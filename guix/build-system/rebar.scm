@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -135,15 +136,8 @@ and VERSION."
                                               search-paths))
                       #:inputs %build-inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    ;; Note: Always pass #:graft? #f.  Without it, ALLOWED-REFERENCES &
-    ;; co. would be interpreted as referring to grafted packages.
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define rebar-build-system
   (build-system
