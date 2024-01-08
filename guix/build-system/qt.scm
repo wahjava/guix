@@ -177,14 +177,8 @@ provides a 'CMakeLists.txt' file as its build system."
                     #:strip-flags #$strip-flags
                     #:strip-directories #$strip-directories))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:graft? #f                 ;consistent with 'gnu-build'
-                      #:system system
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+  (mbegin %store-monad
+    (return builder)))
 
 
 ;;;
@@ -274,14 +268,8 @@ build system."
                     #:strip-flags #$strip-flags
                     #:strip-directories #$strip-directories))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:graft? #f                 ;consistent with 'gnu-build'
-                      #:system system
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define qt-build-system
   (build-system
