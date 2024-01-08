@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -91,11 +92,8 @@
                                              search-paths))
                      #:inputs #$(input-tuples->gexp inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (zig-cross-build name
                           #:key
