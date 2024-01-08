@@ -3,6 +3,7 @@
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2014 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -147,7 +148,7 @@
                             allowed-references
                             disallowed-references)
   "Build SOURCE with INPUTS.  See GNU-BUILD for more details."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -179,16 +180,8 @@
                                    #:strip-directories
                                    #$strip-directories)))))
 
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (glib-or-gtk-cross-build name
                                   #:key
@@ -273,15 +266,8 @@
                              #:strip-directories
                              #$strip-directories))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define glib-or-gtk-build-system
   (build-system
