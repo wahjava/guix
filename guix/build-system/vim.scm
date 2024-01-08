@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2022 Jonathan Scoresby <me@jonscoresby.com>
 ;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,7 +118,7 @@
                     (modules '((guix build vim-build-system)
                                (guix build utils))))
 
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@modules)
@@ -148,16 +149,8 @@
                            #:strip-flags #$strip-flags
                            #:strip-directories #$strip-directories)))))
 
-  (mlet %store-monad
-        ((guile (package->derivation (or guile (default-guile))
-                                     system #:graft? #f)))
-        (gexp->derivation name
-                          build
-                          #:system system
-                          #:target #f
-                          #:graft? #f
-                          #:substitutable? substitutable?
-                          #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define vim-build-system
   (build-system (name 'vim)
