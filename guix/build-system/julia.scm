@@ -4,6 +4,7 @@
 ;;; Copyright © 2021 Jean-Baptiste Volatier <jbv@pm.me>
 ;;; Copyright © 2021, 2022 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -109,11 +110,8 @@
                        #:julia-package-uuid #$julia-package-uuid
                        #:julia-package-dependencies #$julia-package-dependencies))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define julia-build-system
   (build-system
