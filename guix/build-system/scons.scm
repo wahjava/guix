@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2017 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,6 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix build-system scons)
+  #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix monads)
@@ -115,11 +117,8 @@ provides a 'SConstruct' file as its build system."
                                  (map search-path-specification->sexp
                                       search-paths)))))))
 
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+  (mbegin %store-monad
+    (return builder)))
 
 (define scons-build-system
   (build-system
