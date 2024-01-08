@@ -429,18 +429,8 @@ are allowed to refer to."
                            #:strip-flags #$strip-flags
                            #:strip-directories #$strip-directories)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    ;; Note: Always pass #:graft? #f.  Without it, ALLOWED-REFERENCES &
-    ;; co. would be interpreted as referring to grafted packages.
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 
 ;;;
@@ -574,16 +564,8 @@ platform."
                      #:strip-flags #$strip-flags
                      #:strip-directories #$strip-directories))))
 
-    (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+    (mbegin %store-monad
+      (return builder)))
 
 (define gnu-build-system
   (build-system
