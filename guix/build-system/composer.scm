@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2023-2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,6 +19,7 @@
 
 (define-module (guix build-system composer)
   #:use-module (guix store)
+  #:use-module (guix monads)
   #:use-module (guix utils)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
@@ -146,11 +148,8 @@ a 'composer.json' file as its build system."
                    #:strip-flags #$strip-flags
                    #:strip-directories #$strip-directories))))))
 
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+  (mbegin %store-monad
+    (return builder)))
 
 (define composer-build-system
   (build-system
