@@ -8,6 +8,7 @@
 ;;; Copyright © 2024 Christina O'Donnell <cdo@mutix.org>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -244,12 +245,8 @@ commit hash and its date rather than a proper release tag."
                     #:allow-go-reference? #$allow-go-reference?
                     #:inputs #$(input-tuples->gexp inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:substitutable? substitutable?
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (go-cross-build name
                          #:key
@@ -291,7 +288,7 @@ commit hash and its date rather than a proper release tag."
 
           (define %build-target-inputs
             (append #$(input-tuples->gexp host-inputs)
-              #+(input-tuples->gexp target-inputs)))
+                    #+(input-tuples->gexp target-inputs)))
 
           (define %build-inputs
             (append %build-host-inputs %build-target-inputs))
@@ -329,14 +326,8 @@ commit hash and its date rather than a proper release tag."
                     #:allow-go-reference? #$allow-go-reference?
                     #:inputs %build-inputs))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define go-build-system
   (build-system
