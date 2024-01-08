@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2014, 2015, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,7 +118,7 @@
                                 (guix build utils))))
   "Build SOURCE using PERL, and with INPUTS.  This assumes that SOURCE
 provides a `Makefile.PL' file as its build system."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -143,14 +144,8 @@ provides a `Makefile.PL' file as its build system."
                             #:parallel-tests? #$parallel-tests?
                             #:outputs %outputs
                             #:inputs %build-inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (perl-cross-build name #:key
                            source
@@ -208,13 +203,8 @@ XS or similar."
                       #:outputs #$(outputs->gexp outputs)
                       #:inputs #$inputs
                       #:native-inputs #+(input-tuples->gexp build-inputs)))))
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #false
-                      #:guile-for-build guile)))
+ (mbegin %store-monad
+    (return builder)))
 
 (define perl-build-system
   (build-system
