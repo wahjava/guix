@@ -86,7 +86,7 @@ NAME and VERSION."
                      (modules '((guix build ruby-build-system)
                                 (guix build utils))))
   "Build SOURCE using RUBY and INPUTS."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -107,13 +107,8 @@ NAME and VERSION."
                                                     search-paths))
                             #:inputs %build-inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define ruby-build-system
   (build-system
