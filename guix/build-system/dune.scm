@@ -3,6 +3,7 @@
 ;;; Copyright © 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2021, 2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 pukkamustard <pukkamustard@posteo.net>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,6 +22,7 @@
 
 (define-module (guix build-system dune)
   #:use-module (guix store)
+  #:use-module (guix monads)
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (guix search-paths)
@@ -152,11 +154,8 @@ provides a 'setup.ml' file as its build system."
                       #:strip-flags #$strip-flags
                       #:strip-directories #$strip-directories))))
 
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+  (mbegin %store-monad
+    (return builder)))
 
 (define dune-build-system
   (build-system
