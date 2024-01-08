@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -111,7 +112,7 @@
                           allowed-references
                           disallowed-references)
   "Build SOURCE using PYTHON, and with INPUTS."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -136,16 +137,8 @@
                                          search-paths))
                  #:inputs %build-inputs)))))
 
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:graft? #f                 ;consistent with 'gnu-build'
-                      #:target #f
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define pyproject-build-system
   (build-system
