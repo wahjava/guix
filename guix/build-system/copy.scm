@@ -3,6 +3,7 @@
 ;;; Copyright © 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2021, 2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2023 Jonathan Brielmaier <jonathan.brielmaier@web.de>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -118,14 +119,8 @@
                             #:strip-flags #$strip-flags
                             #:strip-directories #$strip-directories)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:substitutable? substitutable?
-                      #:graft? #f
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define copy-build-system
   (build-system
