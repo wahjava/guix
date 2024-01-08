@@ -12,6 +12,7 @@
 ;;; Copyright © 2023 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -51,6 +52,7 @@
   #:use-module (ice-9 match)
   #:use-module (ice-9 vlist)
   #:use-module (ice-9 regex)
+  #:use-module (ice-9 optargs)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9 gnu)
   #:use-module (srfi srfi-26)
@@ -1988,12 +1990,12 @@ TARGET."
                       (derivation=? obj1 obj2))
                  (equal? obj1 obj2))))))))
 
-(define* (bag->derivation bag #:optional context)
-  "Return the derivation to build BAG for SYSTEM.  Optionally, CONTEXT can be
-a package object describing the context in which the call occurs, for improved
-error reporting."
+(define* (bag-builder bag #:optional context)
+  "Return the gexp or derivation to build BAG for SYSTEM.  Optionally, CONTEXT
+can be a package object describing the context in which the call occurs, for
+improved error reporting."
   (if (bag-target bag)
-      (bag->cross-derivation bag)
+      (bag-cross-builder bag)
       (mlet* %store-monad ((system ->  (bag-system bag))
                            (inputs ->  (bag-transitive-inputs bag))
                            (input-drvs (mapm %store-monad
@@ -2015,10 +2017,10 @@ error reporting."
                #:outputs (bag-outputs bag) #:system system
                (bag-arguments bag)))))
 
-(define* (bag->cross-derivation bag #:optional context)
-  "Return the derivation to build BAG, which is actually a cross build.
-Optionally, CONTEXT can be a package object denoting the context of the call.
-This is an internal procedure."
+(define* (bag-cross-builder bag #:optional context)
+  "Return the gexp or derivation to build BAG, which is actually a cross
+build. Optionally, CONTEXT can be a package object denoting the context of the
+call. This is an internal procedure."
   (mlet* %store-monad ((system ->   (bag-system bag))
                        (target ->   (bag-target bag))
                        (host ->     (bag-transitive-host-inputs bag))
@@ -2058,6 +2060,39 @@ This is an internal procedure."
            #:outputs (bag-outputs bag)
            #:system system #:target target
            (bag-arguments bag))))
+
+(define* (bag->derivation bag #:optional context)
+  "Return the derivation to build BAG for SYSTEM.  Optionally, CONTEXT can be
+a package object describing the context in which the call occurs, for improved
+error reporting."
+  (mlet %store-monad ((builder (bag-builder bag context)))
+    (match builder
+      ((? derivation? drv)
+       (return drv))
+      ((? gexp? gexp)
+       (let-keywords (bag-arguments bag) #t
+                     ((allowed-references    #f)
+                      (disallowed-references #f)
+                      (guile                 #f)
+                      (substitutable?        #t))
+         (mlet %store-monad
+             ((guile (package->derivation (or guile (default-guile))
+                                          (bag-system bag)
+                                          #:graft? #f)))
+           ;; Note: Always pass #:graft? #f.  Without it, ALLOWED-REFERENCES &
+           ;; co. would be interpreted as referring to grafted packages.
+           (gexp->derivation (bag-name bag) gexp
+                             #:system (bag-system bag)
+                             #:target (and (bag-target bag))
+                             #:graft? #f
+                             #:substitutable? substitutable?
+                             #:allowed-references allowed-references
+                             #:disallowed-references disallowed-references
+                             #:guile-for-build guile))))
+      ;; build-bag has to be drv or gexp, else raise.
+      (_
+       (raise (condition (&package-error
+                          (package context))))))))
 
 (define bag->derivation*
   (store-lower bag->derivation))

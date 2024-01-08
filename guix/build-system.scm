@@ -85,7 +85,7 @@
                  (default '("out")))
   (arguments     bag-arguments           ;list
                  (default '()))
-  (build         bag-build))             ;bag -> derivation
+  (build         bag-build))             ;bag -> gexp or derivation
 
 (define* (make-bag build-system name
                    #:key source (inputs '()) (native-inputs '())
