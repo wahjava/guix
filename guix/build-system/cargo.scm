@@ -192,11 +192,8 @@ unavailable."
                                           (map search-path-specification->sexp
                                                search-paths))))))
 
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (cargo-cross-build name
                             #:key
@@ -262,14 +259,11 @@ unavailable."
                                           (map search-path-specification->sexp
                                                search-paths))
                        #:native-search-paths '#$(sexp->gexp
-                                          (map search-path-specification->sexp
-                                               native-search-paths))))))
+                                                 (map search-path-specification->sexp
+                                                      native-search-paths))))))
 
-  (gexp->derivation name builder
-                    #:system system
-                    #:target target
-                    #:graft? #f
-                    #:guile-for-build guile))
+  (mbegin %store-monad
+    (return builder)))
 
 ;; TODO: Remove after Dec. 31, 2026.
 (define (package-cargo-inputs p)
