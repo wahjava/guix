@@ -2,6 +2,7 @@
 ;;; Copyright © 2021 Leo Prikler <leo.prikler@student.tugraz.at>
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Liliana Marie Prikler <liliana.prikler@gmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -102,11 +103,8 @@
                                                search-paths))
                        #:inputs #$(input-tuples->gexp inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define renpy-build-system
   (build-system
