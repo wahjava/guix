@@ -460,13 +460,13 @@ Returns nothing, but overrides the @var{pom-file} as a side-effect."
     (let* ((artifact (pom-artifactid dep))
            (group (or (pom-groupid dep) (pom-groupid pom)))
            (scope (pom-ref dep "scope"))
-           (is-optional? (equal? (pom-ref dep "optional") '("true"))))
+           (is-optional? (or optional? (equal? (pom-ref dep "optional") '("true"))))
+           (is-required? (and (not (equal? scope '("test"))) (not is-optional?))))
       (format (current-error-port) "maven: ~a:~a :: ~a (optional: ~a)~%"
-              group artifact scope optional?)
-      (if (or (and (not (equal? scope '("test"))) (not is-optional?))
-              with-build-dependencies?)
+              group artifact scope is-optional?)
+      (if (or is-required? with-build-dependencies?)
           (let ((version (or (assoc-ref (assoc-ref local-packages group) artifact)
-                             (find-version inputs group artifact optional?)
+                             (find-version inputs group artifact is-optional?)
                              (pom-version dep))))
             (if (pom-version dep)
               (map
