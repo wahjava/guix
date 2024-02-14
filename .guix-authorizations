@@ -45,6 +45,9 @@
    (name "hako"))
   ("B943 509D 633E 80DD 27FC  4EED 634A 8DFF D3F6 31DF"
    (name "htgoebel"))
+  (;; primary: "4519 0024 F2A8 3EE7 0071  D052 AAF8 A093 ECEF A3D1"
+   "DF0D 4822 21EE 942F E01C  5E55 0DF3 F878 D2F3 C62D"
+   (name "hermanrimm"))
   ( ;; primary: "FECD 9EBA FAAD 1831 7E05  DAC0 E55F 4198 D2A7 0CD7"
    "6980 A9B9 5202 AA11 EB1D  8922 8499 AC88 F1A7 1CF2"
    (name "ieure"))
