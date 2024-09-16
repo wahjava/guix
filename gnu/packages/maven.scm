@@ -1766,7 +1766,7 @@ artifactId=maven-core" ,(package-version maven-core-bootstrap))))
                   (("maven-compiler-plugin:[0-9.]+")
                    (string-append "maven-compiler-plugin:"
                                   ,(package-version maven-compiler-plugin)))
-                  (("maven-surefire-plugin:[0-9.]+")
+                  (("maven-surefire-plugin:[0-9.M\\-]+") ;; i.e. 3.0.0-M4
                    (string-append "maven-surefire-plugin:"
                                   ,(package-version maven-surefire-plugin)))
                   (("maven-jar-plugin:[0-9.]+")
