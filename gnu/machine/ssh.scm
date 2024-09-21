@@ -456,10 +456,11 @@ of MACHINE's system profile, ordered from most recent to oldest."
                            (read-file boot-parameters-path))))
                  (reverse (generation-numbers %system-profile)))))))
 
-  (mlet* %store-monad ((generations (machine-remote-eval machine remote-exp)))
+  (mlet %store-monad
+      ((remote-results (machine-remote-eval machine remote-exp)))
     (return
-     (map (lambda (generation)
-            (match generation
+     (map (lambda (remote-result)
+            (match remote-result
               ((generation system-path time serialized-params)
                (let* ((params (call-with-input-string serialized-params
                                 read-boot-parameters))
@@ -478,7 +479,7 @@ of MACHINE's system profile, ordered from most recent to oldest."
                   (kernel-arguments
                    (append (bootable-kernel-arguments system-path root version)
                            (boot-parameters-kernel-arguments params))))))))
-          generations))))
+          remote-results))))
 
 (define-syntax-rule (with-roll-back should-roll-back? mbody ...)
   "Catch exceptions that arise when binding MBODY, a monadic expression in
