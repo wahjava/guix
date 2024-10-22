@@ -1446,7 +1446,8 @@ written entirely in Python.")
             (lambda _
               (let* ((cmake-version #$(version-major+minor
                                        (package-version
-                                        (this-package-native-input "cmake"))))
+                                        (this-package-native-input
+                                         "cmake-minimal"))))
                      (pkg-config-version #$(version-major+minor
                                             (package-version pkg-config))))
                 (call-with-output-file "test/conftest_user.py"
@@ -1497,7 +1498,7 @@ tools_locations = {
     (native-inputs
      (list autoconf-wrapper
            automake
-           cmake
+           cmake-minimal
            git-minimal
            libtool
            meson
