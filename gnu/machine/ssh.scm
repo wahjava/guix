@@ -3,6 +3,8 @@
 ;;; Copyright © 2020-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2024 Ricardo <rekado@elephly.net>
 ;;; Copyright © 2025 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2024 Felix Lechner <felix.lechner@lease-up.com>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -597,34 +599,35 @@ an environment type of 'managed-host."
   (define roll-back-failure
     (condition (&message (message (G_ "could not roll-back machine")))))
 
-  (mlet* %store-monad ((boot-parameters (machine-boot-parameters machine))
-                       (_ -> (if (< (length boot-parameters) 2)
-                                 (raise roll-back-failure)))
-                       (entries -> (map boot-parameters->menu-entry
-                                        (list (second boot-parameters))))
-                       (locale -> (boot-parameters-locale
-                                   (second boot-parameters)))
-                       (crypto-dev -> (boot-parameters-store-crypto-devices
-                                       (second boot-parameters)))
-                       (store-dir -> (boot-parameters-store-directory-prefix
-                                      (second boot-parameters)))
-                       (old-entries -> (map boot-parameters->menu-entry
-                                            (drop boot-parameters 2)))
-                       (bootloader -> (operating-system-bootloader
-                                       (machine-operating-system machine)))
-                       (bootcfg (lower-object
-                                 ((bootloader-configuration-file-generator
-                                   (bootloader-configuration-bootloader
-                                    bootloader))
-                                  bootloader entries
-                                  #:locale locale
-                                  #:store-crypto-devices crypto-dev
-                                  #:store-directory-prefix store-dir
-                                  #:old-entries old-entries)))
-                       (remote-result (machine-remote-eval machine remote-exp)))
-    (if (eqv? 'error remote-result)
-        (raise roll-back-failure)
-        (return remote-result))))
+  (mlet %store-monad
+      ((boot-parameters (machine-boot-parameters machine)))
+    (match boot-parameters
+      ((_ params rest ...)
+       (let* ((entries (list (boot-parameters->menu-entry params)))
+              (locale (boot-parameters-locale params))
+              (crypto-dev (boot-parameters-store-crypto-devices params))
+              (store-dir (boot-parameters-store-directory-prefix params))
+              (old-entries (map boot-parameters->menu-entry rest))
+              (bootloader (operating-system-bootloader
+                            (machine-operating-system machine)))
+              (generate-bootloader-configuration-file
+               (bootloader-configuration-file-generator
+                 (bootloader-configuration-bootloader bootloader)))
+              (bootcfg (generate-bootloader-configuration-file
+                         bootloader entries
+                         #:locale locale
+                         #:store-crypto-devices crypto-dev
+                         #:store-directory-prefix store-dir
+                         #:old-entries old-entries))
+              (eval (cut machine-remote-eval machine <>)))
+         (mlet %store-monad
+             ((_ (lower-object bootcfg))
+              (remote-result (eval remote-exp)))
+           (mbegin %store-monad
+             (if (eqv? 'error remote-result)
+                 (raise roll-back-failure)
+                 (return remote-result))))))
+      (_ (raise roll-back-failure)))))
 
 
 ;;;
