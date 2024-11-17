@@ -41,12 +41,7 @@
 
             deploy-machine
             roll-back-machine
-            machine-remote-eval
-
-            &deploy-error
-            deploy-error?
-            deploy-error-should-roll-back
-            deploy-error-captured-args))
+            machine-remote-eval))
 
 ;;; Commentary:
 ;;;
@@ -122,13 +117,3 @@ MACHINE. Return the number of the generation that was current before switching
 and the new generation number."
   (let ((environment (machine-environment machine)))
     ((environment-type-roll-back-machine environment) machine)))
-
-
-;;;
-;;; Error types.
-;;;
-
-(define-condition-type &deploy-error &error
-  deploy-error?
-  (should-roll-back deploy-error-should-roll-back)
-  (captured-args deploy-error-captured-args))

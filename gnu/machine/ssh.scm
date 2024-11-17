@@ -481,18 +481,6 @@ of MACHINE's system profile, ordered from most recent to oldest."
                            (boot-parameters-kernel-arguments params))))))))
           remote-results))))
 
-(define-syntax-rule (with-roll-back should-roll-back? mbody ...)
-  "Catch exceptions that arise when binding MBODY, a monadic expression in
-%STORE-MONAD, and collect their arguments in a &deploy-error condition, with
-the 'should-roll-back' field set to SHOULD-ROLL-BACK?"
-  (catch #t
-    (lambda ()
-      mbody ...)
-    (lambda args
-      (raise (condition (&deploy-error
-                         (should-roll-back should-roll-back?)
-                         (captured-args args)))))))
-
 (define (deploy-managed-host machine)
   "Internal implementation of 'deploy-machine' for MACHINE instances with an
 environment type of 'managed-host."
@@ -537,39 +525,35 @@ Have you run 'guix archive --generate-key'?")
                         store)))))
 
         (mbegin %store-monad
-          (with-roll-back #f
-            (switch-to-system (eval/error-handling c
-                                (raise (formatted-message
-                                        (G_ "\
+          (switch-to-system (eval/error-handling c
+                              (raise (formatted-message
+                                      (G_ "\
 failed to switch systems while deploying '~a':~%~{~s ~}")
-                                        host
-                                        (inferior-exception-arguments c))))
-                              os))
+                                      host
+                                      (inferior-exception-arguments c))))
+                            os)
           (store-parameterize ((%current-system system)
                                (%current-target-system #f))
-            (with-roll-back #t
-              (mbegin %store-monad
-                (upgrade-shepherd-services (eval/error-handling c
-                                             (warning (G_ "\
+            (mbegin %store-monad
+              (upgrade-shepherd-services
+                (eval/error-handling c
+                  (warning (G_ "\
 an error occurred while upgrading services on '~a':~%~{~s ~}~%")
-                                                      host
-                                                      (inferior-exception-arguments
-                                                       c)))
-                                           os)
-                (load-system-for-kexec (eval/error-handling c
-                                         (warning (G_ "\
+                           host (inferior-exception-arguments c)))
+                os)
+              (load-system-for-kexec
+                (eval/error-handling c
+                  (warning (G_ "\
 failed to load system of '~a' for kexec reboot:~%~{~s~^ ~}~%")
-                                                  host
-                                                  (inferior-exception-arguments
-                                                   c)))
-                                       os)
-                (install-bootloader (eval/error-handling c
-                                      (raise (formatted-message
-                                              (G_ "\
+                           host (inferior-exception-arguments c)))
+                os)
+              (install-bootloader
+                (eval/error-handling c
+                  (raise (formatted-message
+                           (G_ "\
 failed to install bootloader on '~a':~%~{~s ~}~%")
-                                              host
-                                              (inferior-exception-arguments c))))
-                                    bootloader-configuration bootcfg)))))))))
+                           host (inferior-exception-arguments c))))
+                bootloader-configuration bootcfg))))))))
 
 
 ;;;
