@@ -513,7 +513,8 @@ Have you run 'guix archive --generate-key'?")
              (menu-entries (map boot-parameters->menu-entry boot-parameters))
              (bootloader-configuration (operating-system-bootloader os))
              (bootcfg (operating-system-bootcfg os menu-entries)))
-        (define-syntax-rule (eval/error-handling condition handler ...)
+        (define-syntax-rule (eval/error-handling condition store
+                                                 handler ...)
           ;; Return a wrapper around EVAL such that HANDLER is evaluated if an
           ;; exception is raised.
           (lambda (exp)
@@ -525,7 +526,7 @@ Have you run 'guix archive --generate-key'?")
                         store)))))
 
         (mbegin %store-monad
-          (switch-to-system (eval/error-handling c
+          (switch-to-system (eval/error-handling c store
                               (raise (formatted-message
                                       (G_ "\
 failed to switch systems while deploying '~a':~%~{~s ~}")
@@ -536,19 +537,28 @@ failed to switch systems while deploying '~a':~%~{~s ~}")
                                (%current-target-system #f))
             (mbegin %store-monad
               (upgrade-shepherd-services
-                (eval/error-handling c
+                (eval/error-handling c store
+                  (info (G_ "rolling back ~a...~%") host)
+                  (run-with-store store (roll-back-machine machine)
+                                  #:system system)
                   (warning (G_ "\
 an error occurred while upgrading services on '~a':~%~{~s ~}~%")
                            host (inferior-exception-arguments c)))
                 os)
               (load-system-for-kexec
-                (eval/error-handling c
+                (eval/error-handling c store
+                  (info (G_ "rolling back ~a...~%") host)
+                  (run-with-store store (roll-back-machine machine)
+                                  #:system system)
                   (warning (G_ "\
 failed to load system of '~a' for kexec reboot:~%~{~s~^ ~}~%")
                            host (inferior-exception-arguments c)))
                 os)
               (install-bootloader
-                (eval/error-handling c
+                (eval/error-handling c store
+                  (info (G_ "rolling back ~a...~%") host)
+                  (run-with-store store (roll-back-machine machine)
+                                  #:system system)
                   (raise (formatted-message
                            (G_ "\
 failed to install bootloader on '~a':~%~{~s ~}~%")
