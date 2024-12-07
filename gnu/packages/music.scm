@@ -5424,6 +5424,7 @@ can receive input from a MIDI keyboard.")
            portaudio
            portmidi-2
            python
+           python-distro
            python-jinja2
            python-mido
            python-mutagen
