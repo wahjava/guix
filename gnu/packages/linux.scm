@@ -7922,7 +7922,7 @@ graphically visualizing a @file{perf.data} file.")
            pkg-config))
     (inputs
      (list coreutils
-           cryptsetup
+           cryptsetup-minimal
            findutils
            gawk
            grep
