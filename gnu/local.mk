@@ -62,7 +62,7 @@
 # Copyright © 2023 B. Wilson <elaexuotee@wilsonb.com>
 # Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 # Copyright © 2023, 2024 gemmaro <gemmaro.dev@gmail.com>
-# Copyright © 2023 Herman Rimm <herman@rimm.ee>
+# Copyright © 2023, 2025 Herman Rimm <herman@rimm.ee>
 # Copyright © 2023 Troy Figiel <troy@troyfigiel.com>
 # Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 # Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
@@ -855,6 +855,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/containers.scm			\
   %D%/tests/cups.scm				\
   %D%/tests/databases.scm			\
+  %D%/tests/deploy.scm				\
   %D%/tests/desktop.scm				\
   %D%/tests/dns.scm				\
   %D%/tests/dict.scm				\
