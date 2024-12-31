@@ -65,6 +65,9 @@
 (define-public ecl-1am
   (sbcl-package->ecl-package sbcl-1am))
 
+(define-public clasp-1am
+  (sbcl-package->clasp-package sbcl-1am))
+
 (define-public sbcl-2am
   (let ((commit "1d2fd21bbd8f26ec91b962705cab098dd7b5f11c")
         (revision "0"))
