@@ -3355,6 +3355,9 @@ initialization methods.")
 (define-public ecl-charje.documentation
   (sbcl-package->ecl-package sbcl-charje.documentation))
 
+(define-public clasp-charje.documentation
+  (sbcl-package->clasp-package sbcl-charje.documentation))
+
 (define-public sbcl-charje.loop
   (package
     (name "sbcl-charje.loop")
