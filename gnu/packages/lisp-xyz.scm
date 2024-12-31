@@ -11953,6 +11953,9 @@ implementations of those protocols for different purposes.")
 (define-public ecl-cluffer
   (sbcl-package->ecl-package sbcl-cluffer))
 
+(define-public clasp-cluffer
+  (sbcl-package->clasp-package sbcl-cluffer))
+
 (define-public sbcl-clump
   (let ((commit "1ea4dbac1cb86713acff9ae58727dd187d21048a"))
     (package
