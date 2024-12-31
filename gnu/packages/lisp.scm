@@ -440,6 +440,13 @@ interface.")
          (replace 'install
            (lambda* _
              (invoke "ninja" "-C" "build" "install"))))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "XDG_DATA_DIRS")
+            (files '("share")))
+           (search-path-specification
+            (variable "XDG_CONFIG_DIRS")
+            (files '("etc")))))
     (home-page "https://clasp-developers.github.io/")
     (synopsis "Common Lisp implementation based on LLVM and C++")
     (description "Clasp is a new Common Lisp implementation that seamlessly
