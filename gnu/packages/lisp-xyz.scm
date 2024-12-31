@@ -16039,6 +16039,9 @@ a sequence (or chain) of such elements.")
 (define-public ecl-flexichain
   (sbcl-package->ecl-package sbcl-flexichain))
 
+(define-public clasp-flexichain
+  (sbcl-package->clasp-package sbcl-flexichain))
+
 (define-public cl-flexichain
   (sbcl-package->cl-source-package sbcl-flexichain))
 
