@@ -11650,6 +11650,9 @@ Common Lisp.")
 (define-public ecl-clostrum
   (sbcl-package->ecl-package sbcl-clostrum))
 
+(define-public clasp-clostrum
+  (sbcl-package->clasp-package sbcl-clostrum))
+
 (define sbcl-closure-common
   (let ((commit "e3c5f5f454b72b01b89115e581c3c52a7e201e5c")
         (revision "1"))
