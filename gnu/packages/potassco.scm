@@ -103,9 +103,9 @@ Furthermore, it comes with the tool @command{lpconvert} that converts either
 between aspif and smodels format or to a human-readable text format.")
       (license license:expat))))
 
-(define-public clasp
+(define-public potassco-clasp
   (package
-    (name "clasp")
+    (name "potassco-clasp")
     (version "3.3.10")
     (source (origin
               (method git-fetch)
