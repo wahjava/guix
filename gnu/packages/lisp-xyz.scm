@@ -30142,6 +30142,11 @@ binding @code{*debugger-hook*} is not enough -- most notably, for
      ;; Tests fail on ECL: https://github.com/phoe/trivial-custom-debugger/issues/3
      '(#:tests? #f))))
 
+(define-public clasp-trivial-custom-debugger
+  (package
+    (inherit (sbcl-package->clasp-package sbcl-trivial-custom-debugger))
+    (arguments (list #:tests? #f))))
+
 (define-public sbcl-trivial-do
   (let ((commit "03a1729f1e71bad3ebcf6cf098a0cce52dfa1163"))
     (package
