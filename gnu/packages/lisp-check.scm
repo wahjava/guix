@@ -589,6 +589,9 @@ with a focus on interactive development.")
 (define-public ecl-hu.dwim.stefil
   (sbcl-package->ecl-package sbcl-hu.dwim.stefil))
 
+(define-public clasp-hu.dwim.stefil
+  (sbcl-package->clasp-package sbcl-hu.dwim.stefil))
+
 (define-public sbcl-kaputt
   (let ((commit "f26c9b0f8219fe61d86249198ef85174eecafc10")
         (revision "1"))
