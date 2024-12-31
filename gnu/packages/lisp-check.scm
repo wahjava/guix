@@ -424,6 +424,9 @@ without a complicated setup, and with explicit functions and decisions.")
 (define-public ecl-confidence
   (sbcl-package->ecl-package sbcl-confidence))
 
+(define-public clasp-confidence
+  (sbcl-package->clasp-package sbcl-confidence))
+
 (define-public cl-confidence
   (sbcl-package->cl-source-package sbcl-confidence))
 
