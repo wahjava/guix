@@ -28652,6 +28652,9 @@ without the latter being aware of it.")
 (define-public ecl-stealth-mixin
   (sbcl-package->ecl-package sbcl-stealth-mixin))
 
+(define-public clasp-stealth-mixin
+  (sbcl-package->clasp-package sbcl-stealth-mixin))
+
 (define-public sbcl-stmx
   ;; No release for years and recent commits contain fixes for recent SBCL
   ;; versions.
