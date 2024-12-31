@@ -697,6 +697,9 @@ weight, temperature, names of physical quantitites, etc.")
 (define-public ecl-acclimation
   (sbcl-package->ecl-package sbcl-acclimation))
 
+(define-public clasp-acclimation
+  (sbcl-package->clasp-package sbcl-acclimation))
+
 (define-public sbcl-acl-compat
   ;; There does not seem to be proper releases.
   (let ((commit "cac1d6920998ddcbee8310a873414732e707d8e5"))
