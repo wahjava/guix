@@ -6974,6 +6974,9 @@ doesn't support them.")
 (define-public ecl-cl-interpol
   (sbcl-package->ecl-package sbcl-cl-interpol))
 
+(define-public clasp-cl-interpol
+  (sbcl-package->clasp-package sbcl-cl-interpol))
+
 (define-public sbcl-cl-ipfs-api2
   (let ((commit "3ee52c80023bcc662f7d01276ea0a5814bd0011b")
         (revision "0"))
