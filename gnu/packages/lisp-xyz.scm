@@ -26693,6 +26693,9 @@ only.")
 (define-public ecl-sb-cga
   (sbcl-package->ecl-package sbcl-sb-cga))
 
+(define-public clasp-sb-cga
+  (sbcl-package->clasp-package sbcl-sb-cga))
+
 (define-public sbcl-schemeish
   (let ((commit "872ea3dc3f2ea8438388b5e7660acd9446c49948")
         (revision "2"))
