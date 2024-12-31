@@ -376,9 +376,9 @@ generational, compacting garbage collector, and a convenient foreign-function
 interface.")
     (license license:asl2.0)))
 
-(define-public clasp-cl
+(define-public clasp
   (package
-    (name "clasp-cl")
+    (name "clasp")
     (version "2.6.0")
     (source
      (origin
