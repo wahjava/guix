@@ -32747,6 +32747,9 @@ file.")
 (define-public ecl-zpb-ttf
   (sbcl-package->ecl-package sbcl-zpb-ttf))
 
+(define-public clasp-zpb-ttf
+  (sbcl-package->clasp-package sbcl-zpb-ttf))
+
 (define-public sbcl-zpng
   (package
     (name "sbcl-zpng")
