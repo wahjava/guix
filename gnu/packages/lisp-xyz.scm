@@ -1831,6 +1831,9 @@ GNU libiconv, but completely written in Common Lisp.")
 (define-public ecl-babel
   (sbcl-package->ecl-package sbcl-babel))
 
+(define-public clasp-babel
+  (sbcl-package->clasp-package sbcl-babel))
+
 (define-public sbcl-binary-types
   (let ((commit "9ec42042a50403961c08179a892ae3de725b1d7a"))
     (package
