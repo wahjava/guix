@@ -621,9 +621,11 @@ an environment type of 'managed-host."
                          #:old-entries old-entries))
               (eval (cut machine-remote-eval machine <>)))
          (mlet %store-monad
-             ((_ (lower-object bootcfg))
-              (remote-result (eval remote-exp)))
+             ((remote-result (eval remote-exp)))
            (mbegin %store-monad
+             ;; TODO: Run previous installer if the current one failed.
+             (install-bootloader eval bootloader bootcfg
+                                 #:run-installer? #f)
              (if (eqv? 'error remote-result)
                  (raise roll-back-failure)
                  (return remote-result))))))
