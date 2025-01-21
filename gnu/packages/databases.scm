@@ -1205,6 +1205,9 @@ Language.")
          "-DWITH_SSL=system"
          "-DWITH_ZLIB=system"
 
+         ;; Enable embedded server.
+         "-DWITH_EMBEDDED_SERVER=ON"
+
          "-DDEFAULT_CHARSET=utf8"
          "-DDEFAULT_COLLATION=utf8_general_ci"
          "-DMYSQL_DATADIR=/var/lib/mysql"
