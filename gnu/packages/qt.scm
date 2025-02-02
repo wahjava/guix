@@ -3449,7 +3449,10 @@ linux/libcurl_wrapper.h")
                                   "/share/qt5/translations\")"))
                   (("QLibraryInfo::location\\(QLibraryInfo::DataPath\\)")
                    (string-append "QLatin1String(\"" #$output
-                                  "/share/qt5\")")))
+                                  "/share/qt5\")"))
+                  (("QLibraryInfo::location\\(QLibraryInfo::LibraryExecutablesPath)")
+                   (string-append "QLatin1String(\"" #$output
+                                  "/lib/qt5/libexec\")")))
                 ;; Substitute full dynamic library path for nss.
                 (substitute* "src/3rdparty/chromium/crypto/nss_util.cc"
                   (("libnssckbi.so")
@@ -3487,12 +3490,6 @@ linux/libcurl_wrapper.h")
        ;; It's possible this can be fixed by setting QTWEBENGINEPROCESS_PATH
        ;; before running tests.
        ((#:tests? _ #f) #f)))
-    (native-search-paths
-     (list (search-path-specification
-            (file-type 'regular)
-            (separator #f)
-            (variable "QTWEBENGINEPROCESS_PATH")
-            (files '("lib/qt5/libexec/QtWebEngineProcess")))))
     (home-page "https://wiki.qt.io/QtWebEngine")
     (synopsis "Qt WebEngine module")
     (description "The Qt5WebEngine module provides support for web applications
@@ -3858,7 +3855,10 @@ linux/libcurl_wrapper.h"
                                 "/share/qt6/translations\")"))
                 (("QLibraryInfo::path\\(QLibraryInfo::DataPath)")
                  (string-append "QLatin1String(\"" #$output
-                                "/share/qt6\")")))
+                                "/share/qt6\")"))
+                (("QLibraryInfo::path\\(QLibraryInfo::LibraryExecutablesPath)")
+                 (string-append "QLatin1String(\"" #$output
+                                "/lib/qt6/libexec\")")))
               ;; Substitute full dynamic library path for nss.
               (substitute* "src/3rdparty/chromium/crypto/nss_util.cc"
                 (("libnssckbi.so")
@@ -3918,12 +3918,6 @@ linux/libcurl_wrapper.h"
        (replace "qtbase" qtbase)
        (replace "qtdeclarative" qtdeclarative)
        (replace "qtwebchannel" qtwebchannel)))
-    (native-search-paths
-     (list (search-path-specification
-            (file-type 'regular)
-            (separator #f)
-            (variable "QTWEBENGINEPROCESS_PATH")
-            (files '("lib/qt6/libexec/QtWebEngineProcess")))))
     (home-page "https://wiki.qt.io/QtWebEngine")
     (synopsis "Qt WebEngine module")
     (description "The Qt WebEngine module provides support for web
