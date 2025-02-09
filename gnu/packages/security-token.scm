@@ -20,7 +20,7 @@
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
-;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2023, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -225,12 +225,12 @@ the low-level development kit for the Yubico YubiKey authentication device.")
               (patches (search-patches "softhsm-fix-openssl3-tests.patch"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags '("--disable-gost"))) ; TODO Missing the OpenSSL
-                                               ; engine for GOST
-    (inputs
-     (list openssl))
-    (native-inputs
-     (list pkg-config cppunit))
+     (list #:configure-flags
+           #~(list "--disable-gost"  ;TODO Missing the OpenSSL engine for GOST
+                   (string-append "--with-p11-kit="
+                                  #$output "/share/p11-kit/modules"))))
+    (inputs (list openssl))
+    (native-inputs (list pkg-config cppunit))
     (synopsis "Software implementation of a generic cryptographic device")
     (description
      "SoftHSM 2 is a software implementation of a generic cryptographic device
