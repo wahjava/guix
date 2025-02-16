@@ -868,33 +868,36 @@ derivation.  It is kept as-is, uninterpreted, in the derivation."
                                env-vars)
                           #f)))))
 
-  (define (user+system-env-vars)
+  (define (user+system-env-vars inputs)
     ;; Some options are passed to the build daemon via the env. vars of
     ;; derivations (urgh!).  We hide that from our API, but here is the place
     ;; where we kludgify those options.
-    (let ((env-vars `(,@(if local-build?
-                            `(("preferLocalBuild" . "1"))
-                            '())
-                      ,@(if (not substitutable?)
-                            `(("allowSubstitutes" . "0"))
-                            '())
-                      ,@(if allowed-references
-                            `(("allowedReferences"
-                               . ,(string-join allowed-references)))
-                            '())
-                      ,@(if disallowed-references
-                            `(("disallowedReferences"
-                               . ,(string-join disallowed-references)))
-                            '())
-                      ,@(if leaked-env-vars
-                            `(("impureEnvVars"
-                               . ,(string-join leaked-env-vars)))
-                            '())
-                      ,@(match properties
-                          (() '())
-                          (lst `(("guix properties"
-                                  . ,(object->string properties)))))
-                      ,@env-vars)))
+    (let* ((substitutable-inputs? (every substitutable-derivation?
+                                         (map derivation-input-derivation
+                                              inputs)))
+           (env-vars `(,@(if local-build?
+                             `(("preferLocalBuild" . "1"))
+                             '())
+                       ,@(if (and substitutable? substitutable-inputs?)
+                             '()
+                             `(("allowSubstitutes" . "0")))
+                       ,@(if allowed-references
+                             `(("allowedReferences"
+                                . ,(string-join allowed-references)))
+                             '())
+                       ,@(if disallowed-references
+                             `(("disallowedReferences"
+                                . ,(string-join disallowed-references)))
+                             '())
+                       ,@(if leaked-env-vars
+                             `(("impureEnvVars"
+                                . ,(string-join leaked-env-vars)))
+                             '())
+                       ,@(match properties
+                           (() '())
+                           (lst `(("guix properties"
+                                   . ,(object->string properties)))))
+                       ,@env-vars)))
       (match references-graphs
         (((file . path) ...)
          (let ((value (map (cut string-append <> " " <>)
@@ -967,7 +970,7 @@ derivation.  It is kept as-is, uninterpreted, in the derivation."
                             (filter-map input->derivation-input inputs))
                            derivation-input<?))
          (env-vars   (sort (env-vars-with-empty-outputs
-                            (user+system-env-vars))
+                            (user+system-env-vars inputs))
                            (lambda (e1 e2)
                              (string<? (car e1) (car e2)))))
          (drv-masked (make-derivation outputs inputs sources

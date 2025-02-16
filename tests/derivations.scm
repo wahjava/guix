@@ -1125,14 +1125,16 @@
         (let-values (((build download)
                       (derivation-build-plan store
                                              (list (derivation-input drv2)))))
-          ;; Although DRV2 is available as a substitute, we must build its
-          ;; dependency, DRV1, due to #:substitutable? #f.
-          (and (match download
-                 (((= substitutable-path item))
-                  (string=? item (derivation->output-path drv2))))
+          ;; DRV2 is *not* available as a substitute, since it has drv1 as
+          ;; input, and the non-substitutability is viral to avoid
+          ;; distributing non-substitutable items that could have become
+          ;; embedded, for example in an initrd.
+          (and (null? download)
                (match build
-                 (((= derivation-file-name build))
-                  (string=? build (derivation-file-name drv1))))))))))
+                 (((= derivation-file-name build1)
+                   (= derivation-file-name build2))
+                  (string=? build1 (derivation-file-name drv1))
+                  (string=? build2 (derivation-file-name drv2))))))))))
 
 (test-assert "derivation-build-plan and substitutes, local build"
   (with-store store
