@@ -1380,6 +1380,8 @@ we're running in the final root."
                #:linux (operating-system-kernel os)
                #:linux-modules
                (operating-system-initrd-modules os)
+               #:linux-extra-module-directories
+               (operating-system-kernel-loadable-modules os)
                #:mapped-devices mapped-devices
                #:keyboard-layout (operating-system-keyboard-layout os)))
 
