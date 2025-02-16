@@ -120,12 +120,18 @@ the derivations referenced by EXP are automatically copied to the initrd."
                               `(#:references-graphs (("closure" ,init))))
                "/initrd.cpio.gz"))
 
-(define (flat-linux-module-directory linux modules)
+(define (flat-linux-module-directory packages modules)
   "Return a flat directory containing the Linux kernel modules listed in
-MODULES and taken from LINUX."
+MODULES and taken from PACKAGES."
   (define imported-modules
     (source-module-closure '((gnu build linux-modules)
                              (guix build utils))))
+
+  (define package-inputs
+    (map (match-lambda
+           ((p o) (gexp-input p o))
+           (p     (gexp-input p "out")))
+         packages))
 
   (define build-exp
     (with-imported-modules imported-modules
@@ -138,8 +144,9 @@ MODULES and taken from LINUX."
                          (srfi srfi-26)
                          (ice-9 match))
 
-            (define module-dir
-              (string-append #$linux "/lib/modules"))
+            (define module-dirs
+              (map (cut string-append <> "/lib/modules")
+                   '#$package-inputs))
 
             (define builtin-modules
               (match (find-files module-dir (lambda (file stat)
@@ -157,7 +164,7 @@ MODULES and taken from LINUX."
               (lset-difference string=? '#$modules builtin-modules))
 
             (define modules
-              (let* ((lookup  (cut find-module-file module-dir <>))
+              (let* ((lookup  (cut find-module-file module-dirs <>))
                      (modules (map lookup modules-to-lookup)))
                 (append modules
                         (recursive-module-dependencies
@@ -192,6 +199,7 @@ MODULES and taken from LINUX."
                       #:key
                       (linux linux-libre)
                       (linux-modules '())
+                      (linux-extra-module-directories '())
                       (pre-mount #t)
                       (mapped-devices '())
                       (keyboard-layout #f)
@@ -199,15 +207,16 @@ MODULES and taken from LINUX."
                       qemu-networking?
                       volatile-root?
                       (on-error 'debug))
-  "Return as a file-like object a raw initrd, with kernel
-modules taken from LINUX.  FILE-SYSTEMS is a list of file-systems to be
-mounted by the initrd, possibly in addition to the root file system specified
-on the kernel command line via 'root'.  LINUX-MODULES is a list of kernel
-modules to be loaded at boot time. MAPPED-DEVICES is a list of device
-mappings to realize before FILE-SYSTEMS are mounted. PRE-MOUNT is a
-G-expression to evaluate before realizing MAPPED-DEVICES.
-HELPER-PACKAGES is a list of packages to be copied in the initrd. It may include
-e2fsck/static or other packages needed by the initrd to check root partition.
+  "Return as a file-like object a raw initrd, with kernel modules taken from
+LINUX.  FILE-SYSTEMS is a list of file-systems to be mounted by the initrd,
+possibly in addition to the root file system specified on the kernel command
+line via 'root'.  LINUX-MODULES is a list of kernel modules to be loaded at
+boot time. LINUX-EXTRA-MODULE-DIRECTORIES is a list of file-like objects which
+will be searched for modules in addition to the linux kernel. MAPPED-DEVICES
+is a list of device mappings to realize before FILE-SYSTEMS are mounted.
+HELPER-PACKAGES is a list of packages to be copied in the initrd. It may
+include e2fsck/static or other packages needed by the initrd to check root
+partition.
 
 When true, KEYBOARD-LAYOUT is a <keyboard-layout> record denoting the desired
 console keyboard layout.  This is done before MAPPED-DEVICES are set up and
@@ -243,7 +252,8 @@ upon error."
           #~())))
 
   (define kodir
-    (flat-linux-module-directory linux linux-modules))
+    (flat-linux-module-directory (cons linux linux-extra-module-directories)
+                                 linux-modules))
 
   (expression->initrd
    (with-imported-modules (source-module-closure
@@ -391,6 +401,7 @@ FILE-SYSTEMS."
                       #:key
                       (linux linux-libre)
                       (linux-modules '())
+                      (linux-extra-module-directories '())
                       (mapped-devices '())
                       (keyboard-layout #f)
                       qemu-networking?
@@ -411,9 +422,10 @@ passphrase or use the REPL, this happens using the intended keyboard layout.
 QEMU-NETWORKING? and VOLATILE-ROOT? behaves as in raw-initrd.
 
 The initrd is automatically populated with all the kernel modules necessary
-for FILE-SYSTEMS and for the given options.  Additional kernel
-modules can be listed in LINUX-MODULES.  They will be added to the initrd, and
-loaded at boot time in the order in which they appear."
+for FILE-SYSTEMS and for the given options.  Additional kernel modules can be
+listed in LINUX-MODULES.  Additional directories for modules can be listed in
+LINUX-EXTRA-MODULE-DIRECTORIES.  They will be added to the initrd, and loaded
+at boot time in the order in which they appear."
   (define linux-modules*
     ;; Modules added to the initrd and loaded from the initrd.
     `(,@linux-modules
@@ -433,6 +445,7 @@ loaded at boot time in the order in which they appear."
   (raw-initrd file-systems
               #:linux linux
               #:linux-modules linux-modules*
+              #:linux-extra-module-directories linux-extra-module-directories
               #:mapped-devices mapped-devices
               #:helper-packages helper-packages
               #:keyboard-layout keyboard-layout

@@ -246,8 +246,8 @@ underscores."
 '.ko[.gz|.xz|.zst]' and normalizing it."
   (normalize-module-name (strip-extension (basename file))))
 
-(define (find-module-file directory module)
-  "Lookup module NAME under DIRECTORY, and return its absolute file name.
+(define (find-module-file directories module)
+  "Lookup module NAME under DIRECTORIES, and return its absolute file name.
 NAME can be a file name with or without '.ko', or it can be a module name.
 Raise an error if it could not be found.
 
@@ -255,6 +255,9 @@ Module names can differ from file names in interesting ways; for instance,
 module names usually (always?) use underscores as the inter-word separator,
 whereas file names often, but not always, use hyphens.  Examples:
 \"usb-storage.ko\", \"serpent_generic.ko\"."
+  (define directories (if (pair? directories)
+                          directories
+                          (list directories))) ;for backward compatibility
   (define names
     ;; List of possible file names.  XXX: It would of course be cleaner to
     ;; have a database that maps module names to file names and vice versa,
@@ -268,16 +271,19 @@ whereas file names often, but not always, use hyphens.  Examples:
                            (else chr)))
                        module))))
 
-  (match (find-files directory
-                     (lambda (file stat)
-                       (member (strip-extension
-                                (basename file)) names)))
+  (match (append-map (lambda (directory)
+                       (find-files directory
+                                   (lambda (file _)
+                                     (member (strip-extension
+                                              (basename file))
+                                             names))))
+                       directories)
     ((file)
      file)
     (()
-     (error "kernel module not found" module directory))
+     (error "kernel module not found" module directories))
     ((_ ...)
-     (error "several modules by that name" module directory))))
+     (error "several modules by that name" module directories))))
 
 (define* (recursive-module-dependencies files
                                         #:key (lookup-module dot-ko))
