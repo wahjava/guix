@@ -34332,7 +34332,7 @@ utilities.")
          (package-arguments emacs-treemacs)
        ((#:phases phases)
         #~(modify-phases #$phases
-            (add-after 'chdir-elisp 'copy-extra
+            (add-after 'unpack 'copy-extra
               (lambda _
                 (copy-recursively "../extra" ".")))))))
     (propagated-inputs
