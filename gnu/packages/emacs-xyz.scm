@@ -43343,7 +43343,6 @@ should pop up.")
       (build-system emacs-build-system)
       (arguments
        (list
-        #:test-command #~(list "ert-runner")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-curl-executable
