@@ -133,18 +133,18 @@ that was originally contributed to Debian.")
     ;; FIXME We used to refer to the nss package here, but that eventually caused
     ;; module cycles.  The below is a quick copy-paste job that must be kept in
     ;; sync manually.  Surely there's a better way…?
-    (version "3.99")
+    (version "3.101.4")
     (source (origin
               (method url-fetch)
-              (uri (let ((version-with-underscores
-                          (string-join (string-split version #\.) "_")))
+              (uri (let* ((versions (string-split version #\.))
+                          (directory-version (string-join versions "_")))
                      (string-append
                       "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
-                      "releases/NSS_" version-with-underscores "_RTM/src/"
+                      "releases/NSS_" directory-version "_RTM/src/"
                       "nss-" version ".tar.gz")))
               (sha256
                (base32
-                "1g89ig40gfi1sp02gybvl2z818lawcnrqjzsws36cdva834c5maw"))
+                "1sqvh49qi9vq55sbg42c5n0kz6w6ni383hgiyhaym6drsmbzb86a"))
               ;; Create nss.pc and nss-config.
               (patches (search-patches "nss-3.56-pkgconfig.patch"
                                        "nss-getcwd-nonnull.patch"
