@@ -6100,7 +6100,8 @@ tool.")
       (inputs
        (list global))
       (arguments
-       `(#:phases
+       `(#:tests? #f                    ; no tests
+         #:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'configure
              (lambda* (#:key inputs #:allow-other-keys)
