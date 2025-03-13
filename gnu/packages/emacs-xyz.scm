@@ -3319,6 +3319,7 @@ compile}.")
       (build-system emacs-build-system)
       (arguments
        (list
+        #:tests? #f                     ; no tests
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'set-command
