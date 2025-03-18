@@ -195,7 +195,7 @@ commit hash and its date rather than a proper release tag."
 
 (define* (go-build name inputs
                    #:key
-                   source
+                   modules source
                    (phases '%standard-phases)
                    (outputs '("out"))
                    (search-paths '())
@@ -216,9 +216,6 @@ commit hash and its date rather than a proper release tag."
                    (goos #f)
                    (guile #f)
                    (imported-modules %go-build-system-modules)
-                   (modules '((guix build go-build-system)
-                              (guix build union)
-                              (guix build utils)))
                    (substitutable? #t))
   (define builder
     (with-imported-modules imported-modules
@@ -257,7 +254,7 @@ commit hash and its date rather than a proper release tag."
 
 (define* (go-cross-build name
                          #:key
-                         source target
+                         modules source target
                          build-inputs target-inputs host-inputs
                          (phases '%standard-phases)
                          (outputs '("out"))
@@ -280,9 +277,6 @@ commit hash and its date rather than a proper release tag."
                          (embed-files ''())
                          (guile #f)
                          (imported-modules %go-build-system-modules)
-                         (modules '((guix build go-build-system)
-                                    (guix build union)
-                                    (guix build utils)))
                          (substitutable? #t))
   "Cross-build NAME using GO, where TARGET is a GNU triplet and with INPUTS."
   (define builder
@@ -347,4 +341,7 @@ commit hash and its date rather than a proper release tag."
     (name 'go)
     (description
      "Build system for Go programs")
+    (modules '((guix build go-build-system)
+               (guix build union)
+               (guix build utils)))
     (lower lower)))

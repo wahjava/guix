@@ -63,7 +63,7 @@
 
 (define* (dub-build name inputs
                     #:key
-                    source
+                    modules source
                     (tests? #t)
                     (test-target #f)
                     (dub-build-flags ''())
@@ -72,9 +72,7 @@
                     (search-paths '())
                     (system (%current-system))
                     (guile #f)
-                    (imported-modules %dub-build-system-modules)
-                    (modules '((guix build dub-build-system)
-                               (guix build utils))))
+                    (imported-modules %dub-build-system-modules))
   "Build SOURCE using DUB, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -137,4 +135,6 @@
     (name 'dub)
     (description
      "DUB build system, to build D packages")
+    (modules '((guix build dub-build-system)
+               (guix build utils)))
     (lower lower)))

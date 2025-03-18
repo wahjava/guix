@@ -24,6 +24,7 @@
             build-system?
             build-system-name
             build-system-description
+            build-system-modules
             build-system-lower
 
             bag
@@ -44,9 +45,10 @@
 
 (define-record-type* <build-system> build-system make-build-system
   build-system?
-  (name        build-system-name)         ; symbol
-  (description build-system-description)  ; short description
-  (lower       build-system-lower))       ; args ... -> bags
+  (name                     build-system-name)         ; symbol
+  (description              build-system-description)  ; short description
+  (modules                  build-system-modules)      ; modules sexp
+  (lower                    build-system-lower))       ; args ... -> bags
 
 ;; "Bags" are low-level representations of "packages".  The system and target
 ;; of a bag is fixed when it's created.  This is because build systems may
@@ -92,8 +94,9 @@ INPUTS, NATIVE-INPUTS, OUTPUTS, and additional ARGUMENTS.  If TARGET is not
 This is the mechanism by which a package is \"lowered\" to a bag, which is the
 intermediate representation just above derivations."
   (match build-system
-    (($ <build-system> _ description lower)
+    (($ <build-system> _ description modules lower)
      (apply lower name
+            #:modules modules
             #:system system
             #:source source
             #:inputs inputs

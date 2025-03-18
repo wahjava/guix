@@ -95,7 +95,7 @@
 
 (define* (ant-build name inputs
                     #:key
-                    source
+                    modules source
                     (tests? #t)
                     (test-target "check")
                     (configure-flags ''())
@@ -113,10 +113,7 @@
                     (search-paths '())
                     (system (%current-system))
                     (guile #f)
-                    (imported-modules %ant-build-system-modules)
-                    (modules '((guix build ant-build-system)
-                               (guix build java-utils)
-                               (guix build utils))))
+                    (imported-modules %ant-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -154,6 +151,9 @@
   (build-system
     (name 'ant)
     (description "The standard Ant build system")
+    (modules '((guix build ant-build-system)
+               (guix build java-utils)
+               (guix build utils)))
     (lower lower)))
 
 ;;; ant.scm ends here

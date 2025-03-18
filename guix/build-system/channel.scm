@@ -77,5 +77,6 @@
                                 #:commit ,commit))))))
     (build-system (name 'channel)
                   (description "Turn a channel instance into a package.")
+                  (modules '())
                   (lower lower))))
 

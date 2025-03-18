@@ -75,7 +75,7 @@ NAME and VERSION."
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (ruby-build name inputs
-                     #:key source
+                     #:key modules source
                      (gem-flags ''())
                      (test-target "test")
                      (tests? #t)
@@ -84,9 +84,7 @@ NAME and VERSION."
                      (search-paths '())
                      (system (%current-system))
                      (guile #f)
-                     (imported-modules %ruby-build-system-modules)
-                     (modules '((guix build ruby-build-system)
-                                (guix build utils))))
+                     (imported-modules %ruby-build-system-modules))
   "Build SOURCE using RUBY and INPUTS."
   (define build
     (with-imported-modules imported-modules
@@ -121,4 +119,6 @@ NAME and VERSION."
   (build-system
     (name 'ruby)
     (description "The standard Ruby build system")
+    (modules '((guix build ruby-build-system)
+               (guix build utils)))
     (lower lower)))

@@ -143,7 +143,7 @@
 
 (define* (maven-build name inputs
                       #:key
-                      source (guile #f)
+                      modules source (guile #f)
                       (outputs '("out"))
                       (search-paths '())
                       (out-of-source? #t)
@@ -157,10 +157,7 @@
                       (strip-directories %strip-directories)
                       (phases '%standard-phases)
                       (system (%current-system))
-                      (imported-modules %maven-build-system-modules)
-                      (modules '((guix build maven-build-system)
-                                 (guix build maven pom)
-                                 (guix build utils))))
+                      (imported-modules %maven-build-system-modules))
   "Build SOURCE using PATCHELF, and with INPUTS. This assumes that SOURCE
 provides its own binaries."
   (define builder
@@ -195,6 +192,9 @@ provides its own binaries."
   (build-system
     (name 'maven)
     (description "The standard Maven build system")
+    (modules '((guix build maven-build-system)
+               (guix build maven pom)
+               (guix build utils)))
     (lower lower)))
 
 ;;; maven.scm ends here

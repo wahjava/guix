@@ -91,7 +91,7 @@
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (pyproject-build name inputs
-                          #:key source
+                          #:key modules source
                           (tests? #t)
                           (configure-flags ''(@))
                           (backend-path #f)
@@ -104,8 +104,6 @@
                           (system (%current-system))
                           (guile #f)
                           (imported-modules %pyproject-build-system-modules)
-                          (modules '((guix build pyproject-build-system)
-                                     (guix build utils)))
                           allowed-references
                           disallowed-references)
   "Build SOURCE using PYTHON, and with INPUTS."
@@ -149,6 +147,8 @@
   (build-system
     (name 'pyproject)
     (description "The PEP517-compliant Python build system")
+    (modules '((guix build pyproject-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; pyproject.scm ends here

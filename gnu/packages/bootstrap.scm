@@ -570,7 +570,7 @@ $out/bin/guile --version~%"
 
 (define* (make-raw-bag name
                        #:key source inputs native-inputs outputs
-                       system target)
+                       system target #:allow-other-keys)
   (bag
     (name name)
     (system system)
@@ -590,6 +590,7 @@ $out/bin/guile --version~%"
   (let ((raw (build-system
                (name 'raw)
                (description "Raw build system with direct store access")
+               (modules '())
                (lower make-raw-bag))))
    (package
      (name "guile-bootstrap")

@@ -47,7 +47,7 @@
 (define* (trivial-build name inputs
                         #:key
                         outputs guile
-                        system builder (modules '())
+                        system builder modules
                         search-paths allowed-references)
   "Run build expression BUILDER, an expression, for SYSTEM.  SOURCE is
 ignored."
@@ -68,7 +68,7 @@ ignored."
                               #:key
                               target
                               source build-inputs target-inputs host-inputs
-                              outputs guile system builder (modules '())
+                              outputs guile system builder modules
                               search-paths native-search-paths
                               allowed-references)
   "Run build expression BUILDER, an expression, for SYSTEM.  SOURCE is
@@ -94,4 +94,5 @@ ignored."
     (name 'trivial)
     (description
      "Trivial build system, to run arbitrary Scheme build expressions")
+    (modules '())
     (lower lower)))

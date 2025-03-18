@@ -185,7 +185,7 @@ TRIPLET."
 
 (define* (meson-build name inputs
                       #:key
-                      guile source
+                      guile modules source
                       (outputs '("out"))
                       (configure-flags ''())
                       (search-paths '())
@@ -206,8 +206,6 @@ TRIPLET."
                       (phases '%standard-phases)
                       (system (%current-system))
                       (imported-modules %meson-build-system-modules)
-                      (modules '((guix build meson-build-system)
-                                 (guix build utils)))
                       (substitutable? #t)
                       allowed-references
                       disallowed-references)
@@ -269,7 +267,7 @@ has a 'meson.build' file."
                             #:key
                             target
                             build-inputs host-inputs target-inputs
-                            guile source
+                            guile modules source
                             (outputs '("out"))
                             (configure-flags ''())
                             (search-paths '())
@@ -294,8 +292,6 @@ has a 'meson.build' file."
                             (phases '%standard-phases)
                             (system (%current-system))
                             (imported-modules %meson-build-system-modules)
-                            (modules '((guix build meson-build-system)
-                                       (guix build utils)))
                             (substitutable? #t)
                             allowed-references
                             disallowed-references)
@@ -385,6 +381,8 @@ SOURCE has a 'meson.build' file."
   (build-system
     (name 'meson)
     (description "The standard Meson build system")
+    (modules '((guix build meson-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; meson.scm ends here

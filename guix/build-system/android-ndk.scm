@@ -45,7 +45,7 @@
 
 (define* (android-ndk-build name inputs
                             #:key
-                            source
+                            modules source
                             (tests? #t)
                             (test-target #f)
                             (phases '%standard-phases)
@@ -54,9 +54,7 @@
                             (search-paths '())
                             (system (%current-system))
                             (guile #f)
-                            (imported-modules %android-ndk-build-system-modules)
-                            (modules '((guix build android-ndk-build-system)
-                                       (guix build utils))))
+                            (imported-modules %android-ndk-build-system-modules))
   "Build SOURCE using Android NDK, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -122,4 +120,6 @@
     (name 'android-ndk)
     (description
      "Android NDK build system, to build Android NDK packages")
+    (modules '((guix build android-ndk-build-system)
+               (guix build utils)))
     (lower lower)))

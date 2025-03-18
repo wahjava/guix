@@ -47,6 +47,7 @@
   (build-system
     (name 'mozilla)
     (description "The build system for Mozilla software using the Autotools")
+    (modules %default-gnu-modules)
     (lower lower-mozilla)))
 
 ;;; mozilla.scm ends here

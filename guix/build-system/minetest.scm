@@ -98,6 +98,7 @@ standard packages used as implicit inputs of the Minetest build system."
   (build-system
     (name 'minetest-mod)
     (description "The build system for minetest mods")
+    (modules %default-modules)
     (lower lower-mod)))
 
 ;;; minetest.scm ends here

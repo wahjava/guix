@@ -76,7 +76,7 @@
   ''("-Wunbound-variable" "-Warity-mismatch" "-Wformat"))
 
 (define* (guile-build name inputs
-                      #:key source
+                      #:key modules source
                       (guile #f)
                       (phases '%standard-phases)
                       (outputs '("out"))
@@ -91,8 +91,6 @@
                       (parallel-build? #f)
                       (compile-flags %compile-flags)
                       (imported-modules %guile-build-system-modules)
-                      (modules '((guix build guile-build-system)
-                                 (guix build utils)))
                       (substitutable? #t))
   "Build SOURCE using Guile taken from the native inputs, and with INPUTS."
   (define builder
@@ -128,7 +126,7 @@
                             (system (%current-system)) target
                             build-inputs target-inputs host-inputs
                             (guile #f)
-                            source
+                            modules source
                             (outputs '("out"))
                             (search-paths '())
                             (native-search-paths '())
@@ -144,8 +142,6 @@
                             (parallel-build? #f)
                             (compile-flags %compile-flags)
                             (imported-modules %guile-build-system-modules)
-                            (modules '((guix build guile-build-system)
-                                       (guix build utils)))
                             (substitutable? #t))
   (define builder
     (with-imported-modules imported-modules
@@ -194,4 +190,6 @@
   (build-system
     (name 'guile)
     (description "The build system for simple Guile packages")
+    (modules '((guix build guile-build-system)
+               (guix build utils)))
     (lower lower)))

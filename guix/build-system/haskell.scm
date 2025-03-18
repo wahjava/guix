@@ -125,7 +125,7 @@ version REVISION."
                        extra-directories))))))))
 
 (define* (haskell-build name inputs
-                        #:key source
+                        #:key modules source
                         (haddock? #t)
                         (haddock-flags ''())
                         (tests? #t)
@@ -140,9 +140,7 @@ version REVISION."
                         (search-paths '())
                         (system (%current-system))
                         (guile #f)
-                        (imported-modules %haskell-build-system-modules)
-                        (modules '((guix build haskell-build-system)
-                                   (guix build utils))))
+                        (imported-modules %haskell-build-system-modules))
   "Build SOURCE using HASKELL, and with INPUTS.  This assumes that SOURCE
 provides a 'Setup.hs' file as its build system."
   (define builder
@@ -188,6 +186,8 @@ provides a 'Setup.hs' file as its build system."
   (build-system
     (name 'haskell)
     (description "The standard Haskell build system")
+    (modules '((guix build haskell-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; haskell.scm ends here

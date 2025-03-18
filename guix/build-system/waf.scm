@@ -72,7 +72,7 @@
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (waf-build name inputs
-                    #:key source
+                    #:key modules source
                     (tests? #t)
                     (test-target "check")
                     (configure-flags #~'())
@@ -81,9 +81,7 @@
                     (search-paths '())
                     (system (%current-system))
                     (guile #f)
-                    (imported-modules %waf-build-system-modules)
-                    (modules '((guix build waf-build-system)
-                               (guix build utils))))
+                    (imported-modules %waf-build-system-modules))
   "Build SOURCE with INPUTS.  This assumes that SOURCE provides a 'waf' file
 as its build system."
   (define build
@@ -118,6 +116,8 @@ as its build system."
   (build-system
     (name 'waf)
     (description "The standard waf build system")
+    (modules '((guix build waf-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; waf.scm ends here

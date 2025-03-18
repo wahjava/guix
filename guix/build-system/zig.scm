@@ -45,7 +45,7 @@
 
 (define* (zig-build name inputs
                     #:key
-                    source
+                    modules source
                     (tests? #t)
                     (test-target #f)
                     (parallel-build? #t)
@@ -61,9 +61,7 @@
                     (search-paths '())
                     (system (%current-system))
                     (guile #f)
-                    (imported-modules %zig-build-system-modules)
-                    (modules '((guix build zig-build-system)
-                               (guix build utils))))
+                    (imported-modules %zig-build-system-modules))
   "Build SOURCE using Zig, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -101,7 +99,7 @@
 
 (define* (zig-cross-build name
                           #:key
-                          source target
+                          modules source target
                           build-inputs target-inputs host-inputs
                           (phases '%standard-phases)
                           (outputs '("out"))
@@ -121,9 +119,7 @@
                           (zig-release-type #f)
                           (system (%current-system))
                           (guile #f)
-                          (imported-modules %zig-build-system-modules)
-                          (modules '((guix build zig-build-system)
-                                     (guix build utils))))
+                          (imported-modules %zig-build-system-modules))
   "Build SOURCE using Zig, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -222,4 +218,6 @@
     (name 'zig)
     (description
      "Zig build system, to build Zig packages")
+    (modules '((guix build zig-build-system)
+               (guix build utils)))
     (lower lower)))

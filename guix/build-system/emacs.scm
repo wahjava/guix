@@ -81,7 +81,7 @@
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (emacs-build name inputs
-                      #:key source
+                      #:key modules source
                       (tests? (not (%current-target-system)))
                       (parallel-tests? #t)
                       (test-command #f) ; inferred in emacs-build-system
@@ -94,9 +94,6 @@
                       (system (%current-system))
                       (guile #f)
                       (imported-modules %emacs-build-system-modules)
-                      (modules '((guix build emacs-build-system)
-                                 (guix build utils)
-                                 (guix build emacs-utils)))
                       allowed-references
                       disallowed-references)
   "Build SOURCE using EMACS, and with INPUTS."
@@ -132,6 +129,9 @@
   (build-system
     (name 'emacs)
     (description "The build system for Emacs packages")
+    (modules '((guix build emacs-build-system)
+               (guix build utils)
+               (guix build emacs-utils)))
     (lower lower)))
 
 ;;; emacs.scm ends here

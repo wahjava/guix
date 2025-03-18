@@ -344,7 +344,7 @@ standard packages used as implicit inputs of the GNU build system."
 
 (define* (gnu-build name inputs
                     #:key
-                    guile source
+                    guile modules source
                     (outputs '("out"))
                     (search-paths '())
                     (bootstrap-scripts %bootstrap-scripts)
@@ -368,7 +368,6 @@ standard packages used as implicit inputs of the GNU build system."
                     (system (%current-system))
                     (build (nix-system->gnu-triplet system))
                     (imported-modules %default-gnu-imported-modules)
-                    (modules %default-gnu-modules)
                     (substitutable? #t)
                     allowed-references
                     disallowed-references)
@@ -483,7 +482,7 @@ is one of `host' or `target'."
                           #:key
                           target
                           build-inputs target-inputs host-inputs
-                          guile source
+                          guile modules source
                           (outputs '("out"))
                           (search-paths '())
                           (native-search-paths '())
@@ -513,7 +512,6 @@ is one of `host' or `target'."
                           (system (%current-system))
                           (build (nix-system->gnu-triplet system))
                           (imported-modules %default-gnu-imported-modules)
-                          (modules %default-gnu-modules)
                           (substitutable? #t)
                           allowed-references
                           disallowed-references)
@@ -590,4 +588,5 @@ platform."
     (name 'gnu)
     (description
      "The GNU Build System—i.e., ./configure && make && make install")
+    (modules %default-gnu-modules)
     (lower lower)))

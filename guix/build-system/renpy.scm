@@ -74,7 +74,7 @@
 
 (define* (renpy-build name inputs
                       #:key
-                      source
+                      modules source
                       (phases '%standard-phases)
                       (configure-flags ''())
                       (outputs '("out"))
@@ -83,9 +83,7 @@
                       (search-paths '())
                       (system (%current-system))
                       (guile #f)
-                      (imported-modules %renpy-build-system-modules)
-                      (modules '((guix build renpy-build-system)
-                                 (guix build utils))))
+                      (imported-modules %renpy-build-system-modules))
   "Build SOURCE using RENPY, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -114,4 +112,6 @@
   (build-system
     (name 'renpy)
     (description "The Ren'py build system")
+    (modules '((guix build renpy-build-system)
+               (guix build utils)))
     (lower lower)))

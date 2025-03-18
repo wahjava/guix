@@ -153,7 +153,7 @@
 
 (define* (linux-module-build name inputs
                              #:key
-                             source target
+                             modules source target
                              (search-paths '())
                              (tests? #t)
                              (phases '%standard-phases)
@@ -165,9 +165,7 @@
                              (guile #f)
                              (substitutable? #t)
                              (imported-modules
-                              %linux-module-build-system-modules)
-                             (modules '((guix build linux-module-build-system)
-                                        (guix build utils))))
+                              %linux-module-build-system-modules))
   "Build SOURCE using LINUX, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -200,7 +198,7 @@
 (define* (linux-module-build-cross
           name
           #:key
-          source target
+          modules source target
           build-inputs target-inputs host-inputs
           (guile #f)
           (outputs '("out"))
@@ -214,9 +212,7 @@
           (source-directory ".")
           (substitutable? #t)
           (imported-modules
-           %linux-module-build-system-modules)
-          (modules '((guix build linux-module-build-system)
-                     (guix build utils))))
+           %linux-module-build-system-modules))
   (define builder
     (with-imported-modules imported-modules
       #~(begin
@@ -261,6 +257,8 @@
   (build-system
     (name 'linux-module)
     (description "The Linux module build system")
+    (modules '((guix build linux-module-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; linux-module.scm ends here

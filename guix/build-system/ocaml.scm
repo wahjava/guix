@@ -255,7 +255,7 @@ pre-defined variants."
 
 (define* (ocaml-build name inputs
                       #:key
-                      guile source
+                      guile modules source
                       (outputs '("out")) (configure-flags ''())
                       (search-paths '())
                       (make-flags ''())
@@ -274,9 +274,7 @@ pre-defined variants."
                       (phases '(@ (guix build ocaml-build-system)
                                   %standard-phases))
                       (system (%current-system))
-                      (imported-modules %ocaml-build-system-modules)
-                      (modules '((guix build ocaml-build-system)
-                                 (guix build utils))))
+                      (imported-modules %ocaml-build-system-modules))
   "Build SOURCE using OCAML, and with INPUTS. This assumes that SOURCE
 provides a 'setup.ml' file as its build system."
   (define builder
@@ -315,6 +313,8 @@ provides a 'setup.ml' file as its build system."
   (build-system
     (name 'ocaml)
     (description "The standard OCaml build system")
+    (modules '((guix build ocaml-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; ocaml.scm ends here

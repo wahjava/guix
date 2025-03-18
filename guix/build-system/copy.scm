@@ -79,7 +79,7 @@
 
 (define* (copy-build name inputs
                      #:key
-                     guile source
+                     guile modules source
                      (outputs '("out"))
                      (install-plan ''(("." "./")))
                      (search-paths '())
@@ -95,9 +95,7 @@
                      (system (%current-system))
                      (target #f)
                      (substitutable? #t)
-                     (imported-modules %copy-build-system-modules)
-                     (modules '((guix build copy-build-system)
-                                (guix build utils))))
+                     (imported-modules %copy-build-system-modules))
   "Build SOURCE using INSTALL-PLAN, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -139,6 +137,8 @@
   (build-system
     (name 'copy)
     (description "The standard copy build system")
+    (modules '((guix build copy-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; copy.scm ends here

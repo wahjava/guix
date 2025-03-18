@@ -98,7 +98,7 @@
 
 (define* (vim-build name inputs
                     #:key guile
-                    source
+                    modules source
                     (vim? #f)
                     (neovim? #f)
                     (mode "start")
@@ -116,9 +116,7 @@
                     (search-paths '())
                     (system (%current-system))
                     (substitutable? #t)
-                    (imported-modules %vim-build-system-modules)
-                    (modules '((guix build vim-build-system)
-                               (guix build utils))))
+                    (imported-modules %vim-build-system-modules))
 
   (define build
     (with-imported-modules imported-modules
@@ -165,6 +163,8 @@
 (define vim-build-system
   (build-system (name 'vim)
                 (description "The standard Vim build system")
+                (modules '((guix build vim-build-system)
+                           (guix build utils)))
                 (lower lower)))
 
 ;;; vim.scm ends here

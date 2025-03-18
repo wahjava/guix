@@ -169,15 +169,14 @@ given VERSION with sha256 checksum HASH."
 
 (define* (elm-build name inputs
                     #:key
-                    source
+                    modules source
                     (tests? #t)
                     (phases '%standard-phases)
                     (outputs '("out"))
                     (search-paths '())
                     (system (%current-system))
                     (guile #f)
-                    (imported-modules %elm-build-system-modules)
-                    (modules %elm-default-modules))
+                    (imported-modules %elm-build-system-modules))
   "Build SOURCE using ELM."
   (define builder
     (with-imported-modules imported-modules
@@ -203,4 +202,5 @@ given VERSION with sha256 checksum HASH."
   (build-system
     (name 'elm)
     (description "The Elm build system")
+    (modules %elm-default-modules)
     (lower lower)))

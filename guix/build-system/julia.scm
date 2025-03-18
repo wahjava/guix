@@ -77,7 +77,7 @@
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (julia-build name inputs
-                      #:key source
+                      #:key modules source
                       (tests? #t)
                       (parallel-tests? #t)
                       (phases '%standard-phases)
@@ -88,9 +88,7 @@
                       (julia-package-name #f)
                       (julia-package-uuid #f)
                       (julia-package-dependencies ''())
-                      (imported-modules %julia-build-system-modules)
-                      (modules '((guix build julia-build-system)
-                                 (guix build utils))))
+                      (imported-modules %julia-build-system-modules))
   "Build SOURCE using Julia, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -121,6 +119,8 @@
   (build-system
    (name 'julia)
    (description "The build system for Julia packages")
+   (modules '((guix build julia-build-system)
+              (guix build utils)))
    (lower lower)))
 
 ;;; julia.scm ends here

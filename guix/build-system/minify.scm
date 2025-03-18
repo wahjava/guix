@@ -72,16 +72,14 @@
 
 (define* (minify-build name inputs
                        #:key
-                       source
+                       modules source
                        (javascript-files #f)
                        (phases '%standard-phases)
                        (outputs '("out"))
                        (system (%current-system))
                        search-paths
                        (guile #f)
-                       (imported-modules %minify-build-system-modules)
-                       (modules '((guix build minify-build-system)
-                                  (guix build utils))))
+                       (imported-modules %minify-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -107,6 +105,8 @@
   (build-system
     (name 'minify)
     (description "The trivial JavaScript minification build system")
+    (modules '((guix build minify-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; minify.scm ends here

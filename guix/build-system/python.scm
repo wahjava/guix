@@ -167,7 +167,7 @@ pre-defined variants."
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (python-build name inputs
-                       #:key source
+                       #:key modules source
                        (tests? #t)
                        (test-target "test")
                        (use-setuptools? #t)
@@ -178,8 +178,6 @@ pre-defined variants."
                        (system (%current-system))
                        (guile #f)
                        (imported-modules %python-build-system-modules)
-                       (modules '((guix build python-build-system)
-                                  (guix build utils)))
                        allowed-references
                        disallowed-references)
   "Build SOURCE using PYTHON, and with INPUTS.  This assumes that SOURCE
@@ -220,6 +218,8 @@ provides a 'setup.py' file as its build system."
   (build-system
     (name 'python)
     (description "The standard Python build system")
+    (modules '((guix build python-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; python.scm ends here

@@ -76,7 +76,7 @@
 
 (define* (agda-build name inputs
                      #:key
-                     source
+                     modules source
                      (phases '%standard-phases)
                      (outputs '("out"))
                      (search-paths '())
@@ -87,8 +87,7 @@
                      (guile #f)
                      plan
                      (extra-files '("^\\./.*\\.agda-lib$"))
-                     (imported-modules %agda-build-system-modules)
-                     (modules %default-modules))
+                     (imported-modules %agda-build-system-modules))
   (define builder
     (with-imported-modules imported-modules
       #~(begin
@@ -119,4 +118,5 @@
     (name 'agda)
     (description
      "Build system for Agda libraries")
+    (modules %default-modules)
     (lower lower)))

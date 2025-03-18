@@ -99,7 +99,7 @@
 
 (define* (rakudo-build name inputs
                        #:key
-                       source
+                       modules source
                        (search-paths '())
                        (tests? #t)
                        (phases '%standard-phases)
@@ -108,9 +108,7 @@
                        (guile #f)
                        (with-zef? #t)
                        (with-prove6? #t)
-                       (imported-modules %rakudo-build-system-modules)
-                       (modules '((guix build rakudo-build-system)
-                                  (guix build utils))))
+                       (imported-modules %rakudo-build-system-modules))
   "Build SOURCE using PERL6, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -137,6 +135,8 @@
   (build-system
     (name 'rakudo)
     (description "The standard Rakudo build system")
+    (modules '((guix build rakudo-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; rakudo.scm ends here

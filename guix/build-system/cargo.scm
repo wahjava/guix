@@ -88,7 +88,7 @@ to NAME and VERSION."
 
 (define* (cargo-build name inputs
                       #:key
-                      source
+                      modules source
                       (tests? #t)
                       (test-target #f)
                       (vendor-dir "guix-vendor")
@@ -105,9 +105,7 @@ to NAME and VERSION."
                       (search-paths '())
                       (system (%current-system))
                       (guile #f)
-                      (imported-modules %cargo-build-system-modules)
-                      (modules '((guix build cargo-build-system)
-                                 (guix build utils))))
+                      (imported-modules %cargo-build-system-modules))
   "Build SOURCE using CARGO, and with INPUTS."
 
   (define builder
@@ -147,7 +145,7 @@ to NAME and VERSION."
 
 (define* (cargo-cross-build name
                             #:key
-                            source target
+                            modules source target
                             build-inputs target-inputs host-inputs
                             (tests? #f)
                             (test-target #f)
@@ -167,9 +165,7 @@ to NAME and VERSION."
                             (native-search-paths '())
                             (system (%current-system))
                             (guile #f)
-                            (imported-modules %cargo-build-system-modules)
-                            (modules '((guix build cargo-build-system)
-                                       (guix build utils))))
+                            (imported-modules %cargo-build-system-modules))
   "Cross-build SOURCE using CARGO, and with INPUTS."
 
   (define builder
@@ -382,4 +378,6 @@ any dependent crates. This can be a benefits:
     (name 'cargo)
     (description
      "Cargo build system, to build Rust crates")
+    (modules '((guix build cargo-build-system)
+               (guix build utils)))
     (lower lower)))

@@ -72,7 +72,7 @@
     (arguments (strip-keyword-arguments private-keywords arguments))))
 
 (define* (font-build name inputs
-                     #:key source
+                     #:key modules source
                      (tests? #t)
                      (test-target "test")
                      (configure-flags ''())
@@ -82,9 +82,7 @@
                      (search-paths '())
                      (system (%current-system))
                      (guile #f)
-                     (imported-modules %font-build-system-modules)
-                     (modules '((guix build font-build-system)
-                                (guix build utils))))
+                     (imported-modules %font-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -120,6 +118,8 @@
   (build-system
     (name 'font)
     (description "The build system for font packages")
+    (modules '((guix build font-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; font.scm ends here

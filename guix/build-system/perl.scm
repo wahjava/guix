@@ -102,7 +102,7 @@
     (arguments (strip-keyword-arguments private-keywords arguments))))
 
 (define* (perl-build name inputs
-                     #:key source
+                     #:key modules source
                      (search-paths '())
                      (tests? #t)
                      (parallel-build? #t)
@@ -115,9 +115,7 @@
                      (outputs '("out"))
                      (system (%current-system))
                      (guile #f)
-                     (imported-modules %perl-build-system-modules)
-                     (modules '((guix build perl-build-system)
-                                (guix build utils))))
+                     (imported-modules %perl-build-system-modules))
   "Build SOURCE using PERL, and with INPUTS.  This assumes that SOURCE
 provides a `Makefile.PL' file as its build system."
   (define build
@@ -156,8 +154,7 @@ provides a `Makefile.PL' file as its build system."
                       #:guile-for-build guile)))
 
 (define* (perl-cross-build name #:key
-                           source
-                           target
+                           modules source target
                            build-inputs host-inputs target-inputs
                            (search-paths '())
                            (native-search-paths '())
@@ -173,9 +170,7 @@ provides a `Makefile.PL' file as its build system."
                            (system (%current-system))
                            (build (nix-system->gnu-triplet system))
                            (guile #f)
-                           (imported-modules %perl-build-system-modules)
-                           (modules '((guix build perl-build-system)
-                                      (guix build utils))))
+                           (imported-modules %perl-build-system-modules))
   "Cross-build SOURCE to TARGET using PERL, and with INPUTS.  This assumes
 that SOURCE provides a `Makefile.PL' file as its build system and does not use
 XS or similar."
@@ -223,6 +218,8 @@ XS or similar."
   (build-system
     (name 'perl)
     (description "The standard Perl build system")
+    (modules '((guix build perl-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; perl.scm ends here

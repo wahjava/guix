@@ -96,7 +96,7 @@
 
 (define* (composer-build name inputs
                          #:key
-                         guile source
+                         guile modules source
                          (outputs '("out"))
                          (configure-flags ''())
                          (search-paths '())
@@ -115,9 +115,7 @@
                          (phases '(@ (guix build composer-build-system)
                                      %standard-phases))
                          (system (%current-system))
-                         (imported-modules %composer-build-system-modules)
-                         (modules '((guix build composer-build-system)
-                                    (guix build utils))))
+                         (imported-modules %composer-build-system-modules))
   "Build SOURCE using PHP, and with INPUTS. This assumes that SOURCE provides
 a 'composer.json' file as its build system."
   (define guile-json
@@ -161,6 +159,8 @@ a 'composer.json' file as its build system."
   (build-system
     (name 'composer)
     (description "The standard Composer build system")
+    (modules '((guix build composer-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; composer.scm ends here

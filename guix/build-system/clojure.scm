@@ -103,7 +103,7 @@
 
 (define* (clojure-build name inputs
                         #:key
-                        source
+                        modules source
                         (source-dirs `',%source-dirs)
                         (java-source-dirs `',%java-source-dirs)
                         (test-dirs `',%test-dirs)
@@ -130,8 +130,7 @@
                         (system (%current-system))
                         (guile #f)
 
-                        (imported-modules %clojure-build-system-modules)
-                        (modules %default-modules))
+                        (imported-modules %clojure-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -179,6 +178,7 @@
   (build-system
     (name 'clojure)
     (description "Simple Clojure build system using plain old 'compile'")
+    (modules %default-modules)
     (lower lower)))
 
 ;;; clojure.scm ends here

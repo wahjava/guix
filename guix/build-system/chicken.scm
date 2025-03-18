@@ -81,7 +81,7 @@ EXTENSION is the file name extension, such as '.tar.gz'."
 
 (define* (chicken-build name inputs
                         #:key
-                        source
+                        modules source
                         (phases '%standard-phases)
                         (outputs '("out"))
                         (search-paths '())
@@ -91,10 +91,7 @@ EXTENSION is the file name extension, such as '.tar.gz'."
                         (tests? #t)
                         (system (%current-system))
                         (guile #f)
-                        (imported-modules %chicken-build-system-modules)
-                        (modules '((guix build chicken-build-system)
-                                   (guix build union)
-                                   (guix build utils))))
+                        (imported-modules %chicken-build-system-modules))
   (define builder
     (with-imported-modules imported-modules
       #~(begin
@@ -124,4 +121,7 @@ EXTENSION is the file name extension, such as '.tar.gz'."
     (name 'chicken)
     (description
      "Build system for Chicken Scheme programs")
+    (modules '((guix build chicken-build-system)
+               (guix build union)
+               (guix build utils)))
     (lower lower)))

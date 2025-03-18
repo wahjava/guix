@@ -75,6 +75,7 @@
 
 (define* (scons-build name inputs
                       #:key
+                      modules
                       (source #f)
                       (tests? #t)
                       (scons-flags ''())
@@ -86,9 +87,7 @@
                       (search-paths '())
                       (system (%current-system))
                       (guile #f)
-                      (imported-modules %scons-build-system-modules)
-                      (modules '((guix build scons-build-system)
-                                 (guix build utils))))
+                      (imported-modules %scons-build-system-modules))
   "Build SOURCE using SCons, and with INPUTS.  This assumes that SOURCE
 provides a 'SConstruct' file as its build system."
   (define builder
@@ -127,6 +126,8 @@ provides a 'SConstruct' file as its build system."
   (build-system
     (name 'scons)
     (description "The standard SCons build system")
+    (modules '((guix build scons-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; scons.scm ends here

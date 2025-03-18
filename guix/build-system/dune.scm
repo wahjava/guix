@@ -96,7 +96,7 @@
 
 (define* (dune-build name inputs
                      #:key
-                     guile source
+                     guile modules source
                      (outputs '("out"))
                      (search-paths '())
                      (build-flags ''())
@@ -116,9 +116,7 @@
                      (phases '(@ (guix build dune-build-system)
                                  %standard-phases))
                      (system (%current-system))
-                     (imported-modules %dune-build-system-modules)
-                     (modules '((guix build dune-build-system)
-                                (guix build utils))))
+                     (imported-modules %dune-build-system-modules))
   "Build SOURCE using OCAML, and with INPUTS. This assumes that SOURCE
 provides a 'setup.ml' file as its build system."
   (define builder
@@ -162,6 +160,8 @@ provides a 'setup.ml' file as its build system."
   (build-system
     (name 'dune)
     (description "The standard Dune build system")
+    (modules '((guix build dune-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; dune.scm ends here

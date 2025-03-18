@@ -74,7 +74,7 @@ See: https://github.com/hexpm/specifications/blob/main/endpoints.md"
 (define* (mix-build name
                     inputs
                     #:key
-                    source
+                    modules source
                     (tests? #t)
                     (mix-path #f) ;See MIX_PATH.
                     (mix-exs "mix.exs") ;See MIX_EXS.
@@ -85,9 +85,7 @@ See: https://github.com/hexpm/specifications/blob/main/endpoints.md"
                     (system (%current-system))
                     (guile #f)
                     (imported-modules `((guix build mix-build-system)
-                                        ,@%default-gnu-imported-modules))
-                    (modules '((guix build mix-build-system)
-                               (guix build utils))))
+                                        ,@%default-gnu-imported-modules)))
   "Build SOURCE using Elixir, and with INPUTS."
 
   ;; Check the documentation of :build_per_environment here:
@@ -174,6 +172,8 @@ See: https://github.com/hexpm/specifications/blob/main/endpoints.md"
 (define mix-build-system
   (build-system (name 'mix)
                 (description "The standard Mix build system")
+                (modules '((guix build mix-build-system)
+                           (guix build utils)))
                 (lower lower)))
 
 ;;; mix.scm ends here

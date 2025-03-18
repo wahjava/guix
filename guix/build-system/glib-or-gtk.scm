@@ -124,7 +124,7 @@
     (arguments (strip-keyword-arguments private-keywords arguments))))
 
 (define* (glib-or-gtk-build name inputs
-                            #:key guile source
+                            #:key guile modules source
                             (outputs '("out"))
                             (search-paths '())
                             (configure-flags ''())
@@ -145,7 +145,6 @@
                             (glib-or-gtk-wrap-excluded-outputs ''())
                             (system (%current-system))
                             (imported-modules %glib-or-gtk-build-system-modules)
-                            (modules %glib-or-gtk-build-system-default-modules)
                             allowed-references
                             disallowed-references)
   "Build SOURCE with INPUTS.  See GNU-BUILD for more details."
@@ -196,7 +195,7 @@
                                   #:key
                                   target
                                   build-inputs target-inputs host-inputs
-                                  guile source
+                                  guile modules source
                                   (outputs '("out"))
                                   (search-paths '())
                                   (native-search-paths '())
@@ -220,7 +219,6 @@
                                   (system (%current-system))
                                   (build (nix-system->gnu-triplet system))
                                   (imported-modules %glib-or-gtk-build-system-modules)
-                                  (modules %glib-or-gtk-build-system-default-modules)
                                   allowed-references
                                   disallowed-references)
   "Cross-build SOURCE with INPUTS.  See GNU-BUILD for more details."
@@ -292,4 +290,5 @@
      "The GNU Build System—i.e., ./configure && make && make install,
 augmented with definition of suitable environment variables for glib and gtk+
 in program wrappers.")
+    (modules %glib-or-gtk-build-system-default-modules)
     (lower lower)))

@@ -94,13 +94,12 @@
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (asdf-build/source name inputs
-                            #:key source outputs
+                            #:key modules source outputs
                             (phases '%standard-phases/source)
                             (search-paths '())
                             (system (%current-system))
                             (guile #f)
-                            (imported-modules %asdf-build-system-modules)
-                            (modules %asdf-build-modules))
+                            (imported-modules %asdf-build-system-modules))
   (define builder
     (with-imported-modules imported-modules
       #~(begin
@@ -271,7 +270,7 @@ set up using CL source package conventions."
 
 (define (asdf-build lisp-type)
   (lambda* (name inputs
-                 #:key source outputs
+                 #:key modules source outputs
                  (tests? #t)
                  (asd-systems ''())
                  (asd-test-systems ''())
@@ -280,8 +279,7 @@ set up using CL source package conventions."
                  (search-paths '())
                  (system (%current-system))
                  (guile #f)
-                 (imported-modules %asdf-build-system-modules)
-                 (modules %asdf-build-modules))
+                 (imported-modules %asdf-build-system-modules))
 
     (define systems
       (if (null? (cadr asd-systems))
@@ -332,18 +330,21 @@ set up using CL source package conventions."
   (build-system
     (name 'asdf/sbcl)
     (description "The build system for ASDF binary packages using SBCL")
+    (modules %asdf-build-modules)
     (lower (lower "sbcl"))))
 
 (define asdf-build-system/ecl
   (build-system
     (name 'asdf/ecl)
     (description "The build system for ASDF binary packages using ECL")
+    (modules %asdf-build-modules)
     (lower (lower "ecl"))))
 
 (define asdf-build-system/source
   (build-system
     (name 'asdf/source)
     (description "The build system for ASDF source packages")
+    (modules %asdf-build-modules)
     (lower lower/source)))
 
 (define sbcl-package->cl-source-package

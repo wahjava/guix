@@ -99,7 +99,7 @@
 
 (define* (texlive-build name inputs
                         #:key
-                        source
+                        modules source
                         (tests? #f)
                         (build-targets #f)
                         (create-formats #f)
@@ -120,10 +120,7 @@
                         (system (%current-system))
                         (guile #f)
                         (substitutable? #t)
-                        (imported-modules %texlive-build-system-modules)
-                        (modules '((guix build texlive-build-system)
-                                   (guix build union)
-                                   (guix build utils))))
+                        (imported-modules %texlive-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -164,6 +161,9 @@
   (build-system
     (name 'texlive)
     (description "The build system for TeX Live packages")
+    (modules '((guix build texlive-build-system)
+                                   (guix build union)
+                                   (guix build utils)))
     (lower lower)))
 
 ;;; texlive.scm ends here

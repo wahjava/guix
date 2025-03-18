@@ -97,7 +97,7 @@
 
 (define* (tree-sitter-build name inputs
                             #:key
-                            source
+                            modules source
                             (phases '%standard-phases)
                             (grammar-directories '("."))
                             (tests? #t)
@@ -106,9 +106,7 @@
                             (system (%current-system))
                             (guile #f)
                             (guile-json (default-guile-json))
-                            (imported-modules %tree-sitter-build-system-modules)
-                            (modules '((guix build utils)
-                                       (guix build tree-sitter-build-system))))
+                            (imported-modules %tree-sitter-build-system-modules))
   (define builder
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
@@ -137,7 +135,7 @@
                                   #:key
                                   target
                                   build-inputs target-inputs host-inputs
-                                  guile source
+                                  guile modules source
                                   (phases '%standard-phases)
                                   (grammar-directories '("."))
                                   (tests? #t)
@@ -148,10 +146,7 @@
                                   (guile-json (default-guile-json))
                                   (build (nix-system->gnu-triplet system))
                                   (imported-modules
-                                   %tree-sitter-build-system-modules)
-                                  (modules
-                                   '((guix build utils)
-                                     (guix build tree-sitter-build-system))))
+                                   %tree-sitter-build-system-modules))
   (define builder
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
@@ -200,6 +195,8 @@
   (build-system
     (name 'tree-sitter)
     (description "The Tree-sitter grammar build system")
+    (modules '((guix build utils)
+               (guix build tree-sitter-build-system)))
     (lower lower)))
 
 ;;; tree-sitter.scm ends here

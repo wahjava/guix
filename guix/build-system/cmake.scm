@@ -110,7 +110,7 @@
     (arguments (strip-keyword-arguments private-keywords arguments))))
 
 (define* (cmake-build name inputs
-                      #:key guile source
+                      #:key guile modules source
                       (outputs '("out")) (configure-flags ''())
                       (search-paths '())
                       (make-flags ''())
@@ -128,8 +128,6 @@
                       (system (%current-system))
                       (substitutable? #t)
                       (imported-modules %cmake-build-system-modules)
-                      (modules '((guix build cmake-build-system)
-                                 (guix build utils)))
                       allowed-references
                       disallowed-references)
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
@@ -186,7 +184,7 @@ provides a 'CMakeLists.txt' file as its build system."
                             #:key
                             target
                             build-inputs target-inputs host-inputs
-                            source guile
+                            modules source guile
                             (outputs '("out"))
                             (configure-flags ''())
                             (search-paths '())
@@ -207,8 +205,6 @@ provides a 'CMakeLists.txt' file as its build system."
                             (system (%current-system))
                             (build (nix-system->gnu-triplet system))
                             (imported-modules %cmake-build-system-modules)
-                            (modules '((guix build cmake-build-system)
-                                       (guix build utils)))
                             allowed-references
                             disallowed-references)
   "Cross-build NAME using CMAKE for TARGET, where TARGET is a GNU triplet and
@@ -283,6 +279,8 @@ build system."
   (build-system
     (name 'cmake)
     (description "The standard CMake build system")
+    (modules '((guix build cmake-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; cmake.scm ends here

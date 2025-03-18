@@ -104,7 +104,7 @@ release corresponding to NAME and VERSION."
 
 (define* (r-build name inputs
                   #:key
-                  source
+                  modules source
                   (tests? #t)
                   (test-target "tests")
                   (test-types #f)
@@ -115,9 +115,7 @@ release corresponding to NAME and VERSION."
                   (system (%current-system))
                   (guile #f)
                   (substitutable? #t)
-                  (imported-modules %r-build-system-modules)
-                  (modules '((guix build r-build-system)
-                             (guix build utils))))
+                  (imported-modules %r-build-system-modules))
   "Build SOURCE with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -148,6 +146,8 @@ release corresponding to NAME and VERSION."
   (build-system
     (name 'r)
     (description "The standard R build system")
+    (modules '((guix build r-build-system)
+               (guix build utils)))
     (lower lower)))
 
 ;;; r.scm ends here

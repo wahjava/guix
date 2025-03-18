@@ -99,7 +99,7 @@ and VERSION."
 
 (define* (rebar-build name inputs
                        #:key
-                       guile source
+                       guile modules source
                        (rebar-flags ''("skip_deps=true" "-vv"))
                        (tests? #t)
                        (test-target "eunit")
@@ -111,9 +111,7 @@ and VERSION."
                        (search-paths '())
                        (native-search-paths '())
                        (system (%current-system))
-                       (imported-modules %rebar-build-system-modules)
-                       (modules '((guix build rebar-build-system)
-                                  (guix build utils))))
+                       (imported-modules %rebar-build-system-modules))
   "Build SOURCE with INPUTS."
 
   (define builder
@@ -153,4 +151,6 @@ and VERSION."
   (build-system
     (name 'rebar)
     (description "The standard Rebar build system")
+    (modules '((guix build rebar-build-system)
+               (guix build utils)))
     (lower lower)))

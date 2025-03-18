@@ -123,7 +123,7 @@
 (define* (qt-build name inputs
                    #:key
                    (qtbase (default-qtbase))
-                   source (guile #f)
+                   modules source (guile #f)
                    (outputs '("out")) (configure-flags ''())
                    (search-paths '())
                    (make-flags ''())
@@ -142,8 +142,6 @@
                    (qt-wrap-excluded-inputs %qt-wrap-excluded-inputs)
                    (system (%current-system))
                    (imported-modules %qt-build-system-modules)
-                   (modules '((guix build qt-build-system)
-                              (guix build utils)))
                    allowed-references
                    disallowed-references)
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
@@ -195,7 +193,7 @@ provides a 'CMakeLists.txt' file as its build system."
 
 (define* (qt-cross-build name
                          #:key
-                         source target
+                         modules source target
                          build-inputs target-inputs host-inputs
                          (qtbase (default-qtbase))
                          (guile #f)
@@ -218,8 +216,6 @@ provides a 'CMakeLists.txt' file as its build system."
                          (system (%current-system))
                          (build (nix-system->gnu-triplet system))
                          (imported-modules %qt-build-system-modules)
-                         (modules '((guix build qt-build-system)
-                                    (guix build utils)))
                          allowed-references
                          disallowed-references)
   "Cross-build NAME using CMAKE for TARGET, where TARGET is a GNU triplet and
@@ -285,4 +281,6 @@ build system."
     (description
      "The CMake build system augmented with definition of suitable environment
 variables for Qt and KDE in program wrappers.")
+    (modules '((guix build qt-build-system)
+               (guix build utils)))
     (lower lower)))

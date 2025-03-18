@@ -88,7 +88,7 @@
 
 (define* (node-build name inputs
                      #:key
-                     source
+                     modules source
                      (npm-flags ''())
                      (test-target "test")
                      (tests? #t)
@@ -98,9 +98,7 @@
                      (system (%current-system))
                      (guile #f)
                      (guile-json (default-guile-json))
-                     (imported-modules %node-build-system-modules)
-                     (modules '((guix build node-build-system)
-                                (guix build utils))))
+                     (imported-modules %node-build-system-modules))
   "Build SOURCE using NODE and INPUTS."
   (define builder
     (with-extensions (list guile-json)
@@ -130,4 +128,6 @@
   (build-system
     (name 'node)
     (description "The Node build system")
+    (modules '((guix build node-build-system)
+               (guix build utils)))
     (lower lower)))
