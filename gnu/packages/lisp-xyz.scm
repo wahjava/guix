@@ -1520,7 +1520,7 @@ Clojure, as well as several expansions on the idea.")
 (define-public asdf-cli
   (package
     (name "asdf-cli")
-    (version "0.1.1")
+    (version "0.2.0")
     (source
      (origin
        (method git-fetch)
@@ -1529,7 +1529,7 @@ Clojure, as well as several expansions on the idea.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "asdf-cli" version))
        (sha256
-        (base32 "1dsvmqazn25h3b55ycd96am5f18ymk9rga8xy72d6ykm4ki8w7pn"))))
+        (base32 "0gnspd75hz24b6y682f7754fmpcaphd0ly0rqir3jml013snga2s"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      (list
@@ -1547,6 +1547,9 @@ Clojure, as well as several expansions on the idea.")
     (inputs
      (list sbcl-alexandria
            sbcl-command-line-args
+           sbcl-charje.loop
+           sbcl-cl-str
+           sbcl-cl-fad
            sbcl-cl-annot))
     (propagated-inputs
      (list sbcl
