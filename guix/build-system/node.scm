@@ -32,7 +32,18 @@
   #:use-module (guix build-system gnu)
   #:export (%node-build-system-modules
             node-build
-            node-build-system))
+            node-build-system
+            %npm-ignored-inputs))
+
+(define %npm-ignored-inputs
+  (list "aud" "nsp"                                      ; passed end-of-life
+        "covert"                                         ; code coverage
+        "auto-changelog" "npmignore" "evalmd"            ; development tools
+        "eclint" "eslint" "prettier-standard" "standard" ; lint
+        "in-publish" "np" "safe-publish-latest" ; upload integration tools
+        ;; List of prefixes to ignore
+        ;; Handy for personal configs and extensions of ignored inputs
+        "^@ljharb/" "^eslint-"))
 
 (define %default-lockfiles
   (list "package-lock.json"
@@ -91,6 +102,7 @@
                      #:key
                      source
                      (npm-flags ''())
+                     (ignored-inputs %npm-ignored-inputs)
                      (test-target "test")
                      (lockfiles %default-lockfiles)
                      (tests? #t)
@@ -113,6 +125,7 @@
                         #:source #+source
                         #:system #$system
                         #:npm-flags #$npm-flags
+                        #:ignored-inputs '#$ignored-inputs
                         #:test-target #$test-target
                         #:lockfiles '#$lockfiles
                         #:tests? #$tests?

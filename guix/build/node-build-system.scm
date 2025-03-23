@@ -61,14 +61,18 @@ to be written as json to the replacement FILE."
    (apply compose modifications)
    file))
 
-(define (delete-dependencies dependencies-to-remove)
+(define (delete-dependencies predicate-or-dependencies)
   "Rewrite 'package.json' to allow the build to proceed without packages
 listed in 'dependencies-to-remove', a list of strings naming npm packages.
 
 To prevent the deleted dependencies from being reintroduced, use this function
 only after the 'patch-dependencies' phase."
-  (let ((predicate (lambda (dependency)
-                     (member (car dependency) dependencies-to-remove)))
+  (let ((predicate (match predicate-or-dependencies
+                     ((? procedure? predicate)
+                      predicate)
+                     ((? list? dependencies-to-remove)
+                      (lambda (dependency)
+                        (member (car dependency) dependencies-to-remove)))))
         (dependency? (cut member <> (list "devDependencies"
                                           "dependencies"
                                           "peerDependencies"
@@ -347,11 +351,27 @@ would try to run 'node-gyp rebuild'."
                                    "echo Guix: avoiding node-gyp rebuild"))
            out))))))
 
+(define* (delete-unwanted-dependencies #:key ignored-inputs #:allow-other-keys)
+  (let* (((values prefixes ignored)
+          (partition (lambda (str)
+                       (char=? #\^ (string-ref str 0)))
+                     ignored-inputs))
+         (prefixes (map (cut string-drop <> 1) prefixes)))
+    (modify-json
+     (delete-dependencies
+      (match-lambda
+        ((label . _)
+         (or (member label ignored)
+             (any (cut string-prefix? <> label) prefixes)))
+        (_ #f))))))
+
 (define %standard-phases
   (modify-phases gnu:%standard-phases
     (add-after 'unpack 'set-home set-home)
     (add-before 'configure 'patch-dependencies patch-dependencies)
     (add-after 'patch-dependencies 'delete-lockfiles delete-lockfiles)
+    (add-after 'patch-dependencies 'delete-unwanted-dependencies
+      delete-unwanted-dependencies)
     (replace 'configure configure)
     (replace 'build build)
     (replace 'check check)
