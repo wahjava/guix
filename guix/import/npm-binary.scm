@@ -24,6 +24,7 @@
   #:use-module (gcrypt hash)
   #:use-module (gnu packages)
   #:use-module (guix base32)
+  #:use-module ((guix build-system node) #:select (%npm-ignored-inputs))
   #:use-module (guix http-client)
   #:use-module (guix import json)
   #:use-module (guix import utils)
@@ -37,6 +38,7 @@
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
+  #:use-module (srfi srfi-71)
   #:use-module (srfi srfi-9)
   #:use-module (web client)
   #:use-module (web response)
@@ -201,6 +203,18 @@
          (name (npm-name->name npm-name)))
     (name+version->symbol name version)))
 
+(define (npm-keep-input? input)
+  "If INPUT is not among `%npm-ignored-inputs', return it.  Else return #f."
+  (let* (((values prefixes ignored)
+          (partition (lambda (str)
+                       (char=? #\^ (string-ref str 0)))
+                     %npm-ignored-inputs))
+         (prefixes (map (cut string-drop <> 1) prefixes))
+         (name (versioned-package-name input)))
+    (and (not (or (member name ignored)
+                  (any (cut string-prefix? <> name) prefixes)))
+         input)))
+
 (define (npm-package->package-sexp npm-package)
   "Return the `package' s-expression for an NPM-PACKAGE."
   (define resolve-spec
@@ -218,6 +232,9 @@
                            home-page
                            (string-append %default-page "/" (uri-encode name))))
             (synopsis description)
+            (dependencies (filter-map npm-keep-input? dependencies))
+            (dev-dependencies (filter-map npm-keep-input? dev-dependencies))
+            (peer-dependencies (filter-map npm-keep-input? peer-dependencies))
             (resolved-deps (map resolve-spec
                                 (append dependencies peer-dependencies)))
             (peer-names (map versioned-package-name peer-dependencies))
