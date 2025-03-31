@@ -43,35 +43,6 @@
 ;;; Code:
 
 ;;;
-;;; Helper functions.
-;;;
-
-;;; Repeat v n times
-(define (repeat v n)
-  (if (eq? n 0)
-      '()
-      `(,v ,@(repeat v
-                     (- n 1)))))
-
-;;; Generate an indenter string of n tabs
-(define (indent tabs)
-  (if (<= tabs 0) ""
-      (apply string-append
-             (repeat "\t" tabs))))
-
-(define (flatten lst)
-  (let loop
-      ((lst lst)
-       (acc '()))
-    (cond
-     ((null? lst)
-      acc)
-     ((pair? lst)
-      (loop (car lst)
-            (loop (cdr lst) acc)))
-     (else (cons lst acc)))))
-
-;;;
 ;;; Definition of configurations.
 ;;;
 
@@ -254,25 +225,22 @@
          (() "")
          (((? symbol? name)
            value)
-          (string-append
-           (indent tabs)
-           (symbol->string name)
-           (match value
-             ((? string? v)
-              (string-append " = " v))
-             ((? number? v)
-              (string-append " = "
-                             (number->string v)))
-             ((? boolean? v)
-              (if v " = true" " = false"))
-             ((? block-entries? v)
-              (string-append
-               " {\n"
-               (serialize-block-entries
-                #f v
-                (+ tabs 1))
-               (indent tabs) "}")))
-           "\n"))
+          (let (indent (make-string (max 0 tabs) #\tab))
+            (string-append
+             (indent tabs)
+             (symbol->string name)
+             (match value
+               ((? string? v)
+                (string-append " = " v))
+               ((? number? v)
+                (string-append " = " (number->string v)))
+               ((? boolean? v)
+                (if v " = true" " = false"))
+               ((? block-entries? v)
+                (string-append " {\n"
+                               (serialize-block-entries #f v (+ tabs 1))
+                               (indent tabs) "}")))
+             "\n")))
          ((_)
           #f)) "\n")))
 
@@ -350,7 +318,7 @@
   (list
    (env (name "XCURSOR_SIZE")
         (value "24"))
-   (env (name "HYPRCURSON_SIZE")
+   (env (name "HYPRCURSOR_SIZE")
         (value "24"))))
 
 (define-public %default-hyprland-windowrule
@@ -539,10 +507,7 @@
                      ,(binding
                        (key "XF86AudioPrev")
                        (action "exec")
-                       (args "playerctl previous"))
-                     ,(binding (key "R")
-                               (action "submap")
-                               (args "resize"))))))
+                       (args "playerctl previous"))))))
 
 (define-public %default-hyprland-configuration
   (hyprland-configuration (general %default-hyprland-general)
@@ -566,9 +531,8 @@
 (define %default-configuration-hash 970253705680761254)
 
 ;;; Reload the first instance of hyprland to automatically load the new
-;;; configuration. If the package's default configuration changes, after
-;;; applying a new configuration, a warning notification is automatically
-;;; shown on Hyprland until maintainers don't align the guix defaults
+;;; configuration. If the package's default configuration changes, display a
+;;; notification in Hyprland asking for a review of the service's provided defaults.
 (define (hyprland-reload config)
   (with-imported-modules
       (source-module-closure
@@ -601,9 +565,8 @@
 			 "0" ; this is a warning
 			 "20000" ; 10s duration
 			 "0" ; default color
-			 "Package default configuration has changed, \
-please review your configuration and notify \
-the Guix service maintainer")))))))
+			 "Hyprland's default configuration file has changed, and its\
+Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
 
 ;;;
 ;;; Definition of the Home Service.
@@ -613,21 +576,21 @@ the Guix service maintainer")))))))
   (service-type (name 'home-hyprland-config)
                 (description "Configure Hyprland by providing a file
 @file{~/.config/hypr/hyprland.conf}.")
-                (compose (λ (extensions)
-                           (hyprland-extension (exec-once
-                                                (flatten
-                                                 (map
-                                                  hyprland-extension-exec-once
-                                                  extensions)))
-                                               (exec (flatten
-                                                      (map
-                                                       hyprland-extension-exec
-                                                       extensions)))
-                                               (bindings
-                                                (flatten
-                                                 (map
-                                                  hyprland-extension-bindings
-                                                  extensions))))))
+                (compose
+                 (λ (extensions)
+                   (let ((flatten lst)
+                         (let loop ((lst lst) (acc '()))
+                           (cond ((null? lst) acc)
+                                 ((pair? lst) (loop (car lst)
+                                                    (loop (cdr lst) acc)))
+                                 (else (cons lst acc)))))
+                     (hyprland-extension
+                      (exec-once
+                       (flatten (map hyprland-extension-exec-once extensions)))
+                      (exec (flatten (map hyprland-extension-exec
+                                          extensions)))
+                      (bindings (flatten (map hyprland-extension-bindings
+                                              extensions)))))))
                 (extend
                  (λ (config rules)
                    (hyprland-configuration
