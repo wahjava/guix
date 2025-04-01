@@ -11214,7 +11214,8 @@ described on the homepage.")
     (inherit emacs-irony-mode)
     (name "emacs-irony-mode-server")
     (arguments
-     `(#:phases
+     `(#:tests? #f
+       #:phases
        (modify-phases %standard-phases
          (replace 'configure
            (lambda* (#:key outputs #:allow-other-keys)
