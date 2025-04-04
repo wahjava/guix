@@ -149,47 +149,52 @@ the same author.")
        (base32 "1dzg4gk74lhy6pwvxzhk4zj1qinc83l7i6x6zpvdajdlz5vqvc1m")))))
 
 (define cbqn-bootstrap
-  (let* ((revision "2")
-         (commit "66584ce1491d300746963b8ed17170348b2a03e6"))
     (package
       (name "cbqn-bootstrap")
-      (version (git-version "0" revision commit))
+      (version "0.9.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
                       (url "https://github.com/dzaima/CBQN")
-                      (commit commit)))
+                      (commit (string-append "v" version))))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "13gg96aa56b8k08bjvv8i0f5nxrah2sij7g6pg7i21fdv08rd9iv"))))
+                  "0433hp9lgv6w6mhdz0k1kx2rmxia76yy9i0z7ps4qdk7snf2yr2q"))))
       (build-system gnu-build-system)
       (arguments
        (list
-        #:tests? #f                     ; skipping tests for bootstrap
-        #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+        #:tests? #f ;skipping tests for bootstrap
+        ;; `make for-bootstrap' implicitly disables REPLXX, Singeli
+        #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                             ;; Default behaviour is to extract git hash to
+                             ;; use for version string, here our version
+                             ;; string is manually substituted in so git isn't
+                             ;; required for building.
+                             (string-append "version=" #$version)
+                             "nogit=1" "for-bootstrap")
         #:phases
         #~(modify-phases %standard-phases
             (delete 'configure)
-            (add-before 'build 'generate-bytecode
-              (lambda* (#:key inputs #:allow-other-keys)
-                (system (string-append #+dbqn
-                                       "/bin/dbqn ./genRuntime "
-                                       #+bqn-sources))))
             (replace 'install
               (lambda* (#:key outputs #:allow-other-keys)
                 (mkdir-p (string-append #$output "/bin"))
                 (chmod "BQN" #o755)
                 (rename-file "BQN" "bqn")
                 (install-file "bqn" (string-append #$output "/bin")))))))
-      (native-inputs (list dbqn bqn-sources))
-      (inputs (list icedtea-8 libffi))
+      (inputs (list libffi))
       (synopsis "BQN implementation in C")
       (description "This package provides the reference implementation of
 @uref{https://mlochbaum.github.io/BQN/, BQN}, a programming language inspired
 by APL.")
       (home-page "https://mlochbaum.github.io/BQN/")
-      (license license:gpl3))))
+      ;; Upstream explains licensing situation
+      (license (list license:asl2.0       ; src/utils/ryu*
+                     license:boost1.0
+                     license:expat        ; src/builtins/sortTemplate.h
+                     license:lgpl3        ; Everything else except the above
+                     license:gpl3
+                     license:mpl2.0))))
 
 (define-public cbqn
   (package
