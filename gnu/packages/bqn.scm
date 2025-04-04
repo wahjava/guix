@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2022 Christopher Rodriguez <yewscion@gmail.com>
 ;;; Copyright © 2022 Liliana Marie Prikler <liliana.prikler@gmail.com>
+;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -206,9 +207,30 @@ by APL.")
                                     (list #:tests?)
                                     (package-arguments cbqn-bootstrap))
        ((#:make-flags flags #~(list))
-        #~(cons* "shared-o3" "o3" #$flags))
+        #~(cons* "shared-o3" "o3" "for-build" #$flags))
        ((#:phases phases #~%standard-phases)
         #~(modify-phases #$phases
+            ;; Symlinking local copies of REPLXX and Singeli is allowed
+            ;; instead of cloning submodules. `singeli-source' and
+            ;; `replxx-source' git hashes match the submodule hashes for this
+            ;; release of CBQN.
+            (add-before 'build 'link-local-replxx
+              (lambda* (#:key inputs #:allow-other-keys)
+                (symlink (dirname
+                          (search-input-file inputs "replxx-config.cmake.in"))
+                         "build/replxxLocal")))
+            (add-before 'build 'link-local-singeli
+              (lambda* (#:key inputs #:allow-other-keys)
+                (symlink (dirname (search-input-file inputs "singeli"))
+                         "build/singeliLocal")))
+            ;; The BQN built as part of `cbqn-bootstrap' is used here to
+            ;; generate bytecode rather than downloading pre-built bytecode.
+            (add-before 'build 'generate-bytecode
+              (lambda* (#:key inputs #:allow-other-keys)
+                (mkdir-p "build/bytecodeLocal/gen")
+                (system (string-append #+cbqn-bootstrap
+                                       "/bin/bqn build/bootstrap.bqn "
+                                       #+bqn-sources))))
             (replace 'check
               (lambda* (#:key inputs tests? #:allow-other-keys)
                 (when tests?
@@ -218,7 +240,18 @@ by APL.")
                   (map (lambda (x)
                          (system (string-append "./BQN ./test/" x
                                                 ".bqn")))
-                       '("cmp" "equal" "copy" "random"))
+                       '("cmp"
+                         "equal"
+                         "copy"
+                         "bitcpy"
+                         "bit"
+                         "mut"
+                         "hash"
+                         "squeezeValid"
+                         "squeezeExact"
+                         "various"
+                         "random"
+                         "joinReuse"))
                   (system "make -C test/ffi"))))
             (replace 'install
               (lambda* (#:key outputs #:allow-other-keys)
@@ -233,8 +266,11 @@ by APL.")
                   (install-file "bqn" bin)
                   (install-file "libcbqn.so" lib)
                   (install-file "include/bqnffi.h" include))))))))
-    (native-inputs (list dbqn
-                         bqn-sources
-                         libffi))
+    (native-inputs (list bqn-sources cbqn-bootstrap replxx-sources
+                         singeli-sources libffi))
     (properties
-     `((tunable? . #t)))))
+     `((tunable? . #t)))
+    (license (append (package-license cbqn-bootstrap)
+                     (list license:isc   ;Singeli module
+                           license:bsd-3 ;REPLXX module
+                           license:unicode)))))
