@@ -16532,6 +16532,31 @@ functionalities with some extras.")
 pseudo terminal (pty), and interact with both the process and its pty.")
     (license license:isc)))
 
+(define-public python-configshell-fb
+  (package
+    (name "python-configshell-fb")
+    (version "1.1.30")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "configshell-fb" version))
+       (snippet #~(begin
+                    (use-modules (guix build utils))
+                    (delete-file "setup.py")
+                    (delete-file-recursively "configshell_fb")
+                    (rename-file "configshell" "configshell_fb")))
+       (sha256
+        (base32 "1zkhf62qsfcbxwzlc62r6qx37wwyscppc469rlm45zy9lzmbgxj1"))))
+    (arguments (list #:tests? #f))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pyparsing))
+    (native-inputs (list python-wheel python-setuptools python-hatch-vcs python-hatchling))
+    (home-page "https://github.com/open-iscsi/configshell-fb")
+    (synopsis "A framework to implement simple but nice CLIs.")
+    (description
+     "This package provides a framework to implement simple but nice CLIs.")
+    (license license:asl2.0)))
+
 (define-public python-crccheck
   (package
     (name "python-crccheck")
