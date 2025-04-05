@@ -38917,6 +38917,7 @@ REPL appropriate to the current major mode.")
     (build-system emacs-build-system)
     (arguments
      '(#:include (cons "\\.so$" %default-include)
+       #:test-command (list "emacs" "--batch" "-l" "test.el")
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-rime-data-path
@@ -38928,7 +38929,12 @@ REPL appropriate to the current major mode.")
                                         "share/rime-data")))))
          (add-before 'install 'build-emacs-module
            (lambda _
-             (invoke "make" "lib"))))))
+             (invoke "make" "lib")))
+         (add-before 'check 'pre-check
+           (lambda _
+             (setenv "HOME" (getenv "TMPDIR"))
+             (mkdir-p (string-append (getenv "HOME")
+                                     "/.emacs.d/rime")))))))
     (inputs
      (list librime rime-data))
     (propagated-inputs
