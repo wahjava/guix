@@ -810,7 +810,7 @@ As root, run:
 
 @example
 # cd /tmp
-# wget https://guix.gnu.org/install.sh
+# wget -O guix-install.sh https://guix.gnu.org/install.sh
 # chmod +x guix-install.sh
 # ./guix-install.sh
 @end example
