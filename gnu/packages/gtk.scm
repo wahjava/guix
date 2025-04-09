@@ -284,7 +284,7 @@ output.  Experimental backends include OpenGL, BeOS, OS/2, and DirectFB.")
 (define-public harfbuzz
   (package
     (name "harfbuzz")
-    (version "8.3.0")
+    (version "11.2.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/harfbuzz/harfbuzz"
@@ -292,15 +292,12 @@ output.  Experimental backends include OpenGL, BeOS, OS/2, and DirectFB.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0izq2lpqxrf1l755nxrxkkiarywkx5j43asznankxplbxgm0358h"))))
+                "0jba6fw6iar1z4pxzczfb5mncb90kscxq2szd2a50a4aak418dq9"))))
     (build-system meson-build-system)
     (outputs '("out"
                "bin"))                  ;160K, only hb-view depend on cairo
-    (inputs
-     (list cairo))
-    (propagated-inputs
-     ;; There are all in the Requires or Requires.private field of '.pc'.
-     (list glib graphite2 icu4c))
+
+    (arguments (list #:configure-flags #~(list "-Dgraphite2=enabled")))
     (native-inputs
      (append (list `(,glib "bin"))      ;for glib-mkenums
              (if (target-hurd?)
@@ -309,9 +306,8 @@ output.  Experimental backends include OpenGL, BeOS, OS/2, and DirectFB.")
              (list pkg-config
                    python-wrapper
                    which)))
-    (arguments
-     (list #:configure-flags
-           #~(list "-Dgraphite2=enabled")))
+    (inputs (list cairo))
+    (propagated-inputs (list glib graphite2 icu4c)) ;in Requires of .pc
     (synopsis "OpenType text shaping engine")
     (description
      "HarfBuzz is an OpenType text shaping engine.")
