@@ -4695,7 +4695,7 @@ targeting the GNOME stack simple.")
 ;;; An older variant kept to build libsoup-minimal-2.
 (define-public vala-0.52
   (package/inherit vala
-    (version "0.52.0")
+    (version "0.52.11")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/vala/"
