@@ -1181,7 +1181,7 @@ RTSP connections and messages.")
 (define-public python-gst
   (package
     (name "python-gst")
-    (version "1.24.9")
+    (version "1.26.3")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1189,7 +1189,7 @@ RTSP connections and messages.")
                     "gst-python-" version ".tar.xz"))
               (sha256
                (base32
-                "0bplhfnvsi3l9fmfb346n2dvzi1jrxqpp4kcwiwsrjrlgic1vrl0"))))
+                "04hv5pj8br56knvw1nsx74j1lpxskbm6znsdqac28iszqjkvjhwk"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -1205,7 +1205,10 @@ RTSP connections and messages.")
     (native-inputs
      (list pkg-config python))
     (propagated-inputs
-     (list gst-plugins-base python-pygobject))
+     (list gst-plugins-base
+           gst-plugins-bad              ; for gst-analytics
+           gst-rtsp-server
+           python-pygobject))
     (home-page "https://gstreamer.freedesktop.org/")
     (synopsis "GStreamer GObject Introspection overrides for Python")
     (description
