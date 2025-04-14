@@ -24,7 +24,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ftp)
-  #:use-module ((guix licenses) #:select (gpl2 gpl2+ gpl3+ clarified-artistic))
+  #:use-module ((guix licenses)
+                #:select (gpl2 gpl2+ gpl3+ clarified-artistic)
+                #:prefix license:)
+  #:use-module (gnu packages perl)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -345,3 +348,46 @@ files via @acronym{FTP, the File Transfer Protocol}.  Security is a goal; not a
 guarantee.")
     (home-page "https://security.appspot.com/vsftpd.html")
     (license gpl2)))                    ; with OpenSSL exception
+
+(define-public proftpd
+  (package
+    (name "proftpd")
+    (version "1.3.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/proftpd/proftpd")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (patches (search-patches "proftpd-no-install-user.patch"))
+       (sha256
+        (base32
+         "0zgx652qdwj2xkc7218v74x919dxmcs3q5s61v1kpdcw8f9v7370"))))
+    (build-system gnu-build-system)
+    (inputs
+     (list libsodium
+           libxcrypt
+           linux-pam
+           ncurses
+           openssl
+           perl
+           zlib
+           libcap))
+    (arguments
+     (list
+      #:configure-flags #~(list "--enable-openssl"
+                                "--with-modules=mod_sftp")))
+    (synopsis "Highly configurable FTP server")
+    (description
+     "ProFTPD grew out of the desire to have a secure and configurable FTP
+server admiring Apache web server. It's an independent source tree from the
+ground up.")
+    (home-page "http://www.proftpd.org/")
+    (license
+     (list gpl2+ gpl3+ gpl2
+           license:x11
+           license:expat
+           license:public-domain
+           license:bsd-1
+           license:bsd3))))
