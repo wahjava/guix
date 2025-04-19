@@ -2020,7 +2020,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/p7zip-fix-build-with-gcc-11.patch	\
   %D%/packages/patches/p7zip-remove-unused-code.patch		\
   %D%/packages/patches/pam-krb5-CVE-2020-10595.patch		\
-  %D%/packages/patches/pango-skip-libthai-test.patch		\
   %D%/packages/patches/password-store-tree-compat.patch		\
   %D%/packages/patches/pciutils-hurd64.patch			\
   %D%/packages/patches/pcsxr-find-harfbuzz.patch			\
