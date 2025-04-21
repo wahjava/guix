@@ -383,14 +383,14 @@ applications.")
     (name "pango")
     (version "1.56.3")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/pango/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
-              (patches (search-patches "pango-skip-libthai-test.patch"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.gnome.org/GNOME/pango")
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1494p8s2hj3snirpnd1lcz6pmcvjlb1r4zkz3d7d5n2wq8mja1i6"))))
+                "0dpbh423ggbcdhajaglq86rf6hx5znzqvphjcpp7x8xn8y0ih939"))))
     (build-system meson-build-system)
     (arguments
      (list
