@@ -133,7 +133,8 @@ reliability in mind.")
                 "1hcpxxa6vc3ivlpbrcm3wfy5ykamgnrxmjci4im8y54fsy6k8y8x"))
               (patches
                (search-patches
-                "ncftp-reproducible.patch"))
+                "ncftp-reproducible.patch"
+                "ncftp-paths.patch"))
               (modules '((guix build utils)))
               (snippet
                '(begin
