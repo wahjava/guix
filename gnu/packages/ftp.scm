@@ -127,7 +127,7 @@ reliability in mind.")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.ncftp.com/public_ftp/ncftp/ncftp-"
-                                  version "-src.tar.xz"))
+                                  version "-src.tar.gz"))
               (sha256
                (base32
                 "1hcpxxa6vc3ivlpbrcm3wfy5ykamgnrxmjci4im8y54fsy6k8y8x"))
