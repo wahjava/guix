@@ -89,6 +89,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix modules)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
@@ -1936,6 +1937,11 @@ of the same name.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:modules `((guix build privileged)
+                  (guix build qt-build-system)
+                  (guix build utils))
+      #:imported-modules `(,@(source-module-closure '((guix build privileged)))
+                           ,@%qt-build-system-modules)
       ;; This causes the plugins to register runpaths for the wireshark
       ;; libraries, which would otherwise cause the validate-runpath phase to
       ;; fail.
@@ -1951,9 +1957,16 @@ of the same name.")
                 (invoke "ctest" "-VV"
                         "-j" (if parallel-tests?
                                  (number->string (parallel-job-count))
-                                 "1"))))))))
+                                 "1")))))
+          (add-after 'qt-wrap 'wrap-dumpcap
+            (lambda _
+              (wrap-privileged
+               #$output
+               "bin/dumpcap"
+               "dumpcap"))))))
     (inputs
-     (list c-ares
+     (list bash
+           c-ares
            glib
            gnutls
            brotli
