@@ -52,6 +52,7 @@
   #:use-module (gnu system shadow)
   #:use-module (gnu system pam)
   #:use-module ((gnu system file-systems) #:select (file-system-mapping))
+  #:use-module (gnu system privilege)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
@@ -314,7 +315,12 @@
 
             keepalived-configuration
             keepalived-configuration?
-            keepalived-service-type))
+            keepalived-service-type
+
+            wireshark-configuration
+            wireshark-configuration?
+            wireshark-configuration-wireshark
+            wireshark-service-type))
 
 ;;; Commentary:
 ;;;
@@ -3026,5 +3032,32 @@ of the IPFS peer-to-peer storage network.")))
                 (description
                  "Run @uref{https://www.keepalived.org/, Keepalived}
 routing software.")))
+
+(define-configuration wireshark-configuration
+  (wireshark
+   (file-like wireshark)
+   "wireshark package.")
+  (no-serialization))
+
+(define (wireshark-privileged-programs config)
+  (list
+   (privileged-program
+    (program
+     (file-append (wireshark-configuration-wireshark config) "/privileged/dumpcap"))
+    (capabilities "cap_net_raw,cap_net_admin=eip"))))
+
+(define wireshark-service-type
+  (service-type
+   (name 'wireshark)
+   (extensions
+    (list
+     (service-extension profile-service-type
+                        (compose list wireshark-configuration-wireshark))
+     (service-extension privileged-program-service-type
+                        wireshark-privileged-programs)))
+   (default-value (wireshark-configuration))
+   (description "Run wireshark. https://www.wireshark.org/
+
+All users of the system will be able to run dumpcap without special permissions.")))
 
 ;;; networking.scm ends here
