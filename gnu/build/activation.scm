@@ -50,7 +50,9 @@
             activate-firmware
             activate-ptrace-attach
             activate-current-system
-            mkdir-p/perms))
+            mkdir-p/perms
+
+            %privileged-program-directory))
 
 ;;; Commentary:
 ;;;
