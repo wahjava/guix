@@ -54,13 +54,16 @@
 ;; tests that require such devices are all disabled.
 ;; Check https://lists.gnu.org/archive/html/guix-devel/2018-04/msg00293.html
 
-;; If you update either of opencl-headers, opencl-clhpp or opencl-icd-loader
-;; note that they are released together (lockstep) and must be updated
-;; together.
+;; The packages opencl-headers, opencl-clhpp and opencl-icd-loader are released
+;; together (lockstep) and must be updated together. The following variable
+;; facilitates that.
+
+(define %opencl-sdk-version "2023.02.06")
+
 (define-public opencl-headers
   (package
     (name "opencl-headers")
-    (version "2023.02.06")
+    (version %opencl-sdk-version)
     (source
       (origin
         (method git-fetch)
@@ -101,7 +104,7 @@
 (define-public opencl-clhpp
   (package
     (name "opencl-clhpp")
-    (version "2023.02.06")
+    (version %opencl-sdk-version)
     (source
      (origin
        (method git-fetch)
@@ -130,7 +133,7 @@
 (define-public opencl-icd-loader
   (package
     (name "opencl-icd-loader")
-    (version "2023.02.06")
+    (version %opencl-sdk-version)
     (source (origin
               (method git-fetch)
               (uri (git-reference
