@@ -74,7 +74,7 @@
         (sha256
          (base32 "0c3s6g8b3ggfr36cl27axdf3kn79kj6cb880jizcf6q89nw6nf98"))))
     (build-system cmake-build-system)
-    (arguments `(#:tests? #f)) ; Not enabled during build.
+    (arguments (list #:tests? #f)) ; Not enabled during build.
     (synopsis "The Khronos OpenCL headers")
     (description
      "This package provides the C headers by Khronos for OpenCL programming.")
