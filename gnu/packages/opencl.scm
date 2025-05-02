@@ -145,7 +145,7 @@
                (base32
                 "0rnyx83iwisxfj818dzf016fmi62kk1hrlfav0b8a1pjfbzmvr03"))))
     (build-system cmake-build-system)
-    (arguments `(#:tests? #f)) ; Tests need stub loader setup.
+    (arguments (list #:tests? #f)) ; Tests need stub loader setup.
     (native-search-paths
      (list (search-path-specification
             (variable "OCL_ICD_VENDORS")
