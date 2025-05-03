@@ -96,6 +96,16 @@ in the Mozilla clients.")
     (license license:mpl2.0)))
 
 ;; nss should track ESRs, but currently doesn't.  3.102.1 is the current ESR.
+(define (nss-uri version)
+  (let* ((versions (string-split version #\.))
+         (directory-version (string-join versions "_"))
+         ;; 3.101.3 release has a typo in the filename.
+         (filename-version
+          (if (string=? "3.101.3" version) "3.101_3" version)))
+    (string-append
+     "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
+     "releases/NSS_" directory-version "_RTM/src/"
+     "nss-" filename-version ".tar.gz")))
 
 (define-public nss
   (package
@@ -106,12 +116,7 @@ in the Mozilla clients.")
     (version "3.99")
     (source (origin
               (method url-fetch)
-              (uri (let ((version-with-underscores
-                          (string-join (string-split version #\.) "_")))
-                     (string-append
-                      "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
-                      "releases/NSS_" version-with-underscores "_RTM/src/"
-                      "nss-" version ".tar.gz")))
+              (uri (nss-uri version))
               (sha256
                (base32
                 "1g89ig40gfi1sp02gybvl2z818lawcnrqjzsws36cdva834c5maw"))
@@ -184,13 +189,12 @@ in the Mozilla clients.")
               (setenv "CCC" #$(cxx-for-target))
               (setenv "NATIVE_CC" "gcc")
               ;; No VSX on powerpc-linux.
-              #$@(if (target-ppc32?)
-                     #~((setenv "NSS_DISABLE_CRYPTO_VSX" "1"))
-                     #~())
+              (when #$(target-ppc32?)
+                (setenv "NSS_DISABLE_CRYPTO_VSX" "1"))
+
               ;; Tells NSS to build for the 64-bit ABI if we are 64-bit system.
-              #$@(if (target-64bit?)
-                     #~((setenv "USE_64" "1"))
-                     #~())))
+              (when #$(target-64bit?)
+                (setenv "USE_64" "1"))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (if tests?
@@ -209,15 +213,13 @@ in the Mozilla clients.")
                     (substitute* "nss/tests/dbtests/dbtests.sh"
                       ((" -lt 5") " -lt 50"))
 
-                    #$@(if (target-64bit?)
-                           '()
-                           ;; The script fails to determine the source
-                           ;; directory when running under 'datefudge' (see
-                           ;; <https://issues.guix.gnu.org/72239>).  Help it.
-                           #~((substitute* "nss/tests/gtests/gtests.sh"
-                                (("SOURCE_DIR=.*")
-                                 (string-append "SOURCE_DIR=" (getcwd) "/nss\n")))))
-
+                    (unless #$(target-64bit?)
+                      ;; The script fails to determine the source
+                      ;; directory when running under 'datefudge' (see
+                      ;; <https://issues.guix.gnu.org/72239>).  Help it.
+                      ((substitute* "nss/tests/gtests/gtests.sh"
+                         (("SOURCE_DIR=.*")
+                          (string-append "SOURCE_DIR=" (getcwd) "/nss\n")))))
 
                     (let ((release-date (getenv "GUIX_NSS_RELEASE_DATE")))
                       (when (string=? "" release-date)
