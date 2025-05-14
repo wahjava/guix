@@ -29,7 +29,7 @@
 ;;; Copyright © 2020 Tomás Ortín Fernández <tomasortin@mailbox.org>
 ;;; Copyright © 2021 Giovanni Biscuolo <g@xelera.eu>
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
-;;; Copyright © 2022-2024 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2022-2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2022 Taiju HIGASHI <higashi@taiju.info>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
 ;;; Copyright © 2023, 2024 gemmaro <gemmaro.dev@gmail.com>
@@ -280,7 +280,7 @@ a focus on simplicity and productivity.")
 (define-public ruby-3.3
   (package
     (inherit ruby-3.2)
-    (version "3.3.7")
+    (version "3.3.8")
     (source
      (origin
        (method url-fetch)
@@ -289,7 +289,7 @@ a focus on simplicity and productivity.")
                            "/ruby-" version ".tar.xz"))
        (sha256
         (base32
-         "0wmdnqcmfa5mf961hzklvjic7vdpgrbl2ckhaafb1m0fbrhbrg2x"))))))
+         "0hl6bi27w711hva96f95hg02vqzb30kabdw9hbj3rnj3w3z71bj4"))))))
 
 (define-public ruby ruby-3.1)
 
