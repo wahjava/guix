@@ -90,6 +90,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
+  #:use-module (guix go-mod-download)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
@@ -22628,11 +22629,13 @@ tool."))))
 (define-public go-ulid
   (package/inherit go-github-com-oklog-ulid-v2
     (name "go-ulid")
+    (build-system go-module-build-system)
     (arguments
      (list
       #:install-source? #f
-      #:import-path "github.com/oklog/ulid/v2/cmd/ulid"
-      #:unpack-path "github.com/oklog/ulid/v2"))
+      #:install-cache? #f
+      #:build-targets '()
+      #:install-targets '("./cmd/ulid")))
     (description
      (string-append (package-description go-github-com-oklog-ulid-v2)
                     "\nThis package provides a command line interface (CLI)
