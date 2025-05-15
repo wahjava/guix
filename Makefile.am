@@ -169,6 +169,7 @@ MODULES =					\
   guix/build-system/glib-or-gtk.scm		\
   guix/build-system/gnu.scm			\
   guix/build-system/go.scm			\
+  guix/build-system/go-module.scm		\
   guix/build-system/guile.scm			\
   guix/build-system/haskell.scm		\
   guix/build-system/julia.scm			\
@@ -229,6 +230,7 @@ MODULES =					\
   guix/build/minify-build-system.scm		\
   guix/build/font-build-system.scm		\
   guix/build/go-build-system.scm		\
+  guix/build/go-module-build-system.scm	\
   guix/build/android-repo.scm			\
   guix/build/asdf-build-system.scm		\
   guix/build/bzr.scm				\
