@@ -2616,10 +2616,7 @@ strings into words like a POSIX or Windows shell would.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "075ay86gn99wlz26x7hp40s4lpc9r026pd2r0ap0pcrvb88inzy1"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/BurntSushi/toml"))
+    (build-system go-module-build-system)
     (home-page "https://github.com/BurntSushi/toml")
     (synopsis "Toml parser and encoder for Go")
     (description
