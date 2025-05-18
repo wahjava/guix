@@ -13593,7 +13593,7 @@ provided there is a DBus service present:
 (define-public xdg-desktop-portal-gnome
   (package
     (name "xdg-desktop-portal-gnome")
-    (version "46.2")
+    (version "48.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -13601,7 +13601,7 @@ provided there is a DBus service present:
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1mhngp24k06i993kw6kzq0x8hwbbvkk3nq9s0cnm10w4bsi5ximm"))
+                "0qc8kk8wycjj65mh04pylh6fcxx5wj5bp5ipxc4a6k9nw6iaq5fd"))
               (snippet
                #~(begin
                    (use-modules (guix build utils))
