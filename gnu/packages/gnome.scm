@@ -2100,6 +2100,32 @@ the GData protocol — most notably, Google's services.  It provides APIs to
 access the common Google services, and has full asynchronous support.")
     (license license:lgpl2.1+)))
 
+(define-public libgxdp
+  ;; No releases nor tags.  Use the latest commit that passes the project CI.
+  (let ((commit "e6c11f2812cad0a43e847ec97bfc1c67bf50be52")
+        (revision "0"))
+    (package
+      (name "libgxdp")
+      (version (git-version "0.0.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://gitlab.gnome.org/GNOME/libgxdp")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1djfmwvcywbkpl9v8cs0b1hhylfd3fbrdk451vd16hwls46nf0v2"))))
+      (build-system meson-build-system)
+      (native-inputs (list pkg-config))
+      (inputs (list gtk))
+      (home-page "https://gitlab.gnome.org/GNOME/libgxdp")
+      (synopsis "Library for GNOME XDG Desktop Portal")
+      (description "Libgxdp is a library for GNOME XDG Desktop Portal. It
+provides functionality needed by GNOME portal backends, such as cross
+windowing system dialog stacking functionality.")
+      (license license:lgpl2.0+))))
+
 (define-public libgxps
   (package
     (name "libgxps")
