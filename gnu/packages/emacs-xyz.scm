@@ -35815,8 +35815,7 @@ support JSX syntax.")
 (define-public emacs-origami
   (let ((commit "1f38085c8f9af7842765ed63f7d6dfe4dab59366")
         (version "1.0")
-        (revision "1")
-        (patch "1d9c4f120c027a5009b0424270e3aae59f1cb128"))
+        (revision "1"))
     (package
       (name "emacs-origami")
       (version (git-version version revision commit))
@@ -35828,24 +35827,19 @@ support JSX syntax.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "0ha1qsz2p36pqa0sa2sp83lspbgx5lr7930qxnwd585liajzdd9x"))
-         (patches
-          (list
-           (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://github.com/gregsexton/origami.el"
-                   "/commit/" patch ".patch"))
-             (sha256
-              (base32
-               "0yia4dhqjzdidxd77s2ggg6mmj05jbsnwc35myzzhzh1zbq8mrfy")))))))
+          (base32 "0ha1qsz2p36pqa0sa2sp83lspbgx5lr7930qxnwd585liajzdd9x"))
+         (modules '((guix build utils)))
+         (snippet #~(substitute* (find-files "." "\\.el$")
+                      (("\\(require 'cl\\)")
+                       "(require 'cl-lib)")
+                      (("(destructuring-bind|remove-if)" all)
+                       (string-append "cl-" all))))))
       (build-system emacs-build-system)
-      (propagated-inputs
-       (list emacs-dash emacs-s))
+      (propagated-inputs (list emacs-dash emacs-s))
       (home-page "https://github.com/gregsexton/origami.el")
       (synopsis "Flexible text-folding")
-      (description "This package provides a minor mode for collapsing and
+      (description
+       "This package provides a minor mode for collapsing and
 expanding regions of text without modifying the actual contents.")
       (license license:expat))))
 
