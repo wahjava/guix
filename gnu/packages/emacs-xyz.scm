@@ -41904,9 +41904,9 @@ border, the padding of the mode line, and more.  The idea is to produce a more
 comfortable presentation.")
     (license license:gpl3+)))
 
-(define-public emacs-spamfilter-el
+(define-public emacs-spamfilter
   (package
-    (name "emacs-spamfilter-el")
+    (name "emacs-spamfilter")
     (version "1.13")
     (source (origin
               (method url-fetch)
@@ -41948,6 +41948,9 @@ supports Japanese and has the following features:
 @item @url{https://github.com/naota/navi2ch, Navi2ch} integration.
 @end itemize\n")
     (license license:gpl2+)))
+
+(define-deprecated/public emacs-spamfilter-el emacs-spamfilter
+  (deprecated-package "emacs-spamfilter-el" emacs-spamfilter))
 
 (define-public emacs-promise
   ;; XXX: Last stable release fails to build with "(wrong-number-of-arguments
@@ -43953,7 +43956,7 @@ EasyPG and latest Emacs.")
                      (invoke "make" "install")
                      (invoke "make" "install-info"))))))
       (propagated-inputs (list emacs-semi-epg))
-      (inputs (list emacs-spamfilter-el))
+      (inputs (list emacs-spamfilter))
       (home-page "https://www.emacswiki.org/emacs/WanderLust")
       (synopsis "Yet Another Message Interface on Emacsen")
       (description
