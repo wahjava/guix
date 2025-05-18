@@ -4412,7 +4412,6 @@ light user interface.")
                   (string-append "\"" vorbiscomment "\"")))
                (substitute* "emms-info-exiftool.el"
                  (("\"exiftool\"") (string-append "\"" exiftool "\"")))))))))
-    (native-inputs (list texinfo))
     (inputs
      (list emacs-emms-print-metadata
            alsa-utils
@@ -4423,7 +4422,7 @@ light user interface.")
            python-mutagen
            perl-image-exiftool
            opus-tools))
-    (native-inputs (list emacs-ert-runner))))
+    (native-inputs (list emacs-ert-runner texinfo))))
 
 (define-public emacs-emms-mode-line-cycle
   (package
