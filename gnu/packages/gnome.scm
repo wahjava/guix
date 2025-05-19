@@ -5446,20 +5446,19 @@ and other secrets.  It communicates with the \"Secret Service\" using DBus.")
 (define-public gi-docgen
   (package
     (name "gi-docgen")
-    (version "2024.1")
+    (version "2025.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "gi_docgen" version))
               (sha256
                (base32
-                "0cf237ml2jhqcv1zlb35qbvjg4i8a4blawdah5s7f28iz5lmajia"))))
+                "0n7qdcxymzm4ihdd5n4zvqv5cy8szvd43yzwcaw4l631dc7lznrg"))))
     (build-system python-build-system)
     (propagated-inputs (list python-jinja2
                              python-markdown
                              python-markupsafe
                              python-packaging
                              python-pygments
-                             python-tomli
                              python-typogrify))
     (home-page "https://gitlab.gnome.org/GNOME/gi-docgen")
     (synopsis "Documentation tool for GObject-based libraries")
