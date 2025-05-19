@@ -11776,7 +11776,7 @@ that support the Assistive Technology Service Provider Interface (AT-SPI).")
 (define-public gspell
   (package
     (name "gspell")
-    (version "1.12.2")
+    (version "1.14.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -11784,7 +11784,7 @@ that support the Assistive Technology Service Provider Interface (AT-SPI).")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0f91vl42i6fz5yrbw31biffbxqzwa24mw6qbfxmfnk3yhayr7sdl"))))
+                "15w8zv8adzpc5x1zimzwdy3d2nbmyvd803ljbas2a76wks71vsk4"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      '(#:configure-flags (list "--enable-vala")
