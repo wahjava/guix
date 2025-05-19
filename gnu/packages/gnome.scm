@@ -7560,7 +7560,7 @@ principles are simplicity and standards compliance.")
 (define-public d-spy
   (package
     (name "d-spy")
-    (version "1.10.0")
+    (version "48.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -7568,7 +7568,7 @@ principles are simplicity and standards compliance.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0lsyw2h91z8wdmxpbqc77jwiafddh1w19s4yb7d521alqswi4n2m"))))
+                "0c1qbicpvrfdpwjq1z4w1bhq1hx19qw2nd1wzjbls6a6j00hjyhg"))))
     (build-system meson-build-system)
     (arguments
      (list
