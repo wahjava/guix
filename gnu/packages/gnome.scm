@@ -5642,7 +5642,7 @@ more fun.")
 (define-public gnome-console
   (package
     (name "gnome-console")
-    (version "46.0")
+    (version "48.0.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/gnome-console/"
@@ -5650,7 +5650,7 @@ more fun.")
                                   "gnome-console-" version ".tar.xz"))
               (sha256
                (base32
-                "0gkc3lirfb59fhbmmm8l8l3sabhriiv593vi0g4w1ckk2xqcw68n"))))
+                "0jawn2fqhpx4inpmx0fn2jfslwl2v4lbpwfla2qzrg5f9n7913h1"))))
     (build-system meson-build-system)
     (arguments
      (list #:glib-or-gtk? #t
