@@ -9905,7 +9905,7 @@ their own levels.")
 (define-public libmanette
   (package
     (name "libmanette")
-    (version "0.2.9")
+    (version "0.2.12")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/libmanette/"
@@ -9913,7 +9913,7 @@ their own levels.")
                                   "libmanette-" version ".tar.xz"))
               (sha256
                (base32
-                "13v85gckp937lppjqk42wvkd9pafszigyr7wcm6afq1g8pjnndi9"))))
+                "1n513s8ksjbrwqq7k46f3550avx11gly3a85shsdrwc0f4k4kcs8"))))
     (build-system meson-build-system)
     (native-inputs
      (list `(,glib "bin") ; for glib-compile-resources
