@@ -2037,6 +2037,17 @@ into dataclasses.")
 quadrilateral grids.  It is written in C++11 and wrapped using pybind11.")
     (license license:bsd-3)))
 
+(define-public python-contourpy-1.3
+  (package/inherit python-contourpy
+    (version "1.3.2")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "contourpy" version))
+              (sha256 (base32
+                       "0m5by0zqycm87ip6kcixya5hnsqji2alzibz3dklq0ssf515k55n"))))
+    (native-inputs (modify-inputs (package-native-inputs python-contourpy)
+                     (append python-matplotlib)))))
+
 (define-public python-yaspin
   (package
     (name "python-yaspin")
