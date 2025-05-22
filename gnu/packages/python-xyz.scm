@@ -24350,6 +24350,30 @@ JSON) codec.")
 implementation of your Python package and its public API surface.")
     (license license:asl2.0)))
 
+(define-public python-narwhals
+  (package
+    (name "python-narwhals")
+    (version "1.39.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "narwhals" version))
+       (sha256
+        (base32 "0gx4kmlrxm9svij1q16fbqzssig519q57b930lxs5ihzf3pls4bg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (native-inputs (list python-hatchling))
+    (home-page "https://narwhals-dev.github.io/narwhals/")
+    (synopsis
+     "Extremely lightweight compatibility layer between dataframe libraries")
+    (description
+     "Narwhals is a lightweight compatibility layer designed to facilitate seamless
+interaction between different dataframe libraries, providing a unified interface
+for data manipulation and analysis.")
+    (license license:expat)))
+
 (define-public python-natsort
   (package
     (name "python-natsort")
