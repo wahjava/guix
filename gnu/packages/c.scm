@@ -1664,6 +1664,28 @@ C and C++.  The functions it provides are like those from the C header
 string.h, but with a utf8* prefix instead of the str* prefix.")
       (license license:unlicense))))
 
+(define-public simdutf
+  (package
+    (name "simdutf")
+    (version "7.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/simdutf/simdutf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "044qmrkcpyqlq4pf00jc700xwfizs8krq5pylkzhdrh72l0x6w6s"))))
+    (build-system cmake-build-system)
+    (synopsis "SIMD Unicode validation and transcoding")
+    (description
+     "simdutf is a C++ library providing Unicode routines (UTF8, UTF16,
+UTF32).  These routines are optimized for many specific architectures using
+SIMD (Single Instruction, Multiple Data) instructions.")
+    (home-page "https://github.com/simdutf/simdutf")
+    (license license:asl2.0)))
+
 (define-public utest-h
   ;; The latest commit is used as there is no release.
   (let ((commit   "54458e248f875f1a51f0af8bec8ca6ae7761b9d1")
