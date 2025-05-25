@@ -410,6 +410,7 @@ commits)...~%"
 (define* (latest-channel-instance store channel
                                   #:key (patches %patches)
                                   starting-commit
+                                  current-url
                                   (authenticate? #t)
                                   (validate-pull
                                    ensure-forward-channel-update)
@@ -427,6 +428,7 @@ accepted."
         (checkout commit relation
                   (update-cached-checkout (channel-url channel)
                                           #:ref (channel-reference channel)
+                                          #:current-url current-url
                                           #:starting-commit starting-commit
                                           #:verify-certificate? verify-certificate?)))
     (when relation
@@ -527,11 +529,11 @@ CURRENT-CHANNELS is the list of currently used channels.  It is compared
 against the newly-fetched instances of CHANNELS, and VALIDATE-PULL is called
 for each channel update and can choose to emit warnings or raise an error,
 depending on the policy it implements."
-  (define (current-commit name)
-    ;; Return the current commit for channel NAME.
+  (define (current-channel name)
+    ;; Return the current channel with NAME.
     (any (lambda (channel)
            (and (eq? (channel-name channel) name)
-                (channel-commit channel)))
+                channel))
          current-channels))
 
   (define instance-name
@@ -565,15 +567,17 @@ depending on the policy it implements."
                        (G_ "Updating channel '~a' from Git repository at '~a'...~%")
                        (channel-name channel)
                        (channel-url channel))
-               (let* ((current (current-commit (channel-name channel)))
+               (let* ((current (current-channel (channel-name channel)))
                       (instance
                        (latest-channel-instance store channel
                                                 #:authenticate?
                                                 authenticate?
+                                                #:current-url
+                                                (and=> current channel-url)
                                                 #:validate-pull
                                                 validate-pull
                                                 #:starting-commit
-                                                current
+                                                (and=> current channel-commit)
                                                 #:verify-certificate?
                                                 verify-certificate?)))
                  (when authenticate?

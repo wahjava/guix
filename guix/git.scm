@@ -451,6 +451,27 @@ a copy archived at Software Heritage."
             (remote-set-url! repository "origin" url)
             repository)))))
 
+(define* (clone/cache-fallback url ref cache-directory
+                               current-cache-directory
+                               #:key (verify-certificate? #t))
+
+  (catch 'git-error
+    (lambda ()
+      (let ((repository
+             (clone* current-cache-directory cache-directory
+                     #:verify-certificate? verify-certificate?)))
+
+        (remote-set-url! repository "origin" url)
+        ;; refetch remote to populate branch list
+        (remote-fetch (remote-lookup repository "origin")
+                      #:fetch-options (make-default-fetch-options
+                                       #:verify-certificate?
+                                       verify-certificate?))
+        repository))
+    (lambda (key err)
+      (warning (G_ "unable to clone from existing checkout: ~a~%") err)
+      #f)))
+
 (define* (clone/swh-fallback url ref cache-directory
                              #:key (verify-certificate? #t))
   "Like 'clone', but fallback to Software Heritage if the repository cannot be
@@ -531,6 +552,7 @@ could not be fetched from Software Heritage~%")
                                  (read-timeout 45000)
                                  (ref '())
                                  recursive?
+                                 current-url
                                  (check-out? #t)
                                  starting-commit
                                  (log-port (%make-void-port "w"))
@@ -585,14 +607,24 @@ current settings unchanged."
       (('symref . symref) (list symref))
       (_ '())))
 
+  (define current-cache-directory
+    (and current-url
+         (url-cache-directory current-url (%repository-cache-directory)
+                              #:recursive? recursive?)))
+
   (with-libgit2
    (set-git-timeouts connection-timeout read-timeout)
    (let* ((cache-exists? (openable-repository? cache-directory))
           (repository    (if cache-exists?
                              (repository-open cache-directory)
-                             (clone/swh-fallback url ref cache-directory
-                                                 #:verify-certificate?
-                                                 verify-certificate?))))
+                             (or
+                              (clone/cache-fallback url ref cache-directory
+                                                    current-cache-directory
+                                                    #:verify-certificate?
+                                                    verify-certificate?)
+                              (clone/swh-fallback url ref cache-directory
+                                                  #:verify-certificate?
+                                                  verify-certificate?)))))
      ;; Only fetch remote if it has not been cloned just before.
      (when (and cache-exists?
                 (not (reference-available? repository ref)))
