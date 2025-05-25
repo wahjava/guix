@@ -3325,7 +3325,7 @@ msgstr "formatação, de código"
 
 #. type: Plain text
 #: guix-git/doc/contributing.texi:1843
-msgid "If you do not use Emacs, please make sure to let your editor knows these rules.  To automatically indent a package definition, you can also run:"
+msgid "If you do not use Emacs, please make sure your editor knows these rules.  To automatically indent a package definition, you can also run:"
 msgstr "Se você não usa o Emacs, por favor, certifique-se que o seu editor conhece estas regras. Para recuar automaticamente uma definição de pacote, você também pode executar:"
 
 #. type: example
