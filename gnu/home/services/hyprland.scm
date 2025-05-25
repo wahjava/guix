@@ -138,6 +138,22 @@
           "If mod is shifted"
           (serializer (λ (_ n)
                         (string-append (if n " SHIFT" "") ", "))))
+
+  (alt? (boolean #f)
+        "If alt has to be pressed"
+        (serializer (λ (_ n)
+                      (string-append (if n " ALT" "") ", "))))
+
+  (ctrl? (boolean #f)
+        "If control has to be pressed"
+        (serializer (λ (_ n)
+                      (string-append (if n " CTRL" "") ", "))))
+
+  (super? (boolean #f)
+        "If super has to be pressed"
+        (serializer (λ (_ n)
+                      (string-append (if n " SUPER" "") ", "))))
+
   (key (string)
        "Binding main key"
        (serializer (λ (_ n)
@@ -527,7 +543,7 @@
 
 ;;; Obtained with string-hash-ci on the default hyprland.conf
 ;;; Maintainers can find the hash upgrades on home service logs too
-(define %default-configuration-hash 970253705680761254)
+(define %default-configuration-hash 415437361418070137)
 
 ;;; Reload the first instance of hyprland to automatically load the new
 ;;; configuration. If the package's default configuration changes, display a
@@ -564,7 +580,7 @@
 			 "0" ; this is a warning
 			 "20000" ; 10s duration
 			 "0" ; default color
-			 "Hyprland's default configuration file has changed, and its\
+			 "Hyprland's default configuration file has changed, and its \
 Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
 
 ;;;
