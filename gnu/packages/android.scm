@@ -13,6 +13,7 @@
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Camilo Q.S. (Distopico) <distopico@riseup.net>
+;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1325,3 +1326,36 @@ Java bytecode, which simplifies the analysis of Android applications.")
 with Android devices using MTP.  It also allows the Android device to be
 mounted via FUSE.")
     (license license:lgpl2.1+)))
+
+(define-public simg2img
+  (package
+    (name "simg2img")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/anestisb/android-simg2img")
+             (commit version)))
+       (sha256
+        (base32
+         "0drwvqxbhajka580j93z8ldckhjlpr0i84nh20krdpxcp54xvldh"))))
+    (build-system gnu-build-system)
+    (arguments
+     ;; PREFIX=$out is used in the Makefile to set installation path
+     (list #:make-flags
+           #~(list
+              (string-append "PREFIX=" (assoc-ref %outputs "out")))
+           ;; no tests provided upstream
+           #:tests? #f
+           #:phases
+           ;; no configure step
+           #~(modify-phases %standard-phases (delete 'configure))))
+    (inputs (list zlib))
+    (home-page "https://github.com/anestisb/android-simg2img")
+    (synopsis "Convert Android sparse images to raw ext4 images")
+    (description
+     "android-simg2img is a standalone port of AOSP's libsparse that converts \
+Android sparse filesystem images into raw ext4 images, avoiding the need for \
+the full Android build chain.")
+    (license license:asl2.0)))
