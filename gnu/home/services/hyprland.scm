@@ -223,11 +223,10 @@
   (string-append
    (or (match value
          (() "")
-         (((? symbol? name)
-           value)
-          (let (indent (make-string (max 0 tabs) #\tab))
+         (((? symbol? name) value)
+          (let ((indent (make-string (max 0 tabs) #\tab)))
             (string-append
-             (indent tabs)
+             indent
              (symbol->string name)
              (match value
                ((? string? v)
@@ -239,7 +238,7 @@
                ((? block-entries? v)
                 (string-append " {\n"
                                (serialize-block-entries #f v (+ tabs 1))
-                               (indent tabs) "}")))
+                               indent "}")))
              "\n")))
          ((_)
           #f)) "\n")))
@@ -572,18 +571,22 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
 ;;; Definition of the Home Service.
 ;;;
 
+(let ((a (λ (b) (+ b 1))))
+  (a 2))
+
 (define-public home-hyprland-service-type
   (service-type (name 'home-hyprland-config)
                 (description "Configure Hyprland by providing a file
 @file{~/.config/hypr/hyprland.conf}.")
                 (compose
                  (λ (extensions)
-                   (let ((flatten lst)
-                         (let loop ((lst lst) (acc '()))
-                           (cond ((null? lst) acc)
-                                 ((pair? lst) (loop (car lst)
-                                                    (loop (cdr lst) acc)))
-                                 (else (cons lst acc)))))
+                   (let ((flatten
+                          (λ (lst)
+                            (let loop ((lst lst) (acc '()))
+                              (cond ((null? lst) acc)
+                                    ((pair? lst) (loop (car lst)
+                                                       (loop (cdr lst) acc)))
+                                    (else (cons lst acc)))))))
                      (hyprland-extension
                       (exec-once
                        (flatten (map hyprland-extension-exec-once extensions)))
