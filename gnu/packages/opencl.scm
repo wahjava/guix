@@ -114,15 +114,16 @@
        (sha256
         (base32 "1s9z30p80qc1dgp04wvc6szgcs4r167m3nk9622d2bbaaalgd5vg"))
        (file-name (git-file-name name version))))
-    (native-inputs
-     `(("python" ,python-wrapper)))
-    (propagated-inputs
-     (list opencl-headers))
+    (native-inputs (list python-wrapper))
+    (propagated-inputs (list opencl-headers))
     (arguments
-     `(#:configure-flags (list "-DBUILD_EXAMPLES=OFF" "-DBUILD_TESTS=OFF"
-                               "-DBUILD_TESTING=OFF") ;; CTest needs this to be turned off
-       ;; The regression tests require a lot more dependencies.
-       #:tests? #f))
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_EXAMPLES=OFF" "-DBUILD_TESTS=OFF"
+              ;; CTest needs this to be turned off
+              "-DBUILD_TESTING=OFF")
+      ;; The regression tests require a lot more dependencies.
+      #:tests? #f))
     (build-system cmake-build-system)
     (home-page "https://github.khronos.org/OpenCL-CLHPP/")
     (synopsis "Khronos OpenCL-CLHPP")
