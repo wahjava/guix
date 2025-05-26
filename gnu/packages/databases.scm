@@ -2906,6 +2906,73 @@ sets, bitmaps and hyperloglogs.")
 variety of workloads such as caching, message queues, and can act as a primary
 database.")
     (license license:bsd-3)))
+
+(define-public valkey-8
+  (package
+    (inherit valkey-7)
+    (name "valkey")
+    (version "8.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/valkey-io/valkey")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n5ckpa1h87h1llnm4khyf6060gqd4pj43d93vlrvn3hxpdyji8b"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Delete bundled jemalloc, as the package will use the libc one
+        #~(begin (delete-file-recursively "deps/jemalloc")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:modules '((ice-9 ftw)
+                  (guix build utils)
+                  (guix build gnu-build-system))
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                           "MALLOC=libc"
+                           (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* "runtest"
+                (("^TCLSH=.*")
+                 (string-append "TCLSH=" (which "tclsh"))))
+              (substitute* "tests/support/server.tcl"
+                (("/usr/bin/env")
+                 (which "env")))))
+          (add-after 'unpack 'adjust-tests
+            (lambda _
+              ;; Disable failing tests.
+              ;; Valkey search test directories for tests.
+              (with-directory-excursion "tests"
+                ;; The AOF tests cause the test suite to hang waiting for a
+                ;; "background AOF rewrite to finish", perhaps because dead
+                ;; processes persist as zombies in the build environment.
+                (delete-file "unit/aofrw.tcl")
+                (delete-file "integration/aof-multi-part.tcl")
+
+                ;; The OOM score tests try to raise the current OOM score, but
+                ;; our build environment already sets it for all children to
+                ;; the highest possible one (1000).  We can't lower it because
+                ;; we don't have CAP_SYS_RESOURCE.
+                (delete-file "unit/oom-score-adj.tcl")
+
+                (delete-file "integration/failover.tcl")
+
+                (with-directory-excursion "integration"
+                  (for-each
+                   delete-file
+                   (scandir "." (lambda (filename)
+                                  (string-prefix? "replication" filename))))
+                  (delete-file "dual-channel-replication.tcl")
+                  (delete-file "cross-version-replication.tcl"))))))))
+    (native-inputs (list pkg-config procps tcl which))))
+
 (define-public hiredis
   (package
     (name "hiredis")
