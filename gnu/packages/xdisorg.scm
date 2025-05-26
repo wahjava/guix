@@ -159,6 +159,7 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages terminals)
+  #:use-module (gnu packages video)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages webkit)
@@ -2930,7 +2931,12 @@ temperature of the screen.")
                                (package-version this-package)))
       #:configure-flags
       #~(list "--with-pam-service-name=login" "--with-xkb"
-         "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
+         "--with-default-authproto-module=/run/privileged/bin/authproto_pam"
+         (string-append "--with-mpv="
+                        #$(this-package-input "mpv") "/bin/mpv")
+         (string-append "--with-xscreensaver="
+                        #$(this-package-input "xscreensaver")
+                        "/libexec/xscreensaver"))))
     (native-inputs (list autoconf automake pandoc pkg-config))
     (inputs (list fontconfig
                   libx11
@@ -2941,7 +2947,9 @@ temperature of the screen.")
                   libxmu
                   libxrandr
                   libxscrnsaver
-                  linux-pam))
+                  linux-pam
+                  mpv
+                  xscreensaver))
     (home-page "https://github.com/google/xsecurelock")
     (synopsis "X11 screen lock utility with the primary goal of security")
     (description
