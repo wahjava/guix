@@ -1667,7 +1667,7 @@ string.h, but with a utf8* prefix instead of the str* prefix.")
 (define-public simdutf
   (package
     (name "simdutf")
-    (version "7.1.0")
+    (version "7.2.0")
     (source
      (origin
        (method git-fetch)
@@ -1676,7 +1676,7 @@ string.h, but with a utf8* prefix instead of the str* prefix.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "044qmrkcpyqlq4pf00jc700xwfizs8krq5pylkzhdrh72l0x6w6s"))))
+        (base32 "1kw4k3mhkj3bcmfmwwzq76hs2ypg5lrjl4vnp2dfg73vas9v9w35"))))
     (build-system cmake-build-system)
     (synopsis "SIMD Unicode validation and transcoding")
     (description
