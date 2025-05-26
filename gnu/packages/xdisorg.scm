@@ -2916,20 +2916,22 @@ temperature of the screen.")
     (version "1.9.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/google/xsecurelock/releases"
-                           "/download/v"
-                           version
-                           "/xsecurelock-"
-                           version
-                           ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/xsecurelock")
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "09c0br8vwx9q728i4iv1pcp4s0sm0cd1c5ligag4k2730kcg93bf"))))
+        (base32 "0knafjzdzxjh2b1mrrxbcqvg76ia6vazv8shklb6ggp6kj5srxiq"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:configure-flags #~'("--with-pam-service-name=login" "--with-xkb"
-                                 "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
-    (native-inputs (list pandoc pkg-config))
+     (list
+      #:make-flags
+      #~(list #$(string-append "GIT_VERSION=v"
+                               (package-version this-package)))
+      #:configure-flags
+      #~(list "--with-pam-service-name=login" "--with-xkb"
+         "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
+    (native-inputs (list autoconf automake pandoc pkg-config))
     (inputs (list fontconfig
                   libx11
                   libxcomposite
