@@ -54,7 +54,7 @@
 ;;; Copyright © 2021 Alexandre Hannud Abdo <abdo@member.fsf.org>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2021 Foo Chuan Wei <chuanwei.foo@hotmail.com>
-;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
+;;; Copyright © 2022, 2025 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022 Thomas Albers Raviola <thomas@thomaslabs.org>
@@ -2880,6 +2880,32 @@ sets, bitmaps and hyperloglogs.")
     (properties `((lint-hidden-cve . ("CVE-2022-3647" "CVE-2022-33105"))))
     (license license:bsd-3)))
 
+(define-public valkey-7
+  (package
+    (inherit redis)
+    (name "valkey")
+    (version "7.2.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/valkey-io/valkey")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01pbaprl6nwrwv9382i033w8sslqainws0b22b3l1lzladdawrwx"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Delete bundled jemalloc, as the package will use the libc one
+        #~(begin (delete-file-recursively "deps/jemalloc")))))
+    (properties '())
+    (home-page "https://valkey.io/")
+    (synopsis "Free high-performance key/value datastore")
+    (description
+     "Valkey is an free high-performance key/value datastore that supports a
+variety of workloads such as caching, message queues, and can act as a primary
+database.")
+    (license license:bsd-3)))
 (define-public hiredis
   (package
     (name "hiredis")
