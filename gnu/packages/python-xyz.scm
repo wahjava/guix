@@ -1257,6 +1257,30 @@ provided to perform logging in the background.")
 attributes.")
     (license license:bsd-2)))
 
+(define-public python-logfury
+  (package
+    (name "python-logfury")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/reef-technologies/logfury/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s0v4s1q6y6ahd5198096xaps71a5sn3v2s90wbc5xv1bx8pcslk"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel
+                         ;; tests
+                         python-pytest python-testfixtures))
+    (home-page "https://github.com/reef-technologies/logfury/")
+    (synopsis "Logging of method calls for python libraries")
+    (description
+     "Logfury is a tool for python library maintainers. It allows for
+responsible, low-boilerplate logging of method calls.")
+    (license license:bsd-3)))
+
 (define-public python-logzero
   (package
     (name "python-logzero")
