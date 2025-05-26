@@ -2914,35 +2914,36 @@ temperature of the screen.")
   (package
     (name "xsecurelock")
     (version "1.9.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/google/xsecurelock/releases"
-                    "/download/v" version "/xsecurelock-" version ".tar.gz"))
-              (sha256
-               (base32 "09c0br8vwx9q728i4iv1pcp4s0sm0cd1c5ligag4k2730kcg93bf"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/google/xsecurelock/releases"
+                           "/download/v"
+                           version
+                           "/xsecurelock-"
+                           version
+                           ".tar.gz"))
+       (sha256
+        (base32 "09c0br8vwx9q728i4iv1pcp4s0sm0cd1c5ligag4k2730kcg93bf"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags
-       '("--with-pam-service-name=login"
-         "--with-xkb"
-         "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
-    (native-inputs
-     (list pandoc pkg-config))
-    (inputs
-     (list fontconfig
-           libx11
-           libxcomposite
-           libxext
-           libxfixes
-           libxft
-           libxmu
-           libxrandr
-           libxscrnsaver
-           linux-pam))
+     (list #:configure-flags #~'("--with-pam-service-name=login" "--with-xkb"
+                                 "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
+    (native-inputs (list pandoc pkg-config))
+    (inputs (list fontconfig
+                  libx11
+                  libxcomposite
+                  libxext
+                  libxfixes
+                  libxft
+                  libxmu
+                  libxrandr
+                  libxscrnsaver
+                  linux-pam))
     (home-page "https://github.com/google/xsecurelock")
     (synopsis "X11 screen lock utility with the primary goal of security")
-    (description "@code{xsecurelock} is an X11 screen locker which uses
+    (description
+     "@code{xsecurelock} is an X11 screen locker which uses
 a modular design to avoid the usual pitfalls of screen locking utility design.
 
 As a consequence of this design, you shouldn't use the usual screen locker
