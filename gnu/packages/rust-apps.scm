@@ -3713,3 +3713,42 @@ built-in markup for math typesetting, bibliography management, and other common
 tasks, an extensible scripting system for uncommon tasks, incremental
 compilation, and intuitive error messages.")
     (license license:asl2.0)))
+
+(define-public typstyle
+  (package
+    (name "typstyle")
+    (version "0.13.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "typstyle" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "06mg12rkls1hkiz8wxchj1jqf1l1bq963s80mrvjfiajb08zqdx1"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-completions
+            (lambda _
+              (for-each
+               (lambda (comp-data)
+                 (mkdir-p (string-append #$output (dirname (cdr comp-data))))
+                 (let ((binary (string-append #$output "/bin/typstyle")))
+                   (with-output-to-file
+                       (format #f (string-append #$output (cdr comp-data))
+                               (basename binary))
+                     (lambda _ (invoke binary "completions" (car comp-data))))))
+               '(("bash" . "/share/bash-completion/completions/~a")
+                 ("elvish" . "/share/elvish/lib/~a")
+                 ("fish" . "/share/fish/vendor_completions.d/~a.fish")
+                 ("zsh" . "/share/zsh/site-functions/_~a"))))))))
+    (inputs (cargo-inputs 'typstyle))
+    (home-page "https://enter-tainer.github.io/typstyle/")
+    (synopsis "Consistent formatter for Typst")
+    (description "Typstyle is a formatter for the Typst typesetting system
+designed with universal consistency and correctness as top priorities.  It is
+configuration-free.")
+    (license license:asl2.0)))
