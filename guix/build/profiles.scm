@@ -98,9 +98,30 @@ definitions for all the SEARCH-PATHS."
 # to this specific profile generation.
 \n" port)
       (let ((variables (evaluate-search-paths search-paths
-                                              (list output))))
+                                              (list output)))
+            (profile-d (string-append output "/etc/profile.d"))
+            (guard-flag (string-append "GUIX_PROFILE_"
+                                       (string-take (basename output) 32)
+                                       "_LOADED")))
+
+        (format port "if [ \"x$~a\" = x ]; then\n" guard-flag)
         (for-each (write-environment-variable-definition port)
-                  (map (abstract-profile output) variables))))))
+                  (map (abstract-profile output) variables))
+
+        (format port "
+~a=1
+fi
+
+for i in ~a/*.sh; do
+    if [ -r \"$i\" ]; then
+        if [ \"${-#*i}\" != \"$-\" ]; then
+            . \"$i\"
+        else
+            . \"$i\" >/dev/null
+        fi
+    fi
+done"
+                guard-flag profile-d)))))
 
 (define* (ensure-writable-directory directory
                                     #:key (symlink symlink))

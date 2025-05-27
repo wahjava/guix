@@ -504,7 +504,7 @@ and suitable for 'exit'."
 (define primitive-exit/status (compose primitive-exit status->exit-code))
 
 (define* (launch-environment command profile manifest
-                             #:key pure? (white-list '())
+                             #:key pure? login? (white-list '())
                              emulate-fhs?)
   "Load the environment of PROFILE, which corresponds to MANIFEST, and execute
 COMMAND.  When PURE?, pre-existing environment variables are cleared before
@@ -516,8 +516,11 @@ cache."
   (sigaction SIGINT SIG_DFL)
   ;; Restore original action for SIGPIPE.
   (sigaction SIGPIPE SIG_DFL)
-  (load-profile profile manifest
-                #:pure? pure? #:white-list-regexps white-list)
+  (when pure?
+    (purify-environment %precious-variables white-list))
+  (unless login?
+    (load-profile profile manifest
+                  #:pure? pure? #:white-list-regexps white-list))
 
   ;; Give users a way to know that they're in 'guix environment', so they can
   ;; adjust 'PS1' accordingly, for instance.  Set it to PROFILE so users can
@@ -726,13 +729,14 @@ command name."
                           closest))))))))
 
 (define* (launch-environment/fork command profile manifest
-                                  #:key pure? (white-list '()))
+                                  #:key pure? login? (white-list '()))
   "Run COMMAND in a new process with an environment containing PROFILE, with
 the search paths specified by MANIFEST.  When PURE?, pre-existing environment
 variables are cleared before setting the new ones, except those matching the
 regexps in WHITE-LIST."
   (match (primitive-fork)
     (0 (launch-environment command profile manifest
+                           #:login? login?
                            #:pure? pure?
                            #:white-list white-list))
     (pid (match (waitpid pid)
@@ -741,7 +745,7 @@ regexps in WHITE-LIST."
 
 (define* (launch-environment/container #:key command bash user user-mappings
                                        profile manifest link-profile? network?
-                                       map-cwd? emulate-fhs? nesting?
+                                       map-cwd? emulate-fhs? nesting? login?
                                        writable-root?
                                        (setup-hook #f)
                                        (symlinks '()) (white-list '()))
@@ -942,7 +946,7 @@ WHILE-LIST."
                                  (if link-profile?
                                      (string-append home-dir "/.guix-profile")
                                      profile)
-                                 manifest #:pure? #f
+                                 manifest #:pure? #f #:login? login?
                                  #:emulate-fhs? emulate-fhs?)))
           #:populate-file-system
           (lambda ()
@@ -1122,14 +1126,15 @@ command-line option processing with 'parse-command-line'."
          (bootstrap?   (assoc-ref opts 'bootstrap?))
          (system       (assoc-ref opts 'system))
          (profile      (assoc-ref opts 'profile))
+         (login?       (not (->bool (assoc-ref opts 'exec))))
          (command  (or (assoc-ref opts 'exec)
                        ;; Spawn a shell if the user didn't specify
                        ;; anything in particular.
                        (if container?
                            ;; The user's shell is likely not available
                            ;; within the container.
-                           '("/bin/sh")
-                           (list %default-shell))))
+                           '("/bin/sh" "--login")
+                           (list %default-shell "--login"))))
          (mappings   (pick-all opts 'file-system-mapping))
          (white-list (pick-all opts 'inherit-regexp)))
 
@@ -1241,6 +1246,7 @@ when using '--container'; doing nothing~%"))
                              (string-append (derivation->output-path bash)
                                             "/bin/sh"))))
                     (launch-environment/container #:command command
+                                                  #:login? login?
                                                   #:bash bash-binary
                                                   #:user user
                                                   #:user-mappings mappings
@@ -1262,6 +1268,7 @@ when using '--container'; doing nothing~%"))
                   (return
                    (exit/status
                     (launch-environment/fork command profile manifest
+                                             #:login? login?
                                              #:white-list white-list
                                              #:pure? pure?)))))))))))))
 

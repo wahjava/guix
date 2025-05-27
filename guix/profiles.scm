@@ -133,6 +133,8 @@
             profile-derivation
             profile-search-paths
             load-profile
+            purify-environment
+            %precious-variables
 
             profile
             profile?
@@ -2165,7 +2167,9 @@ paths."
                                  (string-append value separator current)
                                  value)
                              value)))))
-            (profile-search-paths profile manifest)))
+            (profile-search-paths profile manifest))
+  (setenv (string-append "GUIX_PROFILE_" (string-take (basename profile) 32)
+                         "_LOADED") "1"))
 
 (define (profile-regexp profile)
   "Return a regular expression that matches PROFILE's name and number."

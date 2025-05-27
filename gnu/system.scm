@@ -1077,9 +1077,6 @@ export XDG_CONFIG_DIRS=$HOME/.guix-profile/etc/xdg:/run/current-system/profile/e
 # Make sure libXcursor finds cursors installed into user or system profiles.  See <http://bugs.gnu.org/24445>
 export XCURSOR_PATH=$HOME/.icons:$HOME/.guix-profile/share/icons:/run/current-system/profile/share/icons
 
-# Ignore the default value of 'PATH'.
-unset PATH
-
 # Load the system profile's settings.
 GUIX_PROFILE=/run/current-system/profile ; \\
 . /run/current-system/profile/etc/profile
@@ -1099,7 +1096,8 @@ fi
 # and guix-home comes before guix-profile.
 for profile in \"$HOME/.guix-profile\"        \\
                \"$HOME/.guix-home/profile\"   \\
-               \"$HOME/.config/guix/current\"
+               \"$HOME/.config/guix/current\" \\
+               \"$GUIX_ENVIRONMENT\"
 do
   if [ -f \"$profile/etc/profile\" ]
   then
@@ -1129,17 +1127,6 @@ export DICPATH=\"$HOME/.guix-profile/share/hunspell:/run/current-system/profile/
 
 # Allow GStreamer-based applications to find plugins.
 export GST_PLUGIN_PATH=\"$HOME/.guix-profile/lib/gstreamer-1.0\"
-
-for i in /etc/profile.d/*.sh; do
-    if [ -r \"$i\" ]; then
-        if [ \"${-#*i}\" != \"$-\" ]; then
-            . \"$i\"
-        else
-            . \"$i\" >/dev/null
-        fi
-    fi
-done
-unset i
 
 if [ -n \"$BASH_VERSION\" -a -f /etc/bashrc ]; then
   # Load Bash-specific initialization code, taking care to not source
