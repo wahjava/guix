@@ -1800,3 +1800,42 @@ support.  It's based on VTE and aimed at power users.")
     (home-page "https://realh.github.io/roxterm/en/index.html")
     ;; src/gresources.c is under LGPL 2.1+
     (license (list license:gpl2+ license:lgpl2.1+))))
+
+(define-public fbterm
+  (package
+    (name "fbterm")
+    (version "1.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url "https://salsa.debian.org/debian/fbterm.git")
+			   (commit (string-append "upstream/" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1nl9z169a59akgb8b5j2pw5fp3bbkmv553rryffkfz45d1cxskvq"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:make-flags
+       (list
+        (string-append "prefix=" (assoc-ref %outputs "out"))
+        "HOME=/tmp"
+        "CXXFLAGS=-Wno-narrowing")))
+    (inputs
+     (list pkg-config freetype fontconfig ncurses gpm))
+    (home-page "https://salsa.debian.org/debian/fbterm")
+    (synopsis "Fast and lightweight framebuffer based terminal emulator for linux.")
+    (description "FbTerm is a fast terminal emulator for linux with frame buffer device or VESA video card. Features include:
+@itemize  
+@item mostly as fast as terminal of linux kernel while accelerated scrolling is enabled
+@item select font with fontconfig and draw text with freetype2, same as Qt/Gtk+ based GUI apps
+@item dynamicly create/destroy up to 10 windows initially running default shell
+@item record scrollback history for every window
+@item auto-detect current locale and convert text encoding, support double width scripts like Chinese, Japanese etc
+@item switch between configurable additional text encodings with hot keys on the fly
+@item copy/past selected text between windows with mouse when gpm server is running
+@item change the orientation of screen display, a.k.a. screen rotation
+@item lightweight input method framework with client-server architecture
+@item background image for eye candy
+@end itemize")
+    (license license:gpl2+)))
