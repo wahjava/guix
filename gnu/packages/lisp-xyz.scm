@@ -29153,8 +29153,8 @@ formats.")
   (sbcl-package->ecl-package sbcl-swap-bytes))
 
 (define-public sbcl-sxql
-  (let ((commit "cc3478cacb0557475a59cf619dad66c5dc8080ba")
-        (revision "3"))
+  (let ((commit "ade0a14bd501c47e339f7b1b27af12af9f5afe64")
+        (revision "5"))
     (package
       (name "sbcl-sxql")
       (version (git-version "0.1.0" revision commit))
@@ -29166,7 +29166,7 @@ formats.")
                (commit commit)))
          (file-name (git-file-name "cl-sqxl" version))
          (sha256
-          (base32 "011an993amy8q3gl4hyqrgnc93cgny3cv9gbp679rrmyyp8zmywr"))))
+          (base32 "1p6nk0dfhihif9n49399ya6zik0aqf1w8zvyrld1j8g6afjiplc0"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria
