@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -156,6 +157,37 @@ using the Git pkt-line format used in various Git operations.")
     (synopsis "Git implementation library")
     (description "This package provides a Git implementation library.")
     (license license:asl2.0)))
+
+(define-public go-github-com-jiangxin-goconfig
+  (package
+    (name "go-github-com-jiangxin-goconfig")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jiangxin/goconfig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dgmwa8dzzafxcpd4j5vmdfmqn2xvah3qd9rfnihywiw45748hg1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jiangxin/goconfig"))
+    (native-inputs (list git-minimal))
+    (propagated-inputs (list go-github-com-jiu2015-gotestspace
+                             go-github-com-golang-groupcache
+                             go-github-com-spf13-pflag
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/jiangxin/goconfig")
+    (synopsis "Go parsing library for .gitconfig files")
+    (description "@code{goconfig} is a Go library for parsing configuration
+files that have the same syntax as @file{.gitconfig} files.  It understands
+multiple values configuration, and can parse configurations include via
+@code{include.path} directives.  @code{includeIf.*.path} directives are not
+supported yet.")
+    (license license:gpl2+)))
 
 (define-public go-github-com-xanzy-go-gitlab
   (package
