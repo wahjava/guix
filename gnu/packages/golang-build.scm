@@ -796,6 +796,29 @@ loading algorithms.")
      "This package provides supplemental Go networking libraries.")
     (license license:bsd-3)))
 
+(define-public go-golang-org-x-net-0.0.0-20210510120150-4163338589ed
+  (package/inherit go-golang-org-x-net
+    (name "go-golang-org-x-net")
+    (version "0.0.0-20210510120150-4163338589ed")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/net")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c2kshl5kz1xpvsacms7fnzzdl1z4jdhpsxxgg4s9kvf7gpl41q4"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/net"))
+    (propagated-inputs
+     (list go-golang-org-x-text-0.3.6
+           go-golang-org-x-term-0.0.0-20201126162022-7de9c90e9dd1
+           go-golang-org-x-sys-0.0.0-20210423082822-04245dca01da))))
+
 (define-public go-golang-org-x-net-bootstrap
   (hidden-package
    (package
