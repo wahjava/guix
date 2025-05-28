@@ -11351,6 +11351,22 @@ to handle ANSI color escapes on Windows.")
 whether a file descriptor points to a terminal and the type of the terminal.")
     (license license:expat)))
 
+(define-public go-github-com-mattn-go-isatty-0.0.14
+  (package/inherit go-github-com-mattn-go-isatty
+    (name "go-github-com-mattn-go-isatty")
+    (version "0.0.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattn/go-isatty")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "015zc3j60vb85d7f2al15la24wn45piazxlagqhzrbgfdyqci60z"))))
+    (propagated-inputs (list
+                        go-golang-org-x-sys-0.0.0-20210630005230-0f9fa26af87c))))
+
 (define-public go-github-com-mattn-go-pointer
   (package
     (name "go-github-com-mattn-go-pointer")
