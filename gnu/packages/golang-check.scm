@@ -25,6 +25,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,8 +50,10 @@
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (gnu packages)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages golang-build)
-  #:use-module (gnu packages golang-xyz))
+  #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages version-control))
 
 ;;; Commentary:
 ;;;
@@ -1257,6 +1260,70 @@ implements exact URL and regexp matches.")
 Many times certain facilities are not available, or tests must run
 differently.")
     (license license:expat)))
+
+(define-public go-github-com-jiu2015-gotestspace
+  (package
+    (name "go-github-com-jiu2015-gotestspace")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Jiu2015/gotestspace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wcvdp1wjqj3lh2vdhb2vph528vncjs3vixjriwkxrn979b59y4s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Jiu2015/gotestspace"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'preserve-PATH-from-environment
+            ;; Unlike FHS systems, Guix needs to look its commands fom PATH.
+            ;; Expose it by default in the test environments.
+            (lambda _
+              (with-directory-excursion "src/github.com/Jiu2015/gotestspace"
+                (substitute* "options.go"
+                  (("\"GIT_COMMITTER_NAME='C O Mitter'\"," all)
+                   (string-append
+                    all "\n\t\t\t\"PATH=\" + os.Getenv(\"PATH\"),"))))))
+          (add-after 'unpack 'patch-commands
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion "src/github.com/Jiu2015/gotestspace"
+                ;; Runtime modules.
+                (substitute* "testspace.go"
+                  (("/bin/bash")
+                   (search-input-file inputs "bin/bash"))
+                  (("\"git\"")
+                   (format #f "~s" (search-input-file inputs "bin/git"))))
+                ;; Test modules.
+                (substitute* "example/testmain/ErrorProcess_test.go"
+                  (("/bin/bash")
+                   (which "bash"))))))
+          (add-after 'unpack 'adjust-or-skip-problematic-tests
+            (lambda _
+              ;; Our patching above causes some discrepancies in the expected
+              ;; output/values; adjust or skip the affected tests.
+              (with-directory-excursion "src/github.com/Jiu2015/gotestspace"
+                (substitute* "example/testmain/ErrorProcess_test.go"
+                  (("line 13")
+                   "line 14"))
+                (substitute* "testspace_test.go"
+                  (("^func TestNewShellSpace.*" anchor)
+                   (string-append anchor "\tt.Skip()\n")))))))))
+    (native-inputs (list git-minimal))
+    (inputs (list bash-minimal git-minimal))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/Jiu2015/gotestspace")
+    (synopsis "Create Go workspaces that can quickly run shell commands")
+    (description "@code{gotestspace} is used to quickly create a working directory
+for shell execution using Go, as well as a tool for customizing
+the execution of the shell.  It can help you quickly create an
+independent workspace for unit testing and improve the efficiency
+of unit test writing.")
+    (license license:gpl3+)))
 
 (define-public go-github-com-jmhodges-clock
   (package
