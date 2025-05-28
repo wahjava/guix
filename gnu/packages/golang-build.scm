@@ -1264,6 +1264,29 @@ time.")
 Go programming language.")
     (license license:bsd-3)))
 
+(define-public go-golang-org-x-tools-0.0.0-20180917221912-90fa682c2a6e
+  (package/inherit go-golang-org-x-tools
+    (name "go-golang-org-x-tools")
+    (version "0.0.0-20180917221912-90fa682c2a6e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/tools")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03ic2xsy51jw9749wl7gszdbz99iijbd2bckgygl6cm9w5m364ak"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/tools"))
+    (native-inputs (list
+                    go-golang-org-x-net))    
+    (propagated-inputs '()))) ;; inherited propagated inputs break the build
+
+
 (define-public go-golang-org-x-tools-bootstrap
   (hidden-package
    (package
