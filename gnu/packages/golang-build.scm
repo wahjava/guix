@@ -1091,6 +1091,22 @@ telemetry uploads: GOOS, GOARCH, Go version, and per-program counters.")
 terminals, as commonly found on Unix systems.")
     (license license:bsd-3)))
 
+(define-public go-golang-org-x-term-0.0.0-20201126162022-7de9c90e9dd1
+  (package/inherit go-golang-org-x-term
+    (name "go-golang-org-x-term")
+    (version "0.0.0-20201126162022-7de9c90e9dd1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/term")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ba252xmv6qsvf1w1gcy98mngrj0vd4inbjw0lsklqvva65nljna"))))
+    (propagated-inputs (list
+                        go-golang-org-x-sys-0.0.0-20201119102817-f84b799fce68))))
+
 (define-public go-golang-org-x-term-bootstrap
   (hidden-package
    (package
