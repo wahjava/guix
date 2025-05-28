@@ -1147,6 +1147,28 @@ terminals, as commonly found on Unix systems.")
 processing.")
     (license license:bsd-3)))
 
+(define-public go-golang-org-x-text-0.3.6
+  (package/inherit go-golang-org-x-text
+    (name "go-golang-org-x-text")
+    (version "0.3.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/text")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wzhvdb059vrp2cczqw422ajrb9sbs4l3qd020hlngj33qfhxah0"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/text"))
+    (propagated-inputs
+     (list
+      go-golang-org-x-tools-0.0.0-20180917221912-90fa682c2a6e))))
+
 (define-public go-golang-org-x-text-bootstrap
   (hidden-package
    (package
