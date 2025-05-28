@@ -10351,6 +10351,30 @@ processing.")
      "This package provides a TOML parser and JSON encoder.")
     (license license:expat)))
 
+(define-public go-github-com-konsorten-go-windows-terminal-sequences
+  (package
+    (name "go-github-com-konsorten-go-windows-terminal-sequences")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/konsorten/go-windows-terminal-sequences")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yrsd4s8vhjnxhwbigirymz89dn6qfjnhn28i33vvvdgf96j6ypl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/konsorten/go-windows-terminal-sequences"))
+    (home-page "https://github.com/konsorten/go-windows-terminal-sequences")
+    (synopsis "Go library for Windows terminal color escapes")
+    (description
+     "This library can be used to enabling Windows terminal color support in
+Go applications.")
+    (license license:expat)))
+
 (define-public go-github-com-kortschak-utter
   (package
     (name "go-github-com-kortschak-utter")
