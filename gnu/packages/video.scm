@@ -154,6 +154,8 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
@@ -3340,6 +3342,50 @@ Both command-line and GTK2 interface are available.")
     (description "ytcc is a command line tool to keep track of your favorite
 playlists.")
     (license license:gpl3+)))
+
+(define-public ytarchive
+  (package
+   (name "ytarchive")
+   (version "0.5.0")
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/Kethsar/ytarchive")
+           (commit (string-append "v" version))))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "1mx7w423rr6s4zvv65sbzl5rifj67rb0pzxjpi2y69l9p1vynmv3"))))
+   (build-system go-build-system)
+   (arguments
+    (list
+     #:import-path "github.com/Kethsar/ytarchive"
+     #:phases
+     #~(modify-phases
+	%standard-phases
+	(add-after 'unpack 'patch-source
+		   (lambda* (#:key inputs outputs #:allow-other-keys)
+		     ;; set fixed ffmpeg location
+		     (substitute*
+		      (find-files "." "\\_main.go$")
+		      (("\"ffmpeg\"")
+		       (string-append
+			(assoc-ref inputs "ffmpeg") "/bin/ffmpeg"))))))))
+   (inputs (list go-golang-org-x-sys-0.3.0
+                 go-golang-org-x-net-0.0.0-20210510120150-4163338589ed
+                 go-github-com-dannav-hhmmss-1.0.0
+                 go-github-com-xhit-go-str2duration-v2
+                 go-github-com-mattn-go-colorable-0.1.11
+                 go-github-com-alessio-shellescape-1.4.1
+		 ffmpeg))
+   (home-page "https://github.com/Kethsar/ytarchive")
+   (synopsis "ytarchive")
+   (description
+    "Attempt to archive a given Youtube livestream from the start.  This is most
+useful for streams that have already started and you want to download, but can
+also be used to wait for a scheduled stream and start downloading as soon as it
+starts.")
+   (license license:expat)))
 
 (define-public libbluray
   (package
