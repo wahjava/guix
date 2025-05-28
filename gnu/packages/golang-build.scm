@@ -885,6 +885,77 @@ cancellation for groups of goroutines working on subtasks of a common task
 low-level interaction with the operating system.")
     (license license:bsd-3)))
 
+(define-public go-golang-org-x-sys-0.0.0-20210630005230-0f9fa26af87c
+  (package/inherit go-golang-org-x-sys
+    (name "go-golang-org-x-sys")
+    (version "0.0.0-20210630005230-0f9fa26af87c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sys")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17g7kc6bf6zw4ib1xhmkbpfdn85jbmindqsz0l8ymmc6v279h13q"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/sys"))))
+
+(define-public go-golang-org-x-sys-0.0.0-20210423082822-04245dca01da
+  (package/inherit go-golang-org-x-sys
+    (name "go-golang-org-x-sys")
+    (version "0.0.0-20210423082822-04245dca01da")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sys")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11is2c5cpxk0gf2mxza2wpzfcf71fxb9b3in77f6w2q0pr68ykzx"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/sys"))))
+
+(define-public go-golang-org-x-sys-0.0.0-20201119102817-f84b799fce68
+  (package/inherit go-golang-org-x-sys
+    (name "go-golang-org-x-sys")
+    (version "0.0.0-20201119102817-f84b799fce68")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sys")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dvhqian5byzkcg1bnqzygqa6ccc6krc2q7j12pp1vhl3y7znnsg"))))
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "golang.org/x/sys"))))
+
+(define-public go-golang-org-x-sys-0.3.0
+  (package/inherit go-golang-org-x-sys
+    (name "go-golang-org-x-sys")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sys")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ylhkkx1yd4imzfjwy54ifhph080frzw0qxqm8fchyrb925s4mpz"))))))
+
 (define-public go-golang-org-x-sys-bootstrap
   (hidden-package
    (package
