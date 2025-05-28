@@ -11325,6 +11325,21 @@ functions.")
 to handle ANSI color escapes on Windows.")
     (license license:expat)))
 
+(define-public go-github-com-mattn-go-colorable-0.1.11
+  (package/inherit go-github-com-mattn-go-colorable
+    (name "go-github-com-mattn-go-colorable")
+    (version "0.1.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattn/go-colorable")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pxl4yxgl19h8gzb7m4b96pxvdvqqpxp6306r6j419ikswh8qykg"))))
+    (propagated-inputs (list go-github-com-mattn-go-isatty-0.0.14))))
+
 (define-public go-github-com-mattn-go-isatty
   (package
     (name "go-github-com-mattn-go-isatty")
