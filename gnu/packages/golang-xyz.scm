@@ -19852,6 +19852,32 @@ programs.  It includes flag parsing, color escape codes, various
 helpful utility functions, and makes testing fairly easy.")
     (license license:expat)))
 
+(define-public go-github-com-alessio-shellescape-1.4.1
+  (package
+    (name "go-github-com-alessio-shellescape")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alessio/shellescape")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14zypi8qdxl77lks5b9jshr17idrm4sri1rxgpw5q4dys1palddd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/alessio/shellescape"))
+    (home-page "https://github.com/alessio/shellescape")
+    (synopsis "Escape arbitrary strings for safe use as command line
+arguments.")
+    (description
+     "Package @code{shellescape} provides the @code{shellescape.Quote} to
+escape arbitrary strings for a safe use as command line arguments in the most
+common POSIX shells.")
+    (license license:expat)))
+
 (define-public go-zgo-at-zstd
   (package
     (name "go-zgo-at-zstd")
