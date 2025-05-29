@@ -587,9 +587,6 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
 ;;; Definition of the Home Service.
 ;;;
 
-(let ((a (λ (b) (+ b 1))))
-  (a 2))
-
 (define-public home-hyprland-service-type
   (service-type (name 'home-hyprland-config)
                 (description "Configure Hyprland by providing a file
