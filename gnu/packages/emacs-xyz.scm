@@ -24370,45 +24370,43 @@ part, which includes creating tokens.")
     (license license:asl2.0)))
 
 (define-public emacs-circe
-  (let ((commit "cc630eb9acb835012ad207dce545d2c380588da7")
-        (revision "1"))
-    (package
-      (name "emacs-circe")
-      (version (git-version "2.13" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/jorgenschaefer/circe")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1m2vnp38yv9fnxchcbf6mrzb7yp7z214vr28pr7sslrmm99dqg89"))))
-      (build-system emacs-build-system)
-      (arguments
-       `(#:tests? #t
-         #:test-command '("buttercup" "-L" ".")
-         #:emacs ,emacs                 ;requires gnutls
-         #:phases
-         (modify-phases %standard-phases
-           ;; The HOME environment variable should be set to an existing
-           ;; directory for the tests to succeed.
-           (add-before 'check 'set-home
-             (lambda _
-               (setenv "HOME" "/tmp"))))))
-      (native-inputs
-       (list emacs-buttercup))
-      ;; In order to securely connect to an IRC server using TLS, Circe requires
-      ;; the GnuTLS binary.
-      (propagated-inputs
-       (list gnutls))
-      (home-page "https://github.com/jorgenschaefer/circe")
-      (synopsis "Client for IRC in Emacs")
-      (description "Circe is a Client for IRC in Emacs.  It integrates well with
+  (package
+    (name "emacs-circe")
+    (version "2.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jorgenschaefer/circe")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12vq5p3bmqp4gh4s40s8sbz8hs2zczkcl4zfnn7ybr5sc36g1zax"))))
+    (build-system emacs-build-system)
+    (arguments
+     `(#:tests? #t
+       #:test-command '("buttercup" "-L" ".")
+       #:emacs ,emacs                 ;requires gnutls
+       #:phases
+       (modify-phases %standard-phases
+         ;; The HOME environment variable should be set to an existing
+         ;; directory for the tests to succeed.
+         (add-before 'check 'set-home
+           (lambda _
+             (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list emacs-buttercup))
+    ;; In order to securely connect to an IRC server using TLS, Circe requires
+    ;; the GnuTLS binary.
+    (propagated-inputs
+     (list gnutls))
+    (home-page "https://github.com/jorgenschaefer/circe")
+    (synopsis "Client for IRC in Emacs")
+    (description "Circe is a Client for IRC in Emacs.  It integrates well with
 the rest of the editor, using standard Emacs key bindings and indicating
 activity in channels in the status bar so it stays out of your way unless you
 want to use it.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-track-changes
   (package
@@ -29947,30 +29945,32 @@ be changed by customizing the appropriate variables.")
       (license license:gpl3+))))
 
 (define-public emacs-org-caldav
-  (package
-    (name "emacs-org-caldav")
-    (version "3.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dengste/org-caldav")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0im6swyhdy8g56lh2nnbz7hb4hjqspi7aag7qc4616m5fs7ijlig"))))
-    (build-system emacs-build-system)
-    (arguments
-     ;; Tests require to have two specific calendars on a test server.
-     `(#:exclude '("^org-caldav-testsuite\\.el")))
-    (propagated-inputs
-     (list emacs-org))
-    (home-page "https://github.com/dengste/org-caldav")
-    (synopsis "Sync Org files with external calendars via the CalDAV protocol")
-    (description
-     "Org CalDAV synchronizes events between Org files and a CalDAV
+  (let ((commit "44a6d463cee3c3be8acf7511db785ab55519b375")
+        (revision "0"))
+    (package
+      (name "emacs-org-caldav")
+      (version (git-version "3.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dengste/org-caldav")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0qxnms7libsq1q7hbvpbbza8g9kzyry0fi3ayhdv9sddnm2wx2d4"))))
+      (build-system emacs-build-system)
+      (arguments
+       ;; Tests require to have two specific calendars on a test server.
+       `(#:exclude '("^org-caldav-testsuite\\.el")))
+      (propagated-inputs
+       (list emacs-org))
+      (home-page "https://github.com/dengste/org-caldav")
+      (synopsis "Sync Org files with external calendars via the CalDAV protocol")
+      (description
+       "Org CalDAV synchronizes events between Org files and a CalDAV
 calendar.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-zotxt
   (package
