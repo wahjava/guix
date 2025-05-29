@@ -78,8 +78,9 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages tcl)
-  #:use-module (gnu packages text-editors)
   #:use-module (gnu packages terminals)
+  #:use-module (gnu packages text-editors)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
@@ -782,7 +783,7 @@ is based on Vim's builtin plugin support.")
 (define-public neovim
   (package
     (name "neovim")
-    (version "0.9.5")
+    (version "0.11.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -791,7 +792,7 @@ is based on Vim's builtin plugin support.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1j3z7jay0m6g06v04falrzr062g07xr4svbrc3hywlqi2h6rrvk5"))))
+                "0arypdiycmss5g9wav21hfdc384v1ly82jnsc32zincl2y3f628q"))))
     (build-system cmake-build-system)
     (arguments
      (list #:modules
@@ -825,6 +826,11 @@ is based on Vim's builtin plugin support.")
                                                         lua-version)))
                                              (string-append path "/?.lua;"
                                                             path "/?/?.lua"))))
+                          (lua-path-spec (lambda (prefix)
+                                           (let ((path (string-append prefix
+                                                        "/share/luajit-2.1")))
+                                             (string-append path "/?.lua;"
+                                                            path "/?/?.lua"))))
                           (lua-inputs (list (or #$(this-package-input "lua")
                                                 #$(this-package-input "luajit"))
                                             #$lua5.1-luv
@@ -850,6 +856,7 @@ is based on Vim's builtin plugin support.")
                   libvterm
                   unibilium
                   jemalloc
+                  utf8proc-2.10.0
                   (if (member (if (%current-target-system)
                                   (gnu-triplet->nix-system (%current-target-system))
                                   (%current-system))

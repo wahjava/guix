@@ -101,16 +101,16 @@ Tree-sitter parsing library.")
 (define-public tree-sitter
   (package
     (name "tree-sitter")
-    (version "0.20.10")                 ;untagged
+    (version "0.25.5")                  ;untagged
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/tree-sitter/tree-sitter")
-                    (commit "0e4ff0bb27edf37b76fc7d35aa768b02cf4392ad")))
+                    (commit "460118b4c82318b083b4d527c9c750426730f9c0")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bai4gdhf8w5p1i9np2kl2ms0jq6rgq98qpiipipzayb9jjjlxcy"))
+                "0pfjysmjdswflfvm07dlir5lbxdw9ydv1i75yagvljam7gjagfa4"))
               (modules '((guix build utils)))
               (snippet #~(begin
                            ;; Remove bundled ICU parts

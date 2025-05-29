@@ -76,6 +76,7 @@
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages julia)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
@@ -268,6 +269,46 @@ encoding, supporting Unicode version 9.0.0.")
                (base32 "1g77s8g9443dd92f82pbkim7rk51s7xdwa3mxpzb1lcw8ryxvvg3"))))
           ;; For tests
           ("ruby" ,ruby-2.7)))))))
+
+(define-public utf8proc-2.10.0
+  (package
+    (inherit utf8proc)
+    (name "utf8proc")
+    (version "2.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaStrings/utf8proc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n1k67x39sk8xnza4w1xkbgbvgb1g7w2a7j2qrqzqaw1lyilqsy2"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments utf8proc)
+       ((#:phases phases)
+        `(modify-phases ,phases
+           (replace 'check-data
+             (lambda* (#:key inputs native-inputs #:allow-other-keys)
+               (display native-inputs)
+               (for-each (lambda (i)
+                           (copy-file (assoc-ref (or native-inputs inputs) i)
+                                      (string-append "data/" i)))
+                         '("NormalizationTest.txt" "GraphemeBreakTest.txt"
+                           "DerivedCoreProperties.txt"))))))))
+    (native-inputs
+     (append
+      (package-native-inputs utf8proc)
+      (let ((UNICODE_VERSION "16.0.0"))
+        `(("DerivedCoreProperties.txt"
+           ,(origin
+              (method url-fetch)
+              (uri (string-append "https://www.unicode.org/Public/"
+                                  UNICODE_VERSION "/ucd/DerivedCoreProperties.txt"))
+              (sha256
+               (base32 "1gfsq4vdmzi803i2s8ih7mm4fgs907kvkg88kvv9fi4my9hm3lrr"))))
+          ;; For tests
+          ("julia" ,julia)))))))
 
 (define-public libconfuse
   (package
