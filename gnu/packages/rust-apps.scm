@@ -35,6 +35,7 @@
 ;;; Copyright © 2024 normally_js <normally_js@posteo.net>
 ;;; Copyright © 2025 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4995,3 +4996,47 @@ or existing object")
      "This package generates Podman Quadlet files from a Podman command,
 compose file, or existing object.")
     (license license:mpl2.0)))
+
+(define-public catppuccin-whiskers
+  (package
+    (name "catppuccin-whiskers")
+    (version "2.5.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "catppuccin-whiskers" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0jjh8qkc7a0vn9wshfi6qmn8b03694kdz9r95fgxmw0fpw6vpnjn"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-anyhow" ,rust-anyhow-1)
+        ("rust-base64" ,rust-base64-0.22)
+        ("rust-catppuccin" ,rust-catppuccin-2)
+        ("rust-clap" ,rust-clap-4)
+        ("rust-clap-stdin" ,rust-clap-stdin-0.5)
+        ("rust-css-colors" ,rust-css-colors-1)
+        ("rust-detect-newline-style" ,rust-detect-newline-style-0.1)
+        ("rust-encoding-rs-io" ,rust-encoding-rs-io-0.1)
+        ("rust-indexmap" ,rust-indexmap-2)
+        ("rust-itertools" ,rust-itertools-0.13)
+        ("rust-lzma-rust" ,rust-lzma-rust-0.1)
+        ("rust-rmp-serde" ,rust-rmp-serde-1)
+        ("rust-semver" ,rust-semver-1)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-serde-yaml" ,rust-serde-yaml-0.9)
+        ("rust-tempfile" ,rust-tempfile-3)
+        ("rust-tera" ,rust-tera-1)
+        ("rust-thiserror" ,rust-thiserror-1))
+       #:cargo-development-inputs
+       (("rust-assert-cmd" ,rust-assert-cmd-2)
+        ("rust-predicates" ,rust-predicates-3))))
+    (home-page "https://github.com/catppuccin/whiskers")
+    (synopsis "Soothing port creation tool for the high-spirited")
+    (description
+     "Whiskers is a helper tool that is custom-built to create ports of the
+Catppuccin color theme, allowing developers to define template files which
+the palette can be injected into.")
+    (license license:expat)))
