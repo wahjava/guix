@@ -61,178 +61,6 @@
               (? block-entries?)))
          #t))))
 
-;;; List of block entries
-(define (block-entries? data)
-  (every block-entry? data))
-
-;;; An executable (a target for the exec action) can be a string or a gexp
-(define (executable? value)
-  (or (string? value)
-      (gexp? value)))
-
-;;; A list of valid executables
-(define (executable-list? values)
-  (every executable? values))
-
-;;; Block sub-configuration (a container of block entries)
-(define-configuration block
-  (entries (block-entries '()) "Block entries"
-           (serializer (λ (name value)
-                         (serialize-block-entries name value 1)))))
-
-;;; Monitor sub-configuration
-(define-configuration monitor
-  (name (string "")
-        "Monitor's name"
-        (serializer (λ (_ n)
-                      (string-append "monitor = " n ", "))))
-  (resolution (string "preferred") "Monitor's resolution"
-              (serializer (λ (_ n)
-                            (string-append n ", "))))
-  (position (string "auto")
-            "Monitor's position"
-            (serializer (λ (_ n)
-                          (string-append n ", "))))
-  (scale (string "auto")
-         "Monitor's scale"
-         (serializer (λ (_ n)
-                       n)))
-  (transform (string "")
-             "Monitor's transform"
-             (serializer (λ (_ n)
-                           (if (string-null? n) "\n"
-                               (string-append ", transform, " n "\n"))))))
-
-;;; List of monitors definition
-(define (monitors? arg)
-  (every monitor? arg))
-
-;;; Environment variable
-(define-configuration env
-  (name (string)
-        "Environemnt variable's name"
-        (serializer (λ (_ n) (string-append "env = " n ", "))))
-  (value (string)
-         "Environment variable's value"
-         (serializer (λ (_  v) (string-append v "\n")))))
-
-;;; List of environment variables
-(define (env-list? arg)
-  (every env? arg))
-
-;;; List of strings
-(define (string-list? arg)
-  (every string? arg))
-
-;;; Binding sub-configuration
-(define-configuration binding
-  (flags (string "")
-         "Bind flags https://wiki.hyprland.org/Configuring/Binds/"
-         (serializer (λ (_ n)
-                       (string-append "bind" n " = "))))
-  (mod (string "$mod")
-       "Mod key"
-       (serializer (λ (_ n)
-                     n)))
-  (shift? (boolean #f)
-          "If mod is shifted"
-          (serializer (λ (_ n)
-                        (string-append (if n " SHIFT" "") ", "))))
-
-  (alt? (boolean #f)
-        "If alt has to be pressed"
-        (serializer (λ (_ n)
-                      (string-append (if n " ALT" "") ", "))))
-
-  (ctrl? (boolean #f)
-        "If control has to be pressed"
-        (serializer (λ (_ n)
-                      (string-append (if n " CTRL" "") ", "))))
-
-  (super? (boolean #f)
-        "If super has to be pressed"
-        (serializer (λ (_ n)
-                      (string-append (if n " SUPER" "") ", "))))
-
-  (key (string)
-       "Binding main key"
-       (serializer (λ (_ n)
-                     (string-append n ", "))))
-  (action (string "exec")
-          "Binding action"
-          (serializer (λ (_ n)
-                        n)))
-  (args (executable "")
-        "Binding action's args"
-        (serializer (λ (name value)
-                      (if (string? value)
-                          (if (string-null? value) "\n"
-                              (string-append ", " value "\n"))
-                          #~(string-append ", "
-                                           #$(serialize-executable name value)
-                                           "\n"))))))
-
-;;; List of bindings
-(define (binding-list? value)
-  (every binding? value))
-
-(define (serialize-binding-list _ n)
-  #~(string-append
-     #$@(map (λ (b)
-	       (serialize-configuration
-		b
-		binding-fields)) n)))
-
-;;; Submap configuration
-(define-configuration submap
-  (name (string)
-        "Submap name"
-        (serializer (λ (_ name) (string-append "submap = " name "\n"))))
-  (bindings (binding-list)
-            "Bindings available only while this submap is active")
-  (escape (binding (binding
-                    (mod "")
-                    (key "escape")
-                    (action "submap")
-                    (args "reset")))
-          "Binding used to go back to the global submap"
-          (serializer (λ (_ e) #~(string-append
-                                  #$(serialize-configuration e binding-fields)
-                                  "submap = reset\n")))))
-
-;;; List of submaps
-(define (submap-list? v)
-  (every submap? v))
-
-;;; Optional string
-(define-maybe/no-serialization string)
-
-;;; Binding block sub-configuration
-(define-configuration bindings
-  (main-mod (maybe-string "") "Main mod bound to $mod"
-            (serializer (λ (_ n)
-                          (string-append "\n$mod = " n "\n\n"))))
-  (binds (binding-list '()) "Bindings"))
-
-;;;
-;;; Serialization functions.
-;;;
-
-(define (serialize-block name block)
-  #~(string-append #$(symbol->string name) " {\n"
-                   #$(if (null? block) ""
-                         (serialize-configuration block
-                                                  block-fields))
-                   "\n}\n"))
-
-(define (serialize-submap-list name submaps)
-  #~(string-append
-     #$@(map (λ (v) (serialize-configuration v submap-fields)) submaps)))
-
-(define (serialize-env-list name env)
-  #~(string-append
-     #$@(map (λ (v) (serialize-configuration v env-fields)) env)))
-
 ;;; A block entry will be serialized as an indented hyprlang
 ;;; statement, nested blocks are allowed
 (define (serialize-block-entry value tabs)
@@ -259,10 +87,189 @@
          ((_)
           #f)) "\n")))
 
+;;; List of block entries
+(define (block-entries? data)
+  (every block-entry? data))
+
+;;; An executable (a target for the exec action) can be a string or a gexp
+(define (executable? value)
+  (or (string? value)
+      (gexp? value)))
+
+;;; A list of valid executables
+(define (executable-list? values)
+  (every executable? values))
+
+;;; Block sub-configuration (a container of block entries)
+(define-configuration block
+  (entries (block-entries '()) "Block entries"
+           (serializer (λ (name value)
+                         (serialize-block-entries name value 1)))))
+
+(define (serialize-block name block)
+  #~(string-append #$(symbol->string name) " {\n"
+                   #$(if (null? block) ""
+                         (serialize-block-entries name (block-entries block) 1))
+                   "\n}\n"))
+
+;;; Monitor sub-configuration
+(define-configuration monitor
+  (name (string "") "Monitor's name"
+        empty-serializer)
+  (resolution (string "preferred") "Monitor's resolution"
+              empty-serializer)
+  (position (string "auto") "Monitor's position"
+            empty-serializer)
+  (scale (string "auto") "Monitor's scale"
+         empty-serializer)
+  (transform (string "") "Monitor's transform"
+             empty-serializer))
+
+(define (serialize-monitor _ monitor)
+  #~(string-append
+     "monitor = "
+     #$(monitor-name monitor) ", "
+     #$(monitor-resolution monitor) ", "
+     #$(monitor-position monitor) ", "
+     #$(monitor-scale monitor) ", "
+     #$(let ((transform (monitor-transform monitor)))
+          (if (string-null? transform)
+              "\n"
+              (string-append ", transform, " transform "\n")))))
+
+;;; List of monitors definition
+(define (monitors? arg)
+  (every monitor? arg))
+
+;;; Environment variable
+(define-configuration env
+  (name (string) "Environemnt variable's name"
+        empty-serializer)
+  (value (string) "Environment variable's value"
+         empty-serializer))
+
+(define (serialize-env _ e)
+  #~(string-append
+     "env = "
+     #$(env-name e) ", "
+     #$(env-value e) "\n"))
+
+;;; List of environment variables
+(define (env-list? arg)
+  (every env? arg))
+
+;;; List of strings
+(define (string-list? arg)
+  (every string? arg))
+
+;;; Binding sub-configuration
+(define-configuration binding
+  (flags (string "")
+         "Bind flags https://wiki.hyprland.org/Configuring/Binds/"
+         empty-serializer)
+  (mod (string "$mod") "Mod key"
+       empty-serializer)
+  (shift? (boolean #f) "If mod is shifted"
+          empty-serializer)
+  (alt? (boolean #f) "If alt has to be pressed"
+        empty-serializer)
+  (ctrl? (boolean #f) "If control has to be pressed"
+         empty-serializer)
+  (super? (boolean #f) "If super has to be pressed"
+          empty-serializer)
+  (key (string) "Binding main key"
+       empty-serializer)
+  (action (string "exec") "Binding action"
+          empty-serializer)
+  (args (executable "") "Binding action's args"
+        empty-serializer))
+
+(define (serialize-binding name b)
+  #~(string-append "bind" #$(binding-flags b) " = "
+                   #$(binding-mod b)
+                   #$(if (binding-shift? b) " SHIFT" "")
+                   #$(if (binding-alt? b) " ALT" "")
+                   #$(if (binding-ctrl? b) " CTRL" "")
+                   #$(if (binding-super? b) " SUPER" "")
+                   ", "
+                   #$(binding-key b) ", "
+                   #$(binding-action b)
+                   #$(let ((args (binding-args b)))
+                        (if (string? args)
+                          (if (string-null? args) "\n"
+                              (string-append ", " args "\n"))
+                          #~(string-append ", "
+                                           #$(serialize-executable name (binding-args b))
+                                           "\n")))))
+
+(define (raw-config? value)
+  (string? value))
+
+(define (serialize-raw-config _ value)
+  (string-append value "\n"))
+
+;;; List of bindings
+(define (binding-list? value)
+  (every binding? value))
+
+(define (serialize-binding-list name n)
+  #~(string-append
+     #$@(map (λ (b)
+	       (serialize-binding name b))
+             n)))
+
+;;; Submap configuration
+(define-configuration submap
+  (name (string) "Submap name"
+        empty-serializer)
+  (bindings (binding-list)
+            "Bindings available only while this submap is active")
+  (escape (binding (binding
+                    (mod "")
+                    (key "escape")
+                    (action "submap")
+                    (args "reset")))
+          "Binding used to go back to the global submap"))
+
+(define (serialize-submap name s)
+  #~(string-append
+     "submap = "
+     #$(submap-name s) "\n"
+     #$(serialize-binding-list name (submap-bindings s))
+     #$(serialize-binding name (submap-escape s))
+     "submap = reset\n"))
+
+;;; List of submaps
+(define (submap-list? v)
+  (every submap? v))
+
+;;; Binding block sub-configuration
+(define-configuration bindings
+  (main-mod (string "") "Main mod bound to $mod"
+            empty-serializer)
+  (binds (binding-list '()) "Bindings"))
+
+(define (serialize-bindings name b)
+  #~(string-append
+     "\n$mod = "
+     #$(bindings-main-mod b) "\n\n"
+     #$(serialize-binding-list name (bindings-binds b))))
+
+;;;
+;;; Serialization functions.
+;;;
+(define (serialize-submap-list name submaps)
+  #~(string-append
+     #$@(map (λ (v) (serialize-submap name v)) submaps)))
+
+(define (serialize-env-list name env)
+  #~(string-append
+     #$@(map (λ (v) (serialize-env name v)) env)))
+
 ;;; String lists will be serialized as name = value\n
 (define (serialize-string-list name values)
   (apply string-append
-         (map (lambda (w)
+         (map (λ (w)
                 (string-append (symbol->string name) " = " w "\n")) values)))
 
 ;;; Gexp executables will be serialized on a program-file
@@ -274,27 +281,25 @@
 ;;; Lists serializers
 (define (serialize-block-entries _ entries level)
   (apply string-append
-         (map (lambda (e)
+         (map (λ (e)
                 (serialize-block-entry e level)) entries)))
 
-(define (serialize-monitors _ monitors)
-  #~(string-append #$@(map (lambda (m)
-                             (serialize-configuration m monitor-fields))
+(define (serialize-monitors name monitors)
+  #~(string-append #$@(map (λ (m)
+                             (serialize-monitor name m))
                            monitors)))
 
 (define (serialize-executable-list name values)
   #~(apply string-append
-           (map (lambda (w)
+           (map (λ (w)
                   (string-append #$(symbol->string name) " = " w "\n"))
-                '#$(map (lambda (v)
+                '#$(map (λ (v)
                           (serialize-executable name v)) values))))
 
 ;;; Hyprland full configuration
 (define-configuration hyprland-configuration
-  (package
-    (package
-      hyprland) "Hyprland package to use"
-      (serializer (λ (_ n) "")))
+  (package (package hyprland) "Hyprland package to use"
+           empty-serializer)
   (monitors (monitors (list (monitor))) "Monitors definition")
   (exec-once (executable-list '()) "Command to exec once")
   (exec (executable-list '()) "Command to automatically exec")
@@ -309,13 +314,9 @@
   (input (block (block)) "Input settings")
   (gestures (block (block)) "Gestures settings")
   (environment (env-list '()) "Environment variables")
-  (bindings (bindings (bindings)) "Bindings configuration"
-            (serializer (λ (_ n)
-                          (serialize-configuration n bindings-fields))))
+  (bindings (bindings (bindings)) "Bindings configuration")
   (submaps (submap-list '()) "Submap configuration")
-  (extra-config (string "") "Extra config"
-                (serializer (λ (_ n)
-                              (string-append n "\n")))))
+  (extra-config (raw-config "") "Extra config"))
 
 ;;; Hyprland configuration extension for other services
 ;;; External services can add new exec entries or new bindings
