@@ -33039,16 +33039,16 @@ files.")
 (define-public sbcl-zpb-ttf
   (package
     (name "sbcl-zpb-ttf")
-    (version "1.0.6")
+    (version "1.0.7-55aab7d")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/xach/zpb-ttf")
-             (commit (string-append "release-" version))))
+             (commit "55aab7d2aae5eaec63a6b26b5bbd2628864c7fc0")))
        (file-name (git-file-name "cl-zpb-ttf" version))
        (sha256
-        (base32 "043xga76jms7dipcwnyh8lkj3gx66cvrkwhc728hjaf7axarvcmv"))))
+        (base32 "1mnn85109dl2nvk00jmw42vm55lf5md4p5aknc7pzfs8kmc45bp4"))))
     (build-system asdf-build-system/sbcl)
     (home-page "https://github.com/xach/zpb-ttf")
     (synopsis "TrueType font file access for Common Lisp")
