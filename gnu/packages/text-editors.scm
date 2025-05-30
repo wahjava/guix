@@ -39,6 +39,7 @@
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Marc Coquand <marc@coquand.email>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -69,6 +70,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
@@ -112,11 +114,13 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages slang)
   #:use-module (gnu packages sqlite)
@@ -1865,3 +1869,35 @@ with full unicode support and antialiased text rendering.")
 syntax highlighting, customizable color scheme (including support for 24-bit true
 colours), kitty keyboard protocol, editorconfig support, amongst other features.")
     (license license:gpl2)))
+
+(define-public typstwriter
+  (package
+    (name "typstwriter")
+    (version "0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "typstwriter" version))
+       (sha256
+        (base32 "0whx593xi5pv9wqzzd6xa97pln5b0j629s3qnfs80v06p2r5ghs6"))))
+    (build-system pyproject-build-system)
+    (inputs (list python-platformdirs
+                             python-pygments
+                             python-pyside-6
+                             python-qtpy))
+    ;; TODO: Re-enable tests and test dependencies once this package is merged
+    ;; into master. python-fpdf cannot build from the rust-team branch without
+    ;; endless substituting.
+    (native-inputs (list ;; python-fpdf
+                         ;; python-pytest
+                         ;; python-pytest-qt
+                         python-flit-core))
+    (propagated-inputs (list typst))
+    (arguments (list #:tests? #f))
+    (home-page "https://github.com/Bzero/typstwriter")
+    (synopsis "Integrated editor for Typst typesetting system")
+    (description "Typstwriter is an integrated editor for the Typst
+typesetting system, including syntax highlighting and compiler output as well
+as file-system and document views presented in a clean, friendly Qt graphical
+interface.")
+    (license license:expat)))
