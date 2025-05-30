@@ -15014,6 +15014,55 @@ and branchless algorithms shine.")
              go-github-com-segmentio-asm-slices
              go-github-com-segmentio-asm-sortedset)))))
 
+(define (make-go-github-com-segmentio-encoding-module module)
+  "Return a package definition for the segmentio-encoding MODULE."
+  (package
+    (name (string-append "go-github-com-segmentio-encoding-" module))
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/segmentio/encoding")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gk2ry6s20h4j5gvl9vf83wi3badphnnzh6fhxfx3r24pbg7c2dx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path (string-append "github.com/segmentio/encoding/" module)
+      #:unpack-path "github.com/segmentio/encoding"))
+    (propagated-inputs (list go-github-com-segmentio-asm))
+    (home-page "https://github.com/segmentio/encoding")
+    (synopsis "Encoding and decoding Go library")
+    (description "Go package containing implementations of encoders and
+decoders for various data formats.")
+    (license license:expat)))
+
+(define go-github-com-segmentio-encoding-ascii
+  (make-go-github-com-segmentio-encoding-module "ascii"))
+
+(define go-github-com-segmentio-encoding-json
+  (make-go-github-com-segmentio-encoding-module "json"))
+
+(define go-github-com-segmentio-encoding-iso8601
+  (make-go-github-com-segmentio-encoding-module "iso8601"))
+
+;;; The various modules reference each other, so they must be bundled as a
+;;; whole.
+(define-public go-github-com-segmentio-encoding
+  (let ((base (make-go-github-com-segmentio-encoding-module "")))
+    (package
+      (inherit base)
+      (name "go-github-com-segmentio-encoding")
+      (build-system trivial-build-system)
+      (arguments (list #:builder #~(mkdir #$output)))
+      (propagated-inputs
+       (list go-github-com-segmentio-encoding-ascii
+             go-github-com-segmentio-encoding-json
+             go-github-com-segmentio-encoding-iso8601)))))
+
 (define-public go-github-com-sereal-sereal-go-sereal
   (package
     (name "go-github-com-sereal-sereal-go-sereal")
