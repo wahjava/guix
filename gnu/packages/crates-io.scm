@@ -17917,6 +17917,24 @@ feature flags.")
 number ``crunching``.")
     (license license:expat)))
 
+(define-public rust-css-colors-1
+  (package
+    (name "rust-css-colors")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "css-colors" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0dljfdw4p54drjy9a5m6h5qnvz8lkdllxfkln0vk9wh8azybphi2"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/vaidehijoshi/css-colors")
+    (synopsis "Rust converter to transform CSS colors")
+    (description
+     "This package provides a Rust converter to transform CSS colors.")
+    (license license:isc)))
+
 (define-public rust-csscolorparser-0.6
   (package
     (name "rust-csscolorparser")
