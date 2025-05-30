@@ -73784,14 +73784,14 @@ Rust's serde.")
 (define-public rust-serde-yaml-0.9
   (package
     (name "rust-serde-yaml")
-    (version "0.9.30")
+    (version "0.9.34+deprecated")
     (source (origin
               (method url-fetch)
               (uri (crate-uri "serde_yaml" version))
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "0f4xkmbjgq452ynh3nkz84c0dryjfp410gfqy7hhxxwrkb3jigxi"))))
+                "0isba1fjyg3l6rxk156k600ilzr8fp7crv82rhal0rxz5qd1m2va"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs
