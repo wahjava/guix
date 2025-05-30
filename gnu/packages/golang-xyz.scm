@@ -14932,6 +14932,88 @@ is undetermined, a customizable spinner is shown.")
 It's typically used for testing responses with larger data bodies.")
     (license license:expat)))
 
+;;; FIXME: That's probably a complication caused by our lack of handling of Go
+;;; modules?
+(define (make-go-github-com-segmentio-asm-module module)
+  "Return a package definition for the segmentio-asm MODULE."
+  (package
+    (name (string-append "go-github-com-segmentio-asm-" module))
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/segmentio/asm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01c90h83rq7fkvzfn28lz7x0455zxbvaxknd3c8259dfszfyr2zx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path (string-append "github.com/segmentio/asm/" module)
+      #:unpack-path "github.com/segmentio/asm"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/segmentio/asm")
+    (synopsis " Go library providing algorithms optimized for modern CPUs")
+    (description "This package aims to provide algorithms optimized to
+leverage advanced instruction sets of modern CPUs to maximize throughput and
+take the best advantage of the available compute power.  It includes functions
+that have often been designed to work on arrays of values, which is where SIMD
+and branchless algorithms shine.")
+    (license license:expat)))
+
+(define go-github-com-segmentio-asm-ascii
+  (make-go-github-com-segmentio-asm-module "ascii"))
+
+(define go-github-com-segmentio-asm-base64
+  (make-go-github-com-segmentio-asm-module "base64"))
+
+(define go-github-com-segmentio-asm-bswap
+  (make-go-github-com-segmentio-asm-module "bswap"))
+
+(define go-github-com-segmentio-asm-cpu
+  (make-go-github-com-segmentio-asm-module "cpu"))
+
+(define go-github-com-segmentio-asm-internal
+  (make-go-github-com-segmentio-asm-module "internal"))
+
+(define go-github-com-segmentio-asm-keyset
+  (make-go-github-com-segmentio-asm-module "keyset"))
+
+(define go-github-com-segmentio-asm-mem
+  (make-go-github-com-segmentio-asm-module "mem"))
+
+(define go-github-com-segmentio-asm-qsort
+  (make-go-github-com-segmentio-asm-module "qsort"))
+
+(define go-github-com-segmentio-asm-slices
+  (make-go-github-com-segmentio-asm-module "slices"))
+
+(define go-github-com-segmentio-asm-sortedset
+  (make-go-github-com-segmentio-asm-module "sortedset"))
+
+;;; The various modules reference each other, so they must be bundled as a
+;;; whole.
+(define-public go-github-com-segmentio-asm
+  (let ((base (make-go-github-com-segmentio-asm-module "")))
+    (package
+      (inherit base)
+      (name "go-github-com-segmentio-asm")
+      (build-system trivial-build-system)
+      (arguments (list #:builder #~(mkdir #$output)))
+      (propagated-inputs
+       (list go-github-com-segmentio-asm-internal
+             go-github-com-segmentio-asm-ascii
+             go-github-com-segmentio-asm-base64
+             go-github-com-segmentio-asm-bswap
+             go-github-com-segmentio-asm-cpu
+             go-github-com-segmentio-asm-keyset
+             go-github-com-segmentio-asm-mem
+             go-github-com-segmentio-asm-qsort
+             go-github-com-segmentio-asm-slices
+             go-github-com-segmentio-asm-sortedset)))))
+
 (define-public go-github-com-sereal-sereal-go-sereal
   (package
     (name "go-github-com-sereal-sereal-go-sereal")
