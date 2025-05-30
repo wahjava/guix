@@ -13471,6 +13471,30 @@ stream of tokens.")
     (description "This package provides a manpage generator for clap.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-clap-stdin-0.5
+  (package
+    (name "rust-clap-stdin")
+    (version "0.5.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "clap-stdin" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0gw0hpi8d99yqs71c40jjfw4q7l94a25jnyssgkw3grkcs4zf7a7"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-clap" ,rust-clap-4)
+        ("rust-thiserror" ,rust-thiserror-1)
+        ("rust-tokio" ,rust-tokio-1))))
+    (home-page "https://github.com/thepacketgeek/clap-stdin")
+    (synopsis "Provides a type for easily accepting Clap arguments from stdin")
+    (description
+     "This package provides a type for easily accepting Clap arguments from
+stdin.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-clap-utilities-0.2
   (package
     (name "rust-clap-utilities")
