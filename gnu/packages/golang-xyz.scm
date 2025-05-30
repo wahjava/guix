@@ -18177,6 +18177,54 @@ word on a list of words, if none is found, look for a similar word.")
 JSON-RPC 2 specification for Go.")
     (license license:bsd-3)))
 
+(define (make-go-go-lsp-dev-pkg-module module)
+  (package
+    (name (string-append "go-go-lsp-dev-pkg-" module))
+    (version "0.0.0-20210717090340-384b27a52fb2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-language-server/pkg")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n6mskf5g4m1h6hc12rwl622mn21a695kk7f2ldb5hdmlwib852g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path (string-append "go.lsp.dev/pkg/" module)
+      #:unpack-path  "go.lsp.dev/pkg"))
+    (home-page "https://go.lsp.dev/pkg")
+    (synopsis "Library for the Go Language Server project")
+    (description "Collection of Go modules for the Go Language Server project.")
+    (license license:bsd-3)))
+
+(define go-go-lsp-dev-pkg-event
+  (make-go-go-lsp-dev-pkg-module "event"))
+
+(define go-go-lsp-dev-pkg-fakenet
+  (make-go-go-lsp-dev-pkg-module "fakenet"))
+
+(define go-go-lsp-dev-pkg-stack
+  (make-go-go-lsp-dev-pkg-module "stack"))
+
+(define go-go-lsp-dev-pkg-xcontext
+  (make-go-go-lsp-dev-pkg-module "xcontext"))
+
+(define-public go-go-lsp-dev-pkg
+  (let ((base (make-go-go-lsp-dev-pkg-module "")))
+    (package
+      (inherit base)
+      (name "go-go-lsp-dev-pkg")
+      (build-system trivial-build-system)
+      (arguments (list #:builder #~(mkdir #$output)))
+      (propagated-inputs
+       (list go-go-lsp-dev-pkg-event
+             go-go-lsp-dev-pkg-fakenet
+             go-go-lsp-dev-pkg-stack
+             go-go-lsp-dev-pkg-xcontext)))))
+
 (define-public go-go-etcd-io-bbolt
   (package
     (name "go-go-etcd-io-bbolt")
