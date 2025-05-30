@@ -50,6 +50,7 @@
 ;;; Copyright © 2025 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21042,6 +21043,25 @@ backslashes.")
        (sha256
         (base32 "0408nmfgb54wqigjpqxwcxy5jp4ni1fjvynqdgpa84svvmhavn11"))))
     (arguments '())))
+
+(define-public rust-detect-newline-style-0.1
+  (package
+    (name "rust-detect-newline-style")
+    (version "0.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "detect-newline-style" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0j9pcjk2ab21f36fqybz69whd1c4xy60hy7qd5v59aqm6rfg490i"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-regex" ,rust-regex-1))))
+    (home-page "https://github.com/busticated/rusty")
+    (synopsis "Determine a string's preferred newline character")
+    (description "Determine a string's preferred newline character.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-detone-1
   (package
