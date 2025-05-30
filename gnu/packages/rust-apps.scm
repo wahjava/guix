@@ -3752,3 +3752,26 @@ compilation, and intuitive error messages.")
 designed with universal consistency and correctness as top priorities.  It is
 configuration-free.")
     (license license:asl2.0)))
+
+(define-public prettypst
+  (package
+    (name "prettypst")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/antonWetzel/prettypst")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0727anhd2wl967m8k5z3bxb37h45nsjbbjz8akjn3mq96cfbfsbw"))
+       (snippet #~((@ (guix build utils) delete-file-recursively) "images"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'prettypst))
+    (arguments (list #:install-source? #f))
+    (home-page "https://github.com/antonWetzel/prettypst")
+    (synopsis "Configurable formatter for Typst")
+    (description "Prettypst is a configurable source file formatter for the
+Typst typesetting system.")
+    (license license:expat)))
