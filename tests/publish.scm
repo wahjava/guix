@@ -425,6 +425,28 @@ FileSize: ~a~%"
         (display "This file is not a valid store item." port)))
     (response-code (http-get (publish-uri (string-append "/nar/invalid"))))))
 
+(test-equal "non-substitutable derivation"
+  404
+  (let* ((non-substitutable (run-with-store %store
+                              (gexp->derivation "non-substitutable"
+                                                #~(begin
+                                                    (mkdir #$output)
+                                                    (chdir #$output)
+                                                    (call-with-output-file "foo.txt"
+                                                      (lambda (port)
+                                                        (display "bar" port))))
+                                                #:substitutable? #f)))
+         (non-substitutable-inheriting (run-with-store %store
+                                         (gexp->derivation "non-substitutable-inheriting"
+                                                           #~(begin (mkdir #$output)
+                                                                    (chdir #$output)
+                                                                    (symlink
+                                                                      (string-append #$non-substitutable "/foo.txt")
+                                                                      "baz.txt")))))
+         (out (build-derivations %store (list non-substitutable non-substitutable-inheriting))))
+    (response-code (http-get (publish-uri (string-append "/nar/"
+                                                         (basename (derivation->output-path non-substitutable-inheriting))))))))
+
 (test-equal "/file/NAME/sha256/HASH"
   "Hello, Guix world!"
   (let* ((data "Hello, Guix world!")
