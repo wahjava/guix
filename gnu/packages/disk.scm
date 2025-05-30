@@ -724,10 +724,57 @@ and unloading removable media and some other housekeeping functions.")
     (native-inputs (list meson pkg-config ninja))
     (inputs (list openssl))
     (home-page "https://github.com/open-iscsi/open-isns")
-    (synopsis "iSNS server and client for Linux")
+    (synopsis "Linux server and client for iSNS")
     (description
      "Partial implementation of @acronym{iSNS, Internet Storage Name Service}, according to @url{https://www.rfc-editor.org/rfc/rfc3720.html, RFC4171"})
     (license license:gpl2)))
+
+(define-public open-iscsi
+  (package
+    (name "open-iscsi")
+    (version "2.1.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-iscsi/open-iscsi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18vzjv0x8p9f8pw6pbbssjm52frv1rax6mqzyma72f3nl8qzvd75"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      ;; 2nd of 4th test fails with
+      ;; iSCSI ERROR: Could not open /run/lock/iscsi: 2: No such file or directory
+      ;; # ../source/libopeniscsiusr/idbm.c:_idbm_lock():327
+      #:configure-flags
+      #~(list "-Dno_systemd=true"
+              (string-append "-Discsi_sbindir="
+                             #$output "/sbin")
+              (string-append "-Ddbroot="
+                             #$output "/var/lib/iscsi")
+              (string-append "--sbindir="
+                             #$output "/sbin"))))
+    (native-inputs (list meson pkg-config perl ninja))
+    (inputs (list kmod open-isns openssl
+                  (list util-linux "lib")))
+    (home-page "https://github.com/open-iscsi/open-iscsi")
+    (synopsis "iSCSI tools for Linux")
+    (description
+     "The Open-@acronym{iSCSI, Internet Small Computer Systems Interface}
+project is a high-performance, transport independent,
+multi-platform implementation of RFC3720 iSCSI. Features:
+@enumerate
+@item highly optimized and very small-footprint data path
+@item persistent configuration database
+@item SendTargets discovery
+@item CHAP
+@item PDU header Digest
+@item multiple sessions
+@end enumerate")
+    (license (list license:gpl3 license:lgpl3))))
 
 (define-public idle3-tools
   (package
