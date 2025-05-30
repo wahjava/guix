@@ -11821,6 +11821,34 @@ types that works on stable Rust.")
         (base32 "1xhspwy477qy5yg9c3jp713asxckjpx0vfrmz5l7r5zg7naqysd2"))))
     (arguments '())))
 
+(define-public rust-catppuccin-2
+  (package
+    (name "rust-catppuccin")
+    (version "2.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "catppuccin" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1x1vccgzc690g8cxd84dm6xw971ypxdhfkcsgc2qzy6m47m9h5xa"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-ansi-term" ,rust-ansi-term-0.12)
+        ("rust-css-colors" ,rust-css-colors-1)
+        ("rust-itertools" ,rust-itertools-0.13)
+        ("rust-ratatui" ,rust-ratatui-0.26)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))))
+    (home-page "https://github.com/catppuccin/rust")
+    (synopsis "Soothing pastel theme for Rust")
+    (description
+     "This package defines the Catppuccin theme's colors for use by Rust
+programs.")
+    (license license:expat)))
+
 (define-public rust-cblas-sys-0.1
   (package
     (name "rust-cblas-sys")
