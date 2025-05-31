@@ -60,3 +60,70 @@
     (description "The @command{godef} command prints the source location of
 definitions in Go programs.")
     (license license:bsd-3)))
+
+(define-public gore
+  (package
+    (name "gore")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/x-motemen/gore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d8ayzni43j1y02g9j2sx1rhml8j1ikbbzmcki2lyi4j0ix5ys7f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23                      ;required by motemen-go-quickfix
+      #:import-path "github.com/x-motemen/gore"
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'do-not-use-go-modules
+            (lambda _
+              (with-directory-excursion "src/github.com/x-motemen/gore"
+                ;; Gore is configured for building modules with Go module
+                ;; support, which fails in the build environment for the tests
+                ;; making use of that.  Remove them.
+                (delete-file "commands_test.go")
+                (delete-file "complete_test.go")
+                (delete-file "session_test.go")
+                (delete-file "session_gomod_test.go"))))
+          (add-after 'unpack 'patch-commands
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion "src/github.com/x-motemen/gore"
+                (substitute* "gopls.go"
+                  (("\"gopls\"")
+                   (format #f "~s" (search-input-file inputs "bin/gopls")))))))
+          (replace 'install
+            (lambda _
+              (with-directory-excursion "src/github.com/x-motemen/gore"
+                (invoke "make" "install")))))))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (inputs
+     (list go-github-com-motemen-go-quickfix
+           go-github-com-peterh-liner
+           go-go-lsp-dev-protocol
+           go-golang-org-x-text
+           go-golang-org-x-tools
+           go-go-lsp-dev-jsonrpc2
+           gopls))
+    (home-page "https://github.com/x-motemen/gore")
+    (synopsis "Go REPL with line editing and completion capabilities")
+    (description
+     "Gore is a Go @acronym{REPL, read-eval-print loop} that offers line
+editing and auto-completion.  Some of its features include:
+@itemize
+@item Line editing with history
+@item Multi-line input
+@item Package importing with completion
+@item Evaluates any expressions, statements and function declarations
+@item No ``evaluated but not used'' errors
+@item Code completion
+@item Showing documents
+@item Auto-importing (gore -autoimport)
+@end itemize")
+    (license license:expat)))
