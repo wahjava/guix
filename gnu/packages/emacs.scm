@@ -101,7 +101,7 @@
 (define-public emacs-minimal
   (package
     (name "emacs-minimal")
-    (version "29.4")
+    (version "30.1")
     ;; Note: When using (replacement …), ensure that comp-native-version-dir
     ;; stays the same across grafts.
     ;; Run `make check-system TESTS=emacs-native-comp' to ensure that grafts
@@ -112,7 +112,7 @@
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0dd2mh6maa7dc5f49qdzj7bi4hda4wfm1cvvgq560djcz537k2ds"))
+                "13qkdx515qv7m8b2mpd37p16frs0xgl7bw8xvv397bz6fspc3jkc"))
               (patches (search-patches "emacs-disable-jit-compilation.patch"
                                        "emacs-exec-path.patch"
                                        "emacs-fix-scheme-indent-function.patch"
@@ -591,10 +591,10 @@ editor (with wide ints)" )
         (base32 "0nj3a7wsl5piqf6a8wnmfyjbpxp2dwl0r48flv9q624jx4nxfr2p"))
        (patches
         (search-patches "emacs-disable-jit-compilation.patch"
-                        "emacs-next-exec-path.patch"
+                        "emacs-exec-path.patch"
                         "emacs-fix-scheme-indent-function.patch"
-                        "emacs-next-native-comp-driver-options.patch"
-                        "emacs-next-native-comp-fix-filenames.patch"
+                        "emacs-native-comp-driver-options.patch"
+                        "emacs-native-comp-fix-filenames.patch"
                         "emacs-native-comp-pin-packages.patch"
                         "emacs-pgtk-super-key-fix.patch")))))))
 
@@ -629,7 +629,7 @@ editor (with wide ints)" )
                        "--load"
                        #$(local-file
                           (search-auxiliary-file
-                           "emacs/comp-integrity-next.el"))
+                           "emacs/comp-integrity.el"))
                        "-f" "ert-run-tests-batch-and-exit")))))))))))
 
 (define-public emacs-next (emacs->emacs-next emacs))
