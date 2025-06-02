@@ -36465,6 +36465,30 @@ typographically-improved HTML.  While often used in conjunction with Jinja and
 Django template systems, the filters can be used in any environment.")
     (license license:bsd-3)))
 
+(define-public python-num2words
+  (package
+    (name "python-num2words")
+    (version "0.5.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "num2words" version))
+       (sha256
+        (base32 "1ikryc61qig04xhs69mjd24amyxagmsbb1l0nfiicrkbwlcfqrmh"))))
+    (build-system pyproject-build-system)
+    ;;the tests
+    ;; 1) require python-pip
+    ;; 2) look for /etc/ssl/certs/ca-certificates.crt
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-docopt))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/savoirfairelinux/num2words")
+    (synopsis "Modules to convert numbers to words. Easily extensible")
+    (description "A library that converts numbers like 42 to words like forty-two.
+It supports multiple languages and can even generate ordinal numbers like forty-second
+(although this last feature is a bit buggy for some languages at the moment).")
+    (license license:gpl2)))
+
 (define-public python-ld
   (package
     (name "python-ld")
