@@ -504,7 +504,6 @@ database later.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/dicedb/dice"
       #:build-flags

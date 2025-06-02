@@ -1090,7 +1090,6 @@ the date of the most recent commit that modified them
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.24
       #:import-path "go.abhg.dev/gs"
       #:install-source? #f
       #:build-flags
