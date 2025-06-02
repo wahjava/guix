@@ -6421,6 +6421,29 @@ by standerizing calls, response processing, error handling, debugging
 across the Finding, Shopping, Merchandising, & Trading APIs.")
     (license license:cddl1.0)))
 
+(define-public python-werkzeug-2.0.2
+  (package
+    (name "python-werkzeug-2.0.2")
+    (version "2.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Werkzeug" version))
+       (sha256
+        (base32 "16nvv9dh37ssf5pkny9yj2li0n6wyzsygh8a9i86r3gfipybcaxa"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-markupsafe python-watchdog))
+    (native-inputs (list python-flit-core python-wheel python-setuptools))
+    (home-page "https://palletsprojects.com/p/werkzeug/")
+    (synopsis "The comprehensive WSGI web application library")
+    (description
+     "One of the most advanced WSGI utility modules.  It includes a
+powerful debugger, full-featured request and response objects, HTTP utilities to
+handle entity tags, cache control headers, HTTP dates, cookie handling, file
+uploads, a powerful URL routing system and a bunch of community-contributed
+addon modules.")
+    (license license:bsd-3)))
+
 (define-public python-ephemeral-port-reserve
   (package
     (name "python-ephemeral-port-reserve")
