@@ -6396,6 +6396,31 @@ this it tries to be opinion-free and very extendable.")
 @code{Engine.IO} realtime client and server.")
     (license license:expat)))
 
+(define-public python-ebaysdk
+  (package
+    (name "python-ebaysdk")
+    (version "2.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ebaysdk" version))
+       (sha256
+        (base32 "1wy7m51h6sc4xz815kpr2il1krgpim9p8c6xm2fgb0dl0vbpbf1f"))))
+    (build-system pyproject-build-system)
+    ;;the tests
+    ;;  1) attempt to access the network
+    ;;  2) require ebay credentials to be written in a conf file
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-lxml python-requests))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/timotheus/ebaysdk-python")
+    (synopsis "The eBay SDK for Python")
+    (description "A programatic inteface into the eBay APIs.
+It simplifies development and cuts development time
+by standerizing calls, response processing, error handling, debugging
+across the Finding, Shopping, Merchandising, & Trading APIs.")
+    (license license:cddl1.0)))
+
 (define-public python-ephemeral-port-reserve
   (package
     (name "python-ephemeral-port-reserve")
