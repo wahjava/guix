@@ -436,16 +436,9 @@ FileSize: ~a~%"
                                                       (lambda (port)
                                                         (display "bar" port))))
                                                 #:substitutable? #f)))
-         (non-substitutable-inheriting (run-with-store %store
-                                         (gexp->derivation "non-substitutable-inheriting"
-                                                           #~(begin (mkdir #$output)
-                                                                    (chdir #$output)
-                                                                    (symlink
-                                                                      (string-append #$non-substitutable "/foo.txt")
-                                                                      "baz.txt")))))
-         (out (build-derivations %store (list non-substitutable non-substitutable-inheriting))))
+         (out (build-derivations %store (list non-substitutable))))
     (response-code (http-get (publish-uri (string-append "/nar/"
-                                                         (basename (derivation->output-path non-substitutable-inheriting))))))))
+                                                         (basename (derivation->output-path non-substitutable))))))))
 
 (test-equal "/file/NAME/sha256/HASH"
   "Hello, Guix world!"

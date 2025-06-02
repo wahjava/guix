@@ -697,16 +697,11 @@ requested using POOL."
   (let* ((store-path (string-append %store-directory "/" store-item))
          (derivations (map read-derivation-from-file
                            (valid-derivers store store-path)))
-         (substitutable-store-item? (every substitutable-derivation? derivations))
-         (inputs (append-map derivation-inputs derivations))
-         (inputs-substitutable? (every substitutable-derivation?
-                                       (map derivation-input-derivation inputs))))
+         (substitutable? (every substitutable-derivation? derivations)))
     ;; The ISO-8859-1 charset *must* be used otherwise HTTP clients will
     ;; interpret the byte stream as UTF-8 and arbitrarily change invalid byte
     ;; sequences.
-    (if (and substitutable-store-item?
-             inputs-substitutable?
-             (valid-path? store store-path))
+    (if (and substitutable? (valid-path? store store-path))
         (values `((content-type . (application/x-nix-archive
                                    (charset . "ISO-8859-1")))
                   (x-nar-compression . ,compression))
