@@ -71,6 +71,7 @@
   #:use-module (gnu packages xml)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (srfi srfi-1))
@@ -1643,3 +1644,32 @@ critical parts are implemented in C.")
  different external quantum chemistry (and molecular mechanics)
  softwares.")
     (license license:bsd-3)))
+
+(define-public mctc-lib
+  (package
+    (name "mctc-lib")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grimme-lab/mctc-lib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1gabdxllx2pcw1mbv4gw9zpn6817ikz9ql8xs9w86wswd6f0m5kl"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "-Dfortran_link_args=-Wl,-rpath="
+                             #$output "/lib"))))
+    (native-inputs (list gfortran python))
+    (home-page "https://github.com/grimme-lab/mctc-lib")
+    (synopsis "Fortran library for working with molecular structure data")
+    (description
+     "@code{mctc-lib} (modular computation tool chain library) is a Fortran
+library for operating on molecular structures and reading and writing common
+geometry file formats.")
+    (license license:asl2.0)))
