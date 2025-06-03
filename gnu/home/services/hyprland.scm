@@ -25,6 +25,7 @@
   #:use-module (guix packages)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-171)
 
   #:export (hyprland-extension
 	    hyprland-configuration
@@ -41,6 +42,19 @@
 ;;; tiling Wayland compositor
 ;;;
 ;;; Code:
+
+;;; Generic hyprland-configuration value serializer
+(define* (serialize-joined config fields #:key (delimiter ", "))
+  #~(string-join
+      (list #$@(list-transduce (base-transducer config) rcons fields))
+      #$delimiter))
+
+;;; String serializers
+(define (serialize-string _ s) s)
+
+(define (serialize-list-of-strings name l)
+  (string-join
+    (map (λ (s) (string-append (symbol->string name) " = " s)) l) "\n"))
 
 ;;;
 ;;; Definition of configurations.
@@ -91,14 +105,32 @@
 (define (block-entries? data)
   (every block-entry? data))
 
+(define (serialize-block-entries _ entries level)
+  (apply string-append
+         (map (λ (e)
+                (serialize-block-entry e level)) entries)))
+
 ;;; An executable (a target for the exec action) can be a string or a gexp
 (define (executable? value)
   (or (string? value)
       (gexp? value)))
 
+;;; Gexp executables will be serialized on a program-file
+(define (serialize-executable name value)
+  (if (string? value) value
+      (program-file (symbol->string name) value
+                    #:module-path %load-path)))
+
 ;;; A list of valid executables
-(define (executable-list? values)
+(define (list-of-executables? values)
   (every executable? values))
+
+(define (serialize-list-of-executables name values)
+  #~(apply string-append
+           (map (λ (w)
+                  (string-append #$(symbol->string name) " = " w "\n"))
+                (list #$@(map (λ (v)
+                                (serialize-executable name v)) values)))))
 
 ;;; Block sub-configuration (a container of block entries)
 (define-configuration block
@@ -112,95 +144,169 @@
                          (serialize-block-entries name (block-entries block) 1))
                    "\n}\n"))
 
+;;; Monitor transform
+(define (monitor-transform? x)
+  (and (number? x)
+       (<= x 7)
+       (>= x 0)))
+
+(define (serialize-monitor-transform _ t)
+  (string-append "transform, "
+                 (number->string t)))
+
+;;; Monitor resolution
+(define (monitor-resolution? x)
+  (or (and (pair? x)
+           (number? (car x))
+           (number? (cdr x)))
+      (memq x '(preferred highres highrr maxwidth))
+      ;; For custom modelines
+      (string? x)))
+
+(define (serialize-monitor-resolution _ r)
+  (if (pair? r)
+      (string-append (number->string (car r))
+                     "x"
+                     (number->string (cdr r)))
+      (if (symbol? r)
+          (symbol->string r)
+          r)))
+
+;;; Monitor position
+(define (monitor-position? x)
+  (or (and (pair? x)
+           (number? (car x))
+           (number? (cdr x)))
+      (memq x '(auto
+                auto-right auto-left auto-up auto-down
+                auto-center-right auto-center-left
+                auto-center-up auto-center-down))))
+
+(define (serialize-monitor-position _ p)
+  (if (pair? p)
+      (string-append (number->string (car p))
+                     "x"
+                     (number->string (cdr p)))
+      (symbol->string p)))
+
+;;; Monitor color management
+(define (monitor-color-management? c)
+  (memq c '(auto srgb wide edid hdr hdredid)))
+
+(define (serialize-monitor-color-management _ c)
+  (string-append "cm, " (symbol->string c)))
+
 ;;; Monitor sub-configuration
 (define-configuration monitor
-  (name (string "") "Monitor's name"
-        empty-serializer)
-  (resolution (string "preferred") "Monitor's resolution"
-              empty-serializer)
-  (position (string "auto") "Monitor's position"
-            empty-serializer)
-  (scale (string "auto") "Monitor's scale"
-         empty-serializer)
-  (transform (string "") "Monitor's transform"
-             empty-serializer))
+  (name (string "") "Monitor's name")
+  (resolution (monitor-resolution 'preferred) "Monitor's resolution")
+  (position (monitor-position 'auto) "Monitor's position")
+  (scale (string "auto") "Monitor's scale")
+  (disable? (boolean #f) "Disables the monitor" empty-serializer)
+  (color-management-preset (monitor-color-management 'auto)
+                           "Monitor color management preset")
+  (transform (monitor-transform 0) "Monitor's transform"))
 
-(define (serialize-monitor _ monitor)
-  #~(string-append
-     "monitor = "
-     #$(monitor-name monitor) ", "
-     #$(monitor-resolution monitor) ", "
-     #$(monitor-position monitor) ", "
-     #$(monitor-scale monitor) ", "
-     #$(let ((transform (monitor-transform monitor)))
-          (if (string-null? transform)
-              "\n"
-              (string-append ", transform, " transform "\n")))))
+(define (serialize-monitor _ m)
+  #~(string-append "monitor = "
+                   #$(if (monitor-disable? m)
+                         (string-append (monitor-name m)
+                                        ", disable")
+                         (serialize-joined m monitor-fields))))
 
 ;;; List of monitors definition
-(define (monitors? arg)
+(define (list-of-monitors? arg)
   (every monitor? arg))
+
+(define (serialize-list-of-monitors name monitors)
+  #~(string-join (list #$@(map (λ (m)
+                                 (serialize-monitor name m))
+                               monitors))
+                 "\n"))
 
 ;;; Environment variable
 (define-configuration env
-  (name (string) "Environemnt variable's name"
-        empty-serializer)
-  (value (string) "Environment variable's value"
-         empty-serializer))
+  (name (string) "Environemnt variable's name")
+  (value (string) "Environment variable's value"))
 
-(define (serialize-env _ e)
-  #~(string-append
-     "env = "
-     #$(env-name e) ", "
-     #$(env-value e) "\n"))
+(define (serialize-env _ m)
+  #~(string-append "env = "
+                   #$(serialize-joined m env-fields)))
 
 ;;; List of environment variables
-(define (env-list? arg)
+(define (list-of-envs? arg)
   (every env? arg))
 
+(define (serialize-list-of-envs name env)
+  #~(string-join
+     (list #$@(map (λ (v) (serialize-env name v)) env))
+     "\n"))
+
 ;;; List of strings
-(define (string-list? arg)
+(define (list-of-strings? arg)
   (every string? arg))
+
+;;; String lists will be serialized as name = value\n
+(define (serialize-string-list name values)
+  (apply string-append
+         (map (λ (w)
+                (string-append (symbol->string name) " = " w "\n")) values)))
+
+;;; Mod key
+(define (mod? x)
+  (memq x '(ctrl shift alt super)))
+
+(define (serialize-mod _ m)
+  (string-upcase (object->string m)))
+
+;;; List of mods
+(define (list-of-mods? x) (every mod? x))
+
+(define (serialize-list-of-mods name mods)
+  (string-join (map (lambda (m) (serialize-mod name m)) mods) " + "))
+
+;;; Dispatcher
+(define (dispatcher? x)
+  (symbol? x))
+
+(define (serialize-dispatcher _ d)
+  (symbol->string d))
+
+;;; Arguments (list of strings or gexps) or a single string or gexp
+(define (arguments? x)
+  (or
+   (executable? x)
+   (every executable? x)))
+
+(define (serialize-arguments name values)
+  #~(string-join
+     (list #$@(map (λ (v) (serialize-executable name v))
+                   (if (list? values) values (list values))))
+     ", "))
 
 ;;; Binding sub-configuration
 (define-configuration binding
   (flags (string "")
          "Bind flags https://wiki.hyprland.org/Configuring/Binds/"
          empty-serializer)
-  (mod (string "$mod") "Mod key"
+  (use-main-mod? (boolean #t) "If true, mod from main-mod is used"
        empty-serializer)
-  (shift? (boolean #f) "If mod is shifted"
-          empty-serializer)
-  (alt? (boolean #f) "If alt has to be pressed"
-        empty-serializer)
-  (ctrl? (boolean #f) "If control has to be pressed"
-         empty-serializer)
-  (super? (boolean #f) "If super has to be pressed"
-          empty-serializer)
-  (key (string) "Binding main key"
-       empty-serializer)
-  (action (string "exec") "Binding action"
-          empty-serializer)
-  (args (executable "") "Binding action's args"
+  (mods (list-of-mods '()) "Mods")
+  (key (string) "Binding main key")
+  (action (dispatcher 'exec) "Binding action")
+  (args (arguments '()) "Binding action's args"
         empty-serializer))
 
 (define (serialize-binding name b)
   #~(string-append "bind" #$(binding-flags b) " = "
-                   #$(binding-mod b)
-                   #$(if (binding-shift? b) " SHIFT" "")
-                   #$(if (binding-alt? b) " ALT" "")
-                   #$(if (binding-ctrl? b) " CTRL" "")
-                   #$(if (binding-super? b) " SUPER" "")
-                   ", "
-                   #$(binding-key b) ", "
-                   #$(binding-action b)
-                   #$(let ((args (binding-args b)))
-                        (if (string? args)
-                          (if (string-null? args) "\n"
-                              (string-append ", " args "\n"))
-                          #~(string-append ", "
-                                           #$(serialize-executable name (binding-args b))
-                                           "\n")))))
+                   #$(if (binding-use-main-mod? b) "$mod" "")
+                   #$(if (null? (binding-mods b)) "" " + ")
+                   #$(serialize-joined b binding-fields)
+                   (if (null? '#$(binding-args b)) ""
+                              (string-append ", "
+                                             #$(serialize-arguments
+                                                name
+                                                (binding-args b))))))
 
 (define (raw-config? value)
   (string? value))
@@ -209,25 +315,23 @@
   (string-append value "\n"))
 
 ;;; List of bindings
-(define (binding-list? value)
+(define (list-of-bindings? value)
   (every binding? value))
 
-(define (serialize-binding-list name n)
-  #~(string-append
-     #$@(map (λ (b)
-	       (serialize-binding name b))
-             n)))
+(define (serialize-list-of-bindings name n)
+  #~(string-join
+     (list #$@(map (λ (b) (serialize-binding name b)) n))
+           "\n"))
 
 ;;; Submap configuration
 (define-configuration submap
-  (name (string) "Submap name"
-        empty-serializer)
-  (bindings (binding-list)
+  (name (string) "Submap name")
+  (bindings (list-of-bindings)
             "Bindings available only while this submap is active")
   (escape (binding (binding
-                    (mod "")
+                    (use-main-mod? #f)
                     (key "escape")
-                    (action "submap")
+                    (action 'submap)
                     (args "reset")))
           "Binding used to go back to the global submap"))
 
@@ -235,96 +339,58 @@
   #~(string-append
      "submap = "
      #$(submap-name s) "\n"
-     #$(serialize-binding-list name (submap-bindings s))
+     #$(serialize-list-of-bindings name (submap-bindings s))
+     "\n"
      #$(serialize-binding name (submap-escape s))
-     "submap = reset\n"))
+     "\nsubmap = reset\n"))
 
 ;;; List of submaps
-(define (submap-list? v)
+(define (list-of-submaps? v)
   (every submap? v))
+
+(define (serialize-list-of-submaps name submaps)
+  #~(string-append
+     #$@(map (λ (v) (serialize-submap name v)) submaps)))
 
 ;;; Binding block sub-configuration
 (define-configuration bindings
-  (main-mod (string "") "Main mod bound to $mod"
-            empty-serializer)
-  (binds (binding-list '()) "Bindings"))
+  (main-mod (mod) "Main mod bound to $mod")
+  (binds (list-of-bindings '()) "Bindings"))
 
 (define (serialize-bindings name b)
   #~(string-append
      "\n$mod = "
-     #$(bindings-main-mod b) "\n\n"
-     #$(serialize-binding-list name (bindings-binds b))))
-
-;;;
-;;; Serialization functions.
-;;;
-(define (serialize-submap-list name submaps)
-  #~(string-append
-     #$@(map (λ (v) (serialize-submap name v)) submaps)))
-
-(define (serialize-env-list name env)
-  #~(string-append
-     #$@(map (λ (v) (serialize-env name v)) env)))
-
-;;; String lists will be serialized as name = value\n
-(define (serialize-string-list name values)
-  (apply string-append
-         (map (λ (w)
-                (string-append (symbol->string name) " = " w "\n")) values)))
-
-;;; Gexp executables will be serialized on a program-file
-(define (serialize-executable name value)
-  (if (string? value) value
-      (program-file (symbol->string name) value
-                    #:module-path %load-path)))
-
-;;; Lists serializers
-(define (serialize-block-entries _ entries level)
-  (apply string-append
-         (map (λ (e)
-                (serialize-block-entry e level)) entries)))
-
-(define (serialize-monitors name monitors)
-  #~(string-append #$@(map (λ (m)
-                             (serialize-monitor name m))
-                           monitors)))
-
-(define (serialize-executable-list name values)
-  #~(apply string-append
-           (map (λ (w)
-                  (string-append #$(symbol->string name) " = " w "\n"))
-                '#$(map (λ (v)
-                          (serialize-executable name v)) values))))
+     #$(serialize-joined b bindings-fields #:delimiter "\n")))
 
 ;;; Hyprland full configuration
 (define-configuration hyprland-configuration
   (package (package hyprland) "Hyprland package to use"
            empty-serializer)
-  (monitors (monitors (list (monitor))) "Monitors definition")
-  (exec-once (executable-list '()) "Command to exec once")
-  (exec (executable-list '()) "Command to automatically exec")
+  (monitors (list-of-monitors (list (monitor))) "Monitors definition")
+  (exec-once (list-of-executables '()) "Command to exec once")
+  (exec (list-of-executables '()) "Command to automatically exec")
   (general (block (block)) "General configuration variables")
   (decoration (block (block)) "Decoration configuration variables")
   (animations (block (block)) "Animation configuration variables")
-  (workspace (string-list '()) "Workspaces settings")
-  (windowrule (string-list '()) "Window rules (v2)")
+  (workspace (list-of-strings '()) "Workspaces settings")
+  (windowrule (list-of-strings '()) "Window rules (v2)")
   (dwindle (block (block)) "Dwindle layout settings")
   (master (block (block)) "Master layout settings")
   (misc (block (block)) "Misc settings")
   (input (block (block)) "Input settings")
   (gestures (block (block)) "Gestures settings")
-  (environment (env-list '()) "Environment variables")
+  (environment (list-of-envs '()) "Environment variables")
   (bindings (bindings (bindings)) "Bindings configuration")
-  (submaps (submap-list '()) "Submap configuration")
+  (submaps (list-of-submaps '()) "Submap configuration")
   (extra-config (raw-config "") "Extra config"))
 
 ;;; Hyprland configuration extension for other services
 ;;; External services can add new exec entries or new bindings
 (define-configuration hyprland-extension
-  (exec-once (executable-list '())
+  (exec-once (list-of-executables '())
              "Commands to be executed with hyprland once")
-  (exec (executable-list '()) "Commands to be executed with hyprland")
-  (bindings (binding-list '()) "Extra binds")
+  (exec (list-of-executables '()) "Commands to be executed with hyprland")
+  (bindings (list-of-bindings '()) "Extra binds")
   (no-serialization))
 
 ;;;
@@ -412,117 +478,117 @@
   (block (entries '((workspace_swipe #f)))))
 
 (define-public %default-hyprland-bindings
-  (bindings (main-mod "SUPER")
+  (bindings (main-mod 'super)
             (binds `(,(binding (key "Q")
-                               (action "exec")
+                               (action 'exec)
                                (args "kitty"))
                      ,(binding (key "C")
-                               (action "killactive"))
+                               (action 'killactive))
                      ,(binding (key "M")
-                               (action "exit"))
+                               (action 'exit))
                      ,(binding (key "E")
-                               (action "exec")
+                               (action 'exec)
                                (args "dolphin"))
                      ,(binding (key "V")
-                               (action "togglefloating"))
+                               (action 'togglefloating))
                      ,(binding (key "R")
-                               (action "exec")
+                               (action 'exec)
                                (args "wofi --show dmenu"))
                      ;; Dwindle layout
                      ,(binding (key "P")
-                               (action "pseudo"))
+                               (action 'pseudo))
                      ,(binding (key "J")
-                               (action "togglesplit"))
+                               (action 'togglesplit))
                      ;; Move focus with arrow keys
                      ,(binding (key "left")
-                               (action "movefocus")
+                               (action 'movefocus)
                                (args "l"))
                      ,(binding (key "right")
-                               (action "movefocus")
+                               (action 'movefocus)
                                (args "r"))
                      ,(binding (key "up")
-                               (action "movefocus")
+                               (action 'movefocus)
                                (args "u"))
                      ,(binding (key "down")
-                               (action "movefocus")
+                               (action 'movefocus)
                                (args "d"))
                      ;; Switch workspaces
                      ,@(map (lambda (index)
                               (binding (key (number->string index))
-                                       (action "workspace")
+                                       (action 'workspace)
                                        (args (number->string index))))
                             (iota 10))
                      ;; Move active window to workspace
                      ,@(map (lambda (index)
-                              (binding (shift? #t)
+                              (binding (mods '(shift))
                                        (key (number->string index))
-                                       (action "movetoworkspace")
+                                       (action 'movetoworkspace)
                                        (args (number->string index))))
                             (iota 10))
                      ;; Scratchpad
                      ,(binding (key "S")
-                               (action "togglespecialworkspace")
+                               (action 'togglespecialworkspace)
                                (args "magic"))
                      ,(binding (key "S")
-                               (shift? #t)
-                               (action "movetoworkspace")
+                               (mods '(shift))
+                               (action 'movetoworkspace)
                                (args "special:magic"))
                      ;; Scroll workspaces with mod + scroll
                      ,(binding (key "mouse_down")
-                               (action "workspace")
+                               (action 'workspace)
                                (args "e+1"))
                      ,(binding (key "mouse_up")
-                               (action "workspace")
+                               (action 'workspace)
                                (args "e-1"))
                      ;; Move/resize with mouse
                      ,(binding (flags "m")
                                (key "mouse:272")
-                               (action "movewindow"))
+                               (action 'movewindow))
                      ,(binding (flags "m")
                                (key "mouse:273")
-                               (action "resizewindow"))
+                               (action 'resizewindow))
                      ;; Multimedia keys
                      ,(binding
                        (key "XF86AudioRaiseVolume")
-                       (action "exec")
+                       (action 'exec)
                        (args
                         "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"))
                      ,(binding
                        (key "XF86AudioLowerVolume")
-                       (action "exec")
+                       (action 'exec)
                        (args
                         "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%-"))
                      ,(binding
                        (key "XF86AudioMute")
-                       (action "exec")
+                       (action 'exec)
                        (args "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
                      ,(binding
                        (key "XF86AudioMicMute")
-                       (action "exec")
+                       (action 'exec)
                        (args "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
                      ,(binding
                        (key "XF86MonBrightnessUp")
-                       (action "exec")
+                       (action 'exec)
                        (args "brightnessctl s 10%+"))
                      ,(binding
                        (key "XF86MonBrightnessDown")
-                       (action "exec")
+                       (action 'exec)
                        (args "brightnessctl s 10%-"))
                      ,(binding
                        (key "XF86AudioNext")
-                       (action "exec")
+                       (action 'exec)
                        (args "playerctl next"))
                      ,(binding
                        (key "XF86AudioPause")
-                       (action "exec")
+                       (action 'exec)
                        (args "playerctl play-pause"))
                      ,(binding
                        (key "XF86AudioPlay")
-                       (action "exec")
+                       (action 'exec)
                        (args "playerctl play-pause"))
                      ,(binding
                        (key "XF86AudioPrev")
-                       (action "exec")
+                       (action 'exec)
                        (args "playerctl previous"))))))
 
 (define-public %default-hyprland-configuration
@@ -650,7 +716,7 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                           `(("hypr/hyprland.conf"
                              ,(mixed-text-file
                                "hyprland-cfg"
-                               (serialize-configuration
-                                c
-                                hyprland-configuration-fields))))))))
+                               (serialize-joined c
+                                                 hyprland-configuration-fields
+                                                 #:delimiter "\n"))))))))
                 (default-value %default-hyprland-configuration)))
