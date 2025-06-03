@@ -22125,7 +22125,7 @@ pycisTarget and SCENIC.")
     ;; "Nanny" process.
     (arguments '(#:tests? #false))
     (propagated-inputs
-     (list python-bokeh
+     (list python-bokeh-2.4
            python-dask
            python-distributed
            python-lz4

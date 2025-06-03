@@ -20462,7 +20462,7 @@ named for) extending the Levenberg-Marquardt method from
 enhancements to optimization and data fitting problems.")
     (license license:bsd-3)))
 
-(define-public python-bokeh
+(define-public python-bokeh-2.4
   (package
     (name "python-bokeh")
     (version "2.4.3")
@@ -20562,6 +20562,36 @@ enhancements to optimization and data fitting problems.")
      "This package provides tools for interactive plots and applications in the
 browser from Python.")
     (license license:bsd-3)))
+
+(define-public python-bokeh
+  (package/inherit python-bokeh-2.4
+    (version "3.7.3")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "bokeh" version))
+              (sha256 (base32
+                       "0argn4fadyswnz86x6fsy1f13nmd8iwzn5ddwrg3s43vg6grma3h"))))
+    (arguments (substitute-keyword-arguments (package-arguments python-bokeh-2.4)
+                 ((#:phases phases
+                   '%standard-phases)
+                  #~(modify-phases #$phases
+                      (add-after 'unpack 'patch-pyproject
+                        (lambda _
+                          (substitute* "pyproject.toml"
+                            (("timeout = .*" all)
+                             (string-append "# " all)))))))
+                 ((#:test-flags flags)
+                  #~(append (list
+                             ;; No module named 'tests'
+                             "--ignore=tests/test_examples.py"
+                             "--ignore=tests/test_defaults.py"
+                             ;; No such file or directory: 'bokehjs'
+                             "--ignore=tests/test_bokehjs.py")
+                            #$flags))))
+    (propagated-inputs (modify-inputs (package-propagated-inputs python-bokeh-2.4)
+                         (append python-contourpy-1.3)
+                         (append python-narwhals)
+                         (append python-xyzservices)))))
 
 (define-public python-botocore
   ;; Note: When updating botocore, also make sure that boto3 and awscli
