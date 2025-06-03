@@ -46,12 +46,14 @@
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages fortran-xyz)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gv)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
@@ -1700,3 +1702,34 @@ geometry file formats.")
     (description "This package contains a Fortran interface to obtain
 molecular geometries used for testing.")
     (license license:asl2.0)))
+
+(define-public simple-dftd3
+  (package
+    (name "simple-dftd3")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dftd3/simple-dftd3")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0aygmnax3vwz2x3ad7syksfjca4zc85nyslsibs0wg8wqfsmr33k"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         "-Dpython=true"
+         (string-append "-Dfortran_link_args=-Wl,-rpath="
+                        #$output "/lib"))))
+    (native-inputs (list gfortran pkg-config python))
+    (propagated-inputs (list python-cffi))
+    (inputs (list mctc-lib mstore toml-f))
+    (home-page "https://github.com/dftd3/simple-dftd3")
+    (synopsis "Implementation of the DFT-D3 dispersion correction")
+    (description "This library provides an implementation of the DFT-D3
+dispersion correction with both a Fortran and a Python interface.")
+    (license license:lgpl3+)))
