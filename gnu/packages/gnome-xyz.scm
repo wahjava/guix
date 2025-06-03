@@ -1115,11 +1115,34 @@ dark, switch backgrounds and run custom commands at sunset and sunrise.")
                  (lambda _
                    (substitute* "src/libgpaste/gpaste/gpaste-settings.c"
                      (("@gschemasCompiled@")
-                      (string-append #$output "/share/glib-2.0/schemas/")))
-                   (substitute* '("src/gnome-shell/extension.js"
-                                  "src/gnome-shell/prefs.js")
-                     (("@typelibDir@")
-                      (string-append #$output "/lib/girepository-1.0/"))))))))
+                      (string-append #$output "/share/glib-2.0/schemas/")))))
+               (add-after 'install 'wrap-typelib
+                 ;; absolute copy from nixpkgs
+                 ;; https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/gp/gpaste/package.nix#L67
+                 (lambda _
+                   (let* [(extension-dir
+                           (string-append
+                            #$output
+                            "/share"
+                            "/gnome-shell"
+                            "/extensions"
+                            "/GPaste@gnome-shell-extensions.gnome.org"))
+                          (extension.js (string-append extension-dir "/extension.js"))
+                          (extension-wrapped.js (string-append extension-dir "/.extension-wrapped.js"))
+                          (prefs.js (string-append extension-dir "/prefs.js"))
+                          (prefs-wrapped.js (string-append extension-dir "/.prefs-wrapped.js"))
+                          (wrapper.js #$(local-file (search-auxiliary-file "gpaste/wrapper.js")))
+                          (typelibdir (string-append #$output "/lib/girepository-1.0"))]
+                     (rename-file extension.js extension-wrapped.js)
+                     (rename-file prefs.js prefs-wrapped.js)
+                     (copy-file wrapper.js extension.js)
+                     (copy-file wrapper.js prefs.js)
+                     (substitute* extension.js
+                       (("@originalName@") "extension")
+                       (("@typelibDir@") typelibdir))
+                     (substitute* prefs.js
+                       (("@originalName@") "prefs")
+                       (("@typelibDir@") typelibdir))))))))
     (home-page "https://github.com/Keruspe/GPaste")
     (synopsis "Clipboard management system for GNOME Shell")
     (description "GPaste is a clipboard manager, a tool which allows you to
