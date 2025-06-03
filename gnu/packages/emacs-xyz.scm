@@ -40663,11 +40663,11 @@ go directly to where they belong.")
       (license license:gpl3+))))
 
 (define-public emacs-org-roam
-  (let ((commit "046822b512ffecdee7d110f73dd3a511802ca590")
-        (revision "2"))
+  (let ((commit "2ff616fbd8277bd797254befe34d5036b35a7dbf")
+        (revision "1"))
     (package
       (name "emacs-org-roam")
-      (version (git-version "2.2.2" revision commit))
+      (version (git-version "2.3.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -40676,7 +40676,7 @@ go directly to where they belong.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0jbj48glh0r6fkb0lk1xb9067x2myp3krkw2byycijwdq1nlqzv2"))))
+          (base32 "00ijpvsghak5d9p703gnyaksfbniwj062qids0m8xkvvxbzqsdda"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -40697,7 +40697,7 @@ go directly to where they belong.")
                   ("org-roam-graph-executable"
                    (search-input-file inputs "/bin/dot")))))
             (add-after 'install 'install-image
-              (lambda* (#:key outputs #:allow-other-keys)
+              (lambda _
                 (install-file "doc/images/org-ref-citelink.png"
                               (string-append #$output "/share/info/images"))))
             (add-after 'unpack 'make-info
