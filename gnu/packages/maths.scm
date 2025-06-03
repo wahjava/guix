@@ -11364,3 +11364,33 @@ expression parsing and evaluation.")
 linear programming (LP), mixed-integer programming (MIP), and quadratic
 programming (QP) models")
     (license license:expat)))
+
+(define-public libtaylor
+  (let ((commit "88709f03efda5b81ff460ccef67d4fd0e7d050cc")
+        (revision "0"))
+    (package
+      (name "libtaylor")
+      (version (git-version "0" "0" commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/uekstrom/libtaylor")
+                      (commit commit)))
+                (file-name (git-file-name "libtaylor" commit))
+                (sha256
+                 (base32
+                  "17gp97vqlpmigf1rf1f5s8lavcswfvpyvqnxxjpdrz5dw9f51y6f"))))
+      (build-system cmake-build-system)
+      (arguments
+       '(#:phases
+         (modify-phases %standard-phases
+           (delete 'check)
+           (add-after 'install 'check
+               (lambda args
+                 (apply (assoc-ref %standard-phases 'check) args))))))
+      (home-page "https://github.com/uekstrom/libtaylor")
+      (synopsis "C++ library for automatic differentiation")
+      (description
+       "This is a header-only C++ library for calculating analytical
+derivatives and taylor expansions of composite functions.")
+      (license license:expat))))
