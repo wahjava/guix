@@ -39,7 +39,7 @@
 ;;; Copyright © 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2022, 2023 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2022, 2023, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2022-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Luis Felipe López Acevedo <luis.felipe.la@protonmail.com>
@@ -89,6 +89,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -4510,3 +4511,26 @@ parameterized tests, timing of the wall clock and CPU time, reproducible
 random number generation, and more.")
       (home-page "https://nemequ.github.io/munit/")
       (license license:x11))))
+
+(define-public test-drive
+  (package
+    (name "test-drive")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fortran-lang/test-drive")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0zfkih7mq9cgjkfl5f3d34ahchj2933i5ryzcvqiixqdn897q765"))))
+    (build-system meson-build-system)
+    (native-inputs (list gfortran))
+    (home-page "https://github.com/fortran-lang/test-drive")
+    (synopsis "Fortran testing framework")
+    (description "@code{test-drive} is a procedural unit testing framework for
+Fortran.")
+    ;; Dual license
+    (license (list license:expat license:asl2.0))))
