@@ -1619,3 +1619,27 @@ Most of the functionality is implemented in Python, while computationally
 critical parts are implemented in C.")
     (properties '((tunable? . #t)))
     (license license:asl2.0)))
+
+(define-public python-geometric
+  (package
+    (name "python-geometric")
+    (version "1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/leeping/geomeTRIC")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0w3c71wvhnc44pfafcjfgqkjimkcdkpjk3bahg9v6l1z8c0cyhfy"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy python-scipy python-networkx))
+    (native-inputs (list python-pytest-cov python-setuptools python-wheel))
+    (home-page "https://github.com/leeping/geomeTRIC")
+    (synopsis "Geometry optimization of molecular structures")
+    (description "@code{geomeTRIC} is a python library and program
+ for geometry optimization of molecular structures, which works with
+ different external quantum chemistry (and molecular mechanics)
+ softwares.")
+    (license license:bsd-3)))
