@@ -1762,3 +1762,31 @@ dispersion correction with both a Fortran and a Python interface.")
     (description "This library implements an electronegativity equilibration
 model to calculate partial charges used in the DFT-D4 model.")
     (license license:asl2.0)))
+
+(define-public dftd4
+  (package
+    (name "dftd4")
+    (version "3.7.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/dftd4/dftd4")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0alsvzgdkmw80wfpsds31pzgcr962xhq9q7yvc26jxgrn444yb3n"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         (string-append "-Dfortran_link_args=-Wl,-rpath="
+                        #$output "/lib"))))
+    (native-inputs (list gfortran pkg-config python))
+    (inputs (list lapack mctc-lib mstore multicharge))
+    (home-page "https://github.com/dftd4/dftd4")
+    (synopsis "Implementation of the DFT-D4 dispersion correction")
+    (description "This library provides an implementation of the DFT-D4
+dispersion correction with both a Fortran and a C interface.")
+    (license license:lgpl3+)))
