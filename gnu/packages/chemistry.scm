@@ -1733,3 +1733,32 @@ molecular geometries used for testing.")
     (description "This library provides an implementation of the DFT-D3
 dispersion correction with both a Fortran and a Python interface.")
     (license license:lgpl3+)))
+
+(define-public multicharge
+  (package
+    (name "multicharge")
+    (version "0.3.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/grimme-lab/multicharge")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "19460xclxnlmyzcxg392kmm532ydg3yka5mkbbv845kgvbfhrb7j"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         (string-append "-Dfortran_link_args=-Wl,-rpath="
+                        #$output "/lib"))))
+    (native-inputs (list gfortran pkg-config python))
+    (propagated-inputs (list python-cffi))
+    (inputs (list mctc-lib mstore lapack toml-f))
+    (home-page "https://github.com/grimme-lab/multicharge")
+    (synopsis "Electronegativity equilibration model for atomic partial charges")
+    (description "This library implements an electronegativity equilibration
+model to calculate partial charges used in the DFT-D4 model.")
+    (license license:asl2.0)))
