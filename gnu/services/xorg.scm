@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2017 Andy Wingo <wingo@igalia.com>
-;;; Copyright © 2013-2017, 2019-2020, 2022, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2017, 2019-2020, 2022, 2024-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2018, 2019 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2019 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
@@ -140,13 +140,29 @@
             gdm-service-type
 
             handle-xorg-configuration
-            set-xorg-configuration))
+            set-xorg-configuration
+
+            xorg-configuration-service?))
 
 ;;; Commentary:
 ;;;
 ;;; Services that relate to the X Window System.
 ;;;
 ;;; Code:
+
+(define %xorg-configuration-service-types
+  ;; Set of service types whose value contains an 'xorg-configuration'
+  ;; record--typically service types for login managers.
+  (make-hash-table))
+
+(define (record-xorg-configuration-service-type type)
+  "Record TYPE as providing an <xorg-configuration> and return it."
+  (hashq-set! %xorg-configuration-service-types type #t)
+  type)
+
+(define (xorg-configuration-service? service)
+  "Return true if SERVICE is known to provide an <xorg-configuration> value."
+  (hashq-ref %xorg-configuration-service-types (service-kind service)))
 
 (define %default-xorg-modules
   ;; Default list of modules loaded by the server.  When multiple drivers
@@ -630,7 +646,8 @@ desktop session from the system or user profile will be used."
 `service-type' to handle specifying the `xorg-configuration' through
 a `service-extension', as used by `set-xorg-configuration'."
     ((_ configuration-record service-type-definition)
-     (service-type
+     (record-xorg-configuration-service-type
+      (service-type
        (inherit service-type-definition)
        (compose (lambda (extensions)
                   (match extensions
@@ -641,7 +658,7 @@ a `service-extension', as used by `set-xorg-configuration'."
                      (configuration-record
                       (inherit config)
                       (xorg-configuration xorg-configuration))
-                     config)))))))
+                     config))))))))
 
 (define (xorg-server-profile-service config)
   ;; XXX: profile-service-type only accepts <package> objects.
@@ -1367,16 +1384,11 @@ polkit.addRule(function(action, subject) {
                    "Run the GNOME Desktop Manager (GDM), a program that allows
 you to log in in a graphical session, whether or not you use GNOME."))))
 
-;; Since GDM depends on Rust and Rust is not available on all platforms,
-;; use SDDM as the fall-back display manager.
-;; TODO: Switch the condition to take into account if Rust is supported and
-;; match the configuration in desktop-services-for-system.
 (define* (set-xorg-configuration config
                                  #:optional
                                  (login-manager-service-type
-                                  (if (target-x86-64?)
-                                      gdm-service-type
-                                      sddm-service-type)))
+                                  (find xorg-configuration-service?
+                                        (desktop-services-for-system))))
   "Tell the log-in manager (of type @var{login-manager-service-type}) to use
 @var{config}, an <xorg-configuration> record."
   (simple-service 'set-xorg-configuration
