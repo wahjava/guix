@@ -52,6 +52,10 @@ do
 		    *codeberg.org/guix/*)
 			perform_checks
 			;;
+		    # SSH remote.
+		    *codeberg.org:guix/*)
+			perform_checks
+			;;
 		    *)
 			exit 0
 			;;
