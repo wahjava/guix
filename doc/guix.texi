@@ -4730,8 +4730,22 @@ $ guix package -p ~/.config/guix/current --delete-generations=1
 deleting /var/guix/profiles/per-user/charlie/current-guix-1-link
 @end example
 
-The @command{guix pull} command is usually invoked with no arguments,
-but it supports the following options:
+The general syntax is:
+
+@example
+guix pull [@var{options}] [@var{channels}@dots{}]
+@end example
+
+The optional @var{channels} argument filters the list of pulled channels
+to those whose names match the given list.
+
+For example, given a list of channels with names A B C:
+
+@example
+guix pull A B
+@end example
+
+would update channels A and B while keeping C unchanged.
 
 @table @code
 @item --url=@var{url}

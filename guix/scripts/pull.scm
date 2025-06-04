@@ -2,6 +2,7 @@
 ;;; Copyright © 2013-2015, 2017-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2017 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -81,8 +82,8 @@
     (validate-pull . ,ensure-forward-channel-update)))
 
 (define (show-help)
-  (display (G_ "Usage: guix pull [OPTION]...
-Download and deploy the latest version of Guix.\n"))
+  (display (G_ "Usage: guix pull [OPTION]... [CHANNELS...]
+Download and deploy the latest version of Guix, possibly limited to CHANNELS.\n"))
   (display (G_ "
   -C, --channels=FILE    deploy the channels defined in FILE"))
   (display (G_ "
@@ -839,21 +840,52 @@ Use '~/.config/guix/channels.scm' instead."))
 (define-command (guix-pull . args)
   (synopsis "pull the latest revision of Guix")
 
-  (define (no-arguments arg _)
-    (leave (G_ "~A: extraneous argument~%") arg))
+  ;; Unpin CHANNELS whose name symbol is present in the NAMES list. If NAMES
+  ;; is an empty list, do not filter anything. Warn if a name is not available
+  ;; in the channels list.
+  (define (unpin-channels channels current-channels names)
+    (if (null? names)
+        channels
+        (let ((available-names (map channel-name
+                                    channels))
+              (selected-channels (filter (lambda (channel)
+                                           (member (channel-name channel)
+                                                   names))
+                                         channels)))
+          (for-each (lambda (name)
+                      (unless (member name available-names)
+                        (warning (G_ "channel '~a~' selected but missing from channel list~%")
+                                 name)))
+                    names)
+
+          (map (lambda (channel)
+                 (let ((selected-channel (find (lambda (ch)
+                                                 (eq? (channel-name ch)
+                                                      (channel-name channel)))
+                                               selected-channels)))
+                   ;; If the user selected this channel, follow channel file
+                   ;; specification. Otherwise, leave the channel pinned as
+                   ;; defined by the current profile.
+                   (or selected-channel
+                       channel)))
+               current-channels))))
 
   (with-error-handling
     (with-git-error-handling
      (let* ((opts         (parse-command-line args %options
-                                              (list %default-options)
-                                              #:argument-handler no-arguments))
+                                              (list %default-options)))
             (substitutes? (assoc-ref opts 'substitutes?))
             (dry-run?     (assoc-ref opts 'dry-run?))
             (profile      (or (assoc-ref opts 'profile) %current-profile))
             (current-channels (profile-channels profile))
             (validate-pull    (assoc-ref opts 'validate-pull))
             (authenticate?    (assoc-ref opts 'authenticate-channels?))
-            (verify-certificate? (assoc-ref opts 'verify-certificate?)))
+            (verify-certificate? (assoc-ref opts 'verify-certificate?))
+            (selected-channels (filter-map
+                                (match-lambda
+                                  (('argument . name) (string->symbol name))
+                                  (_ #f))
+                                opts)))
        (cond
         ((assoc-ref opts 'query)
          (process-query opts profile))
@@ -877,7 +909,9 @@ Use '~/.config/guix/channels.scm' instead."))
                  (ensure-default-profile)
                  (honor-x509-certificates store)
 
-                 (let* ((channels (channel-list opts))
+                 (let* ((channels (unpin-channels (channel-list opts)
+                                                  current-channels
+                                                  selected-channels))
                         (instances
                          (latest-channel-instances store channels
                                                    #:current-channels
