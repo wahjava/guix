@@ -294,7 +294,7 @@ expected COMMIT and SIGNER~%")))
                               (missing-arguments))))
             (keyring     (or (assoc-ref options 'keyring-reference)
                              (configured-keyring-reference repository)
-                             "keyring"))
+                             "origin/keyring"))
             (end         (match (assoc-ref options 'end-commit)
                            (#f  (reference-target
                                  (repository-head repository)))
