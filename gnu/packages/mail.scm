@@ -61,6 +61,7 @@
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Runciter <runciter@whispers-vpn.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1236,7 +1237,9 @@ and corrections.  It is based on a Bayesian filter.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0af6qxnjihpk29ns5i8545yj5spa0a0w85vrikaja768xc56wkrg"))))
+          (base32 "0af6qxnjihpk29ns5i8545yj5spa0a0w85vrikaja768xc56wkrg"))
+         (patches (search-patches
+                   "offlineimap3-fix-machinery.patch"))))
       (build-system pyproject-build-system)
       (arguments
        (list

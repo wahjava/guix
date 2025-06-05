@@ -1,0 +1,20 @@
+Without this patch Offlineimap3 fails to run with
+ERROR: module 'importlib' has no attribute 'machinery'.
+
+This patch imports the needed attribute.
+
+See pull request #205 upstream.
+
+diff --git a/offlineimap/localeval.py b/offlineimap/localeval.py
+index 3b137e0..286657f 100644
+--- a/offlineimap/localeval.py
++++ b/offlineimap/localeval.py
+@@ -26,6 +26,8 @@ class LocalEval:
+         self.namespace = {}
+ 
+         if path is not None:
++            import importlib.machinery
++
+             # FIXME: limit opening files owned by current user with rights set
+             # to fixed mode 644.
+             importlib.machinery.SOURCE_SUFFIXES.append('') # empty string to allow any file
