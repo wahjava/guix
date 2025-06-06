@@ -1637,6 +1637,17 @@ int childEntry(void * arg)
 }
 
 
+/* Wait on FD until MESSAGE has been read.  */
+static void waitForMessage(int fd, const char *message = "go\n")
+{
+    size_t size = strlen(message);
+    char str[size] = { '\0' };
+    readFull(fd, (unsigned char*)str, size);
+    if (strncmp(str, message, size) != 0)
+	throw Error(format("did not receive message '%1%' on file descriptor %2%")
+	    % message % fd);
+}
+
 /* UID and GID of the build user inside its own user namespace.  */
 static const uid_t guestUID = 30001;
 static const gid_t guestGID = 30000;
@@ -2075,15 +2086,9 @@ void DerivationGoal::runChild()
 
 	if (readiness.writeSide >= 0) readiness.writeSide.close();
 
-	if (readiness.readSide >= 0) {
-	     /* Wait for the parent process to initialize the UID/GID mapping
-		of our user namespace.  */
-	     char str[20] = { '\0' };
-	     readFull(readiness.readSide, (unsigned char*)str, 3);
-	     readiness.readSide.close();
-	     if (strcmp(str, "go\n") != 0)
-		  throw Error("failed to initialize process in unprivileged user namespace");
-	}
+	/* Wait for the parent process to initialize the UID/GID mapping of
+	   our user namespace.  */
+	if (readiness.readSide >= 0) waitForMessage(readiness.readSide);
 
         restoreAffinity();
 
