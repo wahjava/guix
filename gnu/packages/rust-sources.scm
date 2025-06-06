@@ -123,6 +123,44 @@
 transliterating them.  It supports Emoji and Chinese.")
      (license license:bsd-3))))
 
+(define-public rust-hypher-0.1
+  (package
+    (name "rust-hypher")
+    (version "0.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/typst/hypher")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1r01hhgxp5fmz1bgy11ilajd67lgfh7kqvd258c58c6y3w3rxpjq"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:cargo-package-crates ''("hypher")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'regenerate
+            (lambda _
+              ;; Stop the attempted dependency retrieval for a bench-marking
+              ;; tool.
+              (substitute* "Cargo.toml" (("^members.+$") ""))
+              ;; --no-default-features lets us avoid using the upstream source's
+              ;; pre-generated tries when running the trie-regenerating
+              ;; "generate" test. We are throwing library binary away, anyways,
+              ;; because we only want the source.
+              (for-each delete-file (find-files "." "\\.bin$"))
+              (false-if-exception (invoke "cargo" "test" "--test" "generate"
+                                          "--no-default-features"))
+              (delete-file-recursively "target"))))))
+    (home-page "https://github.com/typst/hypher")
+    (synopsis "Separates words into syllables")
+    (description "This package provides word separation into syllables.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-pcre2-utf32-0.2
   (hidden-package
    (package

@@ -6243,9 +6243,7 @@
   (crate-source "hyperlocal" "0.8.0"
                 "136978rsp0wr6x28cxivxhbq2np66l4jrq3n9xwckrrd5dxxzbqg"))
 
-(define rust-hypher-0.1.5
-  (crate-source "hypher" "0.1.5"
-                "0ra2kxbpi033jy42wkr7m7rgg6yhy69xad0hmc0z43936xbas91v"))
+(define rust-hypher-0.1.5 rust-hypher-0.1)
 
 (define rust-hyprland-0.3.13
   (crate-source "hyprland" "0.3.13"
