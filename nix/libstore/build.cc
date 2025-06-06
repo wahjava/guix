@@ -23,6 +23,7 @@
 #include <sys/utsname.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <grp.h>
 #include <errno.h>
 #include <stdio.h>
 #include <cstring>
@@ -1655,15 +1656,160 @@ static const gid_t guestGID = 30000;
 /* Initialize the user namespace of CHILD.  */
 static void initializeUserNamespace(pid_t child,
 				    uid_t hostUID = getuid(),
-				    gid_t hostGID = getgid())
+				    gid_t hostGID = getgid(),
+				    const std::vector<std::pair<gid_t, gid_t>> extraGIDs = {},
+				    bool haveCapSetGID = false)
 {
     writeFile("/proc/" + std::to_string(child) + "/uid_map",
 	      (format("%d %d 1") % guestUID % hostUID).str());
 
-    writeFile("/proc/" + std::to_string(child) + "/setgroups", "deny");
+    if (!haveCapSetGID && !extraGIDs.empty()) {
+	try {
+	    Strings args = {
+		std::to_string(child),
+		std::to_string(guestGID), std::to_string(hostGID), "1"
+	    };
+	    for (auto &pair: extraGIDs) {
+		args.push_back(std::to_string(pair.second));
+		args.push_back(std::to_string(pair.first));
+		args.push_back("1");
+	    }
+	    runProgram("newgidmap", true, args);
+	    printMsg(lvlChatty,
+		     format("mapped %1% extra GIDs into namespace of PID %2%")
+		     % extraGIDs.size() % child);
+	    return;
+	} catch (const ExecError &e) {
+	    ignoreException();
+	}
+    }
 
-    writeFile("/proc/" + std::to_string(child) + "/gid_map",
-	      (format("%d %d 1") % guestGID % hostGID).str());
+    if (!haveCapSetGID)
+	writeFile("/proc/" + std::to_string(child) + "/setgroups", "deny");
+
+    auto content = (format("%d %d 1\n") % guestGID % hostGID).str();
+    if (haveCapSetGID) {
+	for (auto &mapping: extraGIDs) {
+	    content += (format("%d %d 1\n") % mapping.second % mapping.first).str();
+	}
+    }
+    writeFile("/proc/" + std::to_string(child) + "/gid_map", content);
+}
+
+/* Maximum number of supplementary groups per user account.  */
+static const size_t maxGroups = 64;
+
+/* Return the content of FILE as an integer, or DFLT if FILE could not be
+   opened or parsed.  */
+static unsigned int fileContent(const std::string &file, int dflt)
+{
+    AutoCloseFD fd;
+    fd = open(file.c_str(), O_RDONLY|O_CLOEXEC);
+    if (fd == -1)
+	return dflt;
+    else {
+	char buf[64];
+	ssize_t count = read (fd, buf, sizeof buf);
+	if (count <= 0) return dflt;
+
+	unsigned int result = dflt;
+	std::string str = buf;
+	try { result = std::stoi(str); } catch (...) {};
+	return result;
+    }
+}
+
+static gid_t overflowGID()
+{
+    return fileContent("/proc/sys/kernel/overflowgid", 65534);
+}
+
+/* Create a new user namespace so that mounts that were previously made are
+   "locked"--i.e., cannot be unmounted individually.  */
+static void lockMounts()
+{
+    /* Save a copy of the current PID, UID, GID, and supplementary groups.  */
+    pid_t parent = getpid();
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+    gid_t overflowgid = overflowGID();
+    gid_t groups[maxGroups];
+    int count = getgroups(maxGroups, groups);
+
+    std::vector<std::pair<gid_t, gid_t>> extraGIDs;
+    for (int i = 0; i < count; i++) {
+	if (groups[i] != overflowgid && groups[i] != gid)
+	    extraGIDs.push_back({ groups[i], groups[i] });
+    }
+
+    std::pair<Pipe, Pipe> sync;
+    sync.first.create();
+    sync.second.create();
+
+    /* Create a child process in the current user namespace whose task is to
+       reinitialize UID and GID mappings of the current process after
+       'unshare' below has completed (this child process can do so because it
+       has CAP_SETGID in the "parent user namespace" of the other process
+       after 'unshare').  */
+    pid_t child = fork();
+    if (child < 0)
+	throw SysError("creating UID/GID mapping child process");
+
+    if (child == 0) {
+	sync.first.writeSide.close();
+	sync.second.readSide.close();
+	waitForMessage(sync.first.readSide, "ready\n");
+	sync.first.readSide.close();
+
+	initializeUserNamespace(parent, uid, gid, extraGIDs, true);
+	writeFull(sync.second.writeSide, (unsigned char*)"go\n", 3);
+	_exit(EXIT_SUCCESS);			  // do not invoke destructors
+    } else {
+	sync.first.readSide.close();
+	sync.second.writeSide.close();
+
+	/* Create a new mount namespace to "lock" previous mounts.
+	   See mount_namespaces(7).  */
+	if (unshare(CLONE_NEWNS | CLONE_NEWUSER) == -1)
+	    throw SysError(format("creating new user and mount namespaces"));
+
+	writeFull(sync.first.writeSide, (unsigned char*)"ready\n", 6);
+	sync.first.writeSide.close();
+
+	waitForMessage(sync.second.readSide, "go\n");
+    }
+}
+
+/* Return the ID of the "kvm" group or -1 if it does not exist or is not part
+   of the current user's supplementary groups.  */
+static gid_t kvmGID()
+{
+    struct group *kvm = getgrnam("kvm");
+    if (kvm == NULL) return -1;
+
+    gid_t groups[maxGroups];
+    int count = getgroups(maxGroups, groups);
+    if (count < 0) return -1;
+
+    for (int i = 0; i < count; i++) {
+	if (groups[i] == kvm->gr_gid) return kvm->gr_gid;
+    }
+
+    return -1;
+}
+
+/* GID of the "kvm" group in guest user namespaces.  */
+static gid_t guestKVMGID = 40000;
+
+static std::vector<std::pair<gid_t, gid_t>> kvmGIDMapping()
+{
+    gid_t kvm = kvmGID();
+    if (kvm == (gid_t) -1)
+	return {};
+    else {
+	std::pair<gid_t, gid_t> mapping(kvm, guestKVMGID);
+	return { mapping };
+    }
 }
 
 void DerivationGoal::startBuilder()
@@ -2035,9 +2181,17 @@ void DerivationGoal::startBuilder()
 
 	readiness.readSide.close();
 	if ((flags & CLONE_NEWUSER) != 0) {
-	     /* Initialize the UID/GID mapping of the child process.  */
-	     initializeUserNamespace(pid);
-	     writeFull(readiness.writeSide, (unsigned char*)"go\n", 3);
+	     /* Initialize the UID/GID mapping of the child process.
+
+		Try hard to map the "kvm" GID inside the user namespace ("kvm"
+	        is usually the only supplementary group of the 'guix-daemon'
+	        privilege separation user) so that package test suites that
+	        expect to be able to chown to supplementary groups can do so
+	        (without that mapping, attempts to chown to the supplementary
+	        group fail with EINVAL).  */
+	    auto extraGIDs = kvmGIDMapping();
+	    initializeUserNamespace(pid, getuid(), getgid(), extraGIDs);
+	    writeFull(readiness.writeSide, (unsigned char*)"go\n", 3);
 	}
 	readiness.writeSide.close();
     } else
@@ -2277,15 +2431,7 @@ void DerivationGoal::runChild()
 	    chmod_("/", 0555);
 
 	    if (getuid() != 0) {
-		/* Create a new mount namespace to "lock" previous mounts.
-		   See mount_namespaces(7).  */
-		auto uid = getuid();
-		auto gid = getgid();
-
-		if (unshare(CLONE_NEWNS | CLONE_NEWUSER) == -1)
-		    throw SysError(format("creating new user and mount namespaces"));
-
-		initializeUserNamespace(getpid(), uid, gid);
+		lockMounts();
 
 		/* Check that mounts within the build environment are "locked"
 		   together and cannot be separated from within the build
