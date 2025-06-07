@@ -3243,44 +3243,27 @@ designed to work for programming in the Julia Programming Language and other
 text environments.")
     (license license:silofl1.1)))
 
-(define-public font-vazir
+(define-public font-vazirmatn
   (package
-    (name "font-vazir")
-    (version "22.1.0")
+    (name "font-vazirmatn")
+    (version "33.003")
     (source
      (origin
-       (method url-fetch/zipbomb)
-       (uri
-        (string-append "https://github.com/rastikerdar/vazir-font/"
-                       "releases/download/v" version
-                       "/vazir-font-v" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rastikerdar/vazirmatn")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0w3gwb5q33x5llw7cfs8qhaxr4ssg6rsx4b9day3993zn24xq031"))))
+        (base32 "0s2w6905iaqqaqrvm1vrsyqbhxxrw7pg2qzqpwp3vks5niz2sm8b"))))
     (build-system font-build-system)
-    (home-page "https://rastikerdar.github.io/vazir-font/")
-    (synopsis "Vazir Persian typeface")
+    (home-page "https://rastikerdar.github.io/vazirmatn/")
+    (synopsis "Persian/Arabic font")
     (description
-     "Vazir is a beautiful and elegant Persian typeface originally based on
-DejaVu, and comes in six variants: Thin, Light, Normal, Medium, Bold, and
-Black.  This package provides four versions of Vazir:
-
-@itemize
-@item @code{Vazir}: The main version; includes Latin glyphs from Roboto.
-@item @code{Vazir-FD}: Like @code{Vazir}, but (always) uses Farsi digit glyphs
-instead of Latin ones.
-@item @code{Vazir-WOL}: Like @code{Vazir}, but without Roboto's Latin glyphs.
-@item @code{Vazir-FD-WOL}: Combination of @code{Vazir-FD} and @code{Vazir-WOL}:
-always uses Farsi digits, and does not include Latin glyphs from Roboto.
-@end itemize\n")
-    (license
-     ;; See https://github.com/rastikerdar/vazir-font/blob/master/LICENSE for
-     ;; details.
-     (list license:public-domain        ; the Vazir modifications to DejaVu
-                                        ; and the DejaVu modifications to...
-           (license:x11-style           ; ...the Bitstream Vera typeface
-            "file://LICENSE" "Bitstream Vera License")
-           license:asl2.0))))           ; Latin glyphs from Roboto
+     "Vazirmatn is a Persian/Arabic font project that started in 2015 under the
+name of Vazir with the idea of a new simple and legible typeface suitable for
+web pages and applications.")
+    (license license:silofl1.1)))
 
 (define-public font-victor-mono
   (package
