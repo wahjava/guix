@@ -3285,6 +3285,10 @@ It comes in seven weights and Roman, Italic and Oblique styles.")
    (home-page "https://rubjo.github.io/victor-mono/")
    (license license:expat)))
 
+;; https://github.com/rastikerdar/vazirmatn/blob/v33.003/CHANGELOG.md?plain=1#L87
+(define-public font-vazir
+  (deprecated-package "font-vazir"  font-vazirmatn))
+
 (define-public font-dongle
   (let ((commit "f7127c4d2450e1cad20254ec692591347e2fc260")
         (revision "1"))
