@@ -3786,3 +3786,48 @@ compose file, or existing object.")
     (description
      "This package provides a command-line tool for flashing Espressif devices.")
     (license (list license:expat license:asl2.0))))
+
+(define-public fclones
+  (package
+    (name "fclones")
+    (version "0.35.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "fclones" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1danl1sn7l1b5wz27aqbx43nnvsm9nflly8l8xqf41c4ainq5j07"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'fclones))
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-completions
+            (lambda _
+              ;; Stop the full path from being used in completion.
+              (setenv "PATH"
+                      (string-append (getenv "PATH") ":" #$output "/bin"))
+              (for-each
+               (lambda (comp-data)
+                 (mkdir-p (string-append #$output (dirname (cdr comp-data))))
+                 (with-output-to-file
+                     (format #f (string-append #$output (cdr comp-data))
+                             "fclones")
+                   (lambda _ (invoke "fclones" "complete" (car comp-data)))))
+               '(("bash" . "/share/bash-completion/completions/~a")
+                 ("elvish" . "/share/elvish/lib/~a")
+                 ("fish" . "/share/fish/vendor_completions.d/~a.fish")
+                 ("zsh" . "/share/zsh/site-functions/_~a"))))))))
+    (home-page "https://github.com/pkolaczk/fclones")
+    (synopsis "Find and operate on duplicate files")
+    (description
+     "@command{fclones} is a command line utility that identifies groups of
+identical files and gets rid of the file copies you no longer need.  It comes
+with plenty of configuration options for controlling the search scope and
+offers many ways of removing duplicates.  For maximum flexibility, it
+integrates well with other Unix utilities like @command{find} and it speaks
+JSON, so you have a lot of control over the search and cleanup process.")
+    (license license:expat)))
