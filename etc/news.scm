@@ -42,7 +42,7 @@
         (title
          (en "New services for /etc/profile.d and /etc/bashrc.d")
          (de "Neue Dienste für /etc/profile.d und /etc/bashrc.d"))
-         (zh-cn "为 /etc/profile.d 和 /etc/bashrc.d 提供新服务")
+         (zh "为 /etc/profile.d 和 /etc/bashrc.d 提供新服务")
         (body
          (en "Two new services, @code{etc-profile-d-service-type} and
 @code{etc-bashrc-d-service-type}, can now be used to configure and extend your
@@ -72,11 +72,11 @@ nicht beinhaltet, möchten Sie vielleicht
 Bash-Komplettierung weiterhin für neue Benutzer Befehle vervollständigt.  Siehe
 @samp{info \"(guix.de) Service-Referenz\"} für weitere Informationen und
 Beispiele.")
-	(zh-cn "两个新服务，`@code{etc-profile-d-service-type}` 和 `@code{etc-bashrc-d-service-type}`，现在可用于配置和扩展您的 shell。这些服务接受一个必须具有 `@file{.sh}` 文件扩展名的类文件对象列表。
+	(zh "两个新服务，@code{etc-profile-d-service-type} 和 @code{etc-bashrc-d-service-type}，现在可用于配置和扩展您的 shell。这些服务接受一个必须具有 @file{.sh} 文件扩展名的类文件对象列表。
 
-`@code{etc-bashrc-d-service-type}` 现在取代了 skeleton 文件（skeleton file）来提供 Guix 提供的 Bash 别名 (`@file{/etc/bashrc.d/aliases.sh}`)。它也用于通过提供 `@file{/etc/bashrc.d/bash_completion.sh}` 来配置 `@code{bash-completion}` 包。
+@code{etc-bashrc-d-service-type} 现在取代了 skeleton 文件（skeleton file）来提供 Guix 提供的 Bash 别名 (@file{/etc/bashrc.d/aliases.sh})。它也用于通过提供 @file{/etc/bashrc.d/bash_completion.sh} 来配置 @code{bash-completion} 包。
 
-如果您的 `@code{operating-system}` 配置不包含 `@code{%base-services}` 或 `@code{%desktop-services}`，您可能需要将 `@code{(service etc-bashrc-d-service-type)}` 添加到您的服务列表中，以确保 Bash 补全功能对新用户继续有效。更多信息和示例请参阅 `@samp{info \"(guix。zh-cn) 服务参考\"}`。")))
+如果您的 @code{operating-system} 配置不包含 @code{%base-services} 或 @code{%desktop-services}，您可能需要将 @code{(service etc-bashrc-d-service-type)} 添加到您的服务列表中，以确保 Bash 补全功能对新用户继续有效。更多信息和示例请参阅 @samp{info \"(guix.zh_CN) 服务参考\"}。")))
 
  (entry (commit "3b6e499d5e635e2189f1bf60279dbf5175c404bd")
         (title
