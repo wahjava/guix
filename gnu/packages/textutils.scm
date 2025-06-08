@@ -1511,6 +1511,7 @@ of a Unix terminal to HTML code.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:embed-files #~(list ".*\\.gob")
       #:import-path "github.com/errata-ai/vale/cmd/vale"
@@ -1547,7 +1548,7 @@ of a Unix terminal to HTML code.")
            go-github-com-masterminds-sprig-v3
            go-github-com-mitchellh-mapstructure
            go-github-com-niklasfasching-go-org
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-otiai10-copy
            go-github-com-pelletier-go-toml-v2
            go-github-com-pterm-pterm
