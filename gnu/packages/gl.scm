@@ -798,6 +798,30 @@ which OpenGL extensions are supported on the target platform.  OpenGL core and
 extension functionality is exposed in a single header file.")
     (license license:bsd-3)))
 
+(define-public glfw
+  (package
+    (name "glfw")
+    (version "3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/glfw/glfw")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1izxbb55hzi0b6jnfi11nvfsd3l85xzvb66jsb0ipkfxs95mdiqy"))))
+    (build-system cmake-build-system)
+    (home-page "https://www.glfw.org/")
+    (synopsis "A multi-platform library for OpenGL, OpenGL ES, Vulkan, window
+and input")
+    (description "GLFW is an Open Source, multi-platform library for OpenGL,
+OpenGL ES and Vulkan development on the desktop.  It provides a simple API for
+creating windows, contexts and surfaces, receiving input and events.
+
+GLFW is written in C and supports Windows, macOS, Wayland and X11.")
+    (license license:zlib)))
+
 (define-public guile-opengl
   (package
     (name "guile-opengl")
