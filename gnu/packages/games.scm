@@ -12848,7 +12848,7 @@ the map.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/FreeRCT/FreeRCT")
+                    (url "https://codeberg.org/FreeRCT/FreeRCT")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
