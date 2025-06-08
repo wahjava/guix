@@ -72,11 +72,11 @@ nicht beinhaltet, möchten Sie vielleicht
 Bash-Komplettierung weiterhin für neue Benutzer Befehle vervollständigt.  Siehe
 @samp{info \"(guix.de) Service-Referenz\"} für weitere Informationen und
 Beispiele.")
-	(zh "两个新服务，@code{etc-profile-d-service-type} 和 @code{etc-bashrc-d-service-type}，现在可用于配置和扩展您的 shell。这些服务接受一个必须具有 @file{.sh} 文件扩展名的类文件对象列表。
+	(zh "您现在可在 Guix 中使用新服务 @code{etc-profile-d-service-type} 和 @code{etc-bashrc-d-service-type} 配置和扩展 shell。这些服务接受一个必须具有 @file{.sh} 文件扩展名的类文件对象列表。
 
-@code{etc-bashrc-d-service-type} 现在取代了 skeleton 文件（skeleton file）来提供 Guix 提供的 Bash 别名 (@file{/etc/bashrc.d/aliases.sh})。它也用于通过提供 @file{/etc/bashrc.d/bash_completion.sh} 来配置 @code{bash-completion} 包。
+Guix 现在用 @code{etc-bashrc-d-service-type} 取代了 skeleton 文件（skeleton file），以提供 Bash 别名（@file{/etc/bashrc.d/aliases.sh}）。该服务也能通过提供 @file{/etc/bashrc.d/bash_completion.sh} 来配置 @code{bash-completion} 包。
 
-如果您的 @code{operating-system} 配置不包含 @code{%base-services} 或 @code{%desktop-services}，您可能需要将 @code{(service etc-bashrc-d-service-type)} 添加到您的服务列表中，以确保 Bash 补全功能对新用户继续有效。更多信息和示例请参阅 @samp{info \"(guix.zh_CN) 服务参考\"}。")))
+如果您的 @code{operating-system} 配置不包含 @code{%base-services} 或 @code{%desktop-services}，则可能需要将 @code{(service etc-bashrc-d-service-type)} 添加到 @code{services} 列表中，以确保 Bash 补全功能对新用户继续有效。更多信息和示例请参阅 @samp{info \"(guix.zh_CN) 服务参考\"}。")))
 
  (entry (commit "3b6e499d5e635e2189f1bf60279dbf5175c404bd")
         (title
