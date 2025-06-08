@@ -1,0 +1,32 @@
+From cc5ef85966ac968654711cf6e401584d4218beed Mon Sep 17 00:00:00 2001
+From: Alexey Abramov <levenson@mmer.org>
+Date: Sun, 8 Jun 2025 14:59:11 +0200
+Subject: [PATCH] Port of a patch to support largfiles on 32bit systems
+
+See
+https://cgit.git.savannah.gnu.org/cgit/autoconf.git/commit/?id=b71143738516017f0e0d347a4025301c06c40254
+---
+ configure | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure b/configure
+index 4c843f8..3ab502a 100755
+--- a/configure
++++ b/configure
+@@ -4121,12 +4121,12 @@ if test ${ac_cv_sys_largefile_opts+y}
+ then :
+   printf %s "(cached) " >&6
+ else case e in #(
+-  e) ac_save_CC="$CC"
++  e) ac_save_CC="$CPPFLAGS"
+   ac_opt_found=no
+   for ac_opt in "none needed" "-D_FILE_OFFSET_BITS=64" "-D_LARGE_FILES=1" "-n32"; do
+     if test x"$ac_opt" != x"none needed"
+ then :
+-  CC="$ac_save_CC $ac_opt"
++  CPPFLAGS="$ac_save_CC $ac_opt"
+ fi
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+-- 
+2.49.0

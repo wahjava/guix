@@ -6684,7 +6684,8 @@ versions of @command{find}, including POSIX, GNU, and *BSD find.")
        (uri (string-append "https://rdfind.pauldreik.se/" name "-" version
                            ".tar.gz"))
        (sha256
-        (base32 "0afzwhmzlzhzzckd9iwkbx6grrzm5p4vk0zbpz8lz7hx5qan7i3q"))))
+        (base32 "0afzwhmzlzhzzckd9iwkbx6grrzm5p4vk0zbpz8lz7hx5qan7i3q"))
+       (patches (search-patches "rdfind-Port-AC_SYS_LARGEFILE-to-cpp.patch"))))
     (build-system gnu-build-system)
     (native-inputs (list which))
     (inputs (list nettle))
