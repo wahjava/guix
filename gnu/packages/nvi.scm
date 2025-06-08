@@ -76,12 +76,12 @@
                  '("vi_cv_sprintf_count=yes")
                  '()))
       #:make-flags
-      (list
-       ;; nvi's configure chokes on passing CFLAGS and ignores
-       ;; CFLAGS set in the environment
-       (string-append "CFLAGS=-g -O2"
-                      " -Wno-error=implicit-function-declaration"
-                      " -Wno-error=incompatible-pointer-types"))
+      #~(list
+         ;; nvi's configure chokes on passing CFLAGS and ignores
+         ;; CFLAGS set in the environment
+         (string-append "CFLAGS=-g -O2"
+                        " -Wno-error=implicit-function-declaration"
+                        " -Wno-error=incompatible-pointer-types"))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'configure 'fix-configure
