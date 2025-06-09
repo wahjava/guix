@@ -66,14 +66,13 @@
 ;;; A block entry can contain a list of block entries, effectively allowing
 ;;; nested blocks
 (define (block-entry? data)
-  (or (null? data)
-      (match data
-        (((? symbol?)
-          (or (? string?)
-              (? number?)
-              (? boolean?)
-              (? block-entries?)))
-         #t))))
+  (match data
+    (((? symbol?)
+      (or (? string?)
+          (? number?)
+          (? boolean?)
+          (? block-entries?)))
+     #t)))
 
 ;;; A block entry will be serialized as an indented hyprlang
 ;;; statement, nested blocks are allowed
@@ -102,8 +101,8 @@
           #f)) "\n")))
 
 ;;; List of block entries
-(define (block-entries? data)
-  (every block-entry? data))
+(define block-entries?
+  (list-of block-entry?))
 
 (define (serialize-block-entries _ entries level)
   (apply string-append
@@ -122,8 +121,8 @@
                     #:module-path %load-path)))
 
 ;;; A list of valid executables
-(define (list-of-executables? values)
-  (every executable? values))
+(define list-of-executables?
+  (list-of executable?))
 
 (define (serialize-list-of-executables name values)
   #~(apply string-append
@@ -215,8 +214,8 @@
                          (serialize-joined m monitor-fields))))
 
 ;;; List of monitors definition
-(define (list-of-monitors? arg)
-  (every monitor? arg))
+(define list-of-monitors?
+  (list-of monitor?))
 
 (define (serialize-list-of-monitors name monitors)
   #~(string-join (list #$@(map (λ (m)
@@ -234,23 +233,13 @@
                    #$(serialize-joined m env-fields)))
 
 ;;; List of environment variables
-(define (list-of-envs? arg)
-  (every env? arg))
+(define list-of-envs?
+  (list-of env?))
 
 (define (serialize-list-of-envs name env)
   #~(string-join
      (list #$@(map (λ (v) (serialize-env name v)) env))
      "\n"))
-
-;;; List of strings
-(define (list-of-strings? arg)
-  (every string? arg))
-
-;;; String lists will be serialized as name = value\n
-(define (serialize-string-list name values)
-  (apply string-append
-         (map (λ (w)
-                (string-append (symbol->string name) " = " w "\n")) values)))
 
 ;;; Mod key
 (define (mod? x)
@@ -260,7 +249,8 @@
   (string-upcase (object->string m)))
 
 ;;; List of mods
-(define (list-of-mods? x) (every mod? x))
+(define list-of-mods?
+  (list-of mod?))
 
 (define (serialize-list-of-mods name mods)
   (string-join (map (lambda (m) (serialize-mod name m)) mods) " + "))
@@ -315,8 +305,8 @@
   (string-append value "\n"))
 
 ;;; List of bindings
-(define (list-of-bindings? value)
-  (every binding? value))
+(define list-of-bindings?
+  (list-of binding?))
 
 (define (serialize-list-of-bindings name n)
   #~(string-join
@@ -345,8 +335,8 @@
      "\nsubmap = reset\n"))
 
 ;;; List of submaps
-(define (list-of-submaps? v)
-  (every submap? v))
+(define list-of-submaps?
+  (list-of submap?))
 
 (define (serialize-list-of-submaps name submaps)
   #~(string-append
