@@ -156,9 +156,10 @@ system is expected to be on DEVICE."
   ;; inferiors.
   (file-append (package-source guix) "/etc/guix-install.sh"))
 
-(define (run-foreign-install-test image name)
+(define* (run-foreign-install-test image name #:key (deb-files '()))
   "Run an installation of Guix in IMAGE, the QCOW2 image of a systemd-based
-GNU/Linux distro, and check that the installation is functional."
+GNU/Linux distro, and check that the installation is functional.  Prior to
+that, install all of DEB-FILES with 'dpkg -i'."
   (define instrumented-image
     (qcow-image-with-marionette image
                                 #:name (string-append name ".qcow2")))
@@ -224,6 +225,14 @@ GNU/Linux distro, and check that the installation is functional."
                                 #t)
                              marionette))
 
+          (test-assert "install extra .deb packages"
+            (marionette-eval
+             '(and #$@(map (lambda (deb)
+                             #~(system* "dpkg" "-i"
+                                        (in-vicinity "/host" (basename #$deb))))
+                           deb-files))
+             marionette))
+
           (test-assert "run install script"
             (marionette-eval '(system
                                (string-append
@@ -273,10 +282,21 @@ GNU/Linux distro, and check that the installation is functional."
      (base32
       "06vlcq2dzgczlyp9lfkkdf3dgvfjp22lh5xz0mnl0bdgzq61sykb"))))
 
+(define debian-12-uidmap-deb-file
+  ;; This package provides 'newgidmap' & co., used by the unprivileged daemon.
+  (origin
+    (uri
+     "http://ftp.debian.org/debian/pool/main/s/shadow/uidmap_4.13+dfsg1-1+deb12u1_amd64.deb")
+    (method url-fetch)
+    (sha256
+     (base32
+      "0iqhljzmnni3k3jc1xb0mrb7cqywkzrmdc2322kd8b1wpw45zv8l"))))
+
 (define %test-debian-install
   (system-test
    (name "debian-install")
    (description
     "Test installation of Guix on Debian using the @file{guix-install.sh}
 script.")
-   (value (run-foreign-install-test debian-12-qcow2 name))))
+   (value (run-foreign-install-test debian-12-qcow2 name
+                                    #:deb-files (list debian-12-uidmap-deb-file)))))
