@@ -52,6 +52,7 @@
                    (cargo-inputs 'gleam)))
     (synopsis "Compiler for Gleam, a type-safe functional language")
     (description
-     "Gleam is a type-safe, impure functional programming language that compiles to Erlang or Javascript.")
+     "Gleam is a type-safe, impure functional programming language that compiles to
+ Erlang or Javascript.")
     (license license:asl2.0)
-    (home-page "https://gleam.run/")))
+    (home-page "https://gleam.run")))
