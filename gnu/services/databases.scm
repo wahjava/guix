@@ -28,6 +28,8 @@
 
 (define-module (gnu services databases)
   #:use-module (gnu services)
+  #:use-module (gnu services configuration)
+  #:use-module (gnu services configuration environment-variables)
   #:use-module (gnu services shepherd)
   #:use-module (gnu system shadow)
   #:autoload   (gnu system accounts) (default-shell)
@@ -41,8 +43,11 @@
   #:use-module (guix modules)
   #:use-module (guix packages)
   #:use-module (guix records)
+  #:use-module (guix diagnostics)
   #:use-module (guix gexp)
+  #:use-module (guix i18n)
   #:use-module (srfi srfi-1)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 match)
   #:export (postgresql-config-file
             postgresql-config-file?
@@ -85,6 +90,35 @@
             postgresql-role-configuration-roles
 
             postgresql-role-service-type
+
+            postgresql-backup-configuration
+            postgresql-backup-configuration?
+            postgresql-backup-configuration-fields
+            postgresql-backup-configuration-package
+            postgresql-backup-configuration-schedule
+            postgresql-backup-configuration-shepherd-requirement
+            postgresql-backup-configuration-databases
+            postgresql-backup-configuration-backup-user
+            postgresql-backup-configuration-hostname
+            postgresql-backup-configuration-username
+            postgresql-backup-configuration-backup-dir
+            postgresql-backup-configuration-schema-only-list
+            postgresql-backup-configuration-enable-custom-backups?
+            postgresql-backup-configuration-enable-plain-backups?
+            postgresql-backup-configuration-enable-globals-backups
+            postgresql-backup-configuration-day-of-week-to-keep
+            postgresql-backup-configuration-days-to-keep
+            postgresql-backup-configuration-weeks-to-keep
+            postgresql-backup-configuration-file
+            postgresql-backup-log-file
+            postgresql-backup-program
+
+            postgresql-backup-extension
+            postgresql-backup-extension?
+            postgresql-backup-extension-fields
+            postgresql-backup-extension-databases
+
+            postgresql-backup-service-type
 
             memcached-service-type
             memcached-configuration
@@ -530,6 +564,269 @@ rolname = '" ,name "')) as not_exists;\n"
                 (default-value (postgresql-role-configuration))
                 (description "Ensure the specified PostgreSQL roles are
 created after the PostgreSQL database is started.")))
+
+(define (gexp-or-string? value)
+  (or (gexp? value)
+      (string? value)))
+
+(define list-of-strings?
+  (list-of string?))
+(define list-of-symbols?
+  (list-of symbol?))
+
+(define-maybe/no-serialization string)
+(define-maybe/no-serialization positive)
+
+(define-configuration/no-serialization postgresql-backup-configuration
+  (package
+   (package postgresql-backup-scripts)
+   "The @code{postgresql-backup-scripts} used to run backups.")
+  (schedule
+   (gexp-or-string)
+   "A string or a gexp representing the frequency of the dumps.  Gexp must
+evaluate to @code{calendar-event} records or to strings.  Strings must contain
+Vixie cron date lines.")
+  (shepherd-requirement
+   (list-of-symbols '(user-processes file-systems postgresql))
+   "A list of Shepherd services that will be waited for, before starting
+the backup service.")
+  (databases
+   (list-of-strings '())
+   "List of database names.  These will be the only databases to be dumped.
+When unset all databases in the cluster will be dumped (with the exclusion of
+those mentioned in the @code{schema-only-list} field, which will have only their
+schema dumped).")
+  (backup-user
+   (maybe-string)
+   "Optional system user to run backups as.  If the user the script is running
+as doesn't match this the script terminates.  Leave blank to skip check.")
+  (hostname
+   (string "/var/run/postgresql")
+   "Optional hostname to adhere to @code{pg_hba} policies.")
+  (username
+   (string "postgres")
+   "Optional username to connect to database as.")
+  (backup-dir
+   (string "/var/lib/postgresql-backups")
+   "The directory where backups will be stored.")
+  (schema-only-list
+   (list-of-strings '())
+   "List of strings to match against in database name, separated by space or
+comma, for which we only wish to keep a backup of the schema, not the data.
+Any database names which contain any of these values will be considered
+candidates (e.g. @code{\"system_log\"} will match
+@code{\"dev_system_log_2010-01\"}).")
+  (enable-custom-backups?
+   (boolean #t)
+   "Whether the service will produce a custom-format backup.")
+  (enable-plain-backups?
+   (boolean #f)
+   "Whether the service will produce a gzipped plain-format backup.")
+  (enable-globals-backups?
+   (boolean #f)
+   "Whether the service will produce gzipped SQL file containing the cluster
+globals, like users and passwords.")
+  (day-of-week-to-keep
+   (maybe-positive)
+   "Which day to take the weekly backup from (1-7 = Monday-Sunday).")
+  (days-to-keep
+   (maybe-positive)
+   "Number of days to keep daily backups.")
+  (weeks-to-keep
+   (maybe-positive)
+   "How many weeks to keep weekly backups."))
+
+(define-configuration/no-serialization postgresql-backup-extension
+  (databases
+   (list-of-strings '())
+   "List of database names.  These will be the merged with
+names from other extensions."))
+
+(define (serialize-postgresql-backup-configuration config)
+  (define databases
+    (postgresql-backup-configuration-databases config))
+  (define schema-only-list
+    (postgresql-backup-configuration-schema-only-list config))
+  (define variables
+    (configuration->environment-variables
+     config postgresql-backup-configuration-fields
+     #:excluded '(schedule schema-only-list
+                  shepherd-requirement package databases)
+     #:true-value "yes"
+     #:false-value "no"))
+  #~(begin
+      (use-modules (ice-9 format))
+      (let ((schema-only-list (list #$@schema-only-list))
+            (databases (list #$@databases))
+            (variables
+             (list #$@(map (lambda (variable)
+                             #~(format #f "~a=~a"
+                                       #$(car variable)
+                                       #$(cdr variable)))
+                           variables))))
+        (format #f "##############################
+## POSTGRESQL BACKUP CONFIG ##
+##############################
+~{~%~a~}
+
+######################################~%"
+                (append
+                 (if (> (length schema-only-list) 0)
+                     (list
+                      (format #f "SCHEMA_ONLY_LIST=\"~{ ~a~}\""
+                              schema-only-list))
+                     '())
+                 (if (> (length databases) 0)
+                     (list
+                      (format #f "DATABASES=\"~{ ~a~}\""
+                              databases))
+                     '())
+                 variables)))))
+
+(define (postgresql-backup-configuration-file config)
+  (mixed-text-file "pg_backup.config"
+   (serialize-postgresql-backup-configuration config)))
+
+(define (postgresql-backup-user config)
+  (define backup-user (postgresql-backup-configuration-username config))
+  (if (maybe-value-set? backup-user)
+      backup-user
+      (postgresql-backup-configuration-username config)))
+
+(define (rotated-backup? config)
+  (any
+   maybe-value-set?
+   (list
+    (postgresql-backup-configuration-day-of-week-to-keep config)
+    (postgresql-backup-configuration-days-to-keep config)
+    (postgresql-backup-configuration-weeks-to-keep config))))
+
+(define (postgresql-backup-entrypoint config)
+  #~(string-append
+     #$(postgresql-backup-configuration-package config)
+     (if #$(rotated-backup? config)
+         "/bin/pg_backup_rotated.sh"
+         "/bin/pg_backup.sh")))
+
+(define (postgresql-backup-program config)
+  (program-file "postgresql-backup"
+   #~(begin
+       (let ((bash (string-append #$bash-minimal "/bin/bash"))
+             (configuration-file
+              #$(postgresql-backup-configuration-file config)))
+         (execlp bash bash #$(postgresql-backup-entrypoint config)
+                 "-c" configuration-file)))))
+
+(define (postgresql-backup-log-file config)
+  "/var/log/postgresql-backup.log")
+
+(define (postgresql-backup-configuration->shepherd-service config)
+  (let ((schedule (postgresql-backup-configuration-schedule config))
+        (configuration-file
+         (postgresql-backup-configuration-file config))
+        (user (postgresql-backup-user config))
+        (log-file (postgresql-backup-log-file config))
+        (shepherd-requirement
+         (postgresql-backup-configuration-shepherd-requirement config)))
+    (shepherd-service (provision '(postgres-backups))
+                      (requirement shepherd-requirement)
+                      (modules
+                       '((shepherd service timer)))
+                      (documentation
+                       "Run PostgreSQL backups on a regular basis.")
+                      (start
+                       #~(make-timer-constructor
+                          (if (string? #$schedule)
+                              (cron-string->calendar-event #$schedule)
+                              #$schedule)
+                          (command
+                           (list #$(postgresql-backup-program config))
+                           #:user #$user
+                           #:group
+                           (group:name
+                            (getgrgid
+                             (passwd:gid (getpwnam #$user)))))
+                          #:log-file #$log-file
+                          #:wait-for-termination? #t))
+                      (stop #~(make-timer-destructor))
+                      (actions
+                       (list (shepherd-action
+                              (inherit shepherd-trigger-action)
+                              (documentation "Manually trigger a dump,
+without waiting for the scheduled time."))
+                             (shepherd-action
+                              (name 'configuration)
+                              (documentation
+                               "Prints the configuration file name.")
+                              (procedure
+                               #~(lambda _
+                                   (format #t "~a~%"
+                                           #$configuration-file)))))))))
+
+(define (postgresql-backup-activation config)
+  "Return an activation gexp for Postgresql-Backup."
+  #~(begin
+      (use-modules (guix build utils))
+      (let* ((user (getpwnam #$(postgresql-backup-user config)))
+             (uid (passwd:uid user))
+             (gid (passwd:gid user))
+             (dir #$(postgresql-backup-configuration-backup-dir config)))
+        ;; Setup datadir
+        (mkdir-p dir)
+        (chown dir uid gid)
+        (chmod dir #o700))))
+
+(define (postgresql-backup-databases-merge a b)
+  (let loop ((merged '())
+             (lst (append a b)))
+    (if (null? lst)
+        merged
+        (loop
+         (let ((element (car lst)))
+           (when (member element merged)
+             (raise
+              (formatted-message
+               (G_ "Duplicated database name: ~a. Database names should be
+unique, please remove the duplicate.") element)))
+           (cons element merged))
+         (cdr lst)))))
+
+(define (postgresql-backup-extension-merge a b)
+  (postgresql-backup-extension
+   (databases (postgresql-backup-databases-merge
+                (postgresql-backup-extension-databases a)
+                (postgresql-backup-extension-databases b)))))
+
+(define postgresql-backup-service-type
+  (service-type
+   (name 'postgresql-backup)
+   (extensions
+    (list
+     (service-extension
+      activation-service-type
+      postgresql-backup-activation)
+     (service-extension
+      profile-service-type
+      (compose list postgresql-backup-configuration-package))
+     (service-extension
+      shepherd-root-service-type
+      (compose
+       list postgresql-backup-configuration->shepherd-service))))
+   ;; Concatenate POSTGRESQL-BACKUP databases names.
+   (compose (lambda (args)
+              (fold postgresql-backup-extension-merge
+                    (postgresql-backup-extension)
+                    args)))
+   (extend
+    (lambda (config extension)
+      (postgresql-backup-configuration
+       (inherit config)
+       (databases
+        (postgresql-backup-databases-merge
+         (postgresql-backup-configuration-databases config)
+         (postgresql-backup-extension-databases extension))))))
+   (description
+    "Run PostgreSQL database dumps on a regular basis.")))
 
 
 ;;;

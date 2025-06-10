@@ -33,6 +33,7 @@
   #:use-module (srfi srfi-1)
   #:export (%test-memcached
             %test-postgresql
+            %test-postgresql-backups
             %test-timescaledb
             %test-mysql))
 
@@ -165,7 +166,15 @@
                     (postgresql-role
                      (name "a_database")
                      (password-file "/password")
-                     (create-database? #t))))))))
+                     (create-database? #t))))))
+   (service postgresql-backup-service-type
+            (postgresql-backup-configuration
+             (schedule "0 5 * * *")
+             (databases '("root"))))
+   (simple-service 'postgresql-dumps
+                   postgresql-backup-service-type
+                   (postgresql-backup-extension
+                    (databases '("a_database"))))))
 
 (define (run-postgresql-test)
   "Run tests in %POSTGRESQL-OS."
@@ -295,6 +304,111 @@
    (name "postgresql")
    (description "Start the PostgreSQL service.")
    (value (run-postgresql-test))))
+
+;; Test PostgreSQL backups.
+(define (run-postgresql-backups-test)
+  "Run tests in %POSTGRESQL-OS."
+  (define os
+    (marionette-operating-system
+     %postgresql-os
+     #:imported-modules '((gnu services herd)
+                          (guix combinators))))
+
+  (define vm
+    (virtual-machine
+     (operating-system os)
+     (memory-size 512)))
+
+  (define test
+    (with-imported-modules '((gnu build marionette))
+      #~(begin
+          (use-modules (srfi srfi-64)
+                       (ice-9 popen)
+                       (ice-9 rdelim)
+                       (ice-9 textual-ports)
+                       (gnu build marionette))
+          (define (read-lines invocation)
+            (define (get-lines port)
+              (let ((lines-string (get-string-all port)))
+                (string-split lines-string #\newline)))
+
+            (with-input-from-port (open-input-pipe
+                                   (string-join invocation " "))
+              (lambda _
+                (get-lines (current-input-port)))))
+
+          (define marionette
+            (make-marionette (list #$vm)))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "postgresql-backups")
+
+          ;; Wait for databases to be provisioned.
+          (marionette-eval
+           '(begin
+              (let loop ((i 10))
+                (unless (or (zero? i)
+                            (and (file-exists? #$%role-log-file)
+                                 (string-contains
+                                  (call-with-input-file #$%role-log-file
+                                    get-string-all)
+                                  ";\nCREATE DATABASE")))
+                  (sleep 1)
+                  (loop (- i 1)))))
+           marionette)
+
+          ;; Trigger a backup.
+          (marionette-eval
+           '(begin
+              (use-modules (gnu services herd)
+                           (rnrs base))
+              (with-shepherd-action 'postgres-backups ('trigger) results
+                results))
+           marionette)
+
+          (sleep 5)
+
+          (define backups-directory
+            (marionette-eval
+             '(begin
+                (use-modules (ice-9 popen)
+                             (ice-9 rdelim)
+                             (ice-9 textual-ports)
+                             (srfi srfi-1))
+                (define (read-lines invocation)
+                  (define (get-lines port)
+                    (let ((lines-string (get-string-all port)))
+                      (string-split lines-string #\newline)))
+
+                  (with-input-from-port (open-input-pipe
+                                         (string-join invocation " "))
+                    (lambda _
+                      (get-lines (current-input-port)))))
+
+                (first
+                 (read-lines
+                  (list "bash" "-c" "'ls /var/lib/postgresql-backups/'"))))
+             marionette))
+
+          (test-assert "dumps created"
+            (and
+              (map
+               (lambda (file)
+                 (wait-for-file
+                  (string-append "/var/lib/postgresql-backups/"
+                                 backups-directory "/" file)
+                  marionette #:timeout 120))
+               '("a_database.custom" "root.custom"))))
+
+          (test-end))))
+
+  (gexp->derivation "postgresql-backups-test" test))
+
+(define %test-postgresql-backups
+  (system-test
+   (name "postgresql-backups")
+   (description "Run PostgreSQL dumps.")
+   (value (run-postgresql-backups-test))))
 
 ;; Test TimescaleDB, a PostgreSQL extension.
 (define %timescaledb-os

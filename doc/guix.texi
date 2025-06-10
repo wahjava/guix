@@ -28076,6 +28076,120 @@ The initial PostgreSQL roles to create.
 @end table
 @end deftp
 
+@defvar postgresql-backup-service-type
+This service allows to dump PostgreSQL databases individually in a cluster.
+This is an example of its use.
+
+@lisp
+(service postgresql-backup-service-type
+         (service postgresql-backup-service-type
+                  (postgresql-backup-configuration
+                   ;; Every day at 5 AM.
+                   (schedule "0 5 * * *")
+                   (day-of-week-to-keep 6)
+                   (days-to-keep 7)
+                   (weeks-to-keep 5))))
+@end lisp
+
+This service can be extended with extra databases, as in this
+example:
+
+@lisp
+(service-extension 'postgresql-dumps
+                   postgresql-backup-service-type
+                   (postgresql-backup-extension
+                    (databases '("cuirass"))))
+@end lisp
+@end defvar
+
+@c %start of fragment
+
+@deftp {Data Type} postgresql-backup-configuration
+Available @code{postgresql-backup-configuration} fields are:
+
+@table @asis
+@item @code{package} (default: @code{postgresql-backup-scripts}) (type: package)
+The @code{postgresql-backup-scripts} used to run backups.
+
+@item @code{schedule} (type: gexp-or-string)
+A string or a gexp representing the frequency of the dumps.  Gexp must
+evaluate to @code{calendar-event} records or to strings.  Strings must
+contain Vixie cron date lines.
+
+@item @code{shepherd-requirement} (default: @code{'(user-processes file-systems postgresql)}) (type: list-of-symbols)
+A list of Shepherd services that will be waited for, before starting the
+backup service.
+
+@item @code{databases} (default: @code{'()}) (type: list-of-strings)
+List of database names.  These will be the only databases to be dumped.
+When unset all databases in the cluster will be dumped (with the
+exclusion of those mentioned in the @code{schema-only-list} field, which
+will have only their schema dumped).
+
+@item @code{backup-user} (type: maybe-string)
+Optional system user to run backups as.  If the user the script is
+running as doesn't match this the script terminates.  Leave blank to
+skip check.
+
+@item @code{hostname} (default: @code{"/var/run/postgresql"}) (type: string)
+Optional hostname to adhere to @code{pg_hba} policies.
+
+@item @code{username} (default: @code{"postgres"}) (type: string)
+Optional username to connect to database as.
+
+@item @code{backup-dir} (default: @code{"/var/lib/postgresql-backups"}) (type: string)
+The directory where backups will be stored.
+
+@item @code{schema-only-list} (default: @code{'()}) (type: list-of-strings)
+List of strings to match against in database name, separated by space or
+comma, for which we only wish to keep a backup of the schema, not the
+data.  Any database names which contain any of these values will be
+considered candidates (e.g.  @code{"system_log"} will match
+@code{"dev_system_log_2010-01"}).
+
+@item @code{enable-custom-backups?} (default: @code{#t}) (type: boolean)
+Whether the service will produce a custom-format backup.
+
+@item @code{enable-plain-backups?} (default: @code{#f}) (type: boolean)
+Whether the service will produce a gzipped plain-format backup.
+
+@item @code{enable-globals-backups?} (default: @code{#f}) (type: boolean)
+Whether the service will produce gzipped SQL file containing the cluster
+globals, like users and passwords.
+
+@item @code{day-of-week-to-keep} (type: maybe-positive)
+Which day to take the weekly backup from (1-7 = Monday-Sunday).
+
+@item @code{days-to-keep} (type: maybe-positive)
+Number of days to keep daily backups.
+
+@item @code{weeks-to-keep} (type: maybe-positive)
+How many weeks to keep weekly backups.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} postgresql-backup-extension
+Available @code{postgresql-backup-extension} fields are:
+
+@table @asis
+@item @code{databases} (default: @code{'()}) (type: list-of-strings)
+List of database names.  These will be the merged with
+names from other extensions.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
 @subsubheading MariaDB/MySQL
 
 @defvar mysql-service-type
