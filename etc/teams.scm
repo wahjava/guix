@@ -614,6 +614,7 @@ GLib/GIO, GTK, GStreamer and Webkit."
   (team 'go
         #:name "Go team"
         #:scope (list "gnu/packages/configuration-management.scm"
+                      "gnu/packages/go-apps.scm"
                       (make-regexp* "gnu/packages/golang(-.+|)\\.scm$")
                       "gnu/packages/syncthing.scm"
                       "gnu/packages/terraform.scm"

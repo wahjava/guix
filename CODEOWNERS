@@ -158,6 +158,7 @@ guix/build/glib-or-gtk-build-system\.scm           @guix/gnome
 guix/build/meson-build-system\.scm                 @guix/gnome
 
 gnu/packages/configuration-management\.scm         @guix/go
+gnu/packages/go-apps\.scm                          @guix/go
 gnu/packages/golang(-.+|)\.scm$                    @guix/go
 gnu/packages/syncthing\.scm                        @guix/go
 gnu/packages/terraform\.scm                        @guix/go
