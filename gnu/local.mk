@@ -567,6 +567,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/poedit.scm				\
   %D%/packages/polkit.scm			\
   %D%/packages/popt.scm				\
+  %D%/packages/postmarketos.scm			\
   %D%/packages/potassco.scm				\
   %D%/packages/power.scm			\
   %D%/packages/printers.scm			\
@@ -1302,7 +1303,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/firebird-riscv64-support-pt1.patch	\
   %D%/packages/patches/firebird-riscv64-support-pt2.patch	\
   %D%/packages/patches/flann-cmake-3.11.patch			\
-  %D%/packages/patches/flatpak-fix-path.patch			\
   %D%/packages/patches/flatpak-fix-fonts-icons.patch	\
   %D%/packages/patches/flatpak-fix-icon-validation.patch	\
   %D%/packages/patches/flatpak-unset-gdk-pixbuf-for-sandbox.patch	\
@@ -1948,6 +1948,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/openbios-aarch64-riscv64-support.patch	\
   %D%/packages/patches/openboardview-use-system-imgui.patch	\
   %D%/packages/patches/openboardview-use-system-mpc.patch	\
+  %D%/packages/patches/openbox-add-fix-for-glib2-exposed-segfault.patch \
   %D%/packages/patches/openbox-python3.patch			\
   %D%/packages/patches/openjdk-currency-time-bomb.patch		\
   %D%/packages/patches/openjdk-currency-time-bomb2.patch	\
@@ -1979,6 +1980,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/openssh-trust-guix-store-directory.patch	\
   %D%/packages/patches/openresolv-restartcmd-guix.patch	\
   %D%/packages/patches/openrgb-unbundle-hueplusplus.patch	\
+  %D%/packages/patches/openscad-fix-path-in-expected-test-results-to-acommodate-diff.patch \
   %D%/packages/patches/opensles-add-license-file.patch			\
   %D%/packages/patches/openssl-1.1-c-rehash-in.patch		\
   %D%/packages/patches/openssl-3.0-c-rehash-in.patch		\
@@ -2042,6 +2044,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/quodlibet-fix-mtime-tests.patch		\
   %D%/packages/patches/qucs-s-qucsator-rf-search.patch		\
   %D%/packages/patches/qxlsx-fix-include-directory.patch	\
+  %D%/packages/patches/scn-fast-float-compat.patch		\
   %D%/packages/patches/sdcc-disable-non-free-code.patch		\
   %D%/packages/patches/sdl-pango-api_additions.patch		\
   %D%/packages/patches/sdl-pango-blit_overflow.patch		\
@@ -2338,7 +2341,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/transmission-4.0.6-fix-build.patch	\
   %D%/packages/patches/trytond-add-guix_trytond_path.patch	\
   %D%/packages/patches/ttf2eot-cstddef.patch			\
-  %D%/packages/patches/tup-unbundle-dependencies.patch		\
   %D%/packages/patches/turbovnc-custom-paths.patch		\
   %D%/packages/patches/turbovnc-find-system-packages.patch	\
   %D%/packages/patches/tuxpaint-stamps-path.patch		\

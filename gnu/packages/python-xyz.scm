@@ -1112,6 +1112,27 @@ similar XML files, in the same way the @command{diff} utility does it.")
 Library.")
     (license license:expat)))
 
+(define-public python-jaconv
+  (package
+    (name "python-jaconv")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jaconv" version))
+       (sha256
+        (base32 "0qc1dx21vwlarhsg19l5rdjpjf7j7lamrcynaadf0xpj8yr79nij"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel python-nose))
+    (home-page "https://github.com/ikegami-yukino/jaconv")
+    (synopsis
+     "Pure-Python Japanese character interconverter for Hiragana, Katakana,
+Hankaku, Zenkaku")
+    (description
+     "jaconv (Japanese Converter) is interconverter for Hiragana, Katakana,
+Hankaku (half-width character) and Zenkaku (full-width character)")
+    (license license:expat)))
+
 (define-public python-janus
   (package
     (name "python-janus")
@@ -3331,6 +3352,18 @@ It implements many functionalities offered by command line tools such as: ps,
 top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
 iotop, uptime, pidof, tty, taskset, pmap.")
     (license license:bsd-3)))
+
+(define-public python-psutil-7
+  (package
+    (inherit python-psutil)
+    (name "python-psutil")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "psutil" version))
+       (sha256
+        (base32 "0mn42p9pzh0wynhk9i18iyvp8h54hbcsyczajmjcpv4blgmw7sbv"))))))
 
 (define-public python-scapy
   (package
@@ -7066,6 +7099,30 @@ something else) to Python data-types.")
        (sha256
         (base32
          "10zqvpaky51kgb8nd42bk7jwl8cn2zvayxjpdc1wwmpybj92x67s"))))))
+
+(define-public python-kconfiglib
+  (package
+    (name "python-kconfiglib")
+    (version "14.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "kconfiglib" version))
+       (sha256
+        (base32 "0g690bk789hsry34y4ahvly5c8w8imca90ss4njfqf7m2qicrlmy"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel
+           `(,python "tk")))
+    (home-page "https://github.com/ulfalizer/Kconfiglib")
+    (synopsis
+     "Flexible Python library for parsing and creating Linux Kconfig files")
+    (description
+     "Kconfiglib is a Python implementation of a parser for Linux Kconfig files.
+It can be used as a Python library or as a standalone terminal or GUI menuconfig
+interface.")
+    (license license:isc)))
 
 (define-public python-kitchen
   (package
@@ -14688,6 +14745,19 @@ adherence to RFC 6570, but adds a few extensions.")
      "Urwid is a curses-based UI/widget library for Python.  It includes many
 features useful for text console applications.")
     (license license:lgpl2.1+)))
+
+(define-public python-urwid-3
+  (package
+    (inherit python-urwid)
+    (name "python-urwid")
+    (version "3.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "urwid" version))
+       (sha256
+        (base32
+         "0y7bh77ad94i4i1nrdggrvk7vvl1fp2l6zm5lmwmgx3z3sx71jz7"))))))
 
 (define-public python-urwid-readline
   (package
@@ -31403,6 +31473,38 @@ structure.")
 for YAML and JSON.")
     (license license:expat)))
 
+(define-public python-pykakasi
+  (package
+    (name "python-pykakasi")
+    (version "2.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pykakasi" version))
+       (sha256
+        (base32 "18dhcw7myw5idajnfynjbvqxmyf9m0cygfwsavbbi7zmcf72l1gs"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags ''("-k" "not test_aozora")))
+    (propagated-inputs (list python-deprecated python-importlib-resources
+                             python-jaconv))
+    (native-inputs (list python-coverage
+                         python-py-cpuinfo
+                         python-pytest
+                         python-pytest-benchmark
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (home-page "https://codeberg.org/miurahr/pykakasi")
+    (synopsis "Kana kanji simple inversion library")
+    (description
+       "pykakasi is a Python Natural Language Processing @acronym{NLP, Natural
+Language Processing} library to transliterate hiragana, katakana and
+kanji (Japanese text) into rōmaji (Latin/Roman alphabet).  It can handle
+characters in NFC form.
+
+Its algorithms are based on the kakasi library, which is written in C.")
+    (license license:gpl3+)))
+
 (define-public python-dbus-python
   (package
     (name "python-dbus-python")
@@ -34037,13 +34139,13 @@ By default it uses the open Python vulnerability database Safety DB.")
 (define-public python-pypandoc
   (package
     (name "python-pypandoc")
-    (version "1.14")
+    (version "1.15")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pypandoc" version))
        (sha256
-        (base32 "15x161bxr7hky7rvq0jlgf1kxg6vdf069487casmpyxry7slak3b"))))
+        (base32 "04yfja8p8flvpjakyw7n43jb1jm3863w043l7zb43bhjwzmvw9ga"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -36026,6 +36128,21 @@ mangled symbols, which can be used for directly extracting type information.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "-x"
+              "--dist" "load"
+              "-n" (number->string (parallel-job-count))
+              "-k"
+              ;; test_mips32_missing_offset_in_instructions fails
+              ;; with capstone 5 and passes with capstone 4. Might
+              ;; be a capstone regressions, needs investigation.
+              ;;
+              ;; test_concrete_memset is a non-deterministic benchmark.
+              ;; test_similarity_fauxware is flaky.
+              (string-append
+               "not test_mips32_missing_offset_in_instructions"
+               " and not test_concrete_memset"
+               " and not test_similarity_fauxware"))
       #:phases #~(modify-phases %standard-phases
                    (add-after 'unpack 'patch-tests
                      (lambda* (#:key inputs #:allow-other-keys)
@@ -36045,20 +36162,11 @@ mangled symbols, which can be used for directly extracting type information.")
                          (substitute* "tests/common.py"
                            (("\\[\"cc\"\\]")
                             "[\"gcc\"]")))))
-                   (replace 'check
-                     (lambda* (#:key inputs tests? #:allow-other-keys)
-                       (when tests?
-                         (copy-recursively #$(this-package-native-input "binaries")
-                                           "../binaries")
-                         (with-directory-excursion "tests"
-                           ;; test_mips32_missing_offset_in_instructions fails
-                           ;; with capstone 5 and passes with capstone 4. Might
-                           ;; be a capstone regressions, needs investigation.
-                           ;;
-                           ;; test_concrete_memset is a non-deterministic benchmark.
-                           (invoke "pytest" "-vv" "-x" "--dist" "loadfile"
-                                   "-k" "not test_mips32_missing_offset_in_instructions and not test_concrete_memset"
-                                   "-n" (number->string (parallel-job-count)))))))
+                   (add-before 'check 'check-setup
+                     (lambda _
+                       (copy-recursively
+                        #$(this-package-native-input "binaries")
+                        "../binaries")))
                    (add-before 'build 'set-cc
                      (lambda _
                        (setenv "CC" "gcc"))))))
@@ -36087,7 +36195,7 @@ mangled symbols, which can be used for directly extracting type information.")
                              python-sqlalchemy
                              python-sympy
                              python-unique-log-filter
-                             unicorn))
+                             unicorn-2.0))
     (native-inputs `(("python-pytest" ,python-pytest)
                      ("python-pytest-xdist" ,python-pytest-xdist)
                      ("python-setuptools" ,python-setuptools)

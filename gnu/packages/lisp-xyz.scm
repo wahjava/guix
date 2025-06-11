@@ -27747,7 +27747,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "3.1")
+    (version "3.2")
     (source
      (origin
        (method git-fetch)
@@ -27756,7 +27756,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "046n80j6m16m71fpd5m5cpia50xav02sppxs5vp5dl6iiy2a420p"))))
+        (base32 "1cdvl4m41hmh1yvm06nwm0qf83x9abn6919x9qnzsfy66pvcb7p9"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")
@@ -28050,7 +28050,7 @@ the Processing language and shares some of the API.")
   ;; Update together with emacs-slime.
   (package
     (name "sbcl-slime-swank")
-    (version "2.30")
+    (version "2.31")
     (source
      (origin
        (file-name (git-file-name "cl-slime-swank" version))
@@ -28059,7 +28059,7 @@ the Processing language and shares some of the API.")
              (url "https://github.com/slime/slime/")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1z9mi663cs5gks1fz5yy9dycx47sbs6fdr47z05yc1nl8znqib99"))
+        (base32 "0nv99wq2vz053p0rn9953rhmyz4g40zdl01mz7z9xbklxzbsx6x7"))
        (modules '((guix build utils)))
        (snippet
         ;; The doc folder drags `gawk' into the closure.  Doc is already
@@ -29153,8 +29153,8 @@ formats.")
   (sbcl-package->ecl-package sbcl-swap-bytes))
 
 (define-public sbcl-sxql
-  (let ((commit "cc3478cacb0557475a59cf619dad66c5dc8080ba")
-        (revision "3"))
+  (let ((commit "2a9121b32d2745d622e97be45877348850f61f84")
+        (revision "4"))
     (package
       (name "sbcl-sxql")
       (version (git-version "0.1.0" revision commit))
@@ -29166,7 +29166,7 @@ formats.")
                (commit commit)))
          (file-name (git-file-name "cl-sqxl" version))
          (sha256
-          (base32 "011an993amy8q3gl4hyqrgnc93cgny3cv9gbp679rrmyyp8zmywr"))))
+          (base32 "11x4qgdwbddbk0a8avrirp1ksmphfxlimirfwvmiwi0jc4zd5csa"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria
@@ -31821,6 +31821,55 @@ the abstraction and portability layer as thin as possible.")
 
 (define-public ecl-usocket
   (sbcl-package->ecl-package sbcl-usocket))
+
+(define-public sbcl-alive-lsp
+ (package
+  (name "sbcl-alive-lsp")
+  (version "0.2.11")
+  (source
+   (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/nobody-famous/alive-lsp")
+          (commit (string-append "v" version))))
+    (file-name (git-file-name "sbcl-alive-lsp" version))
+    (sha256
+     (base32 "1dmgglrg7294vx8qacc5d2hkhfrids1iacihj2l8czrvwc3i19yz"))))
+  (build-system asdf-build-system/sbcl)
+  (inputs
+   (list sbcl-usocket
+         sbcl-cl-json
+         sbcl-bordeaux-threads
+         sbcl-flexi-streams))
+  (home-page "https://github.com/nobody-famous/alive-lsp")
+  (synopsis "Common Lisp Alive LSP")
+  (description "This package provides a Language Server Protocol
+implementation for use with the
+@url{https://github.com/nobody-famous/alive, Alive} Visual Studio Code
+extension.
+
+It can be used in Emacs like this:
+
+@example
+(require 'lsp)
+(defun lsp-lisp-alive-start-ls ()
+ \"Start the alive-lsp.\"
+ (interactive)
+ (when-let (((lsp--port-available \"localhost\" lsp-lisp-alive-port)))
+  (lsp-async-start-process #'ignore #'ignore
+   \"sbcl\"
+   \"--eval\"
+   \"(require :asdf)\"
+   \"--eval\"
+   \"(asdf:load-system :alive-lsp)\"
+   \"--eval\"
+   (format \"(alive/server::start :port %s)\"
+    lsp-lisp-alive-port))))
+@end example")
+  (license license:unlicense)))
+
+(define-public cl-alive-lsp
+ (sbcl-package->cl-source-package sbcl-alive-lsp))
 
 (define-public sbcl-utf8-input-stream
   (let ((commit "d33b57a4d439c2f0877e5513be45eb6940d92c68")

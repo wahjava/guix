@@ -18332,7 +18332,7 @@ As an example, an NFS file system would typically have a requirement for
 might not be sufficient as @code{networking} being marked as started
 does @emph{not} imply the network has already been configured and in
 working order (for example, when using
-@code{dhcpcd-client-service-type}).  For such cases, adding a
+@code{dhcp-client-service-type}).  For such cases, adding a
 requirement on a custom @code{network-online} service may be necessary.
 A sample @code{network-online} one-shot Shepherd service implementation
 is provided below:
@@ -21980,12 +21980,13 @@ Host name to send via DHCP, defaults to the current system host name.
 @item @code{duid} (default: @code{""}) (type: maybe-string)
 DHCPv4 clients require a unique client identifier, this option uses the
 DHCPv6 Unique Identifier as a DHCPv4 client identifier as well.  For
-more information, refer to @uref{https://www.rfc-editor.org/rfc/rfc4361, RFC 4361}
-and @code{dhcpcd.conf(5)}.
+more information, refer to
+@uref{https://www.rfc-editor.org/rfc/rfc4361,RFC 4361} and
+@code{dhcpcd.conf(5)}.
 
 @item @code{persistent?} (default: @code{#t}) (type: boolean)
-When true, automatically de-configure the interface when @command{dhcpcd}
-exits.
+When true, automatically de-configure the interface when
+@command{dhcpcd} exits.
 
 @item @code{option} (default: @code{("rapid_commit" "domain_name_servers" "domain_name" "domain_search" "host_name" "classless_static_routes" "interface_mtu")}) (type: list-of-strings)
 List of options to request from the server.
@@ -22019,9 +22020,13 @@ identifier, this is matually exclusive with the @code{duid} option.
 @item @code{extra-content} (type: maybe-string)
 Extra content to append to the configuration as-is.
 
-@end table
-@end deftp
+@item @code{shepherd-requirement} (default: @code{()}) (type: list-of-symbols)
+This is a list of symbols naming Shepherd services that this service
+will depend on.
 
+@end table
+
+@end deftp
 
 @cindex NetworkManager
 
@@ -22042,11 +22047,12 @@ Data type representing the configuration of NetworkManager.
 @item @code{network-manager} (default: @code{network-manager})
 The NetworkManager package to use.
 
-@item @code{shepherd-requirement} (default: @code{'(wpa-supplicant)})
-This option can be used to provide a list of symbols naming Shepherd services
-that this service will depend on, such as @code{'wpa-supplicant} or
-@code{'iwd} if you require authenticated access for encrypted WiFi or Ethernet
-networks.
+@item @code{shepherd-requirement} (default: @code{'(wireless-daemon)})
+This option can be used to provide a list of symbols naming Shepherd
+services that this service will depend on. The default @code{'wireless-daemon}
+is provided by @code{'wpa-supplicant-service-type} and @code{'iwd-service-type}.
+Make sure you have one of these configured. Note, that @code{%desktop-services}
+already include @code{wpa-supplicant-service-type}.
 
 @item @code{dns} (default: @code{"default"})
 Processing mode for DNS, which affects how NetworkManager uses the
@@ -22378,8 +22384,11 @@ It takes the following parameters:
 @item @code{wpa-supplicant} (default: @code{wpa-supplicant})
 The WPA Supplicant package to use.
 
-@item @code{requirement} (default: @code{'(user-processes loopback syslogd)}
+@item @code{shepherd-requirement} (default: @code{(user-processes loopback syslogd)}
 List of services that should be started before WPA Supplicant starts.
+
+@item @code{shepherd-provision} (default: @code{(wpa-supplicant wireless-daemon)}) (type: list-of-symbols)
+The name(s) of the service.
 
 @item @code{dbus?} (default: @code{#t})
 Whether to listen for requests on D-Bus.
@@ -22398,6 +22407,168 @@ Optional configuration file to use.
 List of additional command-line arguments to pass to the daemon.
 @end table
 @end deftp
+
+@cindex iwd, iNet Wireless Daemon
+@defvar iwd-service-type
+This is the service type to run iwd, the
+@uref{https://iwd.wiki.kernel.org/, iNet Wireless Daemon}, a daemon
+required to authenticate against encrypted WiFi networks.
+@end defvar
+
+@quotation Warning
+By default @code{iwd} removes and re-creates interfaces it manages.  It
+doesn't play nicely with @code{dhcp-client-service-type} that enumerates
+wireless interfaces before starting the Shepherd service.  Use either
+@code{dhcpcd-service-type} or the @code{iwd}'s built-in DHCP client (see
+@code{enable-network-configuration} option below).
+@end quotation
+
+@quotation Warning
+@code{iwd-service-type} conflicts with @code{wpa-supplicant-service-type}.
+Make sure only one is configured.
+@end quotation
+
+@c %start of fragment
+
+@deftp {Data Type} iwd-configuration
+Available @code{iwd-configuration} fields are:
+
+@table @asis
+@item @code{iwd} (default: @code{iwd}) (type: file-like)
+The IWD package to use.
+
+@item @code{interfaces} (default: @code{()}) (type: list-of-strings)
+If this is set, it must specify @dfn{glob patterns} matching network
+interfaces that IWD will control.
+
+@item @code{ignored-interfaces} (default: @code{()}) (type: list-of-strings)
+If this is set, it must specify @dfn{glob patterns} matching network
+interfaces that IWD will not manage.
+
+@item @code{phys} (default: @code{()}) (type: list-of-strings)
+If this is set, it must specify @dfn{glob patterns} matching network
+PHYs names that IWD will control.
+
+@item @code{ignored-phys} (default: @code{()}) (type: list-of-strings)
+If this is set, it must specify @dfn{glob patterns} matching network
+PHYs names that IWD will not manage.
+
+@item @code{shepherd-requirement} (default: @code{()}) (type: list-of-symbols)
+Shepherd requirements the service should depend on.
+
+@item @code{shepherd-provision} (default: @code{(iwd wireless-daemon)}) (type: list-of-symbols)
+The name(s) of the service.
+
+@item @code{config} (type: iwd-settings)
+Configuration settings.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} iwd-settings
+Available @code{iwd-settings} fields are:
+
+@table @asis
+@item @code{general} (type: iwd-general-settings)
+General settings.
+
+@item @code{network} (default: @code{(iwd-network-settings)}) (type: maybe-iwd-network-settings)
+Network settings.
+
+@item @code{scan} (type: maybe-iwd-scan-settings)
+Scan settings.
+
+@item @code{extra-config} (default: @code{()}) (type: list-of-strings)
+Extra configuration values to append to the IWD configuration file.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} iwd-general-settings
+Available @code{iwd-general-settings} fields are:
+
+@table @asis
+@item @code{enable-network-configuration?} (default: @code{#f}) (type: boolean)
+Setting this option to true enables @code{iwd} to configure the network
+interfaces with the IP addresses.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of option symbols/strings to string values to be
+appended to the General settings group.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} iwd-network-settings
+Available @code{iwd-network-settings} fields are:
+
+@table @asis
+@item @code{enable-ipv6?} (default: @code{#t}) (type: boolean)
+Sets the global default that tells @code{iwd} whether it should
+configure IPv6 addresses and routes
+
+@item @code{name-resolving-service} (default: @code{none}) (type: resolving-service)
+Configures a DNS resolution method used by the system.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of option symbols/strings to string values to be
+appended to the Network settings group.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} iwd-scan-settings
+Available @code{iwd-scan-settings} fields are:
+
+@table @asis
+@item @code{disable-periodic-scan?} (default: @code{#f}) (type: boolean)
+Setting this option to @code{#t} will prevent @code{iwd} from issuing
+the periodic scans for the available networks while disconnected.
+
+@item @code{initial-periodic-scan-interval} (default: @code{10}) (type: number)
+The initial periodic scan interval upon disconnect (in seconds).
+
+@item @code{maximum-periodic-scan-interval} (default: @code{300}) (type: number)
+The maximum periodic scan interval (in seconds).
+
+@item @code{disable-roaming-scan?} (default: @code{#f}) (type: boolean)
+Setting this option to @code{#t} will prevent @code{iwd} from trying to
+scan when roaming decisions are activated.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of option symbols/strings to string values to be
+appended to the Scan settings group.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
 
 @cindex ModemManager
 Some networking devices such as modems require special care, and this is

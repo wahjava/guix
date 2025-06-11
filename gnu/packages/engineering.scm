@@ -1892,7 +1892,7 @@ fully-vectorial and three-dimensional methods.")
 (define-public meep
   (package
     (name "meep")
-    (version "1.30.0")
+    (version "1.30.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -1901,7 +1901,7 @@ fully-vectorial and three-dimensional methods.")
                 version "/meep-" version ".tar.gz"))
               (sha256
                (base32
-                "0fgbyg0b1g172ndi5cmmawd7j602g00hfr8waqjw3fa4s3zxgq09"))))
+                "1h80d7i7v06fxfdsa496b542dvr105c4v1n7pk8m3jssvbxvv2a0"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -1922,7 +1922,7 @@ fully-vectorial and three-dimensional methods.")
            mpb
            openblas
            zlib))
-    (home-page "http://ab-initio.mit.edu/wiki/index.php/Meep")
+    (home-page "https://meep.readthedocs.io/en/latest/")
     (synopsis "Finite-difference time-domain (FDTD) simulation software")
     (description
      "Meep is a finite-difference time-domain (FDTD) simulation software package
@@ -2924,32 +2924,35 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (license license:bsd-2)))
 
 (define-public manifold
-  (package
-    (name "manifold")
-    (version "3.0.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/elalish/manifold")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1f0k8937gk7b9100k99pmz1f17nzczpdk7797p2aijla0z29ddy1"))))
-    (build-system cmake-build-system)
-    (inputs (list tbb clipper2 assimp python-nanobind googletest))
-    (arguments
-     ;; can be removed when emscripten is packaged
-     `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
-    (synopsis "Geometry library for topological robustness")
-    (description
-     "Manifold is a geometry library dedicated to creating and operating on
+  (let ((commit "7c8fbe186aa1ac5eb73f12c28bdef093ee4d11c9")
+        (version "3.0.1")
+        (revision "0"))
+    (package
+      (name "manifold")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/elalish/manifold")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "09s4r4hlarl5lzbbihfd1fpfd3987lma5m26wkkvi7zssdbis9zc"))))
+      (build-system cmake-build-system)
+      (inputs (list tbb clipper2 assimp python-nanobind googletest))
+      (arguments
+       ;; can be removed once emscripten is packaged
+       `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
+      (synopsis "Geometry library for topological robustness")
+      (description
+       "Manifold is a geometry library dedicated to creating and operating on
 manifold triangle meshes.  A manifold mesh is a mesh that represents a solid
 object, and so is very important in manufacturing, CAD, structural analysis,
 etc..  Manifold also supports arbitrary vertex properties and enables mapping
 of materials for rendering use-cases.")
-    (home-page "https://github.com/elalish/manifold")
-    (license license:asl2.0)))
+      (home-page "https://github.com/elalish/manifold")
+      (license license:asl2.0))))
 
 (define-public python-keithley2600
   (package
@@ -3118,7 +3121,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.6.2")
+    (version "1.7.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -3126,7 +3129,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0s339mw231jgml6wdi6zmvy93x58pv6fmk6xmpjpymdr4g36kk86"))
+                "148bfdbh0y69f5xhxb49jqvc6gabk0n4i0fl1j5f3fnm9vaypyis"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy
@@ -3186,8 +3189,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "72c9919d63116f8e711f3566ae34e9eb63a2d6e6")
-        (version "2025.05.08")
+  (let ((commit "7245089d3226de41ab55faee62ffe326f6efcb69")
+        (version "2025.06.01")
         (revision "0"))
     (package
       (name "openscad")
@@ -3198,23 +3201,27 @@ ontinuous-time and discret-time expressions.")
          (uri (git-reference
                (url "https://github.com/openscad/openscad")
                (commit commit)
+               ;; Needed for libraries/MCAD, a library specific to OpenSCAD
+               ;; which is included as a submodule. All other libraries are
+               ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "077x7s3z65mz6rnrzan3qn06045d2fkqnd6ss6ibw1fhlaypzfbf"))
+          (base32 "0lynjxa5y9wi443vxgaj2r8lr98dyfxinq7n4gcw9gz7cfc52a4a"))
+         (patches (search-patches
+                   "openscad-fix-path-in-expected-test-results-to-acommodate-diff.patch"))
          (file-name (git-file-name name version))))
       (build-system qt-build-system)
       (arguments
        (list
         #:configure-flags
         #~(list "-DCMAKE_BUILD_TYPE=Release"
-                "-DUSE_BUILTIN_OPENCSG=ON"
+                "-DUSE_BUILTIN_CLIPPER2=OFF"
+                "-DUSE_BUILTIN_MANIFOLD=OFF"
+                "-DUSE_BUILTIN_OPENCSG=OFF"
                 "-DMANIFOLD_PYBIND=OFF"
                 "-DMANIFOLD_TEST=OFF"
-                "-DENABLE_TESTS=OFF"
                 "-DEXPERIMENTAL=ON"
-                "-DSNAPSHOT=ON"
                 "-DENABLE_PYTHON=ON"
-                "-DUSE_BUILTIN_CLIPPER2=OFF"
                 (string-append "-DOPENSCAD_VERSION="
                                #$version)
                 (string-append "-DOPENSCAD_COMMIT="
@@ -3223,27 +3230,47 @@ ontinuous-time and discret-time expressions.")
                 "-DENABLE_GLX=ON")
         #:phases
         #~(modify-phases %standard-phases
-            (delete 'check)
             (add-after 'unpack 'patch-source
               (lambda* (#:key inputs #:allow-other-keys)
-                ;; <https://github.com/openscad/openscad/issues/5877>
+                ;; Delete all unbundled libraries to replace them with guix
+                ;; packages.
+                (delete-file-recursively "submodules")
+                ;; Fix: Dependency lib3mf is not found due to using a wrong
+                ;; variable name in the CMake config (see
+                ;; https://github.com/openscad/openscad/issues/5877).
                 (substitute* "cmake/Modules/FindLib3MF.cmake"
                   (("PC_LIB3MF_INCLUDE_DIRS")
                    "PC_LIB3MF_INCLUDEDIR"))
                 (substitute* "CMakeLists.txt"
-                  ;; <https://github.com/openscad/openscad/issues/5880>
+                  ;; Remove bundled libraries from cmake.
+                  (("add_subdirectory\\(submodules\\)")
+                   "")
+                  ;; Fix detection of EGL (see
+                  ;; https://github.com/openscad/openscad/issues/5880).
                   (("target_link_libraries\\(OpenSCAD PRIVATE OpenGL::EGL\\)")
-                   "      find_package(ECM REQUIRED NO_MODULE)
+                   "find_package(ECM REQUIRED NO_MODULE)
       list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
       find_package(EGL REQUIRED)
       target_link_libraries(OpenSCAD PRIVATE EGL::EGL)")
-                  ;; <https://github.com/openscad/openscad/issues/5897>
-                  (("find_package\\(Nettle 3.4\\)")
-                   "find_package(Nettle 3.4 REQUIRED)")
                   ;; Use the system sanitizers-cmake module.
                   (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
                    (string-append (assoc-ref inputs "sanitizers-cmake")
-                                  "/share/sanitizers-cmake/cmake"))))))))
+                                  "/share/sanitizers-cmake/cmake")))
+                ;; Fix test-tool expecting build directory to be a direct
+                ;; subdirectory of the source directory (see
+                ;; https://github.com/openscad/openscad/issues/5937).
+                (substitute* "tests/test_cmdline_tool.py"
+                  (("build_to_test_sources = \"../../tests\"")
+                   "build_to_test_sources = \"../../source/tests\""))))
+            (add-before 'check 'patch-tests
+              (lambda _
+                ;; Fix tests expecting build directory to be a direct descendant
+                ;; of the source dir (see
+                ;; https://github.com/openscad/openscad/issues/5938).
+                (copy-recursively "../source/color-schemes" "./color-schemes")
+                (copy-recursively "../source/shaders" "./shaders")
+                ;; Required for fontconfig
+                (setenv "HOME" "/tmp"))))))
       (inputs (list boost
                     cairomm
                     cgal
@@ -3264,7 +3291,7 @@ ontinuous-time and discret-time expressions.")
                     libxml2
                     libzip
                     manifold
-                    mesa ; or libglvnd if we had mesa-glvnd, too
+                    mesa
                     mimalloc
                     mpfr
                     nettle
@@ -3272,9 +3299,9 @@ ontinuous-time and discret-time expressions.")
                     python
                     python-numpy
                     python-pillow
-                    python-pip
                     qscintilla
                     qtbase-5
+                    qtgamepad
                     qtmultimedia-5
                     qtsvg-5
                     qtwayland-5
@@ -3406,7 +3433,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
 (define-public freecad
   (package
     (name "freecad")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3415,7 +3442,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wwymcfgi0cybj7m6awflk8c7n6iy97lpgpfhfncx3zwvjrxv588"))
+        (base32 "0p3pa4w1xj7sgqk9vxdri8l3hbx0a8iz2pwn8gwjqlhc62z4hrg8"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -3429,9 +3456,8 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
      (list c++-gsl
            doxygen
            graphviz
-           qttools-5
+           qttools
            pkg-config
-           python-pyside-2-tools
            swig))
     (inputs
      (list bash-minimal
@@ -3465,16 +3491,16 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
            python-matplotlib
            python-pivy
            python-ply
-           python-pyside-2
+           python-pyside-6
            python-pyyaml
-           python-shiboken-2
+           python-shiboken-6
            python-wrapper
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtwayland-5
+           qtbase
+           qtdeclarative
+           qtsvg
+           qtwebchannel
+           qtwebengine
+           qtwayland
            qtx11extras
            qtxmlpatterns
            sqlite
@@ -3487,10 +3513,10 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
      `(#:tests? #f  ;; Project has tests, but they are a pain to build
        #:configure-flags
        ,#~(list
-           "-DBUILD_QT5=ON"
            "-DBUILD_FLAT_MESH:BOOL=ON"
            "-DBUILD_ENABLE_CXX_STD:STRING=C++17"
            "-DENABLE_DEVELOPER_TESTS=OFF"  ;; see the above: #:tests? comment
+           "-DFREECAD_QT_VERSION=6"  ;; Build with Qt6
            "-DFREECAD_USE_EXTERNAL_ONDSELSOLVER=ON"  ;; unbundle ondsel-solver
            ;; Do not try to install modules into system python
            "-DINSTALL_TO_SITEPACKAGES=OFF"
@@ -3507,7 +3533,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
                (wrap-program (string-append out "/bin/FreeCAD")
                  (list "GUIX_PYTHONPATH"
                        'prefix (list (getenv "GUIX_PYTHONPATH"))))))))))
-    (home-page "https://www.freecadweb.org/")
+    (home-page "https://www.freecad.org/")
     (synopsis "Your Own 3D Parametric Modeler")
     (description
      "FreeCAD is a general-purpose, feature-based, parametric 3D modeler for

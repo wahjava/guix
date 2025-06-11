@@ -123,6 +123,9 @@ manner.  It also features an interactive interpreter.")
                                     #+(this-package-native-input "swi-prolog")
                                     "/bin/swipl"))
                   #~())
+           (string-append "-DPOSIX_SHELL="
+                          #$(this-package-input "bash-minimal")
+                          "/bin/sh")
            "-DINSTALL_DOCUMENTATION=ON"
            "-DSWIPL_INSTALL_IN_LIB=OFF") ; FIXME: Breaks RUNPATH validation.
        #:phases
@@ -182,7 +185,7 @@ it.")
 (define-public trealla
   (package
     (name "trealla")
-    (version "2.71.33")
+    (version "2.73.3")
     (source
      (origin
        (method git-fetch)
@@ -191,7 +194,7 @@ it.")
          (url "https://github.com/trealla-prolog/trealla")
          (commit (string-append "v" version))))
        (sha256
-        (base32 "0kkadpbdkz662ly468f7hm2nhh8k04nr44qalbn1qm7wsrvc719g"))
+        (base32 "0bfy451sa21xza95xb11ap12p6wkbhlzhpshfsnwnl1bc7csg909"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

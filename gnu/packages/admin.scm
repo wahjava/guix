@@ -1002,17 +1002,16 @@ or via the @code{facter} Ruby library.")
           (base32 "0ldb7a13b9v876c6cbrs78pkizj64drnqx95z5shfbwgpwfhr4im"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:tests? #f      ; no tests
-         #:make-flags
-         (list (string-append "CC=" ,(cc-for-target)))
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure)
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin")))
-                 (install-file "ttyload" bin)))))))
+       (list #:tests? #f      ; no tests
+             #:make-flags
+             #~(list (string-append "CC=" #$(cc-for-target)))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'configure)
+                 (replace 'install
+                   (lambda _
+                     (let ((bin (string-append #$output "/bin")))
+                       (install-file "ttyload" bin)))))))
       (home-page "https://www.daveltd.com/src/util/ttyload/")
       (synopsis "Console based color-coded graphs of CPU load average")
       (description
@@ -1391,38 +1390,31 @@ login, passwd, su, groupadd, and useradd.")
                "05yxrp44ky2kg6qknk1ih0kvwkgbn9fbz77r3vci7agslh5wjm8g"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs outputs target #:allow-other-keys)
-             (let* ((out    (assoc-ref outputs "out"))
-                    (man8   (string-append out "/share/man/man8"))
-                    (sbin   (string-append out "/sbin"))
-                    (shadow (assoc-ref inputs "shadow"))
-                    (login  (string-append shadow "/bin/login")))
-               (substitute* "Makefile"
-                 ,@(if (%current-target-system)
-                       '((("CC=.*$")
-                          (string-append "CC=" target "-gcc\n")))
-                       '())
-                 (("^SBINDIR.*")
-                  (string-append "SBINDIR = " out
-                                 "/sbin\n"))
-                 (("^MANDIR.*")
-                  (string-append "MANDIR = " out
-                                 "/share/man/man8\n")))
+     (list
+      #:tests? #f    ; no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((man8   (string-append #$output "/share/man/man8"))
+                     (sbin   (string-append #$output "/sbin"))
+                     (login  (search-input-file inputs "/bin/login")))
+                (substitute* "Makefile"
+                  (("CC=.*$")
+                   (string-append "CC=" #$(cc-for-target) "\n"))
+                  (("^SBINDIR.*")
+                   (string-append "SBINDIR = " #$output "/sbin\n"))
+                  (("^MANDIR.*")
+                   (string-append "MANDIR = " #$output "/share/man/man8\n")))
 
-               ;; Pick the right 'login' by default.
-               (substitute* "mingetty.c"
-                 (("\"/bin/login\"")
-                  (string-append "\"" login "\"")))
+                ;; Pick the right 'login' by default.
+                (substitute* "mingetty.c"
+                  (("\"/bin/login\"")
+                   (string-append "\"" login "\"")))
 
-               (mkdir-p sbin)
-               (mkdir-p man8))
-             #t)))
-       #:tests? #f))                              ; no tests
+                (mkdir-p sbin)
+                (mkdir-p man8)))))))
     (inputs (list shadow))
-
     (home-page "https://sourceforge.net/projects/mingetty")
     (synopsis "Getty for the text console")
     (description
@@ -2892,16 +2884,20 @@ development, not the kernel implementation of ACPI.")
 (define-public s-tui
   (package
     (name "s-tui")
-    (version "1.1.6")
+    (version "1.2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "s-tui" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/amanusk/s-tui")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0mvvqg0pr8k0cy0mbvi25yqm6zsf8mipdbq97xjqfvifryf6j9wx"))))
+        (base32 "08mfclgdy6cb8xgp8sc7fpm4qxay37j71b1b3niywi6x206i5m2m"))))
     (build-system python-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (inputs
-     (list python-psutil python-urwid))
+     (list python-psutil-7 python-urwid-3))
     (home-page "https://github.com/amanusk/s-tui")
     (synopsis "Interactive terminal stress test and monitoring tool")
     (description
@@ -4648,7 +4644,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.42.0")
+    (version "2.45.0")
     (source
      (origin
        (method git-fetch)
@@ -4657,7 +4653,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09chw9rx4rqgd0f0am3ygm5a4lg1i0rsmxbw0kv3cfj1zgfmcn4y"))
+        (base32 "1cg0zgkhgwnbgq5xr9120i6q9g9pirfrh1k5jf6af01ghn1ghfhw"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -5876,7 +5872,7 @@ exit code reports successful or failed execution to
 (define-public udpcast
   (package
     (name "udpcast")
-    (version "20211207")
+    (version "20250223")
     (source
      (origin
        (method url-fetch)
@@ -5889,11 +5885,13 @@ exit code reports successful or failed execution to
                    "https://www.udpcast.linux.lu/download/udpcast-"
                    version ".tar.gz")))
        (sha256
-        (base32 "0l6hck694szrrvz85nm48rwb7mzvg2z2bwa50v51pkvym3kvxkm3"))))
+        (base32 "19qa6yp0svhvyra4898c6kjs56bn7yr9cavxk1vbrqbpr1a7bzff"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake m4 perl))
-    (arguments `(#:tests? #f))                    ;no test suite
+    (arguments
+     (list #:tests? #f                    ;no test suite
+           #:make-flags #~(list (string-append "sbindir=" #$output "/sbin/"))))
     (synopsis "Multicast file transfer tool")
     (description
      "UDPcast is a file transfer tool that can send data simultaneously to
@@ -6765,7 +6763,7 @@ several firewall backends.")
 (define-public px
   (package
     (name "px")
-    (version "3.6.9")
+    (version "3.6.10")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6774,7 +6772,7 @@ several firewall backends.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kqwi1qb6hvk4si1dynz4q56lxy5161b50fgsvlfk9dnb6gwln6i"))))
+                "15xkpmymf0g0mqhjc6mswymrqkilbys3mkhz1xk9lq3jilfhdm04"))))
     (build-system python-build-system)
     (arguments
      (list #:phases

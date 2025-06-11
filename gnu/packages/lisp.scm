@@ -559,7 +559,7 @@ Definition Facility.")
                             "--with-module=rawsock")
        #:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'patch-sh-and-pwd
+         (add-after 'unpack 'patch-references
            (lambda _
              ;; The package is very messy with its references to "/bin/sh" and
              ;; some other absolute paths to traditional tools.  These appear in
@@ -574,6 +574,8 @@ Definition Facility.")
                (("/bin/sh") "sh"))
              (substitute* '("src/clisp-link.in")
                (("/bin/pwd") "pwd"))
+             (substitute* '("tests/streamslong.tst")
+               (("/bin/cat") "cat"))
              #t))
          (add-after 'unpack 'replace-asdf
            ;; Use system ASDF instead of bundled one.
@@ -1693,7 +1695,7 @@ the HTML documentation of TXR.")
 (define-public txr
   (package
     (name "txr")
-    (version "299")
+    (version "300")
     (source
      (origin
        (method git-fetch)
@@ -1702,7 +1704,7 @@ the HTML documentation of TXR.")
              (commit (string-append "txr-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hlq79j3vyx5y3ffccjkbqx7mvwzbw9dcfy5jrayfzzqwnsyvr78"))))
+        (base32 "1cxdsk31wj8874nijwbcx7c3zsspsclr722jbaivisrm2wx5hbqn"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags

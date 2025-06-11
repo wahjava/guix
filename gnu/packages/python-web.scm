@@ -10133,14 +10133,14 @@ GCS, Azure Blob Storage, gzip, bz2, etc.)")
 (define-public python-w3lib
   (package
     (name "python-w3lib")
-    (version "2.1.2")
+    (version "2.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "w3lib" version))
        (sha256
         (base32
-         "1cd4b3w5g3pfccsg79kjj27fwi216ip927rjq7isp8pfjzlp8nzd"))))
+         "1929layzxwdnf43hhrz7rabv388b2yibj7mnq9s62mr760mc12jw"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest python-setuptools python-wheel))
@@ -10456,40 +10456,31 @@ by asyncio.")
 (define-public python-protego
   (package
     (name "python-protego")
-    (version "0.2.1")
+    (version "0.4.0")
     (source
       (origin
         (method url-fetch)
-        (uri (pypi-uri "Protego" version))
+        (uri (pypi-uri "protego" version))
         (sha256
-          (base32 "1wigcjyhz8zbk562zhgfbkm733dcn65j1swzvki79dys0i1nsrnz"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-        (modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest")))))))
-    (propagated-inputs (list python-six))
-    (native-inputs (list python-pytest))
+          (base32 "1xn2aska8v94jqnbyv4ywczb55gaqvr298q8ybhs168knrifd9ck"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/scrapy/protego")
-    (synopsis
-      "Pure-Python robots.txt parser with support for modern conventions")
-    (description
-      "Pure-Python robots.txt parser with support for modern conventions.")
+    (synopsis "Python robots.txt parser with support for modern conventions")
+    (description "Protego is a pure-Python @file{robots.txt} parser with support
+for modern conventions.")
     (license license:bsd-3)))
 
 (define-public python-parsel
   (package
     (name "python-parsel")
-    (version "1.8.1")
+    (version "1.10.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "parsel" version))
         (sha256
-          (base32 "0f8yh30y3961a7kqwcnp4j3s7044ilakykiavc0skwdkr5l8xwmg"))))
+          (base32 "1050v20gzijfcaxpm1d4bvxqw2l7xhyf9pxrawrv8lczanwpvw8l"))))
     (build-system pyproject-build-system)
     (propagated-inputs
       (list python-cssselect
@@ -10509,13 +10500,13 @@ regular expressions.")
 (define-public python-scrapy
   (package
     (name "python-scrapy")
-    (version "2.12.0")
+    (version "2.13.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "scrapy" version))
        (sha256
-        (base32 "13vqykvjv9d0hj02l0s025r107dncfj7as0r0iv484lv01v6wvfn"))))
+        (base32 "18anr8jjjqyv6pfzdm4fr5hx4vddb8qclyja0y874f5slcnsfsrx"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -10526,6 +10517,8 @@ regular expressions.")
                                  (list "test_pformat"
                                        "test_pformat_old_windows"
                                        "test_pformat_windows"
+                                       ;; AssertionError.
+                                       "test_start_deprecated_super"
                                        ;; Connection refused.
                                        "test_persist")
                                  " and not "))
@@ -10559,6 +10552,7 @@ regular expressions.")
            python-zope-interface))
     (native-inputs
      (list nss-certs-for-test
+           python-hatchling
            python-mypy
            python-pexpect
            python-pytest

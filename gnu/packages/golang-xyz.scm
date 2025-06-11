@@ -62,6 +62,7 @@
 ;;; Copyright © 2025 Jussi Timperi <jussi.timperi@iki.fi>
 ;;; Copyright © 2025 45mg <45mg.writes@gmail.com>
 ;;; Copyright © 2025 Daniel Ziltener <dziltener@lyrion.ch>
+;;; Copyright © 2025 Formbi <formbi@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -118,15 +119,14 @@
 ;;; Libraries:
 ;;;
 
-;; XXX: The package name in Guix uses 'ninefans' instead of '9fans' to
-;; accomodate from a shortcoming of the go-build-system where the `go-inputs'
-;; procedure in the `setup-go-environment' phase uses
-;; `package-name->name+version', which returns 'go' as name for
-;; go-9fans-net-go-acme, which gets removed from the results and thus GOPATH.
-(define (make-go-ninefans-net-go-module module)
-  "Return a go-ninefans-net-go package for MODULE."
+(define-public go-9fans-net-go
+  ;; XXX: This variant is to keep go importer healthy with "--insert" option,
+  ;; which places package in alphabetical order and names it accordingly to
+  ;; import path from go.mod file.
+  ;;
+  ;; Use go-ninefans-net-go to include in inputs.
   (package
-    (name (string-append "go-ninefans-net-go-" module))
+    (name "go-9fans-net-go")
     (version "0.0.7")
     (source
      (origin
@@ -140,39 +140,33 @@
     (build-system go-build-system)
     (arguments
      (list
-      ;; This is challenging to package as it uses Go modules and modules
-      ;; inter-dependencies, and our build system lacks support for it;
-      ;; disable the tests to avoid everything getting tangled at build time.
-      #:tests? #f
-      #:import-path (string-append "9fans.net/go/" module)
-      #:unpack-path "9fans.net/go"))
-    (propagated-inputs (list go-golang-org-x-sys go-golang-org-x-exp))
+      #:skip-build? #t
+      #:import-path "9fans.net/go"
+      #:test-subdirs #~(list "acme/..."
+                             ;; "cmd/..." ; missing packages
+                             ;;
+                             ;; Tests fail with error: panic: drawfcall.New:
+                             ;; exec: "devdraw": executable file not found in
+                             ;; $PATH
+                             ;;
+                             ;; "draw/..."
+                             "games/..."
+                             "p9trace/..."
+                             "plan9/..."
+                             "plumb/...")))
+    ;; TODO: Not ready packages required to build CLI from <cmd/devdraw>.
+    ;; (native-inputs
+    ;;  (list go-golang-org-x-exp-shiny
+    ;;        go-golang-org-x-mobile))
+    (propagated-inputs
+     (list go-golang-org-x-exp
+           go-golang-org-x-sys))
     (home-page "https://9fans.net/go")
     (synopsis "Interface for interacting with Acme windows")
-    (description "The @code{acme} Go package provides simple interface for
+    (description
+     "The @code{acme} Go package provides simple interface for
 interacting with Acme windows of the Plan 9 text editor.")
     (license license:expat)))
-
-(define go-ninefans-net-go-acme
-  (make-go-ninefans-net-go-module "acme"))
-
-(define go-ninefans-net-go-draw
-  (make-go-ninefans-net-go-module "draw"))
-
-(define go-ninefans-net-go-plan9
-  (make-go-ninefans-net-go-module "plan9"))
-
-(define-public go-ninefans-net-go
-  (let ((base (make-go-ninefans-net-go-module "")))
-    (package
-      (inherit base)
-      (name "go-ninefans-net-go")
-      (build-system trivial-build-system)
-      (arguments (list #:builder #~(mkdir #$output)))
-      (propagated-inputs
-       (list go-ninefans-net-go-acme
-             go-ninefans-net-go-draw
-             go-ninefans-net-go-plan9)))))
 
 (define-public go-atomicgo-dev-cursor
   (package
@@ -1138,6 +1132,31 @@ almost directly in Go source code.")
       (description
        "This library provides unit multipliers and functions for Go.")
       (license license:expat))))
+
+(define-public go-github-com-alessio-shellescape
+  (package
+    (name "go-github-com-alessio-shellescape")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alessio/shellescape")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14zypi8qdxl77lks5b9jshr17idrm4sri1rxgpw5q4dys1palddd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/alessio/shellescape"))
+    (home-page "https://github.com/alessio/shellescape")
+    (synopsis "Escape arbitrary strings for use as command line arguments")
+    (description
+     "This package provides the @code{shellescape.Quote} to escape arbitrary
+strings for a safe use as command line arguments in the most common POSIX
+shells.")
+    (license license:expat)))
 
 (define-public go-github-com-alsm-ioprogress
   (package
@@ -3908,34 +3927,6 @@ against various paths.  This is particularly useful when trying to filter
 files based on a .gitignore document.")
     (license license:expat)))
 
-(define-public go-github-com-dicedb-dicedb-go
-  (package
-    (name "go-github-com-dicedb-dicedb-go")
-    (version "1.0.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/DiceDB/dicedb-go")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "18hfymwvp0mdnw1ssxnh58wvg4ifbjq4yhxvzfnw1f70rnhv01y3"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      ;; dicedb-go depends on dicedb for running tests
-      ;; but dicedb depends on dice-db, creating a cyclic depedency
-      #:tests? #f
-      #:import-path "github.com/dicedb/dicedb-go"))
-    (propagated-inputs (list go-github-com-google-uuid
-                             go-google-golang-org-protobuf))
-    (home-page "https://github.com/dicedb/dicedb-go")
-    (synopsis "SDK for @code{DiceDB}")
-    (description
-     "Go SDK for @url{https://github.com/dicedb/dice,@code{dicedb}}.")
-    (license license:bsd-3)))
-
 (define-public go-github-com-creack-pty
   (package
     (name "go-github-com-creack-pty")
@@ -4190,6 +4181,30 @@ Features:
 @item use cases: rules engine, state machine, data pipeline, transpiler
 @end itemize")
     (license license:expat)))
+
+(define-public go-github-com-dannav-hhmmss
+  (package
+    (name "go-github-com-dannav-hhmmss")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dannav/hhmmss")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h2wdpd5sd2wfd5d2vyqiwlrqlxf3qwpqjy74hbcr7bhjpgv81m0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dannav/hhmmss"))
+    (home-page "https://github.com/dannav/hhmmss")
+    (synopsis "Parse HHMMSS strings into a Go time.Duration type")
+    (description
+     "Package @code{hhmmss} manages converting HH:MM:SS time strings to
+@code{time.Duration} values.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-danwakefield-fnmatch
   (let ((commit "cbb64ac3d964b81592e64f957ad53df015803288")
@@ -4781,6 +4796,34 @@ on throughput and hit ratio performance.")
 @item ewmaest - progress logging with ewma-based ETA estimation
 @end itemize")
     (license license:expat)))
+
+(define-public go-github-com-dicedb-dicedb-go
+  (package
+    (name "go-github-com-dicedb-dicedb-go")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/DiceDB/dicedb-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18hfymwvp0mdnw1ssxnh58wvg4ifbjq4yhxvzfnw1f70rnhv01y3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; dicedb-go depends on dicedb for running tests
+      ;; but dicedb depends on dice-db, creating a cyclic depedency
+      #:tests? #f
+      #:import-path "github.com/dicedb/dicedb-go"))
+    (propagated-inputs (list go-github-com-google-uuid
+                             go-google-golang-org-protobuf))
+    (home-page "https://github.com/dicedb/dicedb-go")
+    (synopsis "SDK for @code{DiceDB}")
+    (description
+     "Go SDK for @url{https://github.com/dicedb/dice,@code{dicedb}}.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-dimchansky-utfbom
   (package
@@ -12165,6 +12208,32 @@ values pointed to.  Unexported field values are not copied.")
      "This package provides simple colorized console logger for golang.")
     (license license:expat)))
 
+(define-public go-github-com-motemen-go-quickfix
+  (package
+    (name "go-github-com-motemen-go-quickfix")
+    (version "0.0.0-20250224075427-39bb724d71b7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/motemen/go-quickfix")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j14k6kfzvfn8v21gf2ssaypicrwb4pvh7yzfa5m1jcc9581j2ad"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23                      ;minimum required version
+      #:import-path "github.com/motemen/go-quickfix"))
+    (propagated-inputs (list go-golang-org-x-tools))
+    (home-page "https://github.com/motemen/go-quickfix")
+    (synopsis "Go ASTs fixing library")
+    (description
+     "The @code{quickfix} Go package provides functions for fixing Go ASTs
+that are well typed but @samp{go build} refuses to build.")
+    (license license:expat)))
+
 (define-public go-github-com-mreiferson-go-options
   (package
     (name "go-github-com-mreiferson-go-options")
@@ -13737,6 +13806,32 @@ robust way to define those flags, and to parse them from command-line
 arguments, environment variables, and/or config files.")
     (license license:asl2.0)))
 
+(define-public go-github-com-peterh-liner
+  (package
+    (name "go-github-com-peterh-liner")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/peterh/liner")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hq0maja0ymdc0x5f78jv0hxh4i7byxb5y9p70vi9zsip9yhirqp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/peterh/liner"))
+    (propagated-inputs (list go-golang-org-x-sys
+                             go-github-com-mattn-go-runewidth))
+    (home-page "https://github.com/peterh/liner")
+    (synopsis "Command line editor Go library")
+    (description "The @code{liner} Go package implements a simple command line
+editor with history, inspired by @url{https://github.com/antirez/linenoise/,
+linenoise}.  Xterm as well as WIN32 terminal codes are supported.")
+    (license license:expat)))
+
 (define-public go-github-com-philhofer-fwd
   (package
     (name "go-github-com-philhofer-fwd")
@@ -14878,6 +14973,80 @@ is undetermined, a customizable spinner is shown.")
     (description
      "Package goldie provides test assertions based on golden files.
 It's typically used for testing responses with larger data bodies.")
+    (license license:expat)))
+
+(define-public go-github-com-segmentio-asm
+  (package
+    (name "go-github-com-segmentio-asm")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/segmentio/asm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01c90h83rq7fkvzfn28lz7x0455zxbvaxknd3c8259dfszfyr2zx"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/segmentio/asm/build
+            (delete-file-recursively "build")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/segmentio/asm"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/segmentio/asm")
+    (synopsis " Go library providing algorithms optimized for modern CPUs")
+    (description
+     "This package aims to provide algorithms optimized to
+leverage advanced instruction sets of modern CPUs to maximize throughput and
+take the best advantage of the available compute power.  It includes functions
+that have often been designed to work on arrays of values, which is where SIMD
+and branchless algorithms shine.")
+    (license license:expat)))
+
+(define-public go-github-com-segmentio-encoding
+  (package
+    (name "go-github-com-segmentio-encoding")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/segmentio/encoding")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gk2ry6s20h4j5gvl9vf83wi3badphnnzh6fhxfx3r24pbg7c2dx"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - github.com/segmentio/encoding/benchmarks
+            ;; - github.com/segmentio/encoding/proto/fixtures
+            (for-each delete-file-recursively
+                      (list "benchmarks" "proto/fixtures"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/segmentio/encoding"
+      #:test-flags #~(list "-skip" "TestUnmarshalFixture|TestDecodeFixture")))
+    (propagated-inputs
+     (list go-github-com-segmentio-asm))
+    (home-page "https://github.com/segmentio/encoding")
+    (synopsis "Encoding and decoding Go library")
+    (description
+     "Go package containing implementations of encoders and decoders for
+various data formats.")
     (license license:expat)))
 
 (define-public go-github-com-sereal-sereal-go-sereal
@@ -18004,6 +18173,109 @@ for projects that don't require a full database server such as Postgres or
 MySQL.")
     (license license:expat)))
 
+(define-public go-go-lsp-dev-jsonrpc2
+  (package
+    (name "go-go-lsp-dev-jsonrpc2")
+    (version "0.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-language-server/jsonrpc2")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mx7h0bak0kr3v18yqaqiq6ya9paw6lv3vqf30k55jsmwmrx5647"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.lsp.dev/jsonrpc2"))
+    (propagated-inputs (list go-github-com-segmentio-encoding))
+    (home-page "https://go.lsp.dev/jsonrpc2")
+    (synopsis "JSON-RPC 2 Go library")
+    (description "The @code{jsonrpc2F} package is an implementation of the
+JSON-RPC 2 specification for Go.")
+    (license license:bsd-3)))
+
+(define-public go-go-lsp-dev-pkg
+  (package
+    (name "go-go-lsp-dev-pkg")
+    (version "0.0.0-20210717090340-384b27a52fb2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-language-server/pkg")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n6mskf5g4m1h6hc12rwl622mn21a695kk7f2ldb5hdmlwib852g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "go.lsp.dev/pkg"))
+    (home-page "https://go.lsp.dev/pkg")
+    (synopsis "Library for the Go Language Server project")
+    (description
+     "Collection of Go modules for the Go Language Server project.")
+    (license license:bsd-3)))
+
+(define-public go-go-lsp-dev-protocol
+  (package
+    (name "go-go-lsp-dev-protocol")
+    (version "0.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-language-server/protocol")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14n0s7bs4xcsdp8m7fq9ridrh2nxsh5l80wg6xprgsr984dicpr8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.lsp.dev/protocol"))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-segmentio-encoding
+           go-go-lsp-dev-jsonrpc2
+           go-go-lsp-dev-pkg
+           go-go-lsp-dev-uri
+           go-go-uber-org-zap))
+    (home-page "https://go.lsp.dev/protocol")
+    (synopsis "Language Server Protocol (LSP) library for Go")
+    (description
+     "The @code{protocol} package implements the Language Server
+Protocol (LSP) specification in Go.")
+    (license license:bsd-3)))
+
+(define-public go-go-lsp-dev-uri
+  (package
+    (name "go-go-lsp-dev-uri")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-language-server/uri")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mz1jnbf46rzs3iy8a601rdfmify6x56jsw2wsjvmyczn4vz8qwc"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "go.lsp.dev/uri"))
+    (propagated-inputs (list go-github-com-google-go-cmp))
+    (home-page "https://go.lsp.dev/uri")
+    (synopsis "Go library for URI (uniform resource identifier)")
+    (description
+     "The @code{uri} package implements the URI Uniform Resource
+Identifier (RFC3986) specification in Go.")
+    (license license:bsd-3)))
+
 (define-public go-go-mau-fi-util
   (package
     (name "go-go-mau-fi-util")
@@ -19565,6 +19837,17 @@ that @code{gofmt} is happy with.")
      "This package provides a Golang library implementing a shell parser,
 formatter, and interpreter with bash support.")
     (license license:bsd-3)))
+
+(define-public go-ninefans-net-go
+  ;; XXX: The package name in Guix uses 'ninefans' instead of '9fans' to
+  ;; accomodate from a shortcoming of the go-build-system where the
+  ;; `go-inputs' procedure in the `setup-go-environment' phase uses
+  ;; `package-name->name+version', which returns 'go' as name for
+  ;; go-9fans-net-go-acme, which gets removed from the results and thus
+  ;; GOPATH.
+  (package
+    (inherit go-9fans-net-go)
+    (name "go-ninefans-net-go")))
 
 (define-public go-nullprogram-com-x-optparse
   (package

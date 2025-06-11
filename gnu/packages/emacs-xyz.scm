@@ -2091,7 +2091,7 @@ before interacting with non-free LLMs.")
 (define-public emacs-magit
   (package
     (name "emacs-magit")
-    (version "4.3.2")
+    (version "4.3.6")
     (source
      (origin
        (method git-fetch)
@@ -2100,7 +2100,7 @@ before interacting with non-free LLMs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0k15p39r5jikin86r5wsf5z9jsaica01f4s4sbwczikjjpfpq9r8"))))
+        (base32 "0gc6b1hclrpgyp2xccz980k2zg9ix6cyym11wxq6pjr8x8kl1j93"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -33047,48 +33047,53 @@ man pages with practical examples.")
       (license license:wtfpl2))))
 
 (define-public emacs-window-layout
-  (package
-    (name "emacs-window-layout")
-    (version "1.4")
-    (home-page "https://github.com/kiwanami/emacs-window-layout")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "0wgqi8r844lbx52fn6az8c1n8m681rp6dkfzd54wmdk1ka7zmvv6"))
-              (file-name (git-file-name name version))))
-    (build-system emacs-build-system)
-    (synopsis "Simple window layout management framework for emacs")
-    (description "A window-layout management library that can split a frame
-or a window into some windows according to a layout recipe.")
-    (license license:gpl3+)))
-
-(define-public emacs-e2wm
-  (package
-      (name "emacs-e2wm")
-      (version "1.4")
-      (home-page "https://github.com/kiwanami/emacs-window-manager")
+  ;; Release not tagged; version taken from package header.
+  (let ((commit "277d0a8247adf13707703574cbbc16ddcff7c5fd")
+        (version "1.5"))
+    (package
+      (name "emacs-window-layout")
+      (version version)
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url home-page)
-                      (commit (string-append "v" version))))
+                      (url "https://github.com/kiwanami/emacs-window-layout")
+                      (commit commit)))
                 (sha256
                  (base32
-                  "12midsrx07pdrsr1qbl2rpi7xyhxqx08bkz7n7gf8vsmqkpfp56s"))
+                  "101gab1xm3a4ildwzfysmjcpxrzxj3a1l9fa03nc88if9pcsxjb9"))
                 (file-name (git-file-name name version))))
       (build-system emacs-build-system)
-      (propagated-inputs
-       (list emacs-window-layout))
+      (home-page "https://github.com/kiwanami/emacs-window-layout")
+      (synopsis "Simple window layout management framework for emacs")
+      (description "A window-layout management library that can split a frame
+or a window into some windows according to a layout recipe.")
+      (license license:gpl3+))))
+
+(define-public emacs-e2wm
+  ;; Release not tagged; version taken from package header.
+  (let ((commit "33efca5504db9d8b3fdbd412c3d79663c9eec77a")
+        (version "1.5"))
+    (package
+      (name "emacs-e2wm")
+      (version version)
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/kiwanami/emacs-window-manager")
+                      (commit commit)))
+                (sha256
+                 (base32
+                  "1a1n9b5gw6985qi1dm56vyw8jacx4k3jyl4cadkhj38rz24yiyx8"))
+                (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-window-layout))
+      (home-page "https://github.com/kiwanami/emacs-window-manager")
       (synopsis "Equilibrium Emacs Window Manager")
       (description "E2WM is a window manager for Emacs.  It enables to
 customize the place of pop-up window, how the windows are split, how the
 buffers are located in the windows, keybinds to manipulate windows and
 buffers, etc.  It also has plug-ins to help your Emacs life.")
-      (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-ctable
   ;; Latest release is not tagged.  Use commit matching version bump.
@@ -34863,7 +34868,7 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.8.7")
+    (version "0.9.1")
     (source
      (origin
        (method git-fetch)
@@ -34872,7 +34877,7 @@ as Emacs Lisp.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p3l2j1jrs39j1arzhczwi1ndcqmj5wvbq0y88brk3srzkwj69dr"))))
+        (base32 "09fjb7cvlxjby1r2liqhp90naz0dcfc5m3d4578zyxzhayhpmc13"))))
     (build-system emacs-build-system)
     (arguments
      `(#:tests? #f ;no test suite
@@ -37697,7 +37702,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.6")
+    (version "0.8")
     (source
      (origin
        (method git-fetch)
@@ -37706,7 +37711,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1j4gl8wf9l9pnhz12b0ij2piz02ql23r8c7d3226yb7bsp4b3vdd"))))
+        (base32 "0ijl8vxrddx715fad83j9a4kip35r90klzx7sv2nd4pv3s8d359g"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
@@ -40687,63 +40692,61 @@ go directly to where they belong.")
       (license license:gpl3+))))
 
 (define-public emacs-org-roam
-  (let ((commit "046822b512ffecdee7d110f73dd3a511802ca590")
-        (revision "2"))
-    (package
-      (name "emacs-org-roam")
-      (version (git-version "2.2.2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/org-roam/org-roam")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0jbj48glh0r6fkb0lk1xb9067x2myp3krkw2byycijwdq1nlqzv2"))))
-      (build-system emacs-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            ;; Move the extensions source files to the top level, which
-            ;; is included in the EMACSLOADPATH.
-            (add-after 'unpack 'move-source-files
-              (lambda _
-                (let ((el-files (find-files "./extensions" ".*\\.el$")))
-                  (for-each (lambda (f)
-                              (rename-file f (basename f)))
-                            el-files))))
-            (add-after 'move-source-files 'patch-exec-paths
-              (lambda* (#:key inputs #:allow-other-keys)
-                (make-file-writable "org-roam-graph.el")
-                (emacs-substitute-variables "org-roam-graph.el"
-                  ("org-roam-graph-executable"
-                   (search-input-file inputs "/bin/dot")))))
-            (add-after 'install 'install-image
-              (lambda* (#:key outputs #:allow-other-keys)
-                (install-file "doc/images/org-ref-citelink.png"
-                              (string-append #$output "/share/info/images"))))
-            (add-after 'unpack 'make-info
-              (lambda _
-                (invoke "make" "-C" "doc" "info")
-                (copy-file "doc/org-roam.info" "org-roam.info"))))))
-      (inputs
-       (list graphviz))
-      (native-inputs
-       (list texinfo))
-      (propagated-inputs
-       (list emacs-dash
-             emacs-emacsql
-             emacs-magit))
-      (home-page "https://github.com/org-roam/org-roam/")
-      (synopsis "Non-hierarchical note-taking with Org mode")
-      (description "Emacs Org Roam is a solution for taking non-hierarchical
+  (package
+    (name "emacs-org-roam")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/org-roam/org-roam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00ijpvsghak5d9p703gnyaksfbniwj062qids0m8xkvvxbzqsdda"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Move the extensions source files to the top level, which
+          ;; is included in the EMACSLOADPATH.
+          (add-after 'unpack 'move-source-files
+            (lambda _
+              (let ((el-files (find-files "./extensions" ".*\\.el$")))
+                (for-each (lambda (f)
+                            (rename-file f (basename f)))
+                          el-files))))
+          (add-after 'move-source-files 'patch-exec-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (make-file-writable "org-roam-graph.el")
+              (emacs-substitute-variables "org-roam-graph.el"
+                ("org-roam-graph-executable"
+                 (search-input-file inputs "/bin/dot")))))
+          (add-after 'install 'install-image
+            (lambda _
+              (install-file "doc/images/org-ref-citelink.png"
+                            (string-append #$output "/share/info/images"))))
+          (add-after 'unpack 'make-info
+            (lambda _
+              (invoke "make" "-C" "doc" "info")
+              (copy-file "doc/org-roam.info" "org-roam.info"))))))
+    (inputs
+     (list graphviz))
+    (native-inputs
+     (list texinfo))
+    (propagated-inputs
+     (list emacs-dash
+           emacs-emacsql
+           emacs-magit))
+    (home-page "https://github.com/org-roam/org-roam/")
+    (synopsis "Non-hierarchical note-taking with Org mode")
+    (description "Emacs Org Roam is a solution for taking non-hierarchical
 notes with Org mode.  Notes are captured without hierarchy and are connected
 by tags.  Notes can be found and created quickly.  Org Roam should also work
 as a plug-and-play solution for anyone already using Org mode for their
 personal wiki.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-org-node
   (package

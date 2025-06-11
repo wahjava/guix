@@ -122,7 +122,7 @@
 (define-public swayimg
   (package
     (name "swayimg")
-    (version "4.0")
+    (version "4.2")
     (source
      (origin
        (method git-fetch)
@@ -131,7 +131,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ydy6qi3jkm629gk1lw0ay6ly82z165bfj95v1ix7r1ymm9rljfr"))))
+        (base32 "1kaxr5ppikllkaz45njr5p8yl4j6dqqi8qi18h59qwn291sv68px"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '(,(string-append "-Dversion=" version))))

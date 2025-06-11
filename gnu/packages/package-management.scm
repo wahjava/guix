@@ -2096,7 +2096,6 @@ the boot loader configuration.")
         (base32 "0ajbz8ms4h5nyjr59hv9z8vaimj4f3p51v8idmy14qnbmmjwa2nb"))
        (patches
         (search-patches "flatpak-fix-fonts-icons.patch"
-                        "flatpak-fix-path.patch"
                         "flatpak-fix-icon-validation.patch"
                         "flatpak-unset-gdk-pixbuf-for-sandbox.patch"))))
     (build-system meson-build-system)
@@ -2214,6 +2213,21 @@ cp -r /tmp/locale/*/en_US.*")))
                              libarchive
                              libseccomp
                              libxau))
+    (native-search-paths
+     (list ;; Flatpak creates desktop files on its own.
+           ;; If those desktop files contain DBusActivatable=true, the application
+           ;; will be invoked by using dbus activation.  But dbus activation
+           ;; doesn't use $PATH but rather does execve while the working directory
+           ;; is "/".  That means, if the Exec entry contains just "flatpak",
+           ;; that won't be ever found.
+           ;; When flatpak creates desktop files, it uses a path from
+           ;; $FLATPAK_BINARY if set.
+           ;; See <https://codeberg.org/guix/guix/issues/438>.
+           (search-path-specification
+            (variable "FLATPAK_BINARY")
+            (separator #f)
+            (files '("bin/flatpak"))
+            (file-type 'regular))))
     (home-page "https://flatpak.org")
     (synopsis "System for building, distributing, and running sandboxed desktop
 applications")

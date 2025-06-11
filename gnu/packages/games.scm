@@ -2760,7 +2760,7 @@ Every puzzle has a complete solution, although there may be more than one.")
 (define-public dsda-doom
   (package
     (name "dsda-doom")
-    (version "0.28.2")
+    (version "0.29.0")
     (source
      (origin
        (method git-fetch)
@@ -2769,7 +2769,7 @@ Every puzzle has a complete solution, although there may be more than one.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qvxx4r3ahiy8w9x0559g581971ycmbqm1kszzc65w1aa85f5q2f"))))
+        (base32 "1aki559nz1czlvzah1rdmpdcad4mswpp5gszfwxhil9x0hc3gj4r"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2791,18 +2791,11 @@ Every puzzle has a complete solution, although there may be more than one.")
     (home-page "https://github.com/kraflab/dsda-doom")
     (synopsis "Doom source port, successor of PrBoom+")
     (description
-     "This is a successor of PrBoom+ with new features, including:
-@enumerate
-@item Heretic, Hexen, MBF21, Doom-in-Hexen, UDMF, and MAPINFO support
-@item In-game console and scripting
-@item Full controller support
-@item Palette-based opengl renderer
-@item Debugging features for testing
-@item Strict mode for speedrunning
-@item Various quality of life improvements
-@item Advanced tools for TASing
-@item Rewind
-@end enumerate")
+     "DSDA-Doom is a Doom source port and successor of PrBoom+, with extra
+features for demo recording/playback and quality of life.  In particular, its
+features include support for the Heretic, Hexen, MBF21, Doom-in-Hexen and UDMF
+map formats, MAPINFO support, full controller support, debug and scripting
+features, rewinding, and a strict mode for speedrunning.")
     (license license:gpl2+)))
 
 (define-public prboom-plus
@@ -12849,27 +12842,29 @@ the map.")
       (license license:expat))))
 
 (define-public freerct
-  (package
-    (name "freerct")
-    (version "0.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/FreeRCT/FreeRCT")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1szwy2cq4ffp4yxm9pp9vdyia0i5nz0wnppdd1xb9w7v3wa4mywi"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f))
-    (native-inputs (list flex bison))
-    (inputs (list libpng sdl2 sdl2-ttf))
-    (home-page "https://freerct.net/")
-    (synopsis "Theme park management simulation game")
-    (description
-     "FreeRCT is a game that captures the look and feel of the popular games
+  (let ((commit "f85335dc98cdb28081b38cdf23409ac8a91d9a66")
+        (revision "0"))
+    (package
+      (name "freerct")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://codeberg.org/FreeRCT/FreeRCT")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1mimwgw487dxr2h1kxciwz34hk06g1lfgpicrav7khh19843a2fq"))))
+      (build-system cmake-build-system)
+      (arguments
+       `(#:tests? #f))
+      (native-inputs (list flex bison))
+      (inputs (list libpng glfw glew freetype))
+      (home-page "https://freerct.net/")
+      (synopsis "Theme park management simulation game")
+      (description
+       "FreeRCT is a game that captures the look and feel of the popular games
 RollerCoaster Tycoon 1 and 2, graphics- and gameplay-wise.
 
 In this game, you play as a manager of a theme park, allowing you to make a
@@ -12878,7 +12873,7 @@ finances, landscaping, and most importantly: rides.  Good managers follow the
 principle of prioritizing the guests' happiness with a well-maintained park.
 Should they go unwise, a theme park plunge into chaos with vandalizing guests
 and unsafe rides.  Which path will you take?")
-    (license license:gpl2)))
+      (license license:gpl2))))
 
 (define-public ultrastar-deluxe
   (package

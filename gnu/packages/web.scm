@@ -10,7 +10,7 @@
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2016 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2016 Jelle Licht <jlicht@fsfe.org>
-;;; Copyright © 2016-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Rene Saavedra <rennes@openmailbox.org>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2016, 2023 Clément Lassieur <clement@lassieur.org>
@@ -71,6 +71,7 @@
 ;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>"
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5617,7 +5618,7 @@ It uses the uwsgi protocol for all the networking/interprocess communications.")
 (define-public jq
   (package
     (name "jq")
-    (version "1.7.1")
+    (version "1.8.0")
     (source
      (origin
        (method url-fetch)
@@ -5625,18 +5626,18 @@ It uses the uwsgi protocol for all the networking/interprocess communications.")
                            "/releases/download/jq-" version
                            "/jq-" version ".tar.gz"))
        (sha256
-        (base32 "1hl0wppdwwrqf3gzg3xwc260s7i1br2lnc97zr1k8bpx56hrr327"))
+        (base32 "171i5dnw15gx4ah3xv05vhlq8b5pr7zbzhjhzyan36hxz5vib0ci"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled onigurama.
-        '(delete-file-recursively "modules"))))
+        '(delete-file-recursively "vendor/oniguruma"))))
     (inputs
      (list oniguruma))
     (native-inputs
      (append
        ;; TODO: fix gems to generate documentation
        ;(list ruby bundler)
-       '()
+       (list tzdata-for-tests)  ; needed for tests
        (if (member (%current-system)
                    (package-supported-systems valgrind/pinned))
          (list valgrind/pinned)
@@ -7529,6 +7530,37 @@ Rust with GTK.  It currently supports the Gemini, Gopher and Finger
 protocols.")
     (license license:expat)))
 
+(define-public civetweb
+  (package
+    (name "civetweb")
+    (version "1.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/civetweb/civetweb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rdajgr0243ma8sg7qn03v6f8pnbj9w2dghi751zrdg1d1zzjxkr"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              "-DCIVETWEB_ENABLE_CXX=ON"
+              "-DCIVETWEB_ENABLE_ZLIB=ON"
+              ;; The tests rely on downloading their fork of Check.
+              "-DCIVETWEB_BUILD_TESTING=OFF")))
+    (inputs (list zlib))
+    (home-page "https://github.com/civetweb/civetweb")
+    (synopsis "C/C++ embeddable web server")
+    (description
+     "CivetWeb is a web server with optional @acronym{CGI, Common Gateway
+Interface} and @acronym{SSL, Secure Sockets Layer} support.  It can be
+embedded into C/C++ applications or used as a standalone web server.")
+    (license license:expat)))
+
 (define-public clearsilver
   (package
     (name "clearsilver")
@@ -8738,7 +8770,7 @@ compressed JSON header blocks.
 (define-public nghttp3
   (package
     (name "nghttp3")
-    (version "1.9.0")
+    (version "1.10.1")
     (source
      (origin
        (method url-fetch)
@@ -8747,7 +8779,7 @@ compressed JSON header blocks.
                            "nghttp3-" version ".tar.gz"))
        (sha256
         (base32
-         "1gai6j4nlp79gf9p8qsid27s9qjz6irf0pqykr1qhizsbngaviyv"))))
+         "18lik57yb3zc5g17s18ymd268p037wly0hgvw6n9h48l09jqqv68"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
