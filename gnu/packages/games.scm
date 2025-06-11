@@ -11356,27 +11356,17 @@ across many levels and collect all the coaches to win.")
        (modules '((guix build utils)))
        (snippet
         '(begin
-           ;; There are some bundled fonts.
-           (for-each delete-file-recursively '("default/data/fonts"))))))
+           ;; Delete bundled dejavu fonts.
+           ;; The roboto font has been modified, so use it as is.
+           (for-each delete-file
+                     (find-files "default/data/fonts" "DejaVu"))))))
     (build-system cmake-build-system)
     (arguments
-     '(#:tests? #f                      ;no test
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'unbundle-fonts
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((roboto-dir (string-append (assoc-ref inputs "font-roboto")
-                                              "/share/fonts/truetype/")))
-               (substitute* "UI/ClientUI.cpp"
-                 (("\\(GetRootDataDir.*?Roboto-(Bold|Regular)\\.ttf\"\\)\\.string\\(\\)\\);"
-                   all type)
-                  (string-append "\"" roboto-dir "Roboto-" type ".ttf\");")))
-               #t))))))
+     '(#:tests? #f)) ;no test
     (inputs
      `(("boost" ,boost)
        ("boost_signals" ,boost-signals2)
        ("font-dejavu" ,font-dejavu)
-       ("font-roboto" ,font-google-roboto)
        ("freetype2" ,freetype)
        ("glew" ,glew)
        ("glu" ,glu)
