@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015 Pjotr Prins <pjotr.guix@thebird.nl>
-;;; Copyright © 2014-2017, 2021-2022, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2017, 2021-2022, 2024, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2015 David Thompson <davet@gnu.org>
 ;;; Copyright © 2015, 2019 Ricardo Wurmus <rekado@elephly.net>
@@ -249,23 +249,6 @@ a focus on simplicity and productivity.")
 (define-public ruby-3.1
   (package
     (inherit ruby-3.0)
-    (version "3.1.4")
-    (replacement ruby-3.1.7)
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://cache.ruby-lang.org/pub/ruby/"
-                           (version-major+minor version)
-                           "/ruby-" version ".tar.xz"))
-       (sha256
-        (base32
-         "0kzr792rk9n9yrqlyrkc1a0cmbk5y194f7v7p4vwjdk0ww860v8v"))))))
-
-+;;; TODO: This newer version resolves serveral CVEs.  Remove
-+;;; after ungrafting ruby.
-(define ruby-3.1.7
-  (package
-    (inherit ruby-3.1)
     (version "3.1.7")
     (source
      (origin
