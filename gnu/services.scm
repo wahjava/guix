@@ -672,6 +672,10 @@ information is missing, return the empty list (for channels) and possibly
            (delete-file-recursively "/tmp")
            (delete-file-recursively "/var/run")
            (delete-file-recursively "/run")
+           ;; If you somehow manage to create this (using debugging, say),
+           ;; then no guix reconfigure will work anymore.  Make a reboot
+           ;; fix it, at least.
+           (delete-file-recursively "/homeless-shelter")
 
            ;; Note: The second argument to 'mkdir' is and'ed with umask,
            ;; hence the 'chmod' calls.
