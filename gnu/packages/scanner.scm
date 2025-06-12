@@ -96,7 +96,7 @@
            libjpeg-turbo
            libpng
            libxml2
-           sane-backends))
+           sane))
     (home-page "https://github.com/alexpevzner/sane-airscan")
     (synopsis "SANE backend for eSCL (AirScan) and WSD document scanners")
     (description ; no @acronym{eSCL} because the meaning isn't officially known
