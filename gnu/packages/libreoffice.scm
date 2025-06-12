@@ -1199,7 +1199,7 @@ commonly called @code{ftoa} or @code{dtoa}.")
            python-lxml
            qrcodegen-cpp
            redland
-           sane-backends
+           sane
            unixodbc
            unzip
            vigra
