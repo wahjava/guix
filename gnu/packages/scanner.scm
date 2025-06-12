@@ -48,7 +48,23 @@
   #:use-module ((guix licenses)
                 #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix utils))
+  #:use-module (guix search-paths)
+  #:use-module (guix utils)
+
+  #:export (%sane-backend-search-paths))
+
+(define $SANE_CONFIG_DIR
+  (search-path-specification
+   (variable "SANE_CONFIG_DIR")
+   (files '("etc/sane.d"))))
+
+(define $SANE_BACKEND_LIB_PATH
+  (search-path-specification
+   (variable "SANE_BACKEND_LIB_PATH")
+   (files '("lib/sane"))))
+
+(define %sane-backend-search-paths
+  (list $SANE_CONFIG_DIR $SANE_BACKEND_LIB_PATH))
 
 (define-public sane-airscan
   (package
@@ -106,6 +122,7 @@ both WSD and eSCL.")
 (define-public sane-backends-minimal
   (package
     (name "sane-backends-minimal")
+    (replacement sane-backends-minimal/fixed)
     (version "1.3.1")
     (source (origin
              (method git-fetch)
@@ -205,6 +222,29 @@ proving access to any raster image scanner hardware (flatbed scanner,
 hand-held scanner, video- and still-cameras, frame-grabbers, etc.).  The
 package contains the library, but no drivers.")
     (license license:gpl2+))) ; plus linking exception
+
+(define-public sane-backends-minimal/fixed
+  (hidden-package
+   (package
+     (inherit sane-backends-minimal)
+     (native-search-paths %sane-backend-search-paths)
+
+     (arguments
+      (substitute-keyword-arguments (package-arguments sane-backends-minimal)
+        ((#:phases phases)
+         `(modify-phases ,phases
+           (add-before 'configure 'use-lib-path
+             (lambda _
+               (substitute* "backend/dll.c"
+                 ((".*path.*LD_LIBRARY_PATH.*" all)
+                  (format #f
+                          "~a\nif (!path) path = getenv(~s);\n"
+                          all
+                          ,(search-path-specification-variable
+                            $SANE_BACKEND_LIB_PATH))))))
+           (add-after 'install 'remove-dll.conf
+             (lambda _
+               (delete-file (string-append %output "/etc/sane.d/dll.conf")))))))))))
 
 ;; This variant links in the hpaio backend provided by hplip, which adds
 ;; support for HP scanners whose backends are not maintained by the SANE
