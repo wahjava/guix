@@ -532,6 +532,7 @@ should only be used as part of the Guix cups-pk-helper service.")
   (package
     (name "hplip")
     (version "3.24.4")
+    (replacement hplip/fixed)
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/hplip/hplip/" version
@@ -690,7 +691,7 @@ should only be used as part of the Guix cups-pk-helper service.")
            python-pygobject
            python-pyqt
            python-wrapper
-           sane-backends-minimal
+           sane
            net-snmp
            openssl
            avahi
@@ -703,6 +704,21 @@ should only be used as part of the Guix cups-pk-helper service.")
     ;; The 'COPYING' file lists directories where each of these 3 licenses
     ;; applies.
     (license (list license:gpl2+ license:bsd-3 license:expat))))
+
+(define-public hplip/fixed
+  (hidden-package
+   (package
+     (inherit hplip)
+     (arguments
+      (substitute-keyword-arguments (package-arguments hplip)
+        ((#:phases phases)
+         #~(modify-phases #$phases
+             (add-after 'install 'fix-sane
+               (lambda _
+                 (let ((dll.d (string-append #$output "/etc/sane.d/dll.d"))
+                       (dll.conf (string-append #$output "/etc/sane.d/dll.conf")))
+                   (mkdir-p dll.d)
+                   (rename-file dll.conf (string-append dll.d "/hpaio"))))))))))))
 
 (define-public hplip-minimal
   (package/inherit hplip
@@ -728,7 +744,7 @@ should only be used as part of the Guix cups-pk-helper service.")
            dbus
            libjpeg-turbo
            libusb
-           sane-backends-minimal
+           sane
            zlib))
     (synopsis "GUI-less version of hplip")))
 
