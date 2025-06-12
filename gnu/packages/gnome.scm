@@ -5805,6 +5805,7 @@ output devices.")
   (package/inherit colord-minimal
     (name "colord")
     (version "1.4.6")
+    (replacement colord/fixed)
     (source
      (origin
        (method url-fetch)
@@ -5842,6 +5843,14 @@ output devices.")
                libxslt
                sane-backends
                vala)))))                ;for VAPI, needed by simple-scan
+
+(define-public colord/fixed
+  (hidden-package
+   (package
+     (inherit colord)
+     (native-inputs
+      (modify-inputs (package-native-inputs colord)
+        (replace "sane-backends" sane))))))
 
 (define-public geoclue
   (package
