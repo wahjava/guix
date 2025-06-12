@@ -470,7 +470,7 @@ sharing.")
            procps
            psmisc                       ;for pstree
            rpm
-           sane-backends
+           sane
            smartmontools
            sysstat
            upower
