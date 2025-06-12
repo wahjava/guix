@@ -7347,7 +7347,7 @@ USB transfers with your high-level application or system daemon.")
            gdk-pixbuf
            gusb
            libadwaita
-           sane-backends))
+           sane))
     (home-page "https://gitlab.gnome.org/GNOME/simple-scan")
     (synopsis "Document and image scanner")
     (description
