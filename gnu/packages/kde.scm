@@ -1550,8 +1550,7 @@ transport data and for performing public transport journey queries.")
     (native-inputs
      (list extra-cmake-modules))
     (inputs
-     (list ki18n
-           sane-backends))
+     (list ki18n sane))
     (home-page "https://invent.kde.org/libraries/ksanecore")
     (synopsis "Library providing logic to interface scanners")
     (description
