@@ -249,12 +249,10 @@ package contains the library, but no drivers.")
              (lambda _
                (delete-file (string-append %output "/etc/sane.d/dll.conf")))))))))))
 
-;; This variant links in the hpaio backend provided by hplip, which adds
-;; support for HP scanners whose backends are not maintained by the SANE
-;; project, and builds all of those backends.
 (define-public sane-backends
   (package/inherit sane
     (name "sane-backends")
+    (replacement sane-backends/fixed)
     (inputs
      `(("hplip" ,(@ (gnu packages cups) hplip))
        ("libjpeg" ,libjpeg-turbo)       ; for pixma/epsonds/other back ends
@@ -295,6 +293,21 @@ package contains the library, but no drivers.")
 proving access to any raster image scanner hardware (flatbed scanner,
 hand-held scanner, video- and still-cameras, frame-grabbers, etc.).  The
 package contains the library and drivers.")))
+
+(define-public sane-backends/fixed
+  (hidden-package
+   (package
+     (inherit sane-backends)
+     (inputs
+      (modify-inputs (package-inputs sane-backends)
+        (delete "hplip")))
+     (arguments
+      (substitute-keyword-arguments (package-arguments sane-backends)
+        ((#:phases phases)
+         `(modify-phases ,phases
+           (delete 'disable-backends)
+           (delete 'add-backends)
+           (delete 'install-hpaio))))))))
 
 (define-public utsushi
   (let ((commit "839d06a5a80b353cb604eb9f7d352a1648ab1fdf"))
