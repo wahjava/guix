@@ -487,7 +487,7 @@ provided the driver also exposes the buttons.")
            lcms
            libjpeg-turbo
            libtiff
-           sane-backends
+           sane
            xdg-utils))                  ;to open the manual from the Help menu
     (home-page "https://gitlab.com/sane-project/frontend/xsane")
     (synopsis "Featureful graphical interface for document and image scanners")
