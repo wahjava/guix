@@ -5903,6 +5903,26 @@ built for python-flask 2")
     (description "Extract swagger specs from your flask project.")
     (license license:expat)))
 
+(define-public python-flask-2-limiter
+  (package
+    (name "python-flask-limiter")
+    (version "3.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/alisaifee/flask-limiter/releases/download/"
+             version "/flask_limiter-" version ".tar.gz"))
+       (sha256
+        (base32 "000kw8qcjkq4c3hhl4rwsbs4446xk1qy2ad7pzzx3l5cqk8f7qzr"))))
+    (build-system python-build-system)
+    (propagated-inputs (list python-flask-2 python-limits python-ordered-set
+                             python-rich))
+    (home-page "https://flask-limiter.readthedocs.org")
+    (synopsis "Rate limiting for flask applications")
+    (description "Rate limiting for flask applications.")
+    (license license:expat)))
+
 (define-public python-flask
   (package
     (name "python-flask")
