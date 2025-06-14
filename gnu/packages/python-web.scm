@@ -5857,6 +5857,25 @@ to complex applications.  It began as a simple wrapper around Werkzeug and
 Jinja, and has become one of the most popular Python web application frameworks.")
     (license license:bsd-3)))
 
+(define-public python-flask-2-swagger-ui
+  (package
+    (name "python-flask-swagger-ui")
+    (version "5.21.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flask_swagger_ui" version))
+       (sha256
+        (base32 "1m033srjkq6kv9skf9ry8l0a6fjk7jz0avwgp35fls0sq66h6bc7"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-flask-2))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/sveint/flask-swagger-ui")
+    (synopsis "Swagger UI blueprint for Flask")
+    (description "Swagger UI blueprint for Flask.
+built for python-flask 2")
+    (license license:expat)))
+
 (define-public python-flask
   (package
     (name "python-flask")
