@@ -38879,6 +38879,24 @@ toolkit for Python.")
 composing subtitles in the SRT file format.")
     (license license:expat)))
 
+(define-public python-pysrt
+  (package
+    (name "python-pysrt")
+    (version "1.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pysrt" version))
+       (sha256
+        (base32 "1fdhp7g1qz4fd4a3j59b26yc0g8r78pljimpklz79rz46fx49y5l"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-chardet))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/byroot/pysrt")
+    (synopsis "SubRip (.srt) subtitle parser and writer")
+    (description "@code{SubRip} (.srt) subtitle parser and writer.")
+    (license license:gpl3)))
+
 (define-public python-gatt
   (package
     (name "python-gatt")
