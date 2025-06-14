@@ -75,6 +75,7 @@
 ;;; Copyright © 2025 Daniel Ziltener <dziltener@lyrion.ch>
 ;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
+;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5825,6 +5826,36 @@ file.")
 without starting an HTTP server.  It supports anything that supports the
 minimum of WSGI.")
     (license license:expat)))
+
+(define-public python-flask-2
+  (package
+    (name "python-flask")
+    (version "2.2.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Flask" version))
+       (sha256
+        (base32 "183sjzxwfl38kaxv168d86i3g1z2994gy44cbayj2rpjgw59pvpd"))))
+    (build-system python-build-system)
+    (propagated-inputs (list python-asgiref
+                             python-blinker
+                             python-celery
+                             python-click
+                             python-importlib-metadata
+                             python-itsdangerous
+                             python-jinja2
+                             python-markupsafe
+                             python-dotenv
+                             python-werkzeug))
+    (native-inputs (list python-flit-core))
+    (home-page "https://flask.palletsprojects.com/en/stable/")
+    (synopsis "A simple framework for building complex web applications.")
+    (description "Flask is a lightweight WSGI web application framework.  It is
+designed to make getting started quick and easy, with the ability to scale up
+to complex applications.  It began as a simple wrapper around Werkzeug and
+Jinja, and has become one of the most popular Python web application frameworks.")
+    (license license:bsd-3)))
 
 (define-public python-flask
   (package
