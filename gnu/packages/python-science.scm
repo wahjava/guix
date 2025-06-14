@@ -30,6 +30,7 @@
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Mark Walker <mark.damon.walker@gmail.com>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1552,6 +1553,44 @@ particle decays between digital representations, effectively making it
 possible to interoperate several fitting programs.  Particular interest is
 given to programs dedicated to amplitude analyses.")
     (license license:bsd-3)))
+
+(define-public python-dicomweb-client
+  (package
+    (name "python-dicomweb-client")
+    (version "0.60.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ImagingDataCommons/dicomweb-client")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zad0905cc4jy4hnh9yhcw63bg25f7xa33x9rj9fhh5r4fznha8d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-dynamic-versioning
+            (lambda _
+              (substitute* "pyproject.toml"
+                ;; Dynamic versioning via 'uv-dynamic-versioning' is
+                ;; not suitable for Guix.
+                (("dynamic = \\[\"version\"\\]")
+                 (string-append "version = \""
+                                #$version "\""))))))))
+    (propagated-inputs (list python-numpy python-pillow python-pydicom
+                             python-requests python-retrying))
+    (native-inputs (list python-hatchling python-pytest
+                         python-pytest-localserver))
+    (home-page "https://github.com/ImagingDataCommons/dicomweb-client")
+    (synopsis "Python client for DICOMweb RESTful services")
+    (description
+     "@code{dicomweb_client} provides client intefaces for DICOMweb RESTful
+services QIDO-RS, WADO-RS and STOW-RS to search, retrieve and store
+DICOM objects over the web, respectively.")
+    (license license:expat)))
 
 (define-public python-vector
   (package
