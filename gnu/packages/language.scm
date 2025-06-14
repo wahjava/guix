@@ -13,6 +13,7 @@
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,6 +36,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages audio)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages crates-io)
@@ -53,13 +55,18 @@
   #:use-module (gnu packages java)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages man)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pulseaudio)
+  #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-web)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages ruby)
@@ -80,6 +87,8 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system qt)
+  #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -1240,3 +1249,44 @@ tokenizer, can include whitespace in terminals and have terminals which are
 prefixes of other terminals.")
     (home-page "https://dparser.sourceforge.net/")
     (license (list license:bsd-3))))
+
+(define-public python-stanza
+  (package
+    (name "python-stanza")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stanza" version))
+       (sha256
+        (base32 "0qznbfryl43hqw6gszbyj8l663hflapy2yx6p6kdj1hy6wz6i3fz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; arguments not reaching the test program correctly, perhaps
+      ;; interferance of a wrapper
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'sanity-check 'set-test-home
+            (lambda _
+              (setenv "STANZA_TEST_HOME"
+                      (string-append (getcwd) "/stanza_test")))))))
+    (propagated-inputs (list python-emoji
+                             python-networkx
+                             python-numpy
+                             python-protobuf
+                             python-requests
+                             python-pytorch
+                             python-tqdm))
+    (native-inputs (list python-check-manifest python-coverage python-pytest
+                         python-setuptools python-wheel))
+    (home-page "https://github.com/stanfordnlp/stanza")
+    (synopsis "Python NLP Library for Many Human Languages, by the Stanford NLP Group")
+    (description "Stanza is a collection of accurate and efficient tools for
+the linguistic analysis of many human languages.  Starting from raw text,
+Stanza divides it into sentences and words, and then can recognize parts of
+speech and entities, do syntactic analysis, and more.  Stanza brings
+state-of-the-art NLP models to languages of your choosing.")
+    (license license:asl2.0)))
+
