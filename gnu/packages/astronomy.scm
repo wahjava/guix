@@ -8912,6 +8912,29 @@ can be used to control telescopes over a serial port for tracking celestial
 objects.")
     (license license:gpl2+))))
 
+(define-public stpsf-data
+  (package
+    (name "stpsf-data")
+    (version "2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       ;; 74MiB archive
+       (uri "https://stsci.box.com/shared/static/kqfolg2bfzqc4mjkgmujo06d3iaymahv.gz")
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1jvv56di2l7nj9y0xmwianfyp0wj83gqk5wx7kbipkqwqnk7gn21"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan #~'(("." "share/stpsf-data"))))
+    (home-page "https://stpsf.readthedocs.io/en/stable/installation.html")
+    (synopsis "JWST pupil shape, instrument throughputs, and aperture positions data files")
+    (description
+     "This package contains FIT and CSV files required for STPSF installation and
+distributed separately from it.")
+    (license license:bsd-3)))
+
 (define-public stuff
   (package
     (name "stuff")
