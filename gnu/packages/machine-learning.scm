@@ -1083,6 +1083,29 @@ depend on language-specific pre- or post-processing.")
        (sha256
         (base32 "1j4ymjvwsh00s85dzzps5m23fl8nhm9ra28hhz0di9ga2187mjxl"))))))
 
+(define-public python-sacremoses
+  (package
+    (name "python-sacremoses")
+    (version "0.0.53")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sacremoses" version))
+       (sha256
+        (base32 "0yisynn2pw6xyvm2b2x8gydfbgrnwb64d02bvqsknr3cfrl5hwa3"))))
+    (arguments
+     (list
+      ;; tests raise NotImplementedError
+      #:tests? #f))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-six python-click python-joblib
+                             python-regex python-tqdm))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/hplt-project/sacremoses")
+    (synopsis "Python port of Moses tokenizer, truecaser and normalizer")
+    (description "Python port of Moses tokenizer, truecaser and normalizer")
+    (license license:expat)))
+
 (define-public python-hopcroftkarp
   ;; This commit fixes a broken import, but has not been released to PyPI.
   (let ((commit "2846e1dd3265d95d2bddb0cf4190b830cbb4efe6")
