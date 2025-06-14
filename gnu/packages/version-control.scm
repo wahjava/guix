@@ -1536,6 +1536,34 @@ issue management.")
       (home-page "https://github.com/dspinellis/git-issue")
       (license license:gpl3+))))
 
+(define-public git-credential-oauth
+  (package
+    (name "git-credential-oauth")
+    (version "0.15.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hickford/git-credential-oauth")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fid6dl82val6miq61dm203y7k2kzccpmra43fngnqrr1p4hh2pl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hickford/git-credential-oauth"))
+    (propagated-inputs (list go-golang-org-x-oauth2))
+    (home-page "https://github.com/hickford/git-credential-oauth")
+    (synopsis "Git credential helper that securely authenticates using OAuth")
+    (description
+     "git-credential-oauth is a Git credential helper that securely authenticates to
+GitHub, GitLab, BitBucket, Gerrit, Gitea, and Forgejo using OAuth.
+
+The first time you authenticate, the helper opens a browser window to the host.
+Subsequent authentication within storage lifetime is non-interactive.")
+    (license license:asl2.0)))
+
 (define-public git-crypt
   (package
     (name "git-crypt")
