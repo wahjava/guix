@@ -1290,3 +1290,24 @@ speech and entities, do syntactic analysis, and more.  Stanza brings
 state-of-the-art NLP models to languages of your choosing.")
     (license license:asl2.0)))
 
+(define-public python-morfessor
+  (package
+    (name "python-morfessor")
+    (version "2.0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Morfessor" version))
+       (sha256
+        (base32 "1cmsxyd7ymlqlgam9a6va0x3fqhz0w1mixj0yv2j85rl6k1flfxv"))))
+    (build-system python-build-system)
+    (home-page "http://morpho.aalto.fi/projects/morpho/")
+    (synopsis "Morfessor")
+    (description "The goal of the Morpho project is to develop unsupervised
+data-driven methods that discover the regularities behind word forming in
+natural languages.  In particular, it focuses on the discovery of morphemes.")
+    (license license:bsd-3)))
+
+
+
+
