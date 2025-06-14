@@ -1462,6 +1462,30 @@ storing tensors safely, named safetensors.  They aim to be safer than their
 unsupervised text tokenizer.")
     (license license:asl2.0)))
 
+(define-public python-sentencepiece-0.2
+  (package
+    (name "python-sentencepiece")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sentencepiece" version))
+       (sha256
+        (base32 "0hsqs5afc7alpfpgcrl94jql38qg9rl6ggkcvjbydwma3lbijb55"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list pkg-config python-setuptools python-wheel protobuf))
+    (propagated-inputs (list sentencepiece-0.2))
+    (home-page "https://github.com/google/sentencepiece")
+    (synopsis "SentencePiece python wrapper")
+    (description "SentencePiece is an unsupervised text tokenizer and
+detokenizer mainly for Neural Network-based text generation systems where the
+vocabulary size is predetermined prior to the neural model training.
+SentencePiece implements subword units (e.g., byte-pair-encoding (BPE)
+[Sennrich et al.]) and unigram language model [Kudo.]) with the extension of
+direct training from raw sentences.  SentencePiece allows us to make a purely
+end-to-end system that does not depend on language-specific pre/postprocessing")
+    (license license:asl2.0)))
+
 (define-public python-sentence-transformers
   (package
     (name "python-sentence-transformers")
