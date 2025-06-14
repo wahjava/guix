@@ -164,6 +164,7 @@
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -11591,6 +11592,33 @@ scratch, as well as in-place editing.")
      "This Python package provides utilities to run common packaging tasks,
 e.g. copy examples, fetch data, etc.")
     (license license:bsd-3)))
+
+(define-public python-expiringdict
+  (package
+    (name "python-expiringdict")
+    (version "1.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "expiringdict" version))
+       (sha256
+        (base32 "02gf4d6439kd6am7vq1b2cp4zg5k2la6r1csrw2mpwcqgqmbj3rh"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-coverage
+                         python-coveralls
+                         python-dill
+                         python-mock
+                         python-nose
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://www.mailgun.com/")
+    (synopsis "Dictionary with auto-expiring values for caching purposes")
+    (description "expiringdict is a Python caching library.  The core of the
+ library is ExpiringDict class which is an ordered dictionary with
+ auto-expiring values for caching purposes.  Expiration happens on any access,
+ object is locked during cleanup from expired values.  ExpiringDict can not
+ store more than max_len elements - the oldest will be deleted.")
+    (license license:asl2.0)))
 
 (define-public python-multidict
   (package
