@@ -30,6 +30,7 @@
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Andy Tai <atai@atai.org>
+;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1066,6 +1067,21 @@ model---with the extension of direct training from raw sentences.
 SentencePiece allows us to make a purely end-to-end system that does not
 depend on language-specific pre- or post-processing.")
     (license license:asl2.0)))
+
+(define-public sentencepiece-0.2
+  (package
+    (inherit sentencepiece)
+    (name "sentencepiece")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/sentencepiece")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j4ymjvwsh00s85dzzps5m23fl8nhm9ra28hhz0di9ga2187mjxl"))))))
 
 (define-public python-hopcroftkarp
   ;; This commit fixes a broken import, but has not been released to PyPI.
