@@ -5876,6 +5876,33 @@ Jinja, and has become one of the most popular Python web application frameworks.
 built for python-flask 2")
     (license license:expat)))
 
+(define-public python-flask-2-swagger
+  (package
+    (name "python-flask-swagger")
+    (version "0.2.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flask-swagger" version))
+       (sha256
+        (base32 "0k998m8hchnmghv9a1hgkdqkbky9ml9i9ka8cl5w5x3dqddmy25l"))))
+    (build-system python-build-system)
+    (propagated-inputs (list python-flask-2 python-pyyaml))
+    (native-inputs (list python-setuptools python-wheel))
+
+    (arguments
+     (list
+      ;; the sanity check fails, as a sys arg to the sanity check program is
+      ;; misinterpreted by build_swagger_spec.py with unguarded global logic
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'sanity-check))))
+
+    (home-page "https://github.com/getsling/flask-swagger")
+    (synopsis "Extract swagger specs from your flask project")
+    (description "Extract swagger specs from your flask project.")
+    (license license:expat)))
+
 (define-public python-flask
   (package
     (name "python-flask")
