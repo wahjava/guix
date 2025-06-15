@@ -2472,7 +2472,7 @@ the font would look under various sizes.")
 (define-public gcr
   (package
     (name "gcr")
-    (version "4.2.1")
+    (version "4.4.0.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -2480,12 +2480,27 @@ the font would look under various sizes.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1rbxjrwy88l1b6yml2hrracqamaflvif7a9fq1cd0g1ph1f3ny7d"))))
+                "164098bmv319pdh064p6cck0q2hr0jc51128599z5x7r94g38g0c"))))
     (build-system meson-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-tests
+            (lambda _
+              (substitute* "gcr/test-gnupg-process.c"
+                ;fails with:
+
+                ;not ok /gcr/gnupg-process/run_fail_signal -
+                ;Gcr:ERROR:../gcr-4.4.0.1/gcr
+                ;test-gnupg-process.c:491:test_run_fail_signal:
+
+                ;assertion failed (error->message ==
+                ;"Gnupg process was terminated with signal: 15"):
+                ;("Gnupg process exited with code: 1" ==
+                ;"Gnupg process was terminated with signal: 15")
+                (("Gnupg process was terminated with signal: 15")
+                 "Gnupg process exited with code: 1"))))
           (add-after 'unpack 'remove-fatal-warnings-option
             ;; Otherwise, the gi-docgen tool would fail because of the
             ;; "Fontconfig error: No writable cache directories" warnings.
@@ -2497,7 +2512,7 @@ the font would look under various sizes.")
               (substitute* "meson.build"
                 (("gtk_update_icon_cache: true")
                  "gtk_update_icon_cache: false"))))
-                    (add-before 'check 'pre-check
+          (add-before 'check 'pre-check
             (lambda _
               ;; Some tests expect to write to $HOME.
               (setenv "HOME" "/tmp")))
@@ -2559,6 +2574,7 @@ GNOME Desktop.")
      (substitute-keyword-arguments (package-arguments gcr)
        ((#:phases phases)
         #~(modify-phases #$phases
+            (delete 'patch-tests)
             (replace 'skip-gtk-update-icon-cache
               ;; Don't create 'icon-theme.cache'.
               (lambda _
