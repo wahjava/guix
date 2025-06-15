@@ -142,3 +142,37 @@ LibreTranslate is an API and web-app built on top of Argos Translate.")
     (description "Translate HTML using Beautiful Soup and Argos Translate.")
     (license license:expat)))
 
+(define-public python-argos-translate-files
+  (package
+    (name "python-argos-translate-files")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/LibreTranslate/argos-translate-files")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01v51idnlrjqqzlnczzwzf679n8dn4yyharl8wchcgsw2agxghby"))
+       (snippet #~(substitute* "requirements.txt"
+                    (("^(lxml>=)4.9.2" all stem)
+                     (string-append stem "4.9.1"))))
+       (modules `((guix build utils)))))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-test-home
+            (lambda _
+              (setenv "HOME"
+                      (getcwd)))))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-argostranslate python-beautifulsoup4
+                             python-lxml python-pysrt python-translatehtml))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/LibreTranslate/argos-translate-files")
+    (synopsis "Translate files with Argos Translate")
+    (description "Translate files with Argos Translate.")
+    (license license:expat)))
+
