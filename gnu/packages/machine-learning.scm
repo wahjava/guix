@@ -6395,6 +6395,40 @@ reordering, etc., to accelerate and reduce the memory usage of Transformer
 models on CPU and GPU.")
     (license license:expat)))
 
+(define-public python-ctranslate2
+  (package
+    (name "python-ctranslate2")
+    (version ctranslate2-version)
+    (source ctranslate2-source)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests require the eole python project
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'cd-to-build-dir
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs (list python-setuptools
+
+                         ctranslate2
+
+                         python-wheel
+                         pybind11-2.10
+                         python-pyyaml
+                         python-numpy))
+    (home-page "https://opennmt.net/CTranslate2/")
+    (synopsis "Fast inference engine for Transformer models")
+    (description "CTranslate2 is a C++ and Python library for efficient
+inference with Transformer models.
+
+The project implements a custom runtime that applies many performance
+optimization techniques such as weights quantization, layers fusion, batch
+reordering, etc., to accelerate and reduce the memory usage of Transformer
+models on CPU and GPU.")
+    (license license:expat)))
+
 (define-public python-hmmlearn
   (package
     (name "python-hmmlearn")
