@@ -193,3 +193,74 @@ LibreTranslate is an API and web-app built on top of Argos Translate.")
     (description "Simple, fast dictionary-based language detector.")
     (license license:agpl3)))
 
+(define-public python-libretranslate
+  (package
+    (name "python-libretranslate")
+    (version "1.6.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "libretranslate" version))
+       (sha256
+        (base32 "1k0x5l2rc1qsv1nrjgjaa1gcz94v8ly2w9nagfccvfx6kc5yvg93"))))
+    (build-system pyproject-build-system)
+    ;; avoid joint propagation of python-flask 2 and newer versions
+    (inputs (list python-flask-2
+                  python-flask-2-limiter
+                  python-flask-2-swagger
+                  python-flask-2-swagger-ui))
+    (propagated-inputs (list python-appdirs
+                             python-apscheduler
+                             python-argos-translate-files
+                             python-argostranslate
+                             python-expiringdict
+                             ;; these should probably be brought in line with flask 2
+                             python-flask-babel
+                             python-flask-session
+                             python-itsdangerous
+                             python-langdetect
+                             python-lexilang
+                             python-morfessor
+                             python-numpy
+                             python-packaging
+                             python-polib
+                             python-prometheus-client
+                             python-redis
+                             python-requests
+                             python-pytorch
+                             python-translatehtml
+                             python-waitress
+                             python-werkzeug))
+    (native-inputs (list python-hatchling
+                         ;; large dep count
+                         ;; python-pip-audit
+                         python-pytest
+                         python-pytest-cov
+                         python-types-requests))
+    (arguments
+     (list
+      ;; tests check for internet
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'wipe-init
+            (lambda _
+              ;; this behaviour causes the modules of the following
+              ;; names to be obscured in place of their member
+              ;; functions.
+              ;; this breaks the "create-entrypoints" phase
+              (substitute* "libretranslate/__init__.py"
+                (("from \\.(main|manage).*$")
+                 ""))))
+          (add-before 'check 'set-test-home
+            (lambda _
+              (setenv "HOME"
+                      (getcwd)))))))
+    (home-page "https://github.com/LibreTranslate/LibreTranslate")
+    (synopsis "Free and Open Source Machine Translation API")
+    (description
+     "Free and Open Source Machine Translation API, entirely
+self-hosted.  Unlike other APIs, it doesn't rely on proprietary providers such
+as Google or Azure to perform translations.  Instead, its translation engine
+is powered by the open source Argos Translate library.")
+    (license license:agpl3)))
