@@ -78,3 +78,36 @@ installing language model packages which are zip archives with a
 LibreTranslate is an API and web-app built on top of Argos Translate.")
     (license license:expat)))
 
+(define-public python-argostranslategui
+  (package
+    (name "python-argostranslategui")
+    (version "1.6.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/argosopentech/argos-translate-gui")
+             (commit
+              ;; no releases
+              "06aafde3faf1709080471c94914382a566f6f775")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g251fgwwbk96f8n11c8gzidqgfkrkwpldxk9zq0kkhm729b9yyw"))))
+    (arguments
+     (list
+      ;; lack of ssl certificate bundle error
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-test-home
+            (lambda _
+              (setenv "HOME"
+                      (getcwd)))))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-argostranslate python-pyqt))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://www.argosopentech.com")
+    (synopsis "Graphical user interface for Argos Translate")
+    (description "Graphical user interface for Argos Translate.")
+    (license license:expat)))
+
