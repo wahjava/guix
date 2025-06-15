@@ -176,3 +176,20 @@ LibreTranslate is an API and web-app built on top of Argos Translate.")
     (description "Translate files with Argos Translate.")
     (license license:expat)))
 
+(define-public python-lexilang
+  (package
+    (name "python-lexilang")
+    (version "1.0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lexilang" version))
+       (sha256
+        (base32 "11lfgp7dp3v4crldyj4ijk24q2b0c4g229i8arnwd1hlbqjz6srq"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/LibreTranslate/LexiLang")
+    (synopsis "Simple, fast dictionary-based language detector")
+    (description "Simple, fast dictionary-based language detector.")
+    (license license:agpl3)))
+
