@@ -1669,7 +1669,7 @@ useful for email address completion.")
          ;; This python package lives in a subdirectory of the notmuch source
          ;; tree, so chdir into it before building.
          (add-after 'unpack 'enter-python-dir
-           (lambda _ (chdir "bindings/python") #t))
+           (lambda _ (chdir "contrib/python-legacy") #t))
          ;; Make sure the correct notmuch shared library gets loaded.
          (add-before 'build 'set-libnotmuch-file-name
            (lambda* (#:key inputs #:allow-other-keys)
