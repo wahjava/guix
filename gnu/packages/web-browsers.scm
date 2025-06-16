@@ -539,7 +539,7 @@ interface.")
 (define-public qutebrowser
   (package
     (name "qutebrowser")
-    (version "3.5.0")
+    (version "3.5.1")
     (source
      (origin
        (method git-fetch)
@@ -548,7 +548,7 @@ interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11ir4l4rq86nz2lqj2s31dwc9vm1dcjwqj5sh81c5bg52ccvbbm9"))))
+        (base32 "0vbd6b5332nd7q9y94zjd1bwdr0gk6pgzvl1ygm274nk5plifdjs"))))
     (build-system python-build-system)
     (native-inputs
      (list python-attrs                 ; for tests
