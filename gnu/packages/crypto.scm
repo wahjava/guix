@@ -29,6 +29,7 @@
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1719,3 +1720,48 @@ default Keychain will only start ssh-agent, but it can also be
 configured to start gpg-agent.")
     (home-page "https://www.funtoo.org/Keychain")
     (license license:gpl2)))
+
+(define-public libdigidocpp
+  (package
+    (name "libdigidocpp")
+    (version "4.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-eid/libdigidocpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0di7kajqyjykcblqvfbfc8k2r4az4pzmb2l0bq2bx5y45m4dds9l"))
+       (modules '((guix build utils)))
+       (snippet '(delete-file-recursively "src/minizip"))))
+    (build-system cmake-build-system)
+    (inputs (list libltdl
+                  libxml2
+                  libxslt
+                  minizip-ng
+                  openssl
+                  xmlsec-openssl
+                  zlib))
+    (native-inputs (list pkg-config))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-test-filters
+            (lambda _
+              ;; These tests fail without a network connection. See
+              ;; <https://github.com/open-eid/libdigidocpp/issues/675>.
+              (setenv "BOOST_TEST_RUN_FILTERS"
+                      (string-join
+                       '("!DocSuite/files<digidoc__ASiCE>"
+                         "!DocSuite/signature<digidoc__ASiCE>"
+                         "!DocSuite/signatureParameters<digidoc__ASiCE>")
+                       ":")))))))
+    (home-page "https://github.com/open-eid/libdigidocpp")
+    (synopsis "DigiDoc digital signature library")
+    (description "DigiDoc is an XML file format for documents with digital
+signatures used by the Estonian ID card infrastructure.  This library allows
+for creation and reading of DigiDoc files.")
+    (license license:lgpl2.1+)))
