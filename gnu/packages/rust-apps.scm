@@ -2692,6 +2692,55 @@ universal consistency and correctness as top priorities.  It is
 configuration-free.")
     (license license:asl2.0)))
 
+(define-public vhdl-ls
+  (package
+    (name "vhdl-ls")
+    (version "0.85.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/VHDL-LS/rust_hdl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vb2wmwammbxg89q8hhndskw43kgbamhyz41wdmpzk9skwy658ms"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'vhdl-ls))
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-libraries
+            (lambda _
+              (mkdir-p (string-append #$output "/share/vhdl_libraries"))
+              (copy-recursively "vhdl_libraries"
+                                (string-append #$output "/share/vhdl_libraries")))))
+      #:cargo-install-paths ''("vhdl_ls")))
+    (home-page "https://github.com/kraigher/rust_hdl")
+    (synopsis "VHDL Language Server")
+    (description "This package provides a complete VHDL language server protocol implementation with diagnostics,
+navigate to symbol, find all references etc.
+
+Features:
+@itemize
+    @item Live syntax and type checking
+    @item Checks for missing and duplicate declarations
+    @item Supports goto-definition/declaration (also in presence of overloading)
+    @item Supports find-references (also in presence of overloading)
+    @item Supports goto-implementation
+        @itemize
+        @item From component declaration to matching entity by default binding
+        @item From entity to matching component declaration by default binding
+        @end itemize
+    @item Supports hovering symbols
+    @item Rename symbol
+    @item Find workspace symbols
+    @item View/find document symbols
+@end itemize")
+    (license license:mpl2.0)))
+
 (define-public vivid
   (package
     (name "vivid")
