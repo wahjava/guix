@@ -3625,7 +3625,7 @@ files.")
         (sha256
           (base32
             "12wf17abn3psbsg2r2lk0xdnk8n5cd5rrvjlpxjnjfhd09n7qqgm"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
       (list python-cffi
             python-cython
@@ -3635,9 +3635,12 @@ files.")
             python-python3-midi
             python-soundfile))
     (native-inputs
-     (list libsndfile))
+     (list libsndfile
+           python-setuptools
+           python-wheel))
     (arguments
-     `(#:phases
+     `(#:tests? #f ; There seem to be no tests
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-versions
            (lambda _
