@@ -69,6 +69,7 @@
             grub-efi-netboot-removable-bootloader
             grub-mkrescue-bootloader
             grub-minimal-bootloader
+            grub-efi-luks2-with-argon2-bootloader
 
             grub-configuration))
 
@@ -865,6 +866,12 @@ symlink to the store is not needed in this case."
   (bootloader
    (inherit grub-efi-bootloader)
    (package grub-hybrid)))
+
+(define grub-efi-luks2-with-argon2-bootloader
+  (bootloader
+   (inherit grub-efi-bootloader)
+   (name 'grub-efi-luks2-with-argon2)
+   (package grub-efi-luks2-with-argon2)))
 
 
 ;;;

@@ -40,6 +40,7 @@
 
 (define-module (gnu packages bootloaders)
   #:use-module (gnu packages)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages assembly)
   #:use-module (gnu packages base)
   #:use-module (gnu packages disk)
@@ -582,6 +583,48 @@ menu to select one of the installed operating systems.")
                                          (string-append output-dir "/"
                                                         basename))))
                             (scandir input-dir)))))))))))
+
+(define-public grub-efi-luks2-with-argon2
+  (package
+    (inherit grub-efi)
+    (name "grub-efi-luks2-with-argon2")
+    (source
+     (origin
+       (inherit (package-source grub-efi))
+       (patches (append (origin-patches (package-source grub-efi))
+                        (search-patches
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/grub-install_luks2.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-grub-install_luks2.patch"
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/argon_1.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-argon_1.patch"
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/argon_2.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-argon_2.patch"
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/argon_3.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-argon_3.patch"
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/argon_4.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-argon_4.patch"
+                         ;; https://aur.archlinux.org/cgit/aur.git/plain/argon_5.patch?h=grub-improved-luks2-git&id=31cb76758dcb4429d9a91dabd7e0f914d76d3fed
+                         "grub-efi-luks2-with-argon2-argon_5.patch")))))
+    (native-inputs (modify-inputs (package-native-inputs grub-efi)
+                     (append autoconf automake python)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments grub-efi)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-before 'configure 'autogen
+              (lambda* (#:key inputs #:allow-other-keys)
+                (invoke "./autogen.sh")))))))
+    (home-page (string-append
+                (package-home-page grub-efi)
+                "https://aur.archlinux.org/packages/grub-improved-luks2-git"))
+    (synopsis "GRand Unified Boot loader (with support for Argon2)")
+    (description
+     "GRUB with support for Argon2.  This version allows unlocking of LUKS2
+devices which use Argon2 as PBKDF (which is the default) at boot time.  In
+turn, this makes it possible to run systems with an encrypted /boot partition,
+or even full disk encryption, using LUKS2.")
+    (license (append (list (package-license grub-efi))
+                     (list license:cc0)))))
 
 (define-public (make-grub-efi-netboot name subdir)
   "Make a grub-efi-netboot package named NAME, which will be able to boot over
