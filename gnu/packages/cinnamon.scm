@@ -158,7 +158,6 @@ cross-DE solutions.")
                              python-xlib
                              python-setproctitle
                              libxapp
-                             xdg-utils
                              python-pycairo))
     (build-system meson-build-system)
     (arguments
@@ -171,7 +170,9 @@ cross-DE solutions.")
                    #:prefix python:))))
     (home-page "https://github.com/linuxmint/python3-xapp")
     (synopsis "Python 3 XApp library")
-    (description "This package contains the Python 3 version of the libxapp package.")
+    (description
+     "Provides Python 3 bindings for libxapp, including a toolkit to build and
+persist XApp settings windows using GSettings.")
     (license license:lgpl2.0+)))
 
 (define-public cinnamon-desktop
