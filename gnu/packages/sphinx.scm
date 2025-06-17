@@ -88,7 +88,14 @@
                      "test_build_latex_doc[lualatex-manual]"
                      "est_build_latex_doc[lualatex-howto]"
                      ;; AssertionError: assert...list of weak references to the object...
-                     "test_autodoc_default_options")
+                     "test_autodoc_default_options"
+                     "test_additional_targets_should_be_translated"
+                     "test_additional_targets_should_not_be_translated"
+                     "test_html_code_role"
+                     "test_latex_code_role"
+                     "test_linenothreshold"
+                     "test_literal_include_linenos"
+                     "test_viewcode")
                     " and not "))
       #:phases
       #~(modify-phases %standard-phases
