@@ -6607,7 +6607,7 @@ returns multiple locations, a list is displayed to choose from.")
      (list gzip texinfo))
     (propagated-inputs
      (list emacs-company))
-    (home-page "http://ppareit.github.com/graphviz-dot-mode")
+    (home-page "https://ppareit.github.io/graphviz-dot-mode/")
     (synopsis "Major mode for editing Graphviz DOT files")
     (description
      "This Emacs package helps you to create @file{.dot} or @file{.gv} files
