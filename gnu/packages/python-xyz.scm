@@ -7569,7 +7569,7 @@ e.g. filters, callbacks and errbacks can all be promises.")
                      "not test_seed_link_via_app_data"
                      ;; AssertionError: assert 'python' in ['python3',
                      ;; 'python3.11'].
-                     ;; 
+                     ;;
                      ;; PythonInfo() returns: 'system_executable':
                      ;; '/gnu/store/...-python-wrapper-3.11.11/bin/python'
                      "test_fallback_existent_system_executable")
@@ -19514,14 +19514,29 @@ library provides codecs are supported.")
 (define-public python-charset-normalizer-3
   (package
     (inherit python-charset-normalizer)
-    (name "python-charset-normalizer")
-    (version "3.3.2")
+    (name "python-charset-normalizer-3")
+    (version "3.4.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "charset-normalizer" version))
+       (uri (pypi-uri "charset_normalizer" version))
        (sha256
-        (base32 "1m9g0f513ng4dp2vd3smi4g2nmhqkjqh3bzcza14li947frkq37k"))))))
+        (base32 "0qqfk84ka3d9hh0yf7n8y0qa0yn08ncdacjjckzix8ybkv5cxbjv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (substitute-keyword-arguments (package-arguments
+                                    python-charset-normalizer)
+       ((#:phases phases
+         '%standard-phases)
+        #~(modify-phases #$phases
+            ;; https://github.com/jawah/charset_normalizer/issues/625
+            ;; https://github.com/jawah/charset_normalizer/pull/626
+            (add-after 'unpack 'fix-scripts
+              (lambda _
+                (substitute* "pyproject.toml"
+                  (("charset_normalizer:cli.cli_detect")
+                   "charset_normalizer.cli:cli_detect"))))))))
+    (native-inputs (list python-setuptools python-wheel python-pytest))))
 
 (define-public python-docopt
   (package
