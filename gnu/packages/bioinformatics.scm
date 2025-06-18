@@ -6091,7 +6091,7 @@ databases.")
                '(begin
                   ;; Delete pre-compiled files.
                   (delete-file "clipper/src/peaks.so")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #false
        #:phases
@@ -6131,6 +6131,8 @@ setup"))))
            python-scipy))
     (native-inputs
      (list python-setuptools-git
+           python-setuptools
+           python-wheel
            python-mock ; for tests
            python-nose ; for tests
            python-pytz)) ; for tests
