@@ -1146,45 +1146,45 @@ for communicating with Xiaomi smart appliances over miIO and MIoT protocols.")
        (method url-fetch)
        (uri (pypi-uri "fdroidserver" version))
        (sha256
-        (base32
-         "0m07f791z45w7r2dzx4yb6s54b3c3wykm3w9hn25p2jcyax082a2"))))
+        (base32 "0m07f791z45w7r2dzx4yb6s54b3c3wykm3w9hn25p2jcyax082a2"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-versioning
-           (lambda _
-             (substitute* "setup.py"
-               (("0.2.1") ,(package-version python-pyasn1-modules))
-               ;; The dependency on docker has been removed upstream by
-               ;; a fairly large patch:
-               ;; https://gitlab.com/fdroid/fdroidserver/-/commit/89614851250c79a05db84070feca6dea033af334
-               ;; that is not in a release yet. It appears we can compile with
-               ;; a newer version.
-               (("docker-py >= 1.9, < 2.0") "docker >= 1.9"))
-             #t)))))
-    (propagated-inputs
-     (list python-androguard
-           python-apache-libcloud
-           python-clint
-           python-defusedxml
-           python-docker
-           python-gitpython
-           python-mwclient
-           python-paramiko
-           python-pillow
-           python-pyasn1
-           python-pyasn1-modules
-           python-pyyaml
-           python-qrcode
-           python-ruamel.yaml
-           python-requests
-           python-vagrant))
-    (native-inputs
-     (list python-babel python-bcrypt python-docker-pycreds python-pynacl
-           python-websocket-client
-           python-setuptools
-           python-wheel))
+     `(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'fix-versioning
+                    (lambda _
+                      (substitute* "setup.py"
+                        (("0.2.1")
+                         ,(package-version python-pyasn1-modules))
+                        ;; The dependency on docker has been removed upstream by
+                        ;; a fairly large patch:
+                        ;; https://gitlab.com/fdroid/fdroidserver/-/commit/89614851250c79a05db84070feca6dea033af334
+                        ;; that is not in a release yet. It appears we can compile with
+                        ;; a newer version.
+                        (("docker-py >= 1.9, < 2.0")
+                         "docker >= 1.9")) #t)))))
+    (propagated-inputs (list python-androguard
+                             python-apache-libcloud
+                             python-clint
+                             python-defusedxml
+                             python-docker
+                             python-gitpython
+                             python-mwclient
+                             python-paramiko
+                             python-pillow
+                             python-pyasn1
+                             python-pyasn1-modules
+                             python-pyyaml
+                             python-qrcode
+                             python-ruamel.yaml
+                             python-requests
+                             python-vagrant))
+    (native-inputs (list python-babel
+                         python-bcrypt
+                         python-docker-pycreds
+                         python-pynacl
+                         python-websocket-client
+                         python-setuptools
+                         python-wheel))
     (home-page "https://f-droid.org")
     (synopsis "F-Droid server tools")
     (description
