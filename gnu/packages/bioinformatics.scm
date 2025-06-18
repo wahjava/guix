@@ -4709,7 +4709,7 @@ consensus sequences.")
          "10k88i1fcqchrrjv82rmylwvbwqfba0n51palhig9hsg71xs0dbi"))
        ;; Delete bundled binary
        (snippet '(delete-file "libs/ccs"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
