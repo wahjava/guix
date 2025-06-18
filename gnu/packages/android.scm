@@ -935,7 +935,7 @@ The standard for the ETC1 texture format can be found at
        (file-name (string-append "git-repo-" version "-checkout"))
        (sha256
         (base32 "0khg1731927gvin73dcbw1657kbfq4k7agla5rpzqcnwkk5agzg3"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
