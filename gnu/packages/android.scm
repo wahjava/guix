@@ -1148,7 +1148,7 @@ for communicating with Xiaomi smart appliances over miIO and MIoT protocols.")
        (sha256
         (base32
          "0m07f791z45w7r2dzx4yb6s54b3c3wykm3w9hn25p2jcyax082a2"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -1182,7 +1182,9 @@ for communicating with Xiaomi smart appliances over miIO and MIoT protocols.")
            python-vagrant))
     (native-inputs
      (list python-babel python-bcrypt python-docker-pycreds python-pynacl
-           python-websocket-client))
+           python-websocket-client
+           python-setuptools
+           python-wheel))
     (home-page "https://f-droid.org")
     (synopsis "F-Droid server tools")
     (description
