@@ -344,7 +344,7 @@ package contains the library and drivers.")))
                                                   "/lib/udev/rules.d")))))))
       (inputs (list boost
                     eudev
-                    sane-backends-minimal
+                    sane
                     libusb
                     libjpeg-turbo
                     imagemagick
