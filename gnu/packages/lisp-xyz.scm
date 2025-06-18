@@ -32310,15 +32310,6 @@ has a small codebase that's easy to understand and use.")
 (define-public ecl-vom
   (sbcl-package->ecl-package sbcl-vom))
 
-(define-public cl-wayflan
-  (sbcl-package->cl-source-package sbcl-wayflan))
-
-;; XXX: Error detected: The function CMSG-ALIGN is undefined.An error
-;; occurred during initialization: COMPILE-FILE-ERROR while compiling
-;; #<cl-source-file "wayflan/common" "wire">.
-;; (define-public ecl-wayflan
-;;   (sbcl-package->ecl-package sbcl-wayflan))
-
 (define-public sbcl-websocket-driver
   (let ((commit "17ba5535fb1c4fe43e7e8ac786e8b61a174fcba3")
         (revision "1"))
