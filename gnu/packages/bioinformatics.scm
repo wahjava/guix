@@ -20672,7 +20672,7 @@ matrices.")
               (sha256
                (base32
                 "0il7bf4c7vli2dm2jx7dskh3ymgv8nmk0y90jzgfrnqjzh250x5w"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-annoy
            python-fbpca
@@ -20682,6 +20682,9 @@ matrices.")
            python-numpy
            python-scikit-learn
            python-scipy))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (home-page "https://github.com/brianhie/scanorama")
     (synopsis "Panoramic stitching of heterogeneous single cell transcriptomic data")
     (description
