@@ -937,83 +937,90 @@ The standard for the ETC1 texture format can be found at
         (base32 "0khg1731927gvin73dcbw1657kbfq4k7agla5rpzqcnwkk5agzg3"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'set-executable-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (git (assoc-ref inputs "git"))
-                    (ssh (assoc-ref inputs "openssh")))
-               (substitute* '("repo" "git_command.py")
-                 (("^GIT = 'git'")
-                  (string-append "GIT = '" git "/bin/git'")))
-               (substitute* "git_config.py"
-                 ((" command_base = \\['ssh',")
-                  (string-append " command_base = ['" ssh "/bin/ssh',")))
-               #t)))
-         (add-before 'build 'do-not-self-update
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Setting the REPO_MAIN variable to an absolute file name is
-             ;; enough to have _FindRepo return the store main.py file.  The
-             ;; self update mechanism is activated with the call to _Init() in
-             ;; main(), so we bypass it.
-
-             ;; Ticket requesting upstream to provide a mean to disable the
-             ;; self update mechanism:
-             ;; https://bugs.chromium.org/p/gerrit/issues/detail?id=12407.
-             (let* ((out (assoc-ref outputs "out"))
-                    (repo-main (string-append out "/share/git-repo/main.py")))
-               (substitute* "repo"
-                 (("^REPO_MAIN = .*")
-                  (format #f "REPO_MAIN = ~s~%" repo-main))
-                 ((" _Init\\(args, gitc_init=\\(cmd ==.*" all)
-                  (string-append "True #" all)))
-               ;; Prevent repo from trying to git describe its version from
-               ;; the (disabled) self updated copy.
-               (substitute* "git_command.py"
-                 (("ver = getattr\\(RepoSourceVersion.*")
-                  (format #f "ver = ~s~%" ,version)))
-               (substitute* "subcmds/version.py"
-                 (("rp_ver = .*")
-                  (format #f "rp_ver = ~s~%" ,version)))
-               ;; Prevent repo from adding its (disabled) self update copy to
-               ;; the list of projects to fetch when using 'repo sync'.
-               (substitute* "subcmds/sync.py"
-                 (("to_fetch\\.extend\\(all_projects\\).*" all)
-                  (string-append "#" all))
-                 (("self\\._Fetch\\(to_fetch")
-                  "self._Fetch(all_projects")
-                 (("_PostRepoFetch\\(rp, opt\\.repo_verify).*" all)
-                  (string-append "#" all))))))
-         (delete 'build) ; nothing to build
-         (add-before 'check 'configure-git
-           (lambda _
-             (setenv "HOME" (getcwd))
-             (invoke "git" "config" "--global" "user.email" "you@example.com")
-             (invoke "git" "config" "--global" "user.name" "Your Name")))
-         (replace 'check
-           (lambda _
-             (invoke "./run_tests")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin-dir (string-append out "/bin"))
-                    (repo-dir (string-append out "/share/" ,name)))
-               (mkdir-p bin-dir)
-               (mkdir-p repo-dir)
-               (copy-recursively "." repo-dir)
-               (delete-file-recursively (string-append repo-dir "/tests"))
-               (symlink (string-append repo-dir "/repo")
-                        (string-append bin-dir "/repo"))
-               #t))))))
+     `(#:phases (modify-phases %standard-phases
+                  (add-before 'build 'set-executable-paths
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      (let* ((out (assoc-ref outputs "out"))
+                             (git (assoc-ref inputs "git"))
+                             (ssh (assoc-ref inputs "openssh")))
+                        (substitute* '("repo" "git_command.py")
+                          (("^GIT = 'git'")
+                           (string-append "GIT = '" git "/bin/git'")))
+                        (substitute* "git_config.py"
+                          ((" command_base = \\['ssh',")
+                           (string-append " command_base = ['" ssh
+                                          "/bin/ssh',"))) #t)))
+                  (add-before 'build 'do-not-self-update
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      ;; Setting the REPO_MAIN variable to an absolute file name is
+                      ;; enough to have _FindRepo return the store main.py file.  The
+                      ;; self update mechanism is activated with the call to _Init() in
+                      ;; main(), so we bypass it.
+                      
+                      ;; Ticket requesting upstream to provide a mean to disable the
+                      ;; self update mechanism:
+                      ;; https://bugs.chromium.org/p/gerrit/issues/detail?id=12407.
+                      (let* ((out (assoc-ref outputs "out"))
+                             (repo-main (string-append out
+                                         "/share/git-repo/main.py")))
+                        (substitute* "repo"
+                          (("^REPO_MAIN = .*")
+                           (format #f "REPO_MAIN = ~s~%" repo-main))
+                          ((" _Init\\(args, gitc_init=\\(cmd ==.*" all)
+                           (string-append "True #" all)))
+                        ;; Prevent repo from trying to git describe its version from
+                        ;; the (disabled) self updated copy.
+                        (substitute* "git_command.py"
+                          (("ver = getattr\\(RepoSourceVersion.*")
+                           (format #f "ver = ~s~%"
+                                   ,version)))
+                        (substitute* "subcmds/version.py"
+                          (("rp_ver = .*")
+                           (format #f "rp_ver = ~s~%"
+                                   ,version)))
+                        ;; Prevent repo from adding its (disabled) self update copy to
+                        ;; the list of projects to fetch when using 'repo sync'.
+                        (substitute* "subcmds/sync.py"
+                          (("to_fetch\\.extend\\(all_projects\\).*" all)
+                           (string-append "#" all))
+                          (("self\\._Fetch\\(to_fetch")
+                           "self._Fetch(all_projects")
+                          (("_PostRepoFetch\\(rp, opt\\.repo_verify).*" all)
+                           (string-append "#" all))))))
+                  (delete 'build) ;nothing to build
+                  (add-before 'check 'configure-git
+                    (lambda _
+                      (setenv "HOME"
+                              (getcwd))
+                      (invoke "git" "config" "--global" "user.email"
+                              "you@example.com")
+                      (invoke "git" "config" "--global" "user.name"
+                              "Your Name")))
+                  (replace 'check
+                    (lambda _
+                      (invoke "./run_tests")))
+                  (replace 'install
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let* ((out (assoc-ref outputs "out"))
+                             (bin-dir (string-append out "/bin"))
+                             (repo-dir (string-append out "/share/"
+                                                      ,name)))
+                        (mkdir-p bin-dir)
+                        (mkdir-p repo-dir)
+                        (copy-recursively "." repo-dir)
+                        (delete-file-recursively (string-append repo-dir
+                                                                "/tests"))
+                        (symlink (string-append repo-dir "/repo")
+                                 (string-append bin-dir "/repo"))
+                        #t))))))
     (inputs
      ;; TODO: Add git-remote-persistent-https once it is available in guix
      (list git openssh))
-    (native-inputs
-     (list python-pytest))
+    (native-inputs (list python-pytest))
     (home-page "https://code.google.com/p/git-repo/")
     (synopsis "Helps to manage many Git repositories")
-    (description "Repo is a tool built on top of Git.  Repo helps manage many
+    (description
+     "Repo is a tool built on top of Git.  Repo helps manage many
 Git repositories, does the uploads to revision control systems, and automates
 parts of the development workflow.  Repo is not meant to replace Git, only to
 make it easier to work with Git.  The repo command is an executable Python
