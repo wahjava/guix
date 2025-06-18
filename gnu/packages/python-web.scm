@@ -204,6 +204,33 @@ writing applications that talk to network enabled embedded
 @acronym{IoT,Internet of Things} devices.")
     (license license:expat)))
 
+(define-public python-blacksheep
+  (package
+    (name "python-blacksheep")
+    (version "2.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "blacksheep" version))
+       (sha256
+        (base32 "0q7ak11215hgmzrmx4xvy59k67zrimv0wlargrvyqv65s0jv72bw"))))
+    (build-system pyproject-build-system)
+    ;; test utilities are missing, so no tests can be executed
+    (arguments
+     (list
+      #:tests? #f))
+    (propagated-inputs (list python-certifi
+                             python-dateutil
+                             python-essentials-openapi
+                             python-itsdangerous
+                             python-guardpost))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/Neoteroi/BlackSheep")
+    (synopsis "Asynchronous framework to build event based web applications")
+    (description
+     "BlackSheep is a lightweight, asynchronous, event driven Web framework.")
+    (license license:expat)))
+
 (define-public python-devpi-common
   (package
     (name "python-devpi-common")
