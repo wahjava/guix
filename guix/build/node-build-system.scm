@@ -4,7 +4,7 @@
 ;;; Copyright © 2019, 2021 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2021, 2022 Philip McGrath <philip@philipmcgrath.com>
 ;;; Copyright © 2022 Liliana Marie Prikler <liliana.prikler@gmail.com>
-;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
+;;; Copyright © 2024, 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,11 +25,21 @@
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
   #:use-module (guix build utils)
   #:use-module (ice-9 ftw)
-  #:use-module (ice-9 regex)
+  #:use-module (ice-9 hash-table) ; alist->hash-table
   #:use-module (ice-9 match)
+  #:use-module (ice-9 popen) ; open-input-pipe
+  #:use-module (ice-9 rdelim) ; read-line
+  #:use-module (ice-9 regex)
+  #:use-module (ice-9 string-fun) ; string-replace-substring
+  #:use-module (ice-9 textual-ports) ; get-string-all
+  #:use-module (ice-9 threads) ; call-with-new-thread
   #:use-module (json)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
+  #:use-module (web request) ; request-uri
+  #:use-module (web response) ; build-response
+  #:use-module (web server) ; run-server
+  #:use-module (web uri) ; uri-path
   #:export (%standard-phases
             delete-dependencies
             delete-dev-dependencies
@@ -67,6 +77,12 @@ unique), but the result may still share storage with ALIST."
     (if (pair? pair)
       (acons key (proc (cdr pair)) rest)
       alist)))
+
+(define dependency-fields (list
+  "devDependencies"
+  "dependencies"
+  "peerDependencies"
+  "optionalDependencies"))
 
 ;;;
 ;;; package.json modification procedures
@@ -118,11 +134,7 @@ only after the 'patch-dependencies' phase."
                 (member (car dependency) dependencies-to-remove))
               dependencies))))
       pkg-meta
-      (list
-        "devDependencies"
-        "dependencies"
-        "peerDependencies"
-        "optionalDependencies"))))
+      dependency-fields)))
 
 (define* (modify-json-fields
     fields
@@ -306,10 +318,165 @@ exist."
               "npm-shrinkwrap.json"))
   #t)
 
-(define* (configure #:key outputs inputs #:allow-other-keys)
-  (let ((npm (string-append (assoc-ref inputs "node") "/bin/npm")))
+(define* (configure #:key inputs #:allow-other-keys)
+  ; TODO Replace this phase with the following commented code once the NPM bug
+  ; https://github.com/npm/cli/issues/8364 is resolved and the fix is on Guix:
+  ;(let ((npm (string-append (assoc-ref inputs "node") "/bin/npm")))
+  ;  (invoke npm "--offline" "--ignore-scripts" "--install-links" "install")
+  ;  #t)
+
+  (define npm (string-append (assoc-ref inputs "node") "/bin/npm"))
+
+  (define node-version-port (open-input-pipe
+    (string-append (assoc-ref inputs "node") "/bin/node --version")))
+  (define node-major-version (string->number
+    (match:substring
+      (string-match "^v([0-9]+)\\." (read-line node-version-port))
+      1)))
+  (close-pipe node-version-port)
+
+  (if (< node-major-version 22)
+    ; Use the regular method to install packages for bootstrapping because the
+    ; older version of NPM has issues with the local registry and none of the
+    ; bootstrapping packages have multiple depenencies with the same name but
+    ; different versions.
     (invoke npm "--offline" "--ignore-scripts" "--install-links" "install")
-    #t))
+    ; Else, use the temporary local NPM registry fix:
+    (let ((registry (string-append (getenv "TEMP") "/npm-registry")))
+      (mkdir-p registry)
+      (define store-path->version (make-hash-table))
+      (define package-name->version->path (make-hash-table))
+
+      ; Recursively crawl all dependencies for store paths and versions
+      (let loop
+        ((queue (list ".")))
+        (let ((new-queue (cdr queue)) (package-path (car queue)))
+          (if (not (hash-get-handle store-path->version package-path))
+            (let*
+              (
+                (json-data (call-with-input-file
+                  (string-append package-path "/package.json")
+                  json->scm))
+                (name (assoc-ref json-data "name"))
+                (version (assoc-ref json-data "version")))
+              (hash-set! store-path->version package-path version)
+              (if (string-prefix? "/" package-path)
+                (let
+                  ((version->path (hash-ref package-name->version->path name)))
+                  (if version->path
+                    (hash-set! version->path version package-path)
+                    (hash-set! package-name->version->path name
+                      (alist->hash-table (list (cons version package-path)))
+                    )
+                  )
+                )
+              )
+              (set! new-queue (append
+                new-queue
+                (filter
+                  (lambda (path) (string-prefix? "/" path))
+                  (delete-duplicates (map
+                    cdr
+                    (append-map
+                      (lambda (dependency-list)
+                        (assoc-ref* json-data dependency-list (list)))
+                      dependency-fields))))))))
+          (if (not (null? new-queue))
+            (loop new-queue))))
+
+      (define (de-resolve-dependencies pkg-meta)
+        (fold
+          (lambda (dependency-key pkg-meta)
+            (alist-update
+              pkg-meta
+              dependency-key
+              (lambda (dependencies)
+                (map
+                  (match-lambda ((dependency . version)
+                    (cons
+                      dependency
+                      (hash-ref store-path->version version version))))
+                  dependencies))))
+          pkg-meta
+          dependency-fields))
+
+      ; Write registry metadata files
+      (hash-for-each
+        (lambda (name version->path)
+          (call-with-output-file
+            (string-join
+              (list registry (string-replace-substring name "/" "%2f"))
+              "/")
+            (lambda (out)
+              (scm->json
+                (list
+                  (cons "name" name)
+                  (cons "versions" (hash-map->list
+                    (lambda (version path)
+                      (cons version (acons
+                        "dist"
+                        (list
+                          (cons "tarball" (string-append "file://" path)))
+                        (call-with-input-file
+                          (string-append path "/package.json")
+                          (lambda (file-data)
+                            (de-resolve-dependencies (json->scm file-data)))))))
+                    version->path)))
+                out))))
+        package-name->version->path)
+
+      ; Backup resolved package.json (to be restored at the end of this phase)
+      (install-file "package.json" registry)
+      (with-atomic-json-file-replacement de-resolve-dependencies "package.json")
+
+      ; Run local server
+      (define (handler request request-body)
+        (define request-path (uri-path (request-uri request)))
+        (if
+          (or
+            (string-prefix? "/.." request-path)
+            (string-contains request-path "/./")
+            (string-suffix? "/" request-path)
+            (not (string-prefix? "/" request-path)))
+          (values (build-response #:code 403) "Forbidden")
+          (let
+            ((path (string-append registry request-path)))
+            (if (not (file-exists? path))
+              (values (build-response #:code 404) "Not found")
+              (values
+                (build-response
+                  #:headers (list
+                    (cons 'content-type (list 'application/json))))
+                (call-with-input-file path get-string-all))))))
+      (define server-port
+        (let ((sock (socket AF_INET SOCK_STREAM 0)))
+          (bind sock AF_INET INADDR_ANY 0)
+          (define port (getsockname sock))
+          (close sock)
+          (sockaddr:port port)))
+      (define server-thread #f)
+      (dynamic-wind
+        (lambda _ #f)
+        (lambda _
+          (set! server-thread (call-with-new-thread (lambda _
+            (run-server handler 'http
+              (list #:port server-port #:host "0.0.0.0")))))
+
+          (invoke
+            npm
+            "--ignore-scripts"
+            "--install-links"
+            (string-append
+              "--registry=http://localhost:"
+              (number->string server-port))
+            "install"))
+        (lambda _
+          (if (and server-thread (thread? server-thread))
+            (cancel-thread server-thread))))
+
+      ; Restore the resolved package.json
+      (install-file (string-append registry "/package.json") ".")))
+  #t)
 
 (define* (build #:key inputs #:allow-other-keys)
   (let ((package-meta (call-with-input-file "package.json" json->scm)))
