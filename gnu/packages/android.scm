@@ -943,7 +943,7 @@ The standard for the ETC1 texture format can be found at
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
                     (git (assoc-ref inputs "git"))
-                    (ssh (assoc-ref inputs "ssh")))
+                    (ssh (assoc-ref inputs "openssh")))
                (substitute* '("repo" "git_command.py")
                  (("^GIT = 'git'")
                   (string-append "GIT = '" git "/bin/git'")))
@@ -1008,10 +1008,9 @@ The standard for the ETC1 texture format can be found at
                #t))))))
     (inputs
      ;; TODO: Add git-remote-persistent-https once it is available in guix
-     `(("git" ,git)
-       ("ssh" ,openssh)))
+     (list git openssh))
     (native-inputs
-     `(("pytest" ,python-pytest)))
+     (list python-pytest))
     (home-page "https://code.google.com/p/git-repo/")
     (synopsis "Helps to manage many Git repositories")
     (description "Repo is a tool built on top of Git.  Repo helps manage many
