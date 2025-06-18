@@ -72,6 +72,7 @@
 ;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>"
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
+;;; Copyright © 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -106,6 +107,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system node)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
@@ -2229,57 +2231,53 @@ directions.")
     (description "Microsocks is a small, efficient SOCKS5 server.")
     (license license:expat)))
 
-;; This is a variant of esbuild that builds and installs the nodejs API.
-;; Eventually, this should probably be merged with the esbuild package.
-(define-public esbuild-node
+(define-public node-esbuild
   (package
-    (inherit esbuild)
-    (name "esbuild-node")
-    (version "0.14.0")
+    (name "node-esbuild")
+    (version (package-version esbuild))
     (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/evanw/esbuild")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "09r1xy0kk6c9cpz6q0mxr4why373pwxbm439z2ihq3k1d5kk7x4w"))
-       (modules '((guix build utils)))
-       (snippet
-        ;; Remove prebuilt binaries
-        '(delete-file-recursively "lib/npm/exit0"))))
-    (arguments
-     (list
-      #:import-path "github.com/evanw/esbuild/cmd/esbuild"
-      #:unpack-path "github.com/evanw/esbuild"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'build 'build-platform
-            (lambda* (#:key unpack-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" unpack-path)
-                ;; Must be writable.
-                (for-each make-file-writable (find-files "." "."))
-                (invoke "node" "scripts/esbuild.js"
-                        (string-append #$output "/bin/esbuild"))
-                (let ((modules (string-append #$output "/lib/node_modules/esbuild")))
-                  (mkdir-p modules)
-                  (copy-recursively "npm/esbuild" modules)))))
-          (replace 'check
-            (lambda* (#:key tests? unpack-path #:allow-other-keys)
-              (when tests?
-                ;; The "Go Race Detector" is only supported on 64-bit
-                ;; platforms, this variable disables it.
-                ;; TODO: Causes too many rebuilds, rewrite to limit to x86_64,
-                ;; aarch64 and ppc64le.
-                #$(if (target-riscv64?)
-                      `(setenv "ESBUILD_RACE" "")
-                      #~(unless #$(target-64bit?)
-                          (setenv "ESBUILD_RACE" "")))
-                (with-directory-excursion (string-append "src/" unpack-path)
-                  (invoke "make" "test-go"))))))))
-    (native-inputs
-     (list go-github-com-kylelemons-godebug node-lts))))
+      (origin
+        (inherit (package-source esbuild))
+        (file-name (git-file-name name version))
+        (snippet #f)
+        (modules '())))
+    (build-system node-build-system)
+    (inputs (list esbuild))
+    (arguments (list
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+        (add-after 'unpack 'chdir (lambda _
+          (chdir "npm/esbuild")))
+        (add-before 'patch-dependencies 'modify-package (lambda _
+            (modify-json
+              (delete-fields '("optionalDependencies" "scripts")))
+            (substitute* "../../lib/npm/node-platform.ts"
+              (("^export var ESBUILD_BINARY_PATH:.+$")
+                (string-append "export var ESBUILD_BINARY_PATH: string"
+                " = process.env.ESBUILD_BINARY_PATH"
+                " || ESBUILD_BINARY_PATH"
+                " || path.join(__dirname, '..', 'bin', 'esbuild')")))))
+        (replace 'build (lambda* (#:key inputs #:allow-other-keys)
+          ; From scripts/esbuild.js
+          (invoke
+            "esbuild"
+            "../../lib/npm/node.ts"
+            "--outfile=lib/main.js"
+            "--bundle"
+            "--target=node10"
+            "--define:WASM=false"
+            (string-append "--define:ESBUILD_VERSION=\"" #$version "\"")
+            "--external:esbuild"
+            "--platform=node"
+            "--log-level=warning")
+          (copy-file "../../lib/shared/types.ts" "lib/main.d.ts")
+          (install-file
+            (string-append (assoc-ref inputs "esbuild") "/bin/esbuild")
+            "bin"))))))
+    (home-page (package-home-page esbuild))
+    (synopsis "Node module of ESBuild")
+    (description (package-description esbuild))
+    (license (package-license esbuild))))
 
 (define-public wwwoffle
   (package

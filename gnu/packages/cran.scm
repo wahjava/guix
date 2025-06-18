@@ -41,6 +41,7 @@
 ;;; Copyright © 2024 Marco Baggio <guix@mawumag.com>
 ;;; Copyright © 2024, 2025 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2024-2025 Tor-björn Claesson <tclaesson@gmail.com>
+;;; Copyright © 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -6716,7 +6717,7 @@ esbuild.build({
                        "inst/assets/garcon/garcon.min.js"))))))
       (propagated-inputs (list r-htmltools r-r6 r-shiny))
       (native-inputs
-       (list esbuild-node node-lts r-knitr
+       (list node-esbuild node-lts r-knitr
              (origin
                (method git-fetch)
                (uri (git-reference
