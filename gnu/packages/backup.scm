@@ -531,9 +531,9 @@ errors.")
                            "download/v" version "/rdiff-backup-" version ".tar.gz"))
        (sha256
         (base32 "1ksqjkqadhxzp83zdfs80dvb494vn9q4anppnwxm3ikb4rbq6xyh"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools-scm))
+     (list python-setuptools-scm python-setuptools python-wheel))
     (inputs
      (list python python-pyaml librsync))
     (arguments
