@@ -438,7 +438,7 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
       (list util-linux "lib") ;; <uuid.h>
       libarchive))
     (home-page "https://spdk.io/")
-    (synopsis "The Storage Performance Development Kit")
+    (synopsis "Storage Performance Development Kit")
     (description
      "SPDK provides a set of tools and libraries for writing high
 performance,scalable, user-mode storage applications.")
