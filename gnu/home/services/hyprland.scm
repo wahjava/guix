@@ -26,6 +26,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-171)
+  #:use-module (srfi srfi-26)
 
   #:export (hyprland-extension
 	    hyprland-configuration
