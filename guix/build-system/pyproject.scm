@@ -32,6 +32,7 @@
   #:use-module (srfi srfi-1)
   #:export (%pyproject-build-system-modules
             default-python
+            pypi-uri
             pyproject-build
             pyproject-build-system))
 
@@ -41,6 +42,14 @@
 ;; This is implemented as an extension of 'python-build-system'.
 ;;
 ;; Code:
+
+(define* (pypi-uri name version #:optional (extension ".tar.gz"))
+  "Return a URI string for the Python package hosted on the Python Package
+Index (PyPI) corresponding to NAME and VERSION.  EXTENSION is the file name
+extension, such as '.tar.gz'."
+  (string-append "https://files.pythonhosted.org/packages/source/"
+                 (string-take name 1) "/" name "/"
+                 name "-" version extension))
 
 (define %pyproject-build-system-modules
   ;; Build-side modules imported by default.
