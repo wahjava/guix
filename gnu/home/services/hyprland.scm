@@ -157,11 +157,11 @@
       (string? x)))
 
 (define (serialize-monitor-resolution _ r)
-  (if (pair? r)
-      (format #f "~ax~a" (car r) (cdr r))
-      (if (symbol? r)
-          (symbol->string r)
-          r)))
+  (cond ((pair? r)
+         (format #f "~ax~a" (car r) (cdr r)))
+        ((symbol? r)
+         (symbol->string r))
+        (#t r)))
 
 ;;; Monitor position
 (define (monitor-position? x)
