@@ -16540,6 +16540,11 @@ pseudo terminal (pty), and interact with both the process and its pty.")
      (origin
        (method url-fetch)
        (uri (pypi-uri "configshell-fb" version))
+       ;; snippet below is required because on v1.1.30
+       ;; the source code has configshell_fb as softlink to configshell
+       ;; and guix python-build-system doesn't work with symlinks very well
+       ;; this package is only used in spdk for now and it's crucial
+       ;; to keep it locked on version and keep the snipped for spdk to build successfully
        (snippet #~(begin
                     (use-modules (guix build utils))
                     (delete-file "setup.py")
