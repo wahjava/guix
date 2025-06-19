@@ -671,6 +671,39 @@ like tidy evaluation.")
 and printing capabilities than traditional data frames.")
     (license license:expat)))
 
+(define-public r-vpc
+  (package
+    (name "r-vpc")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ronkeizer/vpc")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bkp0zy1pswrqgcsdvxvc7gyfl544k89qrjqdcj4aqkif0bfqmx8"))))
+    (build-system r-build-system)
+    (native-inputs (list r-testit))
+    (propagated-inputs (list r-classint
+                             r-dplyr
+                             r-mass
+                             r-survival
+                             r-ggplot2
+                             r-readr
+                             r-stringr
+                             r-tidyr))
+    (home-page "https://vpc.ronkeizer.com/")
+    (synopsis "Create visual predictive checks")
+    (description
+     "Visual predictive checks are a commonly used diagnostic plot
+in pharmacometrics, showing how certain statistics (percentiles) for observed
+data compare to those same statistics for data simulated from a model.  The
+package can generate VPCs for continuous, categorical, censored, and
+(repeated) time-to-event data.")
+    (license license:expat)))
+
 (define-public r-xpose4
   (package
     (name "r-xpose4")
