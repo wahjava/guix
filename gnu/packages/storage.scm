@@ -414,7 +414,7 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
            python-wrapper))
     (inputs
      (list
-      ;; ↓ those are copied from NixPkgs
+      ;; this packages are copied from NixPkgs
       cunit
       dpdk
       fuse
@@ -432,10 +432,10 @@ storage protocols (S3, NFS, and others) through the RADOS gateway.")
       glibc
       (list gcc "lib")
 
-      ;; ↓ had to add those
+      ;; had to add this packages
       isa-l
       openlibm
-      (list util-linux "lib") ;; ↓ <uuid.h>
+      (list util-linux "lib") ;; <uuid.h>
       libarchive))
     (home-page "https://spdk.io/")
     (synopsis "The Storage Performance Development Kit")
