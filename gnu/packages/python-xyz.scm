@@ -16557,7 +16557,7 @@ pseudo terminal (pty), and interact with both the process and its pty.")
     (propagated-inputs (list python-pyparsing))
     (native-inputs (list python-wheel python-setuptools python-hatch-vcs python-hatchling))
     (home-page "https://github.com/open-iscsi/configshell-fb")
-    (synopsis "A framework to implement simple but nice CLIs.")
+    (synopsis "Framework to implement simple but nice CLIs.")
     (description
      "This package provides a framework to implement simple but nice CLIs.")
     (license license:asl2.0)))
