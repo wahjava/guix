@@ -16552,7 +16552,7 @@ pseudo terminal (pty), and interact with both the process and its pty.")
                     (rename-file "configshell" "configshell_fb")))
        (sha256
         (base32 "1zkhf62qsfcbxwzlc62r6qx37wwyscppc469rlm45zy9lzmbgxj1"))))
-    (arguments (list #:tests? #f))
+    (arguments (list #:tests? #f)) ;; this package has no tests
     (build-system pyproject-build-system)
     (propagated-inputs (list python-pyparsing))
     (native-inputs (list python-wheel python-setuptools python-hatch-vcs python-hatchling))
