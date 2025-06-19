@@ -53,6 +53,7 @@
 ;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Kjartan Oli Agustsson <kjartanoli@outlook.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3625,7 +3626,7 @@ files.")
         (sha256
           (base32
             "12wf17abn3psbsg2r2lk0xdnk8n5cd5rrvjlpxjnjfhd09n7qqgm"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
       (list python-cffi
             python-cython
@@ -3635,9 +3636,12 @@ files.")
             python-python3-midi
             python-soundfile))
     (native-inputs
-     (list libsndfile))
+     (list libsndfile
+           python-setuptools
+           python-wheel))
     (arguments
-     `(#:phases
+     `(#:tests? #f ; There seem to be no tests
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-versions
            (lambda _
@@ -5521,7 +5525,7 @@ loudness of audio and video files to the same level.")
               (sha256
                (base32
                 "0zqclskkjb9hfdw9gq6iq4bs9dl1wj9nr8v1jz6s885379q9l8i7"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
        (list
         #:phases
@@ -5535,7 +5539,10 @@ loudness of audio and video files to the same level.")
                                   "\""))))))))
     (inputs (list python-crcmod python-ffmpeg-python python-mutagen
                   python-tqdm ffmpeg))
-    (native-inputs (list python-future python-requests))
+    (native-inputs (list python-future
+                         python-requests
+                         python-setuptools
+                         python-wheel))
     (home-page "https://github.com/desbma/r128gain")
     (synopsis "Fast audio loudness scanner & tagger")
     (description
@@ -5631,18 +5638,19 @@ code, used in @code{libtoxcore}.")
 (define-public python-pyalsaaudio
   (package
     (name "python-pyalsaaudio")
-    (version "0.8.4")
+    (version "0.11.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pyalsaaudio" version))
               (sha256
                (base32
-                "1180ypn9596rq4b7y7dyv627j1q0fqilmkkrckclnzsdakdgis44"))))
-    (build-system python-build-system)
+                "1p7xw2jrdwwjfnksj97k7hqp4hl7mgsj2kmkcj82qjsj6g59v2m7"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f))                   ; tests require access to ALSA devices.
     (inputs
      (list alsa-lib))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://larsimmisch.github.io/pyalsaaudio/")
     (synopsis "ALSA wrappers for Python")
     (description
@@ -6929,54 +6937,52 @@ device.  There is support for mono and/or stereo and 8 or 16 bit samples.")
     (license license:gpl2)))
 
 (define-public python-pysox
-  ;; PyPi does not include the data folder containing audio files for testing.
-  (let ((commit "3d0053381c24ae3490f759d4de87194b85789d36")
-        (revision "0"))
-    (package
-      (name "python-pysox")
-      (version (git-version "1.4.2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/rabitt/pysox")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0i62jx92vfpcr2z7lp69yzqdi9idfs3pifl3rzm2akc2c4cr1mac"))))
-      (build-system python-build-system)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'patch-sox
-             (lambda* (#:key inputs #:allow-other-keys)
-               (let* ((sox-store-path (assoc-ref inputs "sox"))
-                      (sox-bin (string-append sox-store-path "/bin/sox")))
-                 (substitute* "sox/__init__.py"
-                   (("sox -h")
-                    (string-append sox-bin " -h")))
-                 (substitute* "sox/core.py"
-                   (("\\['sox")
-                    (string-append "['" sox-bin))))))
-           (replace 'check
-             (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-               (when tests?
-                 (add-installed-pythonpath inputs outputs)
-                 (invoke "pytest")))))))
-      (propagated-inputs
-       (list python-numpy python-typing-extensions))
-      (native-inputs
-       (list sox python-pytest python-pytest-cov python-soundfile))
-      (home-page "https://github.com/rabitt/pysox")
-      (synopsis "Python wrapper around SoX")
-      (description "@code{python-pysox} is a wrapper around the @command{sox}
-command line tool.  The API offers @code{Transformer} and @code{Combiner}
-classes that allow the user to incrementally build up effects and audio
-manipulations.  @code{python-pysox} also provides methods for querying audio
-information such as sample rate, determining whether an audio file is silent,
-and much more.")
-      (license license:bsd-3))))
+  (package
+    (name "python-pysox")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rabitt/pysox")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0039gksdcca5npnfvzy7dqc315f26mcy734la5v3hgvjj84cpcz8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-sox
+            (lambda _
+              (let* ((sox-store-path #$(this-package-input "sox"))
+                     (sox-bin (string-append sox-store-path "/bin/sox")))
+                (substitute* "sox/__init__.py"
+                  (("sox -h")
+                   (string-append sox-bin " -h")))
+                (substitute* "sox/core.py"
+                  (("\\['sox")
+                   (string-append "['" sox-bin)))))))))
+    (native-inputs
+     (list python-pytest
+           python-soundfile
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list sox))
+    (propagated-inputs
+     (list python-numpy
+           python-typing-extensions))
+    (home-page "https://github.com/rabitt/pysox")
+    (synopsis "Python wrapper around SoX")
+    (description
+     "@code{python-pysox} is a wrapper around the @command{sox} command line
+tool.  The API offers @code{Transformer} and @code{Combiner} classes that
+allow the user to incrementally build up effects and audio manipulations.
+@code{python-pysox} also provides methods for querying audio information such
+as sample rate, determining whether an audio file is silent, and much more.")
+    (license license:bsd-3)))
 
 (define-public python-resampy
   (package

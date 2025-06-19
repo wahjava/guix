@@ -12,6 +12,8 @@
 ;;; Copyright © 2020 Peng Mei Yu <pengmeiyu@riseup.net>
 ;;; Copyright © 2021 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2025 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,7 +40,8 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system cmake)
-  #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
+  #:use-module ((guix build-system python) #:select (pypi-uri))
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
@@ -56,6 +59,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages sphinx)
@@ -64,6 +68,41 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-26))
+
+(define-public adl-submit
+  (let ((commit "f38c7ad161fbe6ec72ecc725edbd624f5c627ea9")
+        (revision "0"))
+    (package
+      (name "adl-submit")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://framagit.org/agenda-libre/adl-submit.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zi5s8xpbm253mjdlcc1j13qqz5q7s9zavk3h0m2gfgb52xy2avp"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list #:tests? #f)) ; no tests provided
+      (native-inputs
+       (list python-setuptools
+             python-wheel))
+      (inputs
+       (list python python-pycurl))
+      (home-page "https://www.agendadulibre.org")
+      (synopsis "Submit events to the Agenda Du Libre")
+      (description
+       "adl-submit is a tool that can be used to submit events to any instance
+of the Agenda Du Libre (a web calendar originally meant for free software
+events).  Users can set fields through the command line or create an XML that
+can be submitted with the adl-submit tool.  While the Agenda Du Libre web
+application is available in multiple languages, most of the events on
+https://www.agendadulibre.org are in French and the adl-submit tool is only
+available in French.")
+      (license license:gpl2))))
 
 (define-public date
   ;; We make the same choice as the Arch package maintainer by choosing a
@@ -179,32 +218,40 @@ data units.")
 (define-public khal
   (package
     (name "khal")
-    (version "0.11.3")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "khal" version))
-              (sha256
-               (base32
-                "0pijq7crjpak1rq3hzx68fz34n7ikkcz3xsk9r3brny17z2brk58"))))
-    (build-system python-build-system)
+    ;; TODO: The latest version requires fresh pytz module and fails with
+    ;; error: E AttributeError: module 'icalendar' has no attribute 'use_pytz'
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "khal" version))
+       (sha256
+        (base32 "1gxrhfr4kv5mij75nzjgj69wcssbx4dfbky196w6b4nh3v7nm2pf"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; The test suite is unreliable. See <https://bugs.gnu.org/44197>
-       #:phases (modify-phases %standard-phases
-        ;; Building the manpage requires khal to be installed.
-        (add-after 'install 'manpage
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            ;; Make installed package available for running the tests
-            (add-installed-pythonpath inputs outputs)
-            (invoke "make" "--directory=doc/" "man")
-            (install-file
-             "doc/build/man/khal.1"
-             (string-append (assoc-ref outputs "out") "/share/man/man1")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Building the manpage requires khal to be installed.
+          (add-after 'install 'manpage
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (add-installed-pythonpath inputs outputs)
+              (invoke "make" "--directory=doc/" "man")
+              (install-file "doc/build/man/khal.1"
+                            (string-append #$output "/share/man/man1")))))))
     (native-inputs
-     (list python-setuptools-scm
-           ;; Required to build manpage
-           python-sphinxcontrib-newsfeed python-sphinx))
+     (list python-freezegun
+           python-importlib-metadata
+           python-packaging
+           python-pytest
+           python-setuptools-next
+           python-setuptools-scm-next
+           python-sphinx
+           python-sphinxcontrib-newsfeed
+           python-wheel))
     (inputs
-     (list python-atomicwrites
+     (list python-aiohttp
+           python-atomicwrites
            python-click
            python-click-log
            python-configobj
@@ -212,16 +259,17 @@ data units.")
            python-icalendar
            python-pytz
            python-pyxdg
+           python-setproctitle
            python-tzlocal
            python-urwid
-           ;; For the extras.
-           python-setproctitle))
-    (synopsis "Console calendar program")
-    (description "Khal is a standards based console calendar program,
-able to synchronize with CalDAV servers through vdirsyncer.  It includes
-both a @acronym{CLI, command-line interface} and a @acronym{TUI, textual user
-interface} named 'ikhal'.")
+           vdirsyncer))
     (home-page "https://lostpackets.de/khal/")
+    (synopsis "Console calendar program")
+    (description
+     "Khal is a standards based console calendar program, able to synchronize
+with CalDAV servers through vdirsyncer.  It includes both a @acronym{CLI,
+command-line interface} and a @acronym{TUI, textual user interface} named
+'ikhal'.")
     (license license:expat)))
 
 (define-public remind

@@ -2857,10 +2857,14 @@ development, not the kernel implementation of ACPI.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "08mfclgdy6cb8xgp8sc7fpm4qxay37j71b1b3niywi6x206i5m2m"))))
-    (build-system python-build-system)
-    (native-inputs (list python-setuptools python-wheel))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (inputs
-     (list python-psutil-7 python-urwid-3))
+     (list python-psutil-7
+           python-urwid-3))
     (home-page "https://github.com/amanusk/s-tui")
     (synopsis "Interactive terminal stress test and monitoring tool")
     (description
@@ -3892,10 +3896,10 @@ throughput (in the same interval).")
        (uri (git-reference
              (url "https://github.com/scottchiefbaker/dool")
              (commit (string-append "v" version))))
-       (file-name (git-file-name "dool" version))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "11myxg4y4z0nr60cg0xi3r4akjypyjjg1mxbc4y2a6lg0pras9bv"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -3942,26 +3946,31 @@ plug-in architecture to allow monitoring other system metrics.")
         (base32 "18ipa1bm6q1n5drbi8i65726hhqhl1g41390lfqrc11hkbvv443d"))
        (patches (search-patches "thefuck-test-environ.patch"
                                 "thefuck-remove-broken-tests.patch"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; Tests look for installed package
-             (add-installed-pythonpath inputs outputs)
-             ;; Some tests need write access to $HOME.
-             (setenv "HOME" "/tmp")
-             ;; Even with that, this function tries to mkdir /.config.
-             (substitute* "tests/test_utils.py"
-               (("settings\\.init\\(\\)") ""))
-             (invoke "py.test" "-v"))))))
-    (propagated-inputs
-     (list python-colorama python-decorator python-psutil python-pyte
-           python-six))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Tests look for installed package
+              ;; Some tests need write access to $HOME.
+              (setenv "HOME" "/tmp")
+              ;; Even with that, this function tries to mkdir /.config.
+              (substitute* "tests/test_utils.py"
+                (("settings\\.init\\(\\)") "")))))))
     (native-inputs
-     (list go python-mock python-pytest python-pytest-mock))
+     (list go
+           python-mock
+           python-pytest
+           python-pytest-mock
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list python-colorama
+           python-decorator
+           python-psutil
+           python-pyte))
     (home-page "https://github.com/nvbn/thefuck")
     (synopsis "Correct mistyped console command")
     (description
@@ -4264,31 +4273,33 @@ in order to be able to find it.
        (file-name (git-file-name name version))
        (sha256
         (base32 "0sy26d60j89fw4z2bfvc7zblb7r1ras5q7f06gaqfg2058z5wj8m"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:tests? #f                      ; no tests
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-sed-in
-                 (lambda _
-                   (substitute* "sedsed.py"
-                     (("sedbin = 'sed'")
-                      (string-append "sedbin = '" (which "sed") "'")))))
-               (delete 'build)
-               (replace 'install
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let* ((out (assoc-ref outputs "out"))
-                          (bin (string-append out "/bin")))
-                     ;; Just one file to copy around
-                     (install-file "sedsed.py" bin))))
-               (add-after 'wrap 'symlink
-                 ;; Create 'sedsed' symlink to "sedsed.py".
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let* ((out (assoc-ref outputs "out"))
-                          (bin (string-append out "/bin"))
-                          (sed (string-append bin "/sedsed"))
-                          (sedpy (string-append bin "/sedsed.py")))
-                     (symlink sedpy sed)))))))
+     (list
+      #:tests? #f ; XXX: test suit requires git set up, run by "./test/run"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-sed-in
+            (lambda _
+              (substitute* "sedsed.py"
+                (("sedbin = 'sed'")
+                 (string-append "sedbin = '" (which "sed") "'")))))
+          (delete 'build)
+          (replace 'install
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
+                ;; Just one file to copy around
+                (install-file "sedsed.py" bin))))
+          (add-after 'wrap 'symlink
+            ;; Create 'sedsed' symlink to "sedsed.py".
+            (lambda _
+              (let* ((bin (string-append #$output "/bin"))
+                     (sed (string-append bin "/sedsed"))
+                     (sedpy (string-append bin "/sedsed.py")))
+                (symlink sedpy sed)))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (home-page "https://aurelio.net/projects/sedsed")
     (synopsis "Sed sed scripts")
     (description
@@ -4399,11 +4410,14 @@ you are running, what theme or icon set you are using, etc.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "02bc6dhwvf1daqlsw3am9y2wjfkhs8lpw3vgdxw74jg0w9bpzg8q"))))
-    (build-system python-build-system)
-    (arguments (list #:tests? #f))      ;no tests
-    (inputs (list python-typing-extensions))
+        (base32 "02bc6dhwvf1daqlsw3am9y2wjfkhs8lpw3vgdxw74jg0w9bpzg8q"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list python-typing-extensions))
     (home-page "https://github.com/hykilpikonna/HyFetch")
     (synopsis "@code{neofetch} with pride flags <3")
     (description "HyFetch is a command-line system information tool fork of
@@ -5365,23 +5379,28 @@ file-types for easier parsing in scripts.")
 (define-public jtbl
   (package
     (name "jtbl")
-    (version "1.1.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/kellyjonbrazil/jtbl")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "19i21fqz2m40cds9pb17brjxkczqagmx2f7mfb0xdvbygaply5wz"))))
-    (build-system python-build-system)
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kellyjonbrazil/jtbl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gryjfjchvfb2nv797h5ba2qz54ig5kkjwcq8ycfdffdk1931d10"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (inputs
      (list python-tabulate))
     (home-page "https://github.com/kellyjonbrazil/jtbl")
     (synopsis "Command-line tool to print JSON data as a table in the terminal")
-    (description "@code{jtbl} accepts piped JSON data from stdin and outputs a
-text table representation to stdout.")
+    (description
+     "@code{jtbl} accepts piped JSON data from stdin and outputs a text table
+representation to stdout.")
     (license license:expat)))
 
 (define-public hosts
@@ -6727,80 +6746,81 @@ several firewall backends.")
   (package
     (name "px")
     (version "3.6.12")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/walles/px.git")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "06jg6izya1k5gk71pygv8691fcaa6zfnzns57fjknnihz3c42pzw"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/walles/px")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06jg6izya1k5gk71pygv8691fcaa6zfnzns57fjknnihz3c42pzw"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-git
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (substitute* (find-files "px" "\\.py$")
-                    ;; We don't have MacOS X programs.
-                    (("px_exec_util[.]run[(]\\[\"(vm_stat)\"" all x)
-                     (string-append "px_exec_util.run([\""
-                                    "/bin/false"
-                                    "\""))
-                    ;; Patch names of executables in "sbin".
-                    (("px_exec_util[.]run[(]\\[\"(sysctl)\"" all x)
-                     (string-append "px_exec_util.run([\""
-                                    (search-input-file inputs
-                                                       (string-append "sbin/" x))
-                                    "\""))
-                    ;; Patch names of executables in "bin".
-                    (("px_exec_util[.]run[(]\\[\"([^/\"]*)\"" all x)
-                     (string-append "px_exec_util.run([\""
-                                    (search-input-file inputs
-                                                       (string-append "bin/" x))
-                                    "\"")))
-                   (substitute* "px/px_process.py"
-                    ;; Patch path name of "ps" executable.
-                    (("\"/bin/ps\"") (string-append "\""
-                                                    (assoc-ref inputs "procps")
-                                                    "/bin/ps\"")))
-                   (substitute* "setup.py"
-                    ;; Patch "git describe", replacing it by its result.
-                    (("\\[\"git\", \"describe\", \"--dirty\"\\]")
-                     (string-append "[\"echo\", \"" #$version "\"]")))))
-               (add-before 'check 'prepare-check
-                 (lambda _
-                   (substitute* "tests/px_terminal_test.py"
-                    ;; We don't have /etc/passwd so the output will not say "root".
-                    (("root") "0   "))
-                   (substitute* "tests/px_process_test.py"
-                    ;; Our containers don't have the kernel visible.
-                    (("len[(]all_processes[)] >= 4")
-                     "len(all_processes) >= 3")
-                    ;; We don't have /etc/passwd so the output will not say "root".
-                    (("\"root\"") "\"0\""))
-                   (setenv "PYTEST_ADDOPTS"
-                           (string-append "-vv -k \"not "
-                                          (string-join
-                                           '(;; Network tests cannot succeed.
-                                             "test_stdfds_ipc_and_network"
-                                             ;; Network tests cannot succeed.
-                                             "test_str_resolve"
-                                             ;; Tiny difference in color.
-                                             "test_to_screen_lines_unbounded")
-                                           " and not ")
-                                          "\"")))))))
+     (list
+      #:test-flags
+      ;; Tests requiring networking setup or root access.
+      #~(list "-k" (string-join
+                    (list "not test_get_all_defaultlocale"
+                          "test_get_all_swedish"
+                          "test_match"
+                          "test_ps_line_to_process_1"
+                          "test_ps_line_to_process_2"
+                          "test_ps_line_to_process_unicode"
+                          "test_stdfds_ipc_and_network"
+                          "test_str_resolve"
+                          "test_to_screen_lines_unbounded"
+                          "test_to_screen_lines_unicode")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-git
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* (find-files "px" "\\.py$")
+                ;; We don't have MacOS X programs.
+                (("px_exec_util[.]run[(]\\[\"(vm_stat)\"" all x)
+                 (string-append "px_exec_util.run([\""
+                                "/bin/false"
+                                "\""))
+                ;; Patch names of executables in "sbin".
+                (("px_exec_util[.]run[(]\\[\"(sysctl)\"" all x)
+                 (string-append "px_exec_util.run([\""
+                                (search-input-file inputs
+                                                   (string-append "sbin/" x))
+                                "\""))
+                ;; Patch names of executables in "bin".
+                (("px_exec_util[.]run[(]\\[\"([^/\"]*)\"" all x)
+                 (string-append "px_exec_util.run([\""
+                                (search-input-file inputs
+                                                   (string-append "bin/" x))
+                                "\"")))
+              (substitute* "px/px_process.py"
+                ;; Patch path name of "ps" executable.
+                (("\"/bin/ps\"") (string-append "\""
+                                                (assoc-ref inputs "procps")
+                                                "/bin/ps\"")))
+              (substitute* "setup.py"
+                ;; Patch "git describe", replacing it by its result.
+                (("\\[\"git\", \"describe\", \"--dirty\"\\]")
+                 (string-append "[\"echo\", \"" #$version "\"]"))))))))
     (native-inputs
-     (list pkg-config python-setuptools python-wheel python-pytest
-           python-pytest-runner python-dateutil))
+     (list pkg-config
+           python-setuptools
+           python-wheel
+           python-pytest
+           python-dateutil))
     (inputs
-     (list lsof net-tools procps sysstat util-linux))
-    (synopsis "ps, top and pstree for human beings")
-    (description "This package provides a way to figure out which processes
-communicate with which other processes.  It provides more usable versions
-of ps, top and pstree.")
+     (list lsof
+           net-tools
+           procps
+           sysstat
+           util-linux))
     (home-page "https://github.com/walles/px")
+    (synopsis "Alternative to @command{ps}, @command{top} and @command{pstree}")
+    (description
+     "This package provides a way to figure out which processes communicate
+with which other processes.  It provides more usable versions of @command{ps},
+@command{top} and @command{pstree}.")
     (license license:expat)))
 
 (define-public wakelan
