@@ -157,9 +157,7 @@
 
 (define (serialize-monitor-resolution _ r)
   (if (pair? r)
-      (string-append (number->string (car r))
-                     "x"
-                     (number->string (cdr r)))
+      (format #f "~ax~a" (car r) (cdr r))
       (if (symbol? r)
           (symbol->string r)
           r)))
@@ -176,9 +174,7 @@
 
 (define (serialize-monitor-position _ p)
   (if (pair? p)
-      (string-append (number->string (car p))
-                     "x"
-                     (number->string (cdr p)))
+      (format #f "~ax~a" (car p) (cdr p))
       (symbol->string p)))
 
 ;;; Monitor color management
@@ -211,8 +207,7 @@
   (list-of monitor?))
 
 (define (serialize-list-of-monitors name monitors)
-  #~(string-join (list #$@(map (λ (m)
-                                 (serialize-monitor name m))
+  #~(string-join (list #$@(map (cut serialize-monitor name <>)
                                monitors))
                  "\n"))
 
@@ -249,8 +244,7 @@
   (string-join (map (lambda (m) (serialize-mod name m)) mods) " + "))
 
 ;;; Dispatcher
-(define (dispatcher? x)
-  (symbol? x))
+(define dispatcher? symbol?)
 
 (define (serialize-dispatcher _ d)
   (symbol->string d))
@@ -291,8 +285,7 @@
                                                 name
                                                 (binding-args b))))))
 
-(define (raw-config? value)
-  (string? value))
+(define raw-config? string?)
 
 (define (serialize-raw-config _ value)
   (string-append value "\n"))
