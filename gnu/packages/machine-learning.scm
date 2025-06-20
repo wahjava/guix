@@ -6610,6 +6610,44 @@ training on supercomputers.  This package builds the API used when instrumenting
 the clients.")
       (license license:bsd-3))))
 
+(define-public python-melissa-core
+  (package
+    (inherit melissa)
+    (name "python-melissa-core")
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k"
+              (string-join (list ;Requires a scheduler
+                            "not test_indirect_scheduler_job_submission"
+                            "test_indirect_scheduler_job_submission_failure"
+                            "test_indirect_scheduler_job_updat"
+                            ;; Accesses FHS paths
+                            "test_simple"
+                            ;; Requires torch
+                            "test_generate_client_scripts"
+                            "test_handle_simulation_data_success"
+                            "test_handle_simulation_data_bad_time_step"
+                            "test_handle_simulation_data_bad_field"
+                            "test_handle_simulation_connection") " and not "))))
+    (inputs '())
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-cloudpickle
+                             python-iterative-stats
+                             python-jsonschema
+                             python-mpi4py
+                             python-numpy
+                             python-plotext
+                             python-pyzmq
+                             python-rapidjson
+                             python-scipy))
+    (synopsis "Python front-end server and launcher for Melissa")
+    (description
+     "Python front-end in charge of orchestrating the execution a Melissa based
+study.  It automatically handles large-scale scheduler interactions in OpenMPI
+and with common cluster schedulers (e.g. slurm or OAR).")))
+
 (define-public python-botorch
   (package
     (name "python-botorch")
