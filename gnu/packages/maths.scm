@@ -4900,18 +4900,15 @@ language understood by many solvers.")
 (define-public mumps
   (package
     (name "mumps")
-    (version "5.5.1")
+    (version "5.8.0")
     (source
      (origin
        (method url-fetch)
-       (uri (list (string-append "http://mumps.enseeiht.fr/MUMPS_"
-                                 version ".tar.gz")
-                  (string-append
-                   "https://ftp.mcs.anl.gov/pub/petsc/externalpackages"
-                   "/MUMPS_" version ".tar.gz")))
+       (uri (string-append "https://mumps-solver.org/MUMPS_" version
+                           ".tar.gz"))
        (sha256
         (base32
-         "05gs2i8b76m9flm1826fxpyfnwibjjawbmfza3ylrvj7zaag5gqs"))))
+         "18208d3klhv08p4kgbbp332wf11x0iyi7z4c7fcs0hwq3n5ynqnp"))))
     (build-system gnu-build-system)
     (inputs
      (list gfortran
@@ -4974,7 +4971,9 @@ OPTL          = -O2 -fopenmp $(PIC)
 OPTC          = -O2 -fopenmp $(PIC)
 LPORDDIR      = $(topdir)/PORD/lib
 IPORD         = -I$(topdir)/PORD/include
-LPORD         = $(LPORDDIR)/libpord.a
+LPORD         = -L$(LPORDDIR)  -lpord
+SONAME        = -soname
+SHARED_OPT    = -shared
 ORDERINGSF    = -Dpord~@[
 METISDIR      = ~a
 IMETIS        = -I$(METISDIR)/include
@@ -5047,7 +5046,7 @@ IORDERINGSC   = $(IPORD) $(IMETIS) $(ISCOTCH)"
                (when (file-exists? "libseq/libmpiseq.so")
                  (install-file "libseq/libmpiseq.so" libdir))
                #t))))))
-    (home-page "http://mumps.enseeiht.fr")
+    (home-page "https://mumps-solver.org")
     (synopsis "Multifrontal sparse direct solver")
     (description
      "MUMPS (MUltifrontal Massively Parallel sparse direct Solver) solves a
