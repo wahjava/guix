@@ -2051,6 +2051,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/qcodeeditor-qt6.patch			\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
+  %D%/packages/patches/qtlocation-5.15.8-mapboxgl-gcc13.patch	\
   %D%/packages/patches/quodlibet-fix-invalid-glob.patch	\
   %D%/packages/patches/quodlibet-fix-mtime-tests.patch		\
   %D%/packages/patches/qucs-s-qucsator-rf-search.patch		\
