@@ -376,6 +376,8 @@
 (define-configuration hyprland-extension
   (exec-once (list-of-executables '())
              "Commands to be executed with hyprland once")
+  (environment (list-of-envs '())
+               "Extra environment variables")
   (exec (list-of-executables '()) "Commands to be executed with hyprland")
   (bindings (list-of-bindings '()) "Extra binds")
   (no-serialization))
@@ -658,6 +660,9 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                        (flatten (map hyprland-extension-exec-once extensions)))
                       (exec (flatten (map hyprland-extension-exec
                                           extensions)))
+                      (environment
+                       (flatten (map hyprland-extension-environment
+                                     extensions)))
                       (bindings (flatten (map hyprland-extension-bindings
                                               extensions)))))))
                 (extend
@@ -674,6 +679,11 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                      (append (hyprland-configuration-exec
                               config)
                              (hyprland-extension-exec
+                              rules)))
+                    (environment
+                     (append (hyprland-configuration-environment
+                              config)
+                             (hyprland-extension-environment
                               rules)))
                     (bindings (bindings
                                (inherit
