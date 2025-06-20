@@ -109,6 +109,7 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
+  #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages onc-rpc)
@@ -6576,6 +6577,38 @@ linear algebra routines needed for structured matrices (or operators).")
     (description
      "GPyTorch is a Gaussian process library implemented using PyTorch.")
     (license license:expat)))
+
+(define-public melissa
+  ;; Upstream tags are not stable, use commits instead
+  (let ((commit "32453ad56e15239486582c673bc75fe1a6017890")
+        (revision "0"))
+    (package
+      (name "melissa")
+      (version "2.0.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.inria.fr/melissa/melissa.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0cfqdn6f03hyxsccnp02ifkbajqphm851y55jf7gyk30j247q5fd"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; No tests for this package, but checked in python-melissa-core's tests
+        #:tests? #f))
+      (inputs (list openmpi python zeromq))
+      (native-inputs (list gfortran pkg-config))
+      (home-page "https://gitlab.inria.fr/melissa/melissa")
+      (synopsis "Framework for large-scale sensitivity analysis")
+      (description
+       "Melissa is a file-avoiding, adaptive, fault-tolerant and elastic
+framework, to run large-scale sensitivity analysis or deep-surrogate
+training on supercomputers.  This package builds the API used when instrumenting
+the clients.")
+      (license license:bsd-3))))
 
 (define-public python-botorch
   (package
