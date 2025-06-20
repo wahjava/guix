@@ -33,6 +33,7 @@
 	    binding
 	    bindings
 	    monitor
+            env
 	    submap
 	    home-hyprland-service-type))
 
