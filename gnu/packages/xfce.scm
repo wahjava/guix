@@ -17,6 +17,7 @@
 ;;; Copyright © 2021, 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2021 André A. Gomes <andremegafone@gmail.com>
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
+;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -54,8 +55,6 @@
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages imagemagick)
-  #:use-module (gnu packages inkscape)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages mate)
@@ -1137,32 +1136,8 @@ window manager.")
                        "backgrounds/guix-logo.svg")
             #t))))
     (build-system gnu-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'configure 'prepare-background-image
-                    (lambda _
-                      ;; Stick a Guix logo in the background image.  XXX: It
-                      ;; has to go to the center because the image might be
-                      ;; truncated on the edges.  :-/
-                      (invoke "inkscape" "--export-dpi=120"
-                              "--export-png=/tmp/guix.png"
-                              "backgrounds/guix-logo.svg")
-                      (for-each (lambda (image)
-                                  (invoke "composite" "-gravity" "center"
-                                          "/tmp/guix.png" image
-                                          "/tmp/final.jpg")
-                                  (copy-file "/tmp/final.jpg" image))
-                                '( ;; "backgrounds/xfce-blue.jpg"
-                                  "backgrounds/xfce-stripes.svg"
-                                  "backgrounds/xfce-teal.svg"
-                                  "backgrounds/xfce-verticals.svg"))
-                      #t)))
-
-       #:disallowed-references (,inkscape/pinned ,imagemagick)))
     (native-inputs
-     (list xfce4-dev-tools
-           ;; For our own ‘prepare-background-image’ phase.
-           inkscape/pinned imagemagick))
+     (list xfce4-dev-tools))
     (inputs
      (list exo
            garcon
