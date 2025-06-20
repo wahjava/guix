@@ -30,6 +30,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -60,6 +61,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages m4)
+  #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
@@ -1013,3 +1015,66 @@ from ALSA, ESD, and COMEDI sources.  This package currently does not include
 support for ESD sources.")
     (home-page "https://xoscope.sourceforge.net/")
     (license license:gpl2+)))
+
+(define python-pydigitalwavetools-1.1
+  (package
+    (inherit python-pydigitalwavetools)
+    (name "python-pydigitalwavetools-1.1")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Nic30/pyDigitalWaveTools/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zbk4ndpwm4h8vdv9f567bpsizpy6q4jf0xmma77h0gsnnaqkwis"))))))
+
+(define-public python-hls4ml
+  ;; WIP, debug with:
+  ;; $GUIX/pre-inst-env guix build python-hls4ml --keep-failed
+  ;; cd $TMPDIR/guix-build-python-hls4ml-1.1.0.drv-0
+  ;; $GUIX/pre-inst-en guix shell --no-grafts -CN -D python-hls4ml \
+  ;; --writable-root coreutils which
+  ;; rm /bin/sh
+  ;; source ./environment-variables
+  ;; cd hls4ml-1.1.0/
+  (package
+    (name "python-hls4ml")
+    (version "1.1.0")
+    (source
+     (origin
+       ;; Make sure you're either building from a fully intact git repository
+       ;; or PyPI tarballs. Most other sources (such as GitHub's tarballs, a
+       ;; git checkout without the .git folder) don't contain the necessary
+       ;; metadata and will not work.
+       (method url-fetch)
+       (uri (pypi-uri "hls4ml" version))
+       (sha256
+        (base32 "0dc7dab6pjcp4ipjsh161jk1c5wgi3slzvkyn501bnrk1kvw23k6"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;TODO: implement
+    (native-inputs
+     (list python-calmjs-parse
+           ;; python-hgq
+           onnx
+           python-pytest
+           python-pytest-cov
+           python-pytest-randomly
+           ;; python-qonnx
+           python-setuptools
+           python-setuptools-scm
+           python-tabulate
+           ;; python-pytorch
+           python-wheel))
+    (propagated-inputs
+     (list python-h5py
+           python-numpy
+           python-pydigitalwavetools-1.1
+           python-pyyaml))
+    (home-page "https://fastmachinelearning.org/hls4ml/")
+    (synopsis "Python Library for machine learning inference in FPGAs")
+    (description
+     "Hls4Ml produces firmware implementations of machine learning algorithms using high level synthesis language (HLS).")
+    (license license:asl2.0)))
