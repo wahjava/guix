@@ -228,6 +228,27 @@ of the bitcoin protocol.  This package provides the Bitcoin Core command
 line client and a client based on Qt.")
     (license license:expat)))
 
+(define-public bitcoin-knots
+  (let ((major "28")
+        (minor "1.knots20250305"))
+    (package
+      (inherit bitcoin-core)
+      (name "bitcoin-knots")
+      (version (string-append major "." minor))
+      (source (origin
+                (method url-fetch)
+                (uri (string-append "https://bitcoinknots.org/files/" major ".x/"
+                                    version "/bitcoin-" version ".tar.gz"))
+                (sha256
+                 (base32
+                  "1h038flnzrdky91s4vczqjdp7jvqljq2wsq5559z17ykipxvg8qc"))))
+      (home-page "https://bitcoinknots.org")
+      (synopsis "Enhanced Bitcoin node/wallet based on Bitcoin Core")
+      (description "Bitcoin Knots connects to the Bitcoin peer-to-peer network
+to download and fully validate blocks and transactions.  It also includes a
+wallet and graphical user interface.")
+      (license license:expat))))
+
 (define-public ghc-hledger
   (package
     (name "ghc-hledger")
