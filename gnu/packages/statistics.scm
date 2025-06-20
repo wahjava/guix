@@ -872,6 +872,28 @@ point (up to 50% contamination) and have a number of nice applications in
 machine learning, computer vision, and high-dimensional statistics.")
     (license license:asl2.0)))
 
+(define-public python-iterative-stats
+  (package
+    (name "python-iterative-stats")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "iterative_stats" version))
+       (sha256
+        (base32 "0dh4rvikb1aj4pc3lqd8qbr6c6rd10fx1g6vr3spzai0wx2n1gn2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-openturns python-poetry-core python-pytest))
+    (propagated-inputs (list python-numpy python-pyyaml))
+    (home-page
+     "https://github.com/IterativeStatistics/BasicIterativeStatistics")
+    (synopsis "Iterative Statistics Python library")
+    (description
+     "Implements iterative statistics operators for mean, variance, high-order
+ moments, extrema, covariance, threshold, quantile (experimental) and Sobol'
+ indices.")
+    (license license:bsd-3)))
+
 (define-public python-nestle
   (package
     (name "python-nestle")
