@@ -72,10 +72,7 @@
           (string-append "--with-libgcrypt-prefix="
                          (assoc-ref %build-inputs "libgcrypt"))))))
    (native-inputs
-    (append (list pkg-config)
-            (if (supported-package? ruby-asciidoctor/minimal)
-                (list ruby-asciidoctor/minimal)
-                '())))
+    (list pkg-config))
    (inputs
     (list argon2
           json-c
@@ -105,8 +102,8 @@ block integrity kernel modules.")
 (define-public cryptsetup
   (package/inherit cryptsetup-minimal
     (name "cryptsetup")
-    (native-inputs `(,(if (supported-package? ruby-asciidoctor)
-                          `("ruby-asciidoctor" ,ruby-asciidoctor)
+    (native-inputs `(,(if (supported-package? ruby-asciidoctor/minimal)
+                          `("ruby-asciidoctor" ,ruby-asciidoctor/minimal)
                           '())
                      ,@(package-native-inputs cryptsetup-minimal)))))
 
