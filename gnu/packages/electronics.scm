@@ -799,6 +799,24 @@ format used to store simulation data from Verilog and other hardware description
 languages.")
     (license license:expat)))
 
+;;; This version is a strong dependency of python-hls4ml. See:
+;;; https://github.com/fastmachinelearning/hls4ml/blob/main/pyproject.toml#L28
+(define python-pydigitalwavetools-for-hls4ml
+  (package
+    (inherit python-pydigitalwavetools)
+    (name "python-pydigitalwavetools-for-hls4ml")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Nic30/pyDigitalWaveTools/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zbk4ndpwm4h8vdv9f567bpsizpy6q4jf0xmma77h0gsnnaqkwis"))))
+    (properties '((hidden? . #t)))))
+
 (define-public python-surf
   (package
     (name "python-surf")
