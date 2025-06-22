@@ -17,6 +17,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix build-system)
+  #:use-module (guix diagnostics)
+  #:use-module (guix i18n)
   #:use-module (guix records)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
@@ -47,7 +49,8 @@
   build-system?
   (name                     build-system-name)         ; symbol
   (description              build-system-description)  ; short description
-  (modules                  build-system-modules)      ; modules sexp
+  (modules                  build-system-modules
+                            (default #f))              ; modules sexp
   (lower                    build-system-lower))       ; args ... -> bags
 
 ;; "Bags" are low-level representations of "packages".  The system and target
@@ -94,6 +97,17 @@ INPUTS, NATIVE-INPUTS, OUTPUTS, and additional ARGUMENTS.  If TARGET is not
 This is the mechanism by which a package is \"lowered\" to a bag, which is the
 intermediate representation just above derivations."
   (match build-system
+    (($ <build-system> bs-name description #f lower)
+     (warning (G_ "build-system: ~a: Not setting the modules field is deprecated.~%")
+              bs-name)
+     (apply lower name
+            #:system system
+            #:source source
+            #:inputs inputs
+            #:native-inputs native-inputs
+            #:outputs outputs
+            #:target target
+            arguments))
     (($ <build-system> _ description modules lower)
      (apply lower name
             #:modules modules
