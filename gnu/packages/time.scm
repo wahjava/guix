@@ -333,30 +333,24 @@ Pendulum instances.")
 (define-public python-dateutil
   (package
     (name "python-dateutil")
-    (version "2.8.2")
+    (version "2.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-dateutil" version))
-       (patches (search-patches "python-dateutil-pytest-compat.patch"))
        (sha256
-        (base32 "11iy7m4bp2lgfkcl0r6xzf34bvk7ppjmsyn2ygfikbi72v6cl8q1"))))
+        (base32 "02b7qqimar3p311m0y5z8b09v4qdd0qia037lpzj0nrzqqckxrvq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags '(list  ; avoid freezegun dependency
-                     "--ignore=dateutil/test/test_utils.py"
-                     "--ignore=dateutil/test/test_rrule.py"
-                     ;; XXX: Fails to get timezone from /etc/localtime.
-                     "--ignore=dateutil/test/test_tz.py")))
-    (native-inputs
-     (list python-pytest
-           python-pytest-cov
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list python-six))
+      #:test-flags '(list ;avoid freezegun dependency
+                          "--ignore=tests/test_utils.py"
+                          "--ignore=tests/test_rrule.py"
+                          ;; XXX: Fails to get timezone from /etc/localtime.
+                          "--ignore=tests/test_tz.py")))
+    (native-inputs (list python-pytest python-pytest-cov python-setuptools
+                         python-setuptools-scm python-wheel))
+    (propagated-inputs (list python-six))
     (home-page "https://dateutil.readthedocs.io/en/stable/")
     (synopsis "Extensions to the standard datetime module")
     (description
