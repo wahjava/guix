@@ -953,7 +953,9 @@ new Date();"))
                      ;; Add flags for compilation with gcc >= 10
                      ,(string-append "--with-extra-cflags=-fcommon"
                                      " -fno-delete-null-pointer-checks"
-                                     " -fno-lifetime-dse")
+                                     " -fno-lifetime-dse"
+                                     ;; flags for compilation with gcc >= 14.
+                                     " -Wno-error=int-conversion")
                      (string-append "--with-freetype="
                                     (assoc-ref inputs "freetype"))
                      "--disable-freetype-bundling"
@@ -1186,7 +1188,7 @@ new Date();"))
            freetype
            giflib
            lcms
-           libelf
+           elfutils
            libjpeg-turbo
            libice
            libpng
