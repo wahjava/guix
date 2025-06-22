@@ -610,7 +610,8 @@
                                (string-append (assoc-ref outputs "jdk")
                                               "/jre/lib/security"))))))))
       (native-inputs
-       `(("openjdk-src"
+       `(("gcc" ,gcc-13)
+         ("openjdk-src"
           ,(drop "openjdk"
                  "0l34ikyf62hbzlf9032alzkkqvf7bpmckz4gvirvph755w7gka8l"))
          ("corba-drop"
