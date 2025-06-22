@@ -35,6 +35,7 @@
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4074,6 +4075,27 @@ module provides support functions to the automatically generated code.")
     ;; There is a choice between a python like license, gpl2 and gpl3.
     ;; For compatibility with pyqt, we need gpl3.
     (license license:gpl3)))
+
+;; FIXME Remove this package when not needed by qgis anymore
+;; This is a stopgap to build qgis@3.42.1 while waiting for the
+;; qt-team branch to be merged in master with python-pyqt5-sip@12.17.0.
+(define-public python-sip-6.8
+  (hidden-package
+   (package
+     (inherit python-sip)
+     (name "python-sip")
+     (version "6.8.6")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (list (pypi-uri "sip" version)
+                   (string-append "https://www.riverbankcomputing.com/static/"
+                                  "Downloads/sip/" version
+                                  "/sip-" version ".tar.gz")))
+        (sha256
+         (base32
+          "0ykxq0607f2sdwbl5cxbp0y8pl14bsgzc9nhifpxbibfivj5kjbz"))
+        (patches (search-patches "python-sip-include-dirs.patch")))))))
 
 (define-public python-sip-4
   (package
