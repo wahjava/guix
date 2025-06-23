@@ -304,7 +304,7 @@ files and generates build instructions for the Ninja build system.")
 (define-public meson
   (package
     (name "meson")
-    (version "1.5.2")
+    (version "1.8.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/mesonbuild/meson/"
@@ -312,8 +312,8 @@ files and generates build instructions for the Ninja build system.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "02wi62k9w7716xxdgrrx68q89vaq3ncnbpw5ms0g27npn2df0mgr"))))
-    (build-system python-build-system)
+                "1bw7scy0337x03qb3xh7gpd9d43ijw1gd7ybmmr6pisqh5nq21f1"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f                  ;disabled to avoid extra dependencies
            #:phases
@@ -328,6 +328,8 @@ files and generates build instructions for the Ninja build system.")
 import sys
 sys.path.insert(0, '~a')
 # EASY-INSTALL-ENTRY-SCRIPT" (site-packages inputs outputs)))))))))
+    ;; XXX: We might need to avoid depending on wheel here.
+    (native-inputs (list python-wheel))
     (inputs (list python ninja))
     (home-page "https://mesonbuild.com/")
     (synopsis "Build system designed to be fast and user-friendly")
