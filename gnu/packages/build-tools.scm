@@ -325,11 +325,12 @@ files and generates build instructions for the Ninja build system.")
                (replace 'wrap
                  (lambda* (#:key inputs outputs #:allow-other-keys)
                    (substitute* (search-input-file outputs "bin/meson")
-                     (("# EASY-INSTALL-ENTRY-SCRIPT")
-                      (format #f "\
-import sys
-sys.path.insert(0, '~a')
-# EASY-INSTALL-ENTRY-SCRIPT" (site-packages inputs outputs)))))))))
+                     (("import sys" all)
+                      (string-append
+                       all "\n"
+                       "sys.path.insert(0, '"
+                       (site-packages inputs outputs)
+                       "')"))))))))
     (inputs (list python ninja/pinned))
     (native-inputs (list python-setuptools python-wheel))
     (home-page "https://mesonbuild.com/")
