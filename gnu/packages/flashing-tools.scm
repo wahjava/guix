@@ -13,7 +13,7 @@
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2023 B. Wilson <x@wilsonb.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -32,6 +32,7 @@
 
 (define-module (gnu packages flashing-tools)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
@@ -70,6 +71,8 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-shell)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-26))
@@ -683,6 +686,52 @@ It can be used to upload images to I.MX SoC's using at least their boot ROM.")
        "This tool is for flashing custom layouts to
 @url{https://ergodox-ez.com/,ZSA keyboards}.")
       (license license:expat))))
+
+(define-public wlink
+  (package
+    (name "wlink")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ch32-rs/wlink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1h9k6v8lpd24dls2mqpd74hfjkq151n8f97dg8mpi7ilga1h00w8"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (substitute* "Cargo.toml"
+                   (("nu-pretty-hex = \"0.100.0\"")
+                    "nu-pretty-hex = \"0.101.0\""))))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:cargo-inputs
+      (list rust-anyhow-1
+            rust-bitfield-0.17
+            rust-clap-4
+            rust-hex-0.4
+            rust-log-0.4
+            rust-ihex-3
+            rust-nu-pretty-hex-0.101
+            rust-rusb-0.9
+            rust-simplelog-0.12
+            rust-thiserror-2
+            rust-object-0.36
+            rust-indicatif-0.17
+            rust-serialport-4
+            rust-libloading-0.8
+            rust-clap-verbosity-flag-2)))
+    (native-inputs (list pkg-config))
+    (propagated-inputs (list eudev libusb))
+    (home-page "https://github.com/ch32-rs/wlink")
+    (synopsis "WCH-Link library/command line tool")
+    (description "@code{wlink} is a WCH-Link flash tool for WCH's RISC-V
+MCUs (CH32V, CH56X, CH57X, CH58X, CH59X, CH32L103, CH32X035, CH641, CH643).")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public qdl
   (let ((commit "13681fcb359c9f9c32a17a91d3dd20df2e413b6d")
