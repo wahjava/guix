@@ -50,6 +50,7 @@
 ;;; Copyright © 2025 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -8225,6 +8226,19 @@ types.")
     (description
      "This Rust crate provides macros to generate bitfield-like struct.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-bitfield-0.17
+  (package
+    (inherit rust-bitfield-0.14)
+    (name "rust-bitfield")
+    (version "0.17.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bitfield" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1q4n13japrj852yzidhjfcq702yxkvrpv5mhmacsliz5az8x567p"))))))
 
 (define-public rust-bitflags-2
   (package
