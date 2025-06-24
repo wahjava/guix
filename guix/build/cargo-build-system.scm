@@ -62,13 +62,14 @@
          (bin-dep? (lambda (dep) (find bin? (get-kinds dep)))))
     (find bin-dep? (manifest-targets))))
 
-(define (single-crate? dir)
-  "Check if directory DIR contains 'Cargo.toml' and is not a workspace."
+(define (cargo-package? dir)
+  "Check if directory DIR contains a single package, or a Cargo workspace with
+root package."
   (let ((manifest-file (in-vicinity dir "Cargo.toml")))
     (and (file-exists? manifest-file)
-         (not (string-contains
-               (call-with-input-file manifest-file get-string-all)
-               "[workspace]")))))
+         (string-contains
+          (call-with-input-file manifest-file get-string-all)
+          "[package]"))))
 
 (define* (crate-src? path #:key source)
   "Check if PATH refers to a crate source, namely a gzipped tarball with a
@@ -78,7 +79,7 @@ Cargo.toml file present at its root."
            ;; The build system only handles sources containing single crate.
            ;; Workspaces should be packaged into crates (via 'package phase)
            ;; and used in inputs.
-           (single-crate? path)
+           (cargo-package? path)
            (and (not (string-suffix? "py" path)) ;sanity-check.py
                 ;; First we print out all file names within the tarball to see
                 ;; if it looks like the source of a crate. However, the tarball
