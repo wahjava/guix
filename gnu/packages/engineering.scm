@@ -5567,7 +5567,13 @@ towards field theory.")
                (commit commit)))
          (sha256
           (base32 "1c7vimy065908qs5nwhnrk9pp0wh8pjgdvz2hwb12a9wcsj50kf0"))
-         (file-name (git-file-name name version))))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)))
+         ;; make tests deterministic by seeding the random number generator
+         (snippet '(substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
+                                  "orocos_kdl/tests/solvertest.cpp")
+                     (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
+                      "srand(0u)")))))
       (build-system cmake-build-system)
       (native-inputs (list cppunit))
       (propagated-inputs (list eigen))
