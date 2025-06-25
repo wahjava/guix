@@ -1007,7 +1007,8 @@ commonly called @code{ftoa} or @code{dtoa}.")
                       (string-append out "/lib/python"
                                      (python-version
                                       #$(this-package-input "python"))
-                                     "/site-packages/")))
+                                     "/site-packages/"))
+                     (startup-flags "--no-logo ")) ; faster startups
                 (define (symlink-output src dst)
                   (mkdir-p (dirname (string-append out dst)))
                   (symlink (string-append out src) (string-append out dst)))
@@ -1022,7 +1023,8 @@ commonly called @code{ftoa} or @code{dtoa}.")
                                             app ".desktop")))
                     (substitute* (string-append out src)
                       (("Exec=libreoffice[0-9]+\\.[0-9]+ ")
-                       (string-append "Exec=" out "/bin/libreoffice "))
+                       (string-append "Exec=" out "/bin/libreoffice "
+                                      startup-flags))
                       (("Icon=libreoffice.*")
                        (string-append "Icon=" app "\n"))
                       (("LibreOffice [0-9]+\\.[0-9]+")
