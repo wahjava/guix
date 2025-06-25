@@ -140,13 +140,19 @@ C/C++ part.")
   (package
     (inherit icu4c)
     (name "icu4c")
-    (version "71.1")
+    (version "73.1")
     (source (origin
               (method url-fetch)
               (uri (icu4c-uri version))
               (sha256
                (base32
-                "1gqywaqj9jmdwrng9lm6inyqmi5j2cz36db9dcqg3yk13zjyd9v7"))))))
+                "0iccpdvc0kvpww5a31k9gjkqigyz016i7v80r9zamd34w4fl6mx4"))
+              (patches
+               (append
+                (search-patches
+                 "icu4c-icu-22132-fix-vtimezone.patch"
+                 "icu4c-fix-TestHebrewCalendarInTemporalLeapYear.patch")
+                (origin-patches (package-source icu4c))))))))
 
 (define-public icu4c-75
   (package
