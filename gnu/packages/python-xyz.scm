@@ -8308,21 +8308,20 @@ Google and Numpydoc format.")
 (define-public python-docutils
   (package
     (name "python-docutils")
-    (version "0.19")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "docutils" version))
-              (sha256
-               (base32
-                "1rprvir116g5rz2bgzkzgyn6mv0z8582rz7bgxbpy2y3adkmm69k"))))
-    (build-system python-build-system)
+    (version "0.21.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "docutils" version))
+       (sha256
+        (base32 "0vwqzbmzdvwx23myx4cg8s8mdkrqnfxpa9yi7jm2s66z5rrihsrs"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "python" "test/alltests.py")
-                          (format #t "test suite not run~%")))))))
+     (list
+      #:test-backend #~'custom
+      #:test-flags #~(list "test/alltests.py")))
+    (native-inputs
+     (list python-flit-core))
     (home-page "https://docutils.sourceforge.net/")
     (synopsis "Python Documentation Utilities")
     (description
@@ -8350,7 +8349,7 @@ via commands such as @command{rst2man}, as well as supporting Python code.")
     ;; tests contain Python 2 syntax.
     (arguments '(#:tests? #false))
     (native-inputs
-     (list python-setuptools))))
+     (list python-setuptools python-wheel))))
 
 (define-public python-docx
   (package
