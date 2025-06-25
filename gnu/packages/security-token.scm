@@ -353,6 +353,43 @@ website for more information about Yubico and the YubiKey.")
     (home-page "https://developers.yubico.com/yubico-c-client/")
     (license license:bsd-2)))
 
+(define-public libp11
+  (package
+    (name "libp11")
+    (version "0.4.14")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/OpenSC/libp11")
+                    (commit (string-append "libp11-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "14igwn96dmigxhaj7aax0pwb0ihi2ppbw0c5y1hqfcn9j75vm5x8"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-static"
+                   (string-append "--with-enginesdir="
+                                     #$output "/lib/engines-3")
+                   (string-append "--with-modulesdir="
+                                  #$output "/lib/ossl-modules"))))
+    (native-inputs (list autoconf automake libtool pkg-config))
+    (inputs (list openssl))
+    (home-page "https://github.com/OpenSC/libp11")
+    (synopsis "PKCS#11 wrapper library ")
+    (description "This package provides two libraries:
+@table @code
+@item libp11
+provides a higher-level (compared to the PKCS#11 library) interface to access
+PKCS#11 objects.  It is designed to integrate with applications that use
+OpenSSL.
+@item pkcs11prov
+OpenSSL provider module that allows accessing PKCS#11 modules in a
+semi-transparent way.
+@end table")
+    (license license:lgpl2.1+)))
+
 (define-public opensc
   (package
     (name "opensc")
