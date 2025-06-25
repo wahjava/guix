@@ -1059,7 +1059,7 @@ firmware blobs.  You can
        ("automake" ,automake)
 
        ;; For the documentation.
-       ("python-docutils" ,python-docutils)
+       ("python-docutils" ,python-docutils-0.19)
        ("sphinx" ,python-sphinx)
        ("pandoc" ,pandoc)
        ("dot" ,graphviz)
