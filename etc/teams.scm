@@ -1259,6 +1259,11 @@ the \"texlive\" importer."
                        "monego")
   python science)
 
+(define-member (person "Nicolas Graves"
+                       "ngraves@ngraves.fr"
+                       "ngraves")
+  python ruby javascript)
+
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
