@@ -4,6 +4,7 @@
 #include <linux/audit.h> /* For AUDIT_ARCH_* */
 #include <linux/seccomp.h>
 #include <linux/filter.h>
+#include <cstdint>
 
 
 /* This file provides two preprocessor macros (among other things):
