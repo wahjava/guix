@@ -5649,6 +5649,22 @@ It uses the uwsgi protocol for all the networking/interprocess communications.")
          (list valgrind/pinned)
          '())))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          #$@(if (not (target-64bit?))
+                 #~((add-after 'unpack 'fix-time
+                      (lambda _
+                        (substitute* "src/builtin.c"
+                          (("#ifndef __sun__")
+                           ;; Make sure to use the 64-bit 'struct timespec' in
+                           ;; replacement functions.
+                           (string-append "#ifdef _GNU_SOURCE\n"
+                                          "#define _TIME_BITS 64\n"
+                                          "#endif\n"
+                                          "#ifndef __sun__"))))))
+                 #~()))))
     (home-page "https://jqlang.github.io/jq/")
     (synopsis "Command-line JSON processor")
     (description "jq is like sed for JSON data – you can use it to slice and
