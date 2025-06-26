@@ -57,6 +57,130 @@
        (base32
         "1yhs9lj9gnzbvimv0y5f1a4my0slbvygkcjjkaxd4wkkyfvfbkxy")))))
 
+(define-public rust-alacritty-0.25.1-dev.828457c
+ (hidden-package
+  (package
+    (name "rust-alacritty")
+    (version "0.25.1-dev")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/zed-industries/alacritty.git")
+         (commit "828457c9ff1f7ea0a0469337cc8a37ee3a1b0590")))
+       (file-name
+        (git-file-name "rust-alacritty" "0.25.1-dev.828457c"))
+       (sha256
+        (base32 "1rw6d14j41yvkpk58ngv626bwrwdm3vzyc4gh5lg7fi8x0fda5v0"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list #:skip-build? #t
+           #:install-source? #t
+           #:cargo-package-crates ''("alacritty_config_derive" "alacritty_config" "alacritty_terminal" "alacritty")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-cargo-manifests
+                 (lambda _
+                   ;; Break the circular dev-dependency for packaging.
+                   ;; We need that because we aren't using "cargo package --workspace".
+                   (substitute* "alacritty_config_derive/Cargo.toml"
+                     (("dev-dependencies[.]alacritty_config")
+                      "dummy.dev-dependencies.alacritty_config")))))))
+    (inputs (cargo-inputs 'alacritty-0.25))
+    (home-page "https://github.com/zed-industries/alacritty")
+    (synopsis "Terminal emulator library")
+    (description
+     "This package provides a terminal emulator library.")
+    (license license:asl2.0))))
+
+(define-public rust-async-stripe-0.40.0.3672dd4
+  (hidden-package
+   (package
+     (name "rust-async-stripe")
+     (version "0.40.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/zed-industries/async-stripe")
+          (commit "3672dd4efb7181aa597bf580bf5a2f5d23db6735")))
+        (file-name
+         (git-file-name "rust-async-stripe" "0.40.0.3672dd4"))
+        (sha256
+         (base32 "1k4015jzah505bkdjpdb6i9a5x5n6l91n3mp9ajkiw2cd455hmwi"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("async-stripe"
+                                        ;"stripe-openapi-codegen" ; requires old clap
+                                      )
+            #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'unpack 'patch
+                  (lambda _
+                    (substitute* "Cargo.toml"
+                      ;; This optional dependency has a large number of outdated dependencies.
+                      (("^rocket = .*$")
+                       "\n")
+                      ;; This optional dependency has a number of outdated dependencies.
+                      (("^surf = .*$")
+                       "\n")
+                      ;; This optional dependency has a number of outdated dependencies.
+                      (("^axum = .*$")
+                       "\n")
+                      ;; This optional dependency has a number of outdated dependencies.
+                      (("^httpmock = .*$")
+                       "\n")
+                      ;; Remove reference to it.
+                      (("\"surf\",")
+                       "")))))))
+     (inputs (cargo-inputs 'rust-async-stripe))
+     (home-page "https://github.com/microsoft/python-environment-tools")
+     (synopsis "Python environment tools")
+     (description
+      "This package provides Python environment tools.")
+     (license license:asl2.0))))
+
+(define-public rust-blade-0.6.0.e0ec4e7
+  (hidden-package
+   (package
+     (name "rust-blade")
+     (version "0.6.0.e0ec4e7")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/kvark/blade")
+          (commit "e0ec4e720957edd51b945b64dd85605ea54bcfe5")))
+        (file-name
+         (git-file-name "rust-blade" version))
+        (sha256
+         (base32 "1ncazvjmla1pqkjsbjg6idj6v5a5xz74k09xkdmf48m29yi480ig"))
+        (modules '((guix build utils)))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("blade-asset" 
+                                      "blade-graphics" 
+                                      "blade-macros"
+                                      "blade-util"
+                                        ; we don't have egui packaged "blade-egui"
+                                        ; bevy "blade-render"
+                                      ;; render "blade-helpers"
+                                      )))
+     (inputs (cargo-inputs 'rust-blade-for-zed))
+     (home-page "https://github.com/kvark/blade")
+     (synopsis "Sharp and simple graphics library")
+     (description
+      "This package provides @code{blade}, the sharp and simple graphics
+library.")
+     (license license:expat))))
+
 (define-public rust-deunicode-1
   (hidden-package
    (package
@@ -512,6 +636,175 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
        (base32
         "0vzs9i3sdh6f1b25vdbxwyphmxzbqixrnjlgws56fzfngy4my9dj")))))
 
+(define-public rust-dap-types-0.0.1.b40956a
+  (let ((commit "b40956a7f4d1939da67429d941389ee306a3a308")
+        (revision "0"))
+    (package
+      (name "rust-dap-types")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/zed-industries/dap-types")
+          (commit commit)))
+        (file-name
+         (git-file-name "rust-dap-types" version))
+        (sha256
+         (base32 "1dp6w4p2aw37zr1s4mn10chcg0j0clprjmjrbifc3m3qiz9h5zgi"))))
+       (build-system cargo-build-system)
+       (arguments
+        (list #:skip-build? #t
+              #:install-source? #t
+              #:cargo-package-crates ''("dap-types")
+              #:phases
+              #~(modify-phases %standard-phases
+                  (add-before 'build 'generate
+                    (lambda _
+                      (invoke "cargo" "run" "-p" "generator"))))))
+       (inputs (cargo-inputs 'rust-dap-types))
+       (home-page "https://github.com/zed-industries/dap-types/")
+       (synopsis "Rust types for the Debug Adapter Protocol")
+       (description
+        "This package provides Rust types for the Debug Adapter Protocol.")
+       (license (list license:asl2.0 license:expat)))))
+
+(define-public rust-jj-0.29.0.e18eb8e
+  (hidden-package
+   (package
+     (name "rust-jj")
+     (version "0.29.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/jj-vcs/jj")
+          (commit "e18eb8e05efaa153fad5ef46576af145bba1807f")))
+        (file-name
+         (git-file-name "rust-jj" "0.29.0.e18eb8e"))
+        (sha256
+         (base32 "01j8gwa5z7zdcwpzwib4dwgqfgbbip94zby4v0rpx91skscs3w7q"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("jj-lib-proc-macros"
+                                      "jj-lib"
+                                        ; TODO: Others
+                                      )
+            #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'unpack 'patch
+                  (lambda _
+                    (substitute* "lib/Cargo.toml"
+                      ;; Requires "work in progress" BSER encoding.
+                      ;; I'd rather not.
+                      (("^watchman.*")
+                       "")
+                      ;; Would be a dev-dependency and an entirely different
+                      ;; git-compatible SCM.
+                      (("^sapling-.*")
+                       "\n")))))))
+     (inputs (cargo-inputs 'rust-jj))
+     (home-page "https://github.com/jj-vcs/jj")
+     (synopsis "Git frontend for humans")
+     (description
+      "This package provides a git frontend for humans.")
+     (license license:expat))))
+
+(define-public rust-pet-0.1.0.845945b
+  (hidden-package
+   (package
+     (name "rust-pet")
+     (version "0.1.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/microsoft/python-environment-tools.git")
+          (commit "845945b830297a50de0e24020b980a65e4820559")))
+        (file-name
+         (git-file-name "rust-pet" "0.1.0.845945b"))
+        (sha256
+         (base32 "1r9r0wwc0qwxyksr4l98sb9q64nab1bmcw7gdng8pk8bshyg4lhd"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("pet-fs"
+                                      "pet-core"
+                                      "pet-python-utils"
+                                      "pet-jsonrpc"
+                                      "pet-reporter"
+                                      "pet-conda"
+                                      "pet-virtualenv"
+                                      "pet-virtualenvwrapper"
+                                      "pet-env-var-path"
+                                      "pet-global-virtualenvs"
+                                      "pet-homebrew"
+                                      "pet-linux-global-python"
+                                      "pet-mac-commandlinetools"
+                                      "pet-mac-python-org"
+                                      "pet-mac-xcode"
+                                      "pet-pipenv"
+                                      "pet-pixi"
+                                      "pet-poetry"
+                                      "pet-pyenv"
+                                      "pet-telemetry"
+                                      "pet-venv"
+                                      "pet-windows-store"
+                                      "pet-windows-registry"
+                                      "pet")
+            #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'unpack 'fix-versions
+                  (lambda _
+                    (let ((version #$(package-version this-package)))
+                      ;; Depending on random versions is a great idea.  Not.
+                      (substitute* (find-files "." "^Cargo[.]toml$")
+                        (("^(pet-[a-z-]*) = [{] path = \"([^\"]*)\" [}]" x pkg path)
+                         (string-append pkg " = { version = \"" version "\", path = \"" path "\" }")))))))))
+     (inputs (cargo-inputs 'rust-pet))
+     (home-page "https://github.com/microsoft/python-environment-tools")
+     (synopsis "Python environment tools")
+     (description
+      "This package provides Python environment tools.")
+     (license license:expat))))
+
+(define-public rust-runtimed-0.25.0.7130c80
+  (hidden-package
+   (package
+     (name "rust-runtimed")
+     (version "0.25.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/ConradIrwin/runtimed")
+          (commit "7130c804216b6914355d15d0b91ea91f6babd734")))
+        (file-name
+         (git-file-name "rust-runtimed" "0.25.0.7130c80"))
+        (sha256
+         (base32 "1fx4gziw28viw63v3w078q7psmd7jmgi0j79sx4x0kqq4s0szrmz"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("jupyter-protocol"
+                                      "runtimelib"
+                                      "jupyter-websocket-client"
+                                      "nbformat")))
+     (inputs (cargo-inputs 'rust-runtimed-for-zed))
+     (home-page "https://github.com/ConradIrwin/runtimed")
+     (synopsis "Jupyter notebook")
+     (description
+      "This package provides Jupyter notebook support.")
+     (license license:bsd-3))))
+
 (define-public rust-syntect-5
   (hidden-package
    (package
@@ -602,3 +895,34 @@ intelligence.")
 webview, a tiny cross-platform library to render web-based GUIs as desktop
 applications.")
        (license license:expat)))))
+
+(define-public rust-xim-0.4.0.d50d461
+  (hidden-package
+   (package
+     (name "rust-xim")
+     (version "0.4.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri
+         (git-reference
+          (url "https://github.com/XDeme1/xim-rs")
+          (commit "d50d461764c2213655cd9cf65a0ea94c70d3c4fd")))
+        (file-name
+         (git-file-name "rust-xim" "0.4.0.d50d461"))
+        (sha256
+         (base32 "1bp91ykfn1c8i8x8ajhma6v67xx1cskk2si2d7rxcc1a38h9lz05"))))
+     (build-system cargo-build-system)
+     (arguments
+      (list #:skip-build? #t
+            #:install-source? #t
+            #:cargo-package-crates ''("xim-ctext"
+                                      "xim-gen"
+                                      "xim-parser"
+                                      "xim")))
+     (inputs (cargo-inputs 'rust-xim-for-zed))
+     (home-page "https://github.com/XDeme1/xim-rs")
+     (synopsis "X input method client and server")
+     (description
+      "This package provides a library for @code{xim}, the X input method.")
+     (license license:expat))))
