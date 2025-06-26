@@ -717,8 +717,8 @@ in SOURCE."
                   (list
                    (menu-item "⊕"
                               (if (string=? #$manual "guix-cookbook")
-                                  "https://translate.fedoraproject.org/projects/guix/documentation-cookbook/"
-                                  "https://translate.fedoraproject.org/projects/guix/documentation-manual/")))))
+                                  "https://translate.codeberg.org/projects/guix/documentation-cookbook/"
+                                  "https://translate.codeberg.org/projects/guix/documentation-manual/")))))
 
             (define (stylized-html sxml file)
               ;; Return SXML, which was read from FILE, with additional
