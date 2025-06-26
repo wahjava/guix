@@ -4377,6 +4377,67 @@ itself.")
 WebEngine libraries.  The bindings sit on top of PyQt6 and are implemented as a
 set of three modules.")))
 
+(define-public qtwayland-helper
+  (package
+    (name "qtwayland-helper")
+    (version (package-version qtwayland))
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments
+     '(#:modules ((guix build utils)
+                  (srfi srfi-26))
+       #:builder
+       (begin
+         (use-modules (guix build utils)
+                      (srfi srfi-26))
+         (let ((out (assoc-ref %outputs "out"))
+               (qtbase-5    (assoc-ref %build-inputs "qtbase-5"))
+               (qtbase      (assoc-ref %build-inputs "qtbase"))
+               (qtwayland-5 (assoc-ref %build-inputs "qtwayland-5"))
+               (qtwayland   (assoc-ref %build-inputs "qtwayland")))
+         (for-each mkdir-p
+                   (list (string-append out "/lib/qt5")
+                         (string-append out "/lib/qt6")
+                         (string-append out "/share")))
+         ;; We use copy-recursively instead of union-build because the
+         ;; union-build used for profile generation can't add other plugins
+         ;; to an existing union-build.
+         (for-each (cut copy-recursively <> (string-append out "/lib/qt5/plugins"))
+                   (list (string-append qtbase-5 "/lib/qt5/plugins")
+                         (string-append qtwayland-5 "/lib/qt5/plugins")))
+         (for-each (cut copy-recursively <> (string-append out "/lib/qt6/plugins"))
+                   (list (string-append qtbase "/lib/qt6/plugins")
+                         (string-append qtwayland "/lib/qt6/plugins")))
+         (for-each (cut copy-recursively <> (string-append out "/share/doc"))
+                   (list (string-append qtbase-5 "/share/doc")
+                         (string-append qtwayland-5 "/share/doc")
+                         (string-append qtbase "/share/doc")
+                         (string-append qtwayland "/share/doc")))
+         (copy-recursively (string-append qtwayland-5 "/lib/qt5/qml")
+                           (string-append out "/lib/qt5/qml"))
+         (copy-recursively (string-append qtwayland "/lib/qt6/qml")
+                           (string-append out "/lib/qt6/qml"))
+         (delete-file-recursively (string-append out "/share/doc/qt5"))
+         (delete-file-recursively (string-append out "/share/doc/qt6"))))))
+    (inputs
+     `(("qtbase-5" ,qtbase-5)
+       ("qtbase" ,qtbase)
+       ("qtwayland-5" ,qtwayland-5)
+       ("qtwayland" ,qtwayland)))
+    (native-search-paths
+     (delete-duplicates
+       (append (package-native-search-paths qtbase-5)
+               (package-native-search-paths qtbase))))
+    (home-page (package-home-page qtbase))
+    (synopsis "Helper package to display Qt applications in wayland")
+    (description "This package provides a helper package which can be used to
+enable Qt (Qt5 and Qt6) packages to run under wayland.")
+    (license (delete-duplicates
+               (append (package-license qtbase-5)
+                       (package-license qtbase)
+                       (package-license qtwayland-5)
+                       (package-license qtwayland))))))
+
 (define-public python-pyqt-builder
   (package
     (name "python-pyqt-builder")
