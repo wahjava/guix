@@ -145,6 +145,25 @@ can be embedded in any application
 This package includes the @code{libtree-sitter} runtime library.")
     (license license:expat)))
 
+(define-public tree-sitter-0.25
+  (package
+    (inherit tree-sitter)
+    (name "tree-sitter")
+    (version "0.25.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/tree-sitter/tree-sitter")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1kxbxascxf62f7awg0fraxcc1jr0agfim7ma093jwam23kdwbw6v"))
+              (modules '((guix build utils)))
+              (snippet #~(begin
+                           ;; Remove bundled ICU parts
+                           (delete-file-recursively "lib/src/unicode")))))))
+
 (define-public tree-sitter-cli
   (package
     (inherit tree-sitter)
