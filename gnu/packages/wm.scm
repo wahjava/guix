@@ -2010,7 +2010,15 @@ XDG-Output for wlclock to work.")
                    (substitute* "backend/drm/meson.build"
                      (("/usr/share/hwdata/pnp.ids")
                       (search-input-file
-                       (or native-inputs inputs) "share/hwdata/pnp.ids"))))))))
+                       (or native-inputs inputs) "share/hwdata/pnp.ids")))))
+               (add-before 'configure 'expose-protocols
+                (lambda* _
+                 (let* [(target-dir (string-append (string-append #$output "/share/wayland-protocols")))
+                        (xml? (lambda (x) (string-suffix-ci? ".xml" x)))
+                        (xml-copy (lambda (x y) (if (xml? x) (copy-file x y) #f)))]
+                  (mkdir-p dir)
+                  (copy-recursively "protocol" target-dir #:copy-file xml-copy)
+                  #t))))))
     (propagated-inputs
      (list ;; As required by wlroots.pc.
            eudev
