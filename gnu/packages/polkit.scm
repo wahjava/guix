@@ -234,36 +234,3 @@ privileges.")
     (home-page "https://www.freedesktop.org/wiki/Software/polkit/")
     (license license:lgpl2.0+)))
 
-(define-public hyprpolkitagent
-  (package
-    (name "hyprpolkitagent")
-    (version "0.1.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/hyprwm/hyprpolkitagent")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0zqiskgn57zcrljpyk0py24izf77yngnj7586mb51rb1b4yd4n9b"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f)) ;; No tests yet.
-    (native-inputs (list gcc-14 pkg-config))
-    (inputs (list hyprutils
-                  hyprland-qtutils
-                  polkit
-                  polkit-qt6
-                  qtwayland
-                  qtbase
-                  qtdeclarative
-                  libxkbcommon))
-    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprpolkitagent/")
-    (synopsis "Simple polkit authentication agent for Hyprland")
-    (description
-     "hyprpolkitagent is a polkit authentication daemon written in QT/QML.
-It is required for @acronym{GUI, Graphical User Interface} applications to
-be able to request elevated privileges.")
-    (license license:bsd-3)))
