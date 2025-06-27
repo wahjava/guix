@@ -204,7 +204,14 @@ for configuration, scripting, and rapid prototyping.")
                                    (search-patch
                                     "luajit-add-riscv64-support.patch"))))))
                         #~())
-                 (delete 'configure)) ; no configure script
+                 (delete 'configure) ; no configure script
+                 ;; We expect lua libraries to be under lib/lua/version, and
+                 ;; for luajit the version is 5.1.
+                 (add-before 'build 'patch-install
+                   (lambda _
+                     (substitute* "Makefile"
+                       (("INSTALL_LJLIBD=.*$")
+                        "INSTALL_LJLIBD=$(DESTDIR)$(PREFIX)/lib/lua/5.1\n")))))
              #:make-flags #~(list (string-append "PREFIX="
                                                  (assoc-ref %outputs "out")))))
       (home-page "https://www.luajit.org/")
