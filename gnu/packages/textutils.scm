@@ -76,6 +76,7 @@
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages julia)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
@@ -88,6 +89,7 @@
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages slang)
+  #:use-module (gnu packages unicode)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xorg))
 
@@ -269,6 +271,46 @@ encoding, supporting Unicode version 9.0.0.")
           ;; For tests
           ;; TODO Move to ruby@3 on the next rebuild cycle.
           ("ruby" ,ruby-2.7)))))))
+
+(define-public utf8proc-2.10.0
+  (package
+    (inherit utf8proc)
+    (name "utf8proc")
+    (version "2.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaStrings/utf8proc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1n1k67x39sk8xnza4w1xkbgbvgb1g7w2a7j2qrqzqaw1lyilqsy2"))))
+    (arguments
+     (list #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "prefix=" (assoc-ref %outputs "out")))
+
+           ;; FIXME: Some tests are failing, may be caused due to the old
+           ;; UCD version we are using (15.1.0 vs 16.0.0). Revisit once
+           ;; it is updateed.
+           #:tests? #f
+
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (add-after 'unpack 'symlink-ucd-files
+                 (lambda _
+                   (mkdir-p "data")
+                   (let ((ucd #$(this-package-native-input "ucd")))
+                     (for-each
+                       (lambda (file)
+                         (symlink (string-append ucd "/share/ucd/" file)
+                                  (string-append "data/" (basename file))))
+                       '("DerivedCoreProperties.txt" "NormalizationTest.txt"
+                         "auxiliary/GraphemeBreakTest.txt"))))))))
+    (native-inputs (list julia perl ucd))))
 
 (define-public libconfuse
   (package
