@@ -5597,3 +5597,62 @@ towards field theory.")
 and representations for kinematic structures and their inverse and
 forward kinematics solvers.")
       (license license:lgpl2.1+))))
+
+(define-public python-orocos-kinematics-dynamics
+  (let ((commit "34ecff4ca7bae52fa16ca13fdb3d9db26fd2a293")
+        (revision "0"))
+    (package
+      (name "python-orocos-kinematics-dynamics")
+      (version (git-version "1.5.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/orocos/orocos_kinematics_dynamics")
+               (commit commit)))
+         (sha256
+          (base32 "1c7vimy065908qs5nwhnrk9pp0wh8pjgdvz2hwb12a9wcsj50kf0"))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     (substitute* "python_orocos_kdl/CMakeLists.txt"
+                       ;; Use the system pybind11 instead of the bundled version
+                       (("add_subdirectory\\(pybind11\\)")
+                        "find_package(pybind11)")
+                       ;; change debian-specific python install directory
+                       (("dist-packages")
+                        "site-packages"))
+                     ;; ROS 1 uses some dynamic attributes, which are
+                     ;; disabled by default in pybind11. No harm in enabling them
+                     ;; See "https://github.com/ros2/geometry2/issues/624
+                     ;; and https://pybind11.readthedocs.io/en/stable/classes.html
+                     ;; #dynamic-attributes <Both accessed June 1 2025>
+                     (substitute* "python_orocos_kdl/PyKDL/frames.cpp"
+                       (("m, \"Vector\"")
+                        "m, \"Vector\", py::dynamic_attr()")
+                       (("m, \"Frame\"")
+                        "m, \"Frame\", py::dynamic_attr()")
+                       (("m, \"Twist\"")
+                        "m, \"Twist\", py::dynamic_attr()")
+                       (("m, \"Wrench\"")
+                        "m, \"Wrench\", py::dynamic_attr()"))))))
+      (build-system cmake-build-system)
+      (native-inputs (list python pybind11 python-psutil))
+      (inputs (list orocos-kinematics-dynamics))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "python_orocos_kdl")))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (setenv "PYTHONPATH" "./")
+                (when tests?
+                  (invoke "python3" "../python_orocos_kdl/tests/PyKDLtest.py")))))))
+      (home-page "https://docs.orocos.org/kdl/overview.html")
+      (synopsis
+       "Python Bindings for the Orocos Kinematics and Dynamics Library")
+      (description "Python bindings for orocos-kinematics-dynamics.")
+      (license license:lgpl2.1+))))
