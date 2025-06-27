@@ -79,6 +79,7 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages text-editors)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages xdisorg)
@@ -782,7 +783,7 @@ is based on Vim's builtin plugin support.")
 (define-public neovim
   (package
     (name "neovim")
-    (version "0.9.5")
+    (version "0.11.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -791,7 +792,7 @@ is based on Vim's builtin plugin support.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1j3z7jay0m6g06v04falrzr062g07xr4svbrc3hywlqi2h6rrvk5"))))
+                "14zy1mk8h72dhz8sn546l5qyl2lzfpj6nspvgskpsdj19f6abn54"))))
     (build-system cmake-build-system)
     (arguments
      (list #:modules
@@ -860,7 +861,8 @@ is based on Vim's builtin plugin support.")
                   lua5.1-lpeg
                   lua5.1-bitop
                   lua5.1-libmpack
-                  tree-sitter))
+                  tree-sitter-0.25
+                  utf8proc-2.10.0))
     (native-inputs (list pkg-config gettext-minimal gperf))
     (home-page "https://neovim.io")
     (synopsis "Fork of vim focused on extensibility and agility")
