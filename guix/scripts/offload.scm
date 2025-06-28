@@ -708,17 +708,30 @@ daemon is not running."
           (leave (G_ "failed to import '~a' from '~a'~%")
                  item name)))))
 
-(define (check-machine-availability machine-file pred)
+(define (check-machines-availability machines)
+  "Check that MACHINES are usable as build machines."
+  (define (if-true proc)
+    (lambda args
+      (when (every ->bool args)
+        (apply proc args))))
+
+  (let* ((names    (map build-machine-name machines))
+         (sockets  (map build-machine-daemon-socket machines))
+         (sessions (map (cut open-ssh-session <> %short-timeout) machines))
+         (nodes    (map remote-inferior* sessions)))
+    (for-each (if-true assert-node-has-guix) nodes names)
+    (for-each (if-true assert-node-repl) nodes names)
+    (for-each (if-true assert-node-can-import) sessions nodes names sockets)
+    (for-each (if-true assert-node-can-export) sessions nodes names sockets)
+    (for-each (if-true close-inferior) nodes)
+    (for-each disconnect! sessions)))
+
+(define (check-machines-availability-from-file machine-file pred)
   "Check that each machine matching PRED in MACHINE-FILE is usable as a build
 machine."
   (define (build-machine=? m1 m2)
     (and (string=? (build-machine-name m1) (build-machine-name m2))
          (= (build-machine-port m1) (build-machine-port m2))))
-
-  (define (if-true proc)
-    (lambda args
-      (when (every ->bool args)
-        (apply proc args))))
 
   ;; A given build machine may appear several times (e.g., once for
   ;; "x86_64-linux" and a second time for "i686-linux"); test them only once.
@@ -727,16 +740,7 @@ machine."
                                              build-machine=?))))
     (info (G_ "testing ~a build machines defined in '~a'...~%")
           (length machines) machine-file)
-    (let* ((names    (map build-machine-name machines))
-           (sockets  (map build-machine-daemon-socket machines))
-           (sessions (map (cut open-ssh-session <> %short-timeout) machines))
-           (nodes    (map remote-inferior* sessions)))
-      (for-each (if-true assert-node-has-guix) nodes names)
-      (for-each (if-true assert-node-repl) nodes names)
-      (for-each (if-true assert-node-can-import) sessions nodes names sockets)
-      (for-each (if-true assert-node-can-export) sessions nodes names sockets)
-      (for-each (if-true close-inferior) nodes)
-      (for-each disconnect! sessions))))
+    (check-machines-availability machines)))
 
 (define (check-machine-status machine-file pred)
   "Print the load of each machine matching PRED in MACHINE-FILE."
@@ -845,7 +849,8 @@ machine."
                        ((file) (values file (const #t)))
                        (()     (values %machine-file (const #t)))
                        (x      (leave (G_ "wrong number of arguments~%"))))))
-         (check-machine-availability (or file %machine-file) pred))))
+         (check-machines-availability-from-file (or file %machine-file)
+                                                pred))))
     (("status" rest ...)
      (with-error-handling
        (let-values (((file pred)
