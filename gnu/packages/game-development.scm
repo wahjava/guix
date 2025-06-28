@@ -36,6 +36,7 @@
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2025 Arnaud Lechevallier <arnaud.lechevallier@free.fr>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1627,6 +1628,68 @@ staying close to the original, but also adding some SDL2-specific features.
 While it aims to be used as a drop-in replacement, it appears to be
 developed mainly for Ren'py.")
       (license (list license:lgpl2.1 license:zlib)))))
+
+(define-public python-pygame-ce
+  (package
+    (name "python-pygame-ce")
+    (version "2.5.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pygame_ce" version))
+       (sha256
+        (base32 "0sxfchimdg606z65qychgvm66mq0aybs2isxsqb5zqy64g19gwm7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Ignore interactive tests and files first.
+      #~(list "-k" (string-append
+                    "not DisplayUpdateInteractiveTest"
+                    " and not DisplayInteractiveTest"
+                    " and not FullscreenToggleTestsInteractive"
+                    " and not MessageBoxInteractiveTest"
+                    " and not VisualTestsInteractive"
+                    " and not TouchInteractiveTest"
+                    ;; Pytest error reading from stdin
+                    " and not test__get_count_interactive"
+                    " and not test_get_count_interactive"
+                    " and not test_set_source_location"
+                    ;; Error: will not convert image with alpha channel to RGB
+                    " and not testSavePNG24"
+                    " and not testSavePNG8"
+                    " and not testSavePaletteAsPNG8"
+                    ;; Content could not be saved in clipboard
+                    " and not test_get__owned_empty_type"
+                    " and not test_init__reinit"
+                    " and not test_put"
+                    " and not test_put__bmp_image"
+                    " and not test_put__text"
+                    " and not test_issue_223"
+                    ;; AssertionError
+                    " and not test_palette_colorkey"
+                    " and not test_palette_colorkey_fill"
+                    " and not test_palette_colorkey_set_px"
+                    " and not test_create_aliases"))
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'pre-check
+                     (lambda _
+                       (setenv "HOME" "/tmp")
+                       (setenv "SDL_VIDEODRIVER" "dummy")
+                       (setenv "SDL_AUDIODRIVER" "disk"))))))
+    (native-inputs (list meson-python
+                         pkg-config
+                         python-cython-3
+                         python-numpy
+                         python-pytest
+                         python-setuptools))
+    (inputs (list freetype portmidi sdl2 sdl2-image sdl2-mixer sdl2-ttf))
+    (home-page "https://pyga.me/")
+    (synopsis "Python Game Development")
+    (description "Pygame-CE is a fork of the upstream pygame project by its
+former core developers.  It aims to offer more frequent releases, continuous
+bugfixes and enhancements, and a new governance model.")
+    (license license:lgpl2.1+)))
 
 (define-public python-renpy
   (package
