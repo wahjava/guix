@@ -573,7 +573,8 @@ Python 3.3 and later, rather than on Python 2.")
            gettext-minimal
            perl))
     (inputs
-     (list coreutils-minimal
+     (list bash-minimal
+           coreutils-minimal
            curl                         ;for HTTP(S) access
            expat                        ;for 'git push' over HTTP(S)
            openssl
