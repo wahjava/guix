@@ -31,6 +31,7 @@
 ;; Copyright © 2025 Jelle Licht <jlicht@fsfe.org>
 ;; Copyright © 2025 Rivulet Cedar <rivulet_cedar@yeah.net>
 ;; Copyright © 2025 jgart <jgart@dismail.de>
+;; Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 
 ;;
 ;; Copying and distribution of this file, with or without modification, are
@@ -39,6 +40,22 @@
 
 (channel-news
  (version 0)
+
+ (entry (commit "f0d95cf773bc5d014f4791617b9109557a285713")
+        (title
+         (en "@code{home-dotfiles-configuration-excluded} also exclude directories")
+         (de "@code{home-dotfiles-configuration-excluded} wird auch Verzeichnisse ausschließen")
+         (fr "@code{home-dotfiles-configuration-excluded} exclut aussi les dossiers"))
+        (body
+         (en "All files, including directories, matching a pattern in
+@code{home-dotfiles-configuration-excluded} are now excluded.  Making it behave
+like @code{stow}'s @code{--ignore}.")
+         (de "Alle Dateien, auch Verzeichnisse, die auf ein Muster in
+@code{home-dotfiles-configuration-excluded} passen, werden jetzt ausgeschlossen.
+Dadurch verhält es sich wie @code{--ignore} bei @code{stow}.")
+         (fr "Tous les fichiers, y compris les dossiers, correspondant à un
+motif présent dans @code{home-dotfiles-configuration-excluded} sont exclus.
+Rendant son comportement similaire au @code{--ignore} de @code{stow}.")))
 
  (entry (commit "4aff8591836e3b4125dcbed651efc8607de53280")
         (title
