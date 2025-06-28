@@ -3879,3 +3879,48 @@ compose file, or existing object.")
     (description
      "This package provides a command-line tool for flashing Espressif devices.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rabbitmqadmin
+  (package
+    (name "rabbitmqadmin")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rabbitmq/rabbitmqadmin-ng")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17x28ph4bgdkv66jv4b2nqwixbmi3j2ld4m842jqp808f0nwj7r7"))))
+    (build-system cargo-build-system)
+    ;; Tests require local instance of RabbitMQ broker.
+    (arguments
+     (list
+      #:tests? #f))
+    (inputs (cons* mimalloc openssl
+                   (cargo-inputs 'rabbitmqadmin)))
+    (home-page "https://www.rabbitmq.com/docs/management-cli")
+    (synopsis "Manage RabbitMQ broker via management plugin")
+    (description
+      "@{command{rabbitmqadmin} is a tool to manage RabbitMQ broker via
+management plugin.
+
+It supports many of the operations available in the management UI
+
+@itemize
+@item listing objects like virtual hosts, users, queues, streams, permissions,
+policies, and so on
+@item creating objects
+@item deleting objects
+@item access to cluster and node metrics
+@item run health checks
+@item listing feature flag state
+@item listing deprecated features in use across the cluster
+@item definition export, transformations, and import
+@item operations on shovels
+@item operations on federation upstreams and links
+@item closing connections
+@item rebalancing of queue leaders across cluster nodes
+@end itemize")
+    (license (list license:asl2.0 license:expat))))
