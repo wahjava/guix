@@ -131,6 +131,7 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages game-development)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -3307,7 +3308,7 @@ MIDI files, based on libsmf.")
 (define-public frescobaldi
   (package
     (name "frescobaldi")
-    (version "3.3.0")
+    (version "4.0.3")
     (source
      (origin
        (method url-fetch)
@@ -3315,36 +3316,35 @@ MIDI files, based on libsmf.")
              "https://github.com/frescobaldi/frescobaldi/releases/download/v"
              version "/frescobaldi-" version ".tar.gz"))
        (sha256
-        (base32 "1n60gfnf6x0l1bac088g9adzx0lskbl9knd4y1ynr3y0zcs0kfcz"))))
-    (build-system python-build-system)
+        (base32 "0xh06nsa0zrgcmdjg1l9kiw2ndi7wkgvl6gd8rwrpbaag7l9irag"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f ;no tests included
-      #:phases #~(modify-phases %standard-phases
-                   (add-before 'build 'generate-translations
-                     (lambda _
-                       (invoke "make" "-C" "i18n")))
-                   (add-before 'build 'generate-metadata
-                     (lambda _
-                       (invoke "make" "-C" "linux")))
-                   (add-after 'install 'wrap-executable
-                     (lambda _
-                       ;; Ensure that icons are found at runtime.
-                       (wrap-program (string-append #$output
-                                                    "/bin/frescobaldi")
-                         `("QT_PLUGIN_PATH" prefix
-                           ,(list (getenv "QT_PLUGIN_PATH")))))))))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'wrap 'wrap-executable
+            (lambda _
+              (wrap-program (string-append #$output "/bin/frescobaldi")
+                `("QT_PLUGIN_PATH" prefix
+                  ,(list (string-append
+                          (string-join
+                           (list #$(this-package-input "qtbase")
+                                 #$(this-package-input "qtsvg")
+                                 #$(this-package-input "qtwayland"))
+                           "/lib/qt6/plugins:")
+                          "/lib/qt6/plugins")))))))))
+    (native-inputs (list python-hatchling))
     (inputs (list bash-minimal
-                  lilypond
-                  poppler
-                  portmidi-2
                   python-ly
-                  python-poppler-qt5
-                  python-pyportmidi
-                  python-pyqt
+                  python-pygame-ce
+                  python-pyqt-6
+                  python-pyqtwebengine-6
                   python-sip
                   qpageview
-                  qtsvg-5))
+                  qtbase
+                  qtsvg
+                  qtwayland))
     (home-page "https://www.frescobaldi.org/")
     (synopsis "LilyPond sheet music text editor")
     (description
