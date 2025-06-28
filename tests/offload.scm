@@ -31,18 +31,8 @@
 (expose-internal-definitions machine-matches?
                              build-requirements-system
                              build-requirements-features
-                             build-machine-system
                              build-machine-systems
-                             %build-machine-system
-                             %build-machine-systems
                              build-machine-features)
-
-(define (deprecated-build-machine system)
-  (build-machine
-   (name "m1")
-   (user "dummy")
-   (host-key "some-key")
-   (system system)))
 
 (define (new-build-machine systems)
   (build-machine
@@ -50,12 +40,6 @@
    (user "dummy")
    (host-key "some-key")
    (systems systems)))
-
-;;; Test that deprecated build-machine definitions still work.
-(test-assert (machine-matches? (deprecated-build-machine "i686-linux")
-                               (build-requirements
-                                (system "i686-linux"))))
-
 
 (test-assert (machine-matches? (new-build-machine '("i686-linux"))
                                (build-requirements

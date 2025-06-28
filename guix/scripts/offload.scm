@@ -97,10 +97,9 @@
   (name            build-machine-name)            ; string
   (port            build-machine-port             ; number
                    (default 22))
-  (systems         %build-machine-systems         ; list of strings
-                   (default #f))                  ; drop default after system is removed
-  (system          %build-machine-system          ; deprecated
-                   (default #f))
+  (systems         build-machine-systems          ; list of strings
+                   (default #f) ; TODO drop it on next revision
+                   (sanitize warn-empty-build-machine-systems))
   (user            build-machine-user)            ; string
   (private-key     build-machine-private-key      ; file name
                    (default (user-openssh-private-key)))
@@ -126,20 +125,14 @@
                                    source-properties->location))
                    (innate)))
 
-;;; Deprecated.
-(define (build-machine-system machine)
-  (warning
-    (build-machine-location machine)
-    (G_ "The 'system' field is deprecated, \
-please use 'systems' instead.~%"))
-  (%build-machine-system machine))
-
-;;; TODO: Remove after the deprecated 'system' field is removed.
-(define (build-machine-systems machine)
-  (or (%build-machine-systems machine)
-      (list (build-machine-system machine))
-      (leave (G_ "The build-machine object lacks a value for its 'systems'
-field."))))
+;;; TODO: Remove it with build-machine-systems default.
+(define-with-syntax-properties (warn-empty-build-machine-systems
+                                (value properties))
+  (unless value
+    (leave (source-properties->location properties)
+           (G_ "The build-machine object lacks a value for its 'systems'
+field.")))
+  value)
 
 (define-record-type* <build-requirements>
   build-requirements make-build-requirements
