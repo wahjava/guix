@@ -3,6 +3,7 @@
 ;;; Copyright © 2017 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -65,9 +66,11 @@
             build-machine-private-key
             build-machine-host-key
             build-machine-compression
+            build-machine-compression-level
             build-machine-daemon-socket
             build-machine-overload-threshold
-            build-machine-systems
+            build-machine-parallel-builds
+            build-machine-speed
             build-machine-features
             build-machine-location
 
