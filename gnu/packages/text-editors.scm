@@ -444,6 +444,7 @@ based command language.")
                                "\";\n        " line)))))
          (delete 'configure))))            ; no configure script
     (native-inputs (list pkg-config))
+    (inputs (list perl))
     (synopsis "Vim-inspired code editor")
     (description
      "Kakoune is a code editor heavily inspired by Vim, as such most of its
