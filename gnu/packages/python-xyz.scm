@@ -17264,23 +17264,24 @@ from an XML-based format.")
 (define-public python-ly
   (package
     (name "python-ly")
-    (version "0.9.5")
+    (version "0.9.9")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri name version))
+       (uri (pypi-uri "python_ly" version))
        (sha256
         (base32
-         "0x98dv7p8mg26p4816yy8hz4f34zf6hpnnfmr56msgh9jnsm2qfl"))))
-    (build-system python-build-system)
+         "0yjn4vp3c2kg2b8w5y0pfpm0cq94axybfb34yb0yyrykagz805yg"))))
+    (build-system pyproject-build-system)
     (arguments
      ;; FIXME: Some tests need network access.
      '(#:tests? #f))
+    (native-inputs (list python-hatchling))
     (synopsis "Tool and library for manipulating LilyPond files")
     (description "This package provides a Python library to parse, manipulate
 or create documents in LilyPond format.  A command line program ly is also
 provided that can be used to do various manipulations with LilyPond files.")
-    (home-page "https://pypi.org/project/python-ly/")
+    (home-page "https://github.com/frescobaldi/python-ly")
     (license license:gpl2+)))
 
 (define-public python-appdirs
