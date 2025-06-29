@@ -17,7 +17,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (tests offload)
-  #:use-module (guix scripts offload)
+  #:use-module (guix offload)
   #:use-module (srfi srfi-64))
 
 
@@ -25,8 +25,8 @@
 
 (define-syntax-rule (expose-internal-definitions s1 s2 ...)
   (begin
-    (define s1 (@@ (guix scripts offload) s1))
-    (define s2 (@@ (guix scripts offload) s2)) ...))
+    (define s1 (@@ (guix offload) s1))
+    (define s2 (@@ (guix offload) s2)) ...))
 
 (expose-internal-definitions machine-matches?
                              build-requirements-system

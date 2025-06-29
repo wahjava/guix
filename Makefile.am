@@ -414,6 +414,7 @@ endif HAVE_GUILE_AVAHI
 if BUILD_DAEMON_OFFLOAD
 
 MODULES +=					\
+  guix/offload.scm				\
   guix/scripts/offload.scm
 
 endif BUILD_DAEMON_OFFLOAD
@@ -798,6 +799,7 @@ EXTRA_DIST +=						\
 if !BUILD_DAEMON_OFFLOAD
 
 EXTRA_DIST +=					\
+  guix/offload.scm				\
   guix/scripts/offload.scm
 
 endif !BUILD_DAEMON_OFFLOAD
