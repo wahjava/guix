@@ -45,6 +45,36 @@
 ;;;
 ;;; Code:
 
+(define (show-help)
+  (display (G_ "Usage: guix offload [COMMAND] [OPTIONS...]
+Inspect remote build machines for offloading package builds.~%"))
+  (display (G_ "
+COMMAND must be one of the sub-commands listed below:
+
+  test [FILE [REGEXP]]     test availability and set up of build machines
+  status [FILE [REGEXP]]   display the load and availability of build machines~%"))
+  (display (G_ "
+
+The build machines are read from '~a' by default, or from FILE when specified.
+When REGEXP is provided, only machines whose names match REGEXP are considered.\n")
+           %machine-file)
+  (display (G_ "
+
+When invoked without a sub-command, 'guix offload' processes build offload
+requests written on standard input. This mode is meant to be used internally
+by 'guix-daemon' as a build hook:
+guix offload SYSTEM MAX-SILENT-TIME PRINT-BUILD-TRACE? BUILD-TIMEOUT~%"))
+  (display (G_ "
+  -h, --help             display this help and exit"))
+  (display (G_ "
+  -V, --version          display version information and exit"))
+  (newline)
+  (display (G_ "
+The machine configuration file should evaluate to a list of <build-machine>
+records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
+  (newline)
+  (show-bug-report-information))
+
 
 ;;;
 ;;; Entry point.
@@ -120,15 +150,8 @@
     (("--version")
      (show-version-and-exit "guix offload"))
     (("--help")
-     (leave-on-EPIPE
-      (format #t (G_ "Usage: guix offload SYSTEM MAX-SILENT-TIME \
-PRINT-BUILD-TRACE? BUILD-TIMEOUT
-Process build offload requests written on the standard input, possibly
-offloading builds to the machines listed in '~a'.~%")
-              %machine-file))
-     (display (G_ "
-This tool is meant to be used internally by 'guix-daemon'.\n"))
-     (show-bug-report-information))
+     (show-help)
+     (exit 0))
     (x
      (leave (G_ "invalid arguments: ~{~s ~}~%") x))))
 
