@@ -27,43 +27,6 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages))
 
-(define-public sbcl-rpcq
-  (package
-    (name "sbcl-rpcq")
-    (version "3.10.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/rigetti/rpcq")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "cl-rpcq" version))
-       (sha256
-        (base32 "1bvppxlacvp0pfdbpn7ls1zxd127jacl225ds7lph5s8f8cyvf17"))))
-    (build-system asdf-build-system/sbcl)
-    (native-inputs (list sbcl-fiasco))
-    (inputs
-     (list sbcl-alexandria
-           sbcl-bordeaux-threads
-           sbcl-cl-messagepack
-           sbcl-cl-ppcre
-           sbcl-cl-syslog
-           sbcl-flexi-streams
-           sbcl-local-time
-           sbcl-parse-float
-           sbcl-pzmq
-           sbcl-trivial-backtrace
-           sbcl-uuid
-           sbcl-yason))
-    (synopsis "RPC framework for Rigetti Quantum Cloud Services")
-    (description
-     "This package provides the asynchronous RPC client-server framework and
-message specification for Rigetti Quantum Cloud Services (QCS).  It implements
-an efficient transport protocol by using ZeroMQ (ZMQ) sockets and MessagePack
-(msgpack) serialization.")
-    (home-page "https://github.com/rigetti/rpcq")
-    (license license:asl2.0)))
-
 (define-public cl-rpcq
   (sbcl-package->cl-source-package sbcl-rpcq))
 
