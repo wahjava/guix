@@ -14716,6 +14716,34 @@ and bash completion for the go command line.")
      "This package provides a wrapper round runit service status.")
     (license license:expat)))
 
+(define-public go-github-com-psanford-uhid
+  (let ((commit "a7c1e481958d6d8861a35d61a3f0734b94848283")
+        (revision "0"))
+  (package
+    (name "go-github-com-psanford-uhid")
+    (version (git-version "0.0.0" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/psanford/uhid")
+              (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jybcj69nrjzlmamk21hl8avmv3lp0ph7kkqnxail52ynlzfn4wv"))))
+    (build-system go-build-system)
+    (native-inputs
+     (list go-github-com-pkg-term))
+    (arguments
+     (list #:skip-build? #t
+           #:import-path "github.com/psanford/uhid"))
+    (home-page "https://github.com/psanford/uhid")
+    (synopsis "Linux uhid api in Go")
+    (description "This package provides a Go library for creating user space
+HID devices on Linux.  It is a fork of the uhid implementation from the
+Chromium OS @code{tast-tests} repository.")
+    (license license:bsd-3))))
+
 (define-public go-github-com-pterm-pterm
   (package
     (name "go-github-com-pterm-pterm")
