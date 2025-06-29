@@ -328,10 +328,10 @@ is deprecated; use '-D'~%"))
              (ensure-free-space store free-space))
             (min-freed
              (let-values (((paths freed) (collect-garbage store min-freed)))
-              (info (G_ "freed ~,2h MiBs~%") (/ freed 1024. 1024.))))
+              (info (G_ "freed ~a~%") (number->size freed))))
             (else
              (let-values (((paths freed) (collect-garbage store)))
-              (info (G_ "freed ~,2h MiBs~%") (/ freed 1024. 1024.)))))))
+              (info (G_ "freed ~a~%") (number->size freed)))))))
         ((list-roots)
          (assert-no-extra-arguments)
          (list-roots))
