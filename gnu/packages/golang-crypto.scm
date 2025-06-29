@@ -1261,6 +1261,21 @@ intended to (eventually) be 1:1 with the TPM 2.0 spec
 @end itemize")
     (license license:asl2.0)))
 
+(define-public go-github-com-google-go-tpm-0.3
+  (package
+    (inherit go-github-com-google-go-tpm)
+    (name "go-github-com-google-go-tpm")
+    (version "0.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/go-tpm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y9w9xkvm1lqda7y56dgclmadywp3q9d12p5pd62l9l18g6kbl5b"))))))
+
 (define-public go-github-com-gsterjov-go-libsecret
   (package
     (name "go-github-com-gsterjov-go-libsecret")
