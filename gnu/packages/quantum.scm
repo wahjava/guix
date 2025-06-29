@@ -27,9 +27,6 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages))
 
-(define-public cl-rpcq
-  (sbcl-package->cl-source-package sbcl-rpcq))
-
 (define-public sbcl-cl-quil
   (package
     (name "sbcl-cl-quil")
