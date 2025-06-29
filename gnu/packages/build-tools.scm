@@ -18,6 +18,7 @@
 ;;; Copyright © 2024 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Aiden Isik <aidenisik+git@member.fsf.org>
+;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -67,6 +68,7 @@
   #:use-module (gnu packages logging)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages ninja)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages package-management)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
@@ -79,6 +81,7 @@
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages sqlite)
@@ -1174,3 +1177,33 @@ maintaining, updating, and regenerating programs.  It is inspired by
 the POSIX make utility and allows writing a build script in Guile
 Scheme.")
       (license license:expat))))
+
+(define-public xmake
+  (package
+    (name "xmake")
+    (version "3.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append
+         "https://github.com/xmake-io/xmake/releases/download/v"
+         version "/xmake-v" version ".tar.gz"))
+       (sha256
+        (base32
+         "0a7b227mjlm2fkhwdqqwz429lz21lri8kdvk7dp8xf510alw4jg7"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f))                ; no test
+    ;; TODO: Unbundle lua, lua-cjson, lz4, libsv, xxhash, tbox.
+    ;; Xmake's build script try to detect these depedencies, but doesn't
+    ;; attempt to link with them.
+    (inputs (list readline ncurses))
+    (native-inputs (list pkg-config))
+    (home-page "https://xmake.io/")
+    (synopsis "Cross-platform build utility based on Lua")
+    (description "Xmake is a cross-platform build utility based on the Lua.
+It can be used to directly build source code (like with Make or Ninja),
+or it can generate project source files like CMake or Meson.  It also has a
+built-in package management system to help users integrate C/C++ dependencies.")
+    (license license:asl2.0)))
