@@ -78,8 +78,8 @@
 
             %machine-file
             process-build-request
-            check-machines-availability-from-file
-            check-machine-status))
+            check-machines-availability-from-file*
+            check-machine-status*))
 
 ;;; Commentary:
 ;;;
@@ -793,6 +793,25 @@ machine."
 
                 (disconnect! session))
               machines)))
+
+(define (extend procedure)
+  "Extend procedures taking a machine-file and a predicate to instead take
+optionally a machine-file and a regexp."
+  (lambda* (#:optional (machine-file #f) (regexp #f))
+    (let ((machine-file (or machine-file %machine-file))
+          (pred (if regexp
+                    (compose (cut string-match regexp <>) build-machine-name)
+                    (const #t))))
+      (procedure machine-file pred))))
+
+;; Check that each machine that name matches REGEXP in MACHINE-FILE is usable
+;; as a build machine.
+(define check-machines-availability-from-file*
+  (extend check-machines-availability-from-file))
+
+;; Print the load of each machine that name matches REGEXP in MACHINE-FILE.
+(define check-machine-status*
+  (extend check-machine-status))
 
 ;;; Local Variables:
 ;;; eval: (put 'with-timeout 'scheme-indent-function 2)

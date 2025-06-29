@@ -170,20 +170,12 @@ records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
   (match (assoc-ref opts 'action)
     ('test
       (with-error-handling
-        (let ((regexp (assoc-ref opts 'regexp)))
-          (check-machines-availability-from-file
-           (or (assoc-ref opts 'file) %machine-file)
-           (if regexp
-               (compose (cut string-match regexp <>) build-machine-name)
-               (const #t))))))
+        (check-machines-availability-from-file* (assoc-ref opts 'file)
+                                                (assoc-ref opts 'regexp))))
     ('status
       (with-error-handling
-        (let ((regexp (assoc-ref opts 'regexp)))
-          (check-machine-status
-           (or (assoc-ref opts 'file) %machine-file)
-           (if regexp
-               (compose (cut string-match regexp <>) build-machine-name)
-               (const #t))))))
+        (check-machine-status* (assoc-ref opts 'file)
+                               (assoc-ref opts 'regexp))))
     ((system max-silent-time print-build-trace? build-timeout)
      (let ((process-line (make-build-request-processor system
                                                        max-silent-time
