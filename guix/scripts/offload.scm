@@ -92,6 +92,30 @@
         ;; default: SYSTEM MAX-SILENT-TIME PRINT-BUILD-TRACE? BUILD-TIMEOUT
         (reverse result))))
 
+(define (make-build-request-processor system
+                                      max-silent-time
+                                      print-build-trace?
+                                      build-timeout)
+  "Returns a function that processes a line with process-build-request with
+settings SYSTEM, MAX-SILENT-TIME, PRINT-BUILD-TRACE? and BUILD-TIMEOUT."
+  (let ((not-coma (char-set-complement (char-set #\,)))
+        (max-silent-time    (string->number max-silent-time))
+        (build-timeout      (string->number build-timeout))
+        (print-build-trace? (string=? print-build-trace? "1")))
+    (set-thread-name "guix offload")
+    (parameterize ((%current-system system))
+      (lambda (match)
+        (with-error-handling
+          (process-build-request
+           (equal? (match:substring match 1) "1")
+           (match:substring match 2) ; system
+           (match:substring match 3)
+           (string-tokenize
+            (match:substring match 4) not-coma)
+           #:print-build-trace? print-build-trace?
+           #:max-silent-time max-silent-time
+           #:build-timeout build-timeout))))))
+
 (define (show-help)
   (display (G_ "Usage: guix offload [COMMAND] [OPTIONS...]
 Inspect remote build machines for offloading package builds.~%"))
@@ -135,9 +159,6 @@ records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
     ;; The request format.  See 'tryBuildHook' method in build.cc.
     (make-regexp "([01]) ([a-z0-9_-]+) (/[[:graph:]]+.drv) ([[:graph:]]*)"))
 
-  (define not-coma
-    (char-set-complement (char-set #\,)))
-
   ;; Make sure $HOME really corresponds to the current user.  This is
   ;; necessary since lsh uses that to determine the location of the yarrow
   ;; seed file, and fails if it's owned by someone else.
@@ -164,29 +185,17 @@ records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
                (compose (cut string-match regexp <>) build-machine-name)
                (const #t))))))
     ((system max-silent-time print-build-trace? build-timeout)
-     (let ((max-silent-time    (string->number max-silent-time))
-           (build-timeout      (string->number build-timeout))
-           (print-build-trace? (string=? print-build-trace? "1")))
-       (set-thread-name "guix offload")
-       (parameterize ((%current-system system))
-         (let loop ((line (read-line)))
-           (unless (eof-object? line)
-             (cond ((regexp-exec request-line-rx line)
-                    =>
-                    (lambda (match)
-                      (with-error-handling
-                        (process-build-request
-                         (equal? (match:substring match 1) "1")
-                         (match:substring match 2) ; system
-                         (match:substring match 3)
-                         (string-tokenize
-                          (match:substring match 4) not-coma)
-                         #:print-build-trace? print-build-trace?
-                         #:max-silent-time max-silent-time
-                         #:build-timeout build-timeout))))
-                   (else
-                    (leave (G_ "invalid request line: ~s~%") line)))
-             (loop (read-line)))))))
+     (let ((process-line (make-build-request-processor system
+                                                       max-silent-time
+                                                       print-build-trace?
+                                                       build-timeout)))
+       (let loop ((line (read-line)))
+         (unless (eof-object? line)
+           (cond ((regexp-exec request-line-rx line)
+                  => process-line)
+                 (else
+                  (leave (G_ "invalid request line: ~s~%") line)))
+           (loop (read-line))))))
     (x
      (leave (G_ "invalid parsed arguments: ~{~s ~}~%") x))))
 
