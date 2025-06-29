@@ -582,10 +582,10 @@ If TIMEOUT is #f, simply evaluate EXP..."
     (warning (G_ "data transfers will *not* be compressed!")))
   (set! check-ssh-zlib-support (const #t)))
 
-(define* (process-request wants-local? system drv features
-                          #:key
-                          print-build-trace? (max-silent-time 3600)
-                          build-timeout)
+(define* (process-build-request wants-local? system drv features
+                                #:key
+                                print-build-trace? (max-silent-time 3600)
+                                build-timeout)
   "Process a request to build DRV."
   (let* ((local?     (and wants-local? (string=? system (%current-system))))
          (reqs       (build-requirements
@@ -827,14 +827,15 @@ machine."
                     =>
                     (lambda (match)
                       (with-error-handling
-                       (process-request (equal? (match:substring match 1) "1")
-                                        (match:substring match 2) ; system
-                                        (match:substring match 3)
-                                        (string-tokenize
-                                         (match:substring match 4) not-coma)
-                                        #:print-build-trace? print-build-trace?
-                                        #:max-silent-time max-silent-time
-                                        #:build-timeout build-timeout))))
+                        (process-build-request
+                         (equal? (match:substring match 1) "1")
+                         (match:substring match 2) ; system
+                         (match:substring match 3)
+                         (string-tokenize
+                          (match:substring match 4) not-coma)
+                         #:print-build-trace? print-build-trace?
+                         #:max-silent-time max-silent-time
+                         #:build-timeout build-timeout))))
                    (else
                     (leave (G_ "invalid request line: ~s~%") line)))
              (loop (read-line)))))))
