@@ -51,6 +51,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system go)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
@@ -67,6 +68,10 @@
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
@@ -1134,3 +1139,34 @@ It also has limited support for Mifare Classic compatible cards (Thalys card)")
 contactless (RFID) and contact USB chipcard readers.")
     (home-page "http://www.reiner-sct.com/")
     (license license:lgpl2.1+)))
+
+(define-public tpm-fido
+  (let ((commit "5f8828b82b58f9badeed65718fca72bc31358c5c")
+        (revision "0"))
+    (package
+      (name "tpm-fido")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/psanford/tpm-fido")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "17p76rryh2zfg5v2rx426l8asqkalk5kll3x1wf1nw0zh03zkyk1"))))
+      (build-system go-build-system)
+      (arguments
+       (list #:import-path "github.com/psanford/tpm-fido"))
+      (propagated-inputs
+       (list go-github-com-foxcpp-go-assuan
+             go-github-com-google-go-tpm-0.3
+             go-github-com-psanford-uhid
+             go-golang-org-x-crypto))
+      (home-page "https://github.com/psanford/tpm-fido")
+      (synopsis "WebAuthn/U2F token protected by a TPM")
+      (description "This package provides a FIDO token implementation that
+protects the token keys by using your system's TPM.  It uses Linux's
+@code{uhid} facility to emulate a USB HID device so that it is properly
+ detected by web browsers.")
+      (license license:expat))))
