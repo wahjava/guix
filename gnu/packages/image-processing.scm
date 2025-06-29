@@ -746,7 +746,7 @@ the OpenCV-Python library.")
 (define-public vips
   (package
     (name "vips")
-    (version "8.16.1")
+    (version "8.17.0")
     (source
      (origin
        (method git-fetch)
@@ -755,7 +755,7 @@ the OpenCV-Python library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qy3vsh8mrkdbmdyfandydfp0miqqqiisqfagp1mnwd5xvwyqwm2"))))
+        (base32 "1rdz2mmivr02s7cksqgbramv37yw95w6s8r20hgjqx36in2ndnbl"))))
     (build-system meson-build-system)
     (native-inputs
      (list `(,glib "bin")
