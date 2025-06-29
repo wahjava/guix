@@ -33,7 +33,7 @@
 	    binding
 	    bindings
 	    monitor
-            env
+      env
 	    submap
 	    home-hyprland-service-type))
 
@@ -380,6 +380,7 @@
                "Extra environment variables")
   (exec (list-of-executables '()) "Commands to be executed with hyprland")
   (bindings (list-of-bindings '()) "Extra binds")
+  (windowrule (list-of-strings '()) "Extra Window rules (v2)")
   (no-serialization))
 
 ;;;
@@ -658,13 +659,14 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                      (hyprland-extension
                       (exec-once
                        (flatten (map hyprland-extension-exec-once extensions)))
-                      (exec (flatten (map hyprland-extension-exec
-                                          extensions)))
+                      (exec 
+                       (flatten (map hyprland-extension-exec extensions)))
                       (environment
-                       (flatten (map hyprland-extension-environment
-                                     extensions)))
-                      (bindings (flatten (map hyprland-extension-bindings
-                                              extensions)))))))
+                       (flatten (map hyprland-extension-environment extensions)))
+                      (bindings 
+                       (flatten (map hyprland-extension-bindings extensions)))
+                      (windowrule
+                       (flatten (map hyprland-extension-windowrule extensions)))))))
                 (extend
                  (λ (config rules)
                    (hyprland-configuration
@@ -694,7 +696,12 @@ Guix service may be out of sync. Please file a bug via bug-guix@gnu.org.")))))))
                                         (hyprland-configuration-bindings
                                          config))
                                        (hyprland-extension-bindings
-                                        rules))))))))
+                                        rules)))))
+                    (windowrule 
+                     (append (hyprland-configuration-windowrule
+                              config)
+                             (hyprland-extension-windowrule
+                              rules))))))
                 (extensions
                  (list (service-extension
                         home-activation-service-type
