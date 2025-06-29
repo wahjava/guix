@@ -25,8 +25,9 @@
   #:use-module (guix ui)
   #:use-module (guix scripts)
   #:use-module (guix diagnostics)
-  #:use-module (srfi srfi-11)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-37)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
@@ -44,6 +45,52 @@
 ;;; inhibited build hooks.
 ;;;
 ;;; Code:
+
+(define %options
+  ;; Specifications of the command-line options.
+  (list (option '(#\h "help") #f #f
+                (lambda args
+                  (show-help)
+                  (exit 0)))
+        (option '(#\V "version") #f #f
+                (lambda args
+                  (show-version-and-exit "guix offload")))))
+
+(define %default-options
+  ;; Alist of default option values.
+  '())
+
+(define (parse-args args)
+
+  (define actions '("status" "test"))
+
+  (define (parse-file+regexp arg result)
+    (cond ((assoc-ref result 'regexp)
+           (leave (G_ "~A: extraneous argument~%") arg))
+          ((assoc-ref result 'file)
+           (alist-cons 'regexp arg result))
+          (else
+           (alist-cons 'file arg result))))
+
+  (define (handle-argument arg result)
+    (cond ((member arg actions)
+           (alist-cons 'action (string->symbol arg) result))
+          ((member (assoc-ref result 'action) '(status test))
+           (parse-file+regexp arg result))
+          ((> (length result) 3)
+           (leave (G_ "~A: extraneous argument~%") arg))
+          (else
+           (cons arg result))))
+
+  (let ((result (parse-command-line args
+                                    %options
+                                    (list %default-options)
+                                    #:argument-handler handle-argument)))
+    (if (assoc-ref result 'action)
+        ;; action alist
+        result
+        ;; default: SYSTEM MAX-SILENT-TIME PRINT-BUILD-TRACE? BUILD-TIMEOUT
+        (reverse result))))
 
 (define (show-help)
   (display (G_ "Usage: guix offload [COMMAND] [OPTIONS...]
@@ -97,7 +144,25 @@ records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
   (and=> (passwd:dir (getpw (getuid)))
          (cut setenv "HOME" <>))
 
-  (match args
+  (define opts (parse-args args))
+
+  (match (assoc-ref opts 'action)
+    ('test
+      (with-error-handling
+        (let ((regexp (assoc-ref opts 'regexp)))
+          (check-machines-availability-from-file
+           (or (assoc-ref opts 'file) %machine-file)
+           (if regexp
+               (compose (cut string-match regexp <>) build-machine-name)
+               (const #t))))))
+    ('status
+      (with-error-handling
+        (let ((regexp (assoc-ref opts 'regexp)))
+          (check-machine-status
+           (or (assoc-ref opts 'file) %machine-file)
+           (if regexp
+               (compose (cut string-match regexp <>) build-machine-name)
+               (const #t))))))
     ((system max-silent-time print-build-trace? build-timeout)
      (let ((max-silent-time    (string->number max-silent-time))
            (build-timeout      (string->number build-timeout))
@@ -122,38 +187,8 @@ records.  See 'info \"(guix) Daemon Offload Setup\"' for details.\n"))
                    (else
                     (leave (G_ "invalid request line: ~s~%") line)))
              (loop (read-line)))))))
-    (("test" rest ...)
-     (with-error-handling
-       (let-values (((file pred)
-                     (match rest
-                       ((file regexp)
-                        (values file
-                                (compose (cut string-match regexp <>)
-                                         build-machine-name)))
-                       ((file) (values file (const #t)))
-                       (()     (values %machine-file (const #t)))
-                       (x      (leave (G_ "wrong number of arguments~%"))))))
-         (check-machines-availability-from-file (or file %machine-file)
-                                                pred))))
-    (("status" rest ...)
-     (with-error-handling
-       (let-values (((file pred)
-                     (match rest
-                       ((file regexp)
-                        (values file
-                                (compose (cut string-match regexp <>)
-                                         build-machine-name)))
-                       ((file) (values file (const #t)))
-                       (()     (values %machine-file (const #t)))
-                       (x      (leave (G_ "wrong number of arguments~%"))))))
-         (check-machine-status (or file %machine-file) pred))))
-    (("--version")
-     (show-version-and-exit "guix offload"))
-    (("--help")
-     (show-help)
-     (exit 0))
     (x
-     (leave (G_ "invalid arguments: ~{~s ~}~%") x))))
+     (leave (G_ "invalid parsed arguments: ~{~s ~}~%") x))))
 
 ;;; Local Variables:
 ;;; eval: (put 'with-timeout 'scheme-indent-function 2)
