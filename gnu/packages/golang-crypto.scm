@@ -1081,6 +1081,30 @@ support mutual and optional authentication, identity hiding, forward secrecy,
 zero round-trip encryption, and other advanced features.")
     (license license:bsd-3)))
 
+(define-public go-github-com-foxcpp-go-assuan
+  (package
+    (name "go-github-com-foxcpp-go-assuan")
+    (version "1.0.0")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/foxcpp/go-assuan")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0xp51yf2wb70zb8irj28gf7jzp380bwjycd8kkj45jrvm0gzll2c"))
+        (patches
+         (search-patches "go-assuan-1.0.0-fix-tests.patch"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:skip-build? #t
+           #:import-path "github.com/foxcpp/go-assuan"))
+    (home-page "https://github.com/foxcpp/go-assuan")
+    (synopsis "Pure Go implementation of Assuan IPC protocol")
+    (description "This package provides a pure Go implementation of the Assuan IPC protocol, which is used in the GnuPG suite for communication between components like gpg, gpg-agent, and pinentry.")
+    (license license:expat)))
+
 (define-public go-github-com-gaukas-godicttls
   (package
     (name "go-github-com-gaukas-godicttls")

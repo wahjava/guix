@@ -1,0 +1,19 @@
+Author: Danny Milosavljevic <dannym@friendly-machines.com>
+Date: 2025-06-29
+License: expat
+
+diff -ru orig/go-assuan/client/session_test.go go-assuan/client/session_test.go
+--- orig/go-assuan/client/session_test.go	2025-06-29 02:45:09.778595156 +0200
++++ go-assuan/client/session_test.go	2025-06-29 02:45:58.030814990 +0200
+@@ -19,8 +19,8 @@
+ 	// data []byte = "info:1:1%0Apub:2499BEB8B47B0235009A5F0AEE8384B0561A25AF:..."
+ 
+ 	// More complex transaction: send key to keyserver.
+-	ses.Transact("KS_PUT", "", map[string][]byte{
+-		"KEYBLOCK":      {},
+-		"KEYBLOCK_INFO": {},
++	ses.Transact("KS_PUT", "", map[string]interface{}{
++		"KEYBLOCK":      []byte{},
++		"KEYBLOCK_INFO": []byte{},
+ 	})
+ }
