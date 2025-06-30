@@ -1583,6 +1583,32 @@ performance concurrent systems developed in C99+.")
     (license (list license:bsd-2        ;everything except...
                    license:asl2.0))))   ;src/ck_hp.c
 
+(define-public tbox
+  (package
+    (name "tbox")
+    (version "1.7.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tboox/tbox")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1rr2hvz0fxa7zv2b9vqllai0fl5y9pwv980mrvvg60nd1lzdy8x6"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f))                ;no test
+    (home-page "https://docs.tboox.org/")
+    (synopsis "GLib-like multi-platform C library")
+    (description
+     "Tbox is a glib-like cross-platform C library, focus on
+making C development easier and provides many modules (e.g. stream, coroutine,
+ regex, container, algorithm ...).")
+    (license license:asl2.0)))
+
+
 (define-public tinydir
   (package
     (name "tinydir")
