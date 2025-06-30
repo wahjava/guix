@@ -311,6 +311,9 @@ UTF-8, including decoding the surrogate pairs.")
 (define-public lua-cjson
   (make-lua-cjson "lua-cjson" "5.3" lua))
 
+(define-public lua5.4-cjson
+  (make-lua-cjson "lua5.4-cjson" "5.4" lua-5.4))
+
 (define (make-lua-expat name lua)
   (package
     (name name)
