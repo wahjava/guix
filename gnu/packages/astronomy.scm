@@ -677,6 +677,70 @@ in FITS files.")
        (sha256
         (base32 "098x1l8ijwsjp2ivp3v7pamrmpgwj5xmgb4yppm9w3w044zxr8b6"))))))
 
+(define-public cianna
+  (let ((commit "76bbcc7330a2eb60fa2fbd093a6e356a7de16a70")
+        (revision "0"))
+    (package
+      (name "cianna")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Deyht/CIANNA")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1i8ik4ncnb8la29fv6z7a6qn93kzn3icyr8jpyxl5vvq3q2avnhf"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure) ; no configure
+            (delete 'check)     ; no tests
+            (add-after 'unpack 'fix-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let* ((blas #$(this-package-input "openblas")))
+                  (substitute* "compile.cp"
+                    (("/usr/bin/gcc")
+                     #$(cc-for-target))
+                    (("/opt/OpenBLAS/include/")
+                     (string-append blas "/include/"))
+                    (("/opt/OpenBLAS/lib")
+                     (string-append blas "/lib")))
+                  (substitute* "src/python_module_setup.py"
+                    (("/opt/OpenBLAS/include")
+                     (string-append blas "/include"))
+                    (("/opt/OpenBLAS/lib")
+                     (string-append blas "/lib"))))))
+            (replace 'build
+              (lambda* _
+                (invoke "./compile.cp" "BLAS" "OPEN_MP" "LPTHREAD" "PY_INTERF")))
+            (replace 'install
+              (lambda _
+                (rename-file "main" "cianna-cpu")
+                (install-file "cianna-cpu" (string-append #$output "/bin"))))
+            (add-after 'install 'install-python
+              (lambda _
+                (with-directory-excursion "src"
+                  (invoke "python" "python_module_setup.py" "install"
+                          "--root=/"
+                          (string-append "--prefix=" #$output))))))))
+      (native-inputs
+       (list python-wrapper
+             python-numpy
+             python-setuptools))
+      (inputs (list openblas))
+      (home-page "https://github.com/Deyht/CIANNA")
+      (synopsis "Deep learning framework for astronomical data analysis")
+      (description
+       "This package provides a @acronym{CIANNA, Convolutional Interactive
+Artificial Neural Networks by/for Astrophysicists} - a general-purpose deep
+learning framework primarily developed and used for astronomical data
+analysis.")
+      (license license:asl2.0))))
+
 (define-public erfa
   (package
     (name "erfa")
