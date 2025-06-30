@@ -1,0 +1,26 @@
+From d74591ac53d7c9130efed83f5074443c9bce78c4 Mon Sep 17 00:00:00 2001
+From: Mark Pulford <mark@kyne.com.au>
+Date: Tue, 12 Apr 2016 22:21:08 +1000
+Subject: [PATCH 2/3] Fix clang undefined-inline warning
+
+Fixes #28.
+---
+ fpconv.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fpconv.h b/fpconv.h
+index 0124908..7b0d0ee 100644
+--- a/fpconv.h
++++ b/fpconv.h
+@@ -12,7 +12,7 @@ static inline void fpconv_init()
+     /* Do nothing - not required */
+ }
+ #else
+-extern inline void fpconv_init();
++extern void fpconv_init();
+ #endif
+ 
+ extern int fpconv_g_fmt(char*, double, int);
+-- 
+2.49.0
+

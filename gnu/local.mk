@@ -1832,7 +1832,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/lua-liblua-so.patch                      \
   %D%/packages/patches/lua-5.4-pkgconfig.patch			\
   %D%/packages/patches/lua-5.4-liblua-so.patch			\
-  %D%/packages/patches/luanti-paths.patch			\
+  %D%/packages/patches/lua-cjson-build-with-g++.patch		\
+  %D%/packages/patches/lua-cjson-fix-clang-undefined-inline.patch	\
+  %D%/packages/patches/lua-cjson-guix-packaging.patch		\
+  %D%/packages/patches/lua-cjson-recover-function-name-in-error-msg.patch\
+  %D%/packages/patches/lua-cjson-work-around-missing-unpack.patch	\
   %D%/packages/patches/lugaru-fix-sound.patch			\
   %D%/packages/patches/luit-posix.patch				\
   %D%/packages/patches/lxc-no-static-bin.patch	\

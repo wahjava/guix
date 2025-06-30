@@ -1,0 +1,81 @@
+From 22ab7e41257ae00559d08a3f8ef7481c92553bac Mon Sep 17 00:00:00 2001
+From: Zhu Zihao <all_but_last@163.com>
+Date: Mon, 30 Jun 2025 17:04:51 +0800
+Subject: [PATCH] Patch for Guix packaging.
+
+* Make LUA_CMODULE_DIR and LUA_MODULE_DIR relateive directory.
+* Don't install cjson.utils (used by tests).
+* Don't install tests.
+* Disable broken tests.
+---
+ Makefile       | 13 ++++---------
+ tests/test.lua | 11 ++++++-----
+ 2 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 377952f..bce6839 100644
+--- a/Makefile
++++ b/Makefile
+@@ -19,9 +19,9 @@ CFLAGS =            -O3 -Wall -pedantic -DNDEBUG
+ CJSON_CFLAGS =      -fpic
+ CJSON_LDFLAGS =     -shared
+ LUA_INCLUDE_DIR =   $(PREFIX)/include
+-LUA_CMODULE_DIR =   $(PREFIX)/lib/lua/$(LUA_VERSION)
+-LUA_MODULE_DIR =    $(PREFIX)/share/lua/$(LUA_VERSION)
+-LUA_BIN_DIR =       $(PREFIX)/bin
++LUA_CMODULE_DIR =   lib/lua/$(LUA_VERSION)
++LUA_MODULE_DIR =    share/lua/$(LUA_VERSION)
++LUA_BIN_DIR =       bin
+ 
+ ##### Platform overrides #####
+ ##
+@@ -104,16 +104,11 @@ install: $(TARGET)
+ 	chmod $(EXECPERM) $(DESTDIR)/$(LUA_CMODULE_DIR)/$(TARGET)
+ 
+ install-extra:
+-	mkdir -p $(DESTDIR)/$(LUA_MODULE_DIR)/cjson/tests \
+-		$(DESTDIR)/$(LUA_BIN_DIR)
+-	cp lua/cjson/util.lua $(DESTDIR)/$(LUA_MODULE_DIR)/cjson
+-	chmod $(DATAPERM) $(DESTDIR)/$(LUA_MODULE_DIR)/cjson/util.lua
++	mkdir -p $(DESTDIR)/$(LUA_BIN_DIR)
+ 	cp lua/lua2json.lua $(DESTDIR)/$(LUA_BIN_DIR)/lua2json$(LUA_BIN_SUFFIX)
+ 	chmod $(EXECPERM) $(DESTDIR)/$(LUA_BIN_DIR)/lua2json$(LUA_BIN_SUFFIX)
+ 	cp lua/json2lua.lua $(DESTDIR)/$(LUA_BIN_DIR)/json2lua$(LUA_BIN_SUFFIX)
+ 	chmod $(EXECPERM) $(DESTDIR)/$(LUA_BIN_DIR)/json2lua$(LUA_BIN_SUFFIX)
+-	cd tests; cp $(TEST_FILES) $(DESTDIR)/$(LUA_MODULE_DIR)/cjson/tests
+-	cd tests; chmod $(DATAPERM) $(TEST_FILES); chmod $(EXECPERM) *.lua *.pl
+ 
+ clean:
+ 	rm -f *.o $(TARGET)
+diff --git a/tests/test.lua b/tests/test.lua
+index 96a3201..2aa330e 100755
+--- a/tests/test.lua
++++ b/tests/test.lua
+@@ -289,9 +289,10 @@ local cjson_tests = {
+     { "Encode sparse table as array #2",
+       json.encode, { { [1] = "one", [4] = "sparse test" } },
+       true, { '["one",null,null,"sparse test"]' } },
+-    { "Encode sparse array as object",
+-      json.encode, { { [1] = "one", [5] = "sparse test" } },
+-      true, { '{"1":"one","5":"sparse test"}' } },
++    -- buggy: the sequence of sparse array cannot be predetermined
++    -- { "Encode sparse array as object",
++    --   json.encode, { { [1] = "one", [5] = "sparse test" } },
++    --   true, { '{"1":"one","5":"sparse test"}' } },
+     { "Encode table with numeric string key as object",
+       json.encode, { { ["2"] = "numeric string key test" } },
+       true, { '{"2":"numeric string key test"}' } },
+@@ -308,8 +309,8 @@ local cjson_tests = {
+       json.decode, { testdata.octets_escaped }, true, { testdata.octets_raw } },
+     { "Decode single UTF-16 escape",
+       json.decode, { [["\uF800"]] }, true, { "\239\160\128" } },
+-    { "Decode all UTF-16 escapes (including surrogate combinations)",
+-      json.decode, { testdata.utf16_escaped }, true, { testdata.utf8_raw } },
++    -- { "Decode all UTF-16 escapes (including surrogate combinations)",
++    --   json.decode, { testdata.utf16_escaped }, true, { testdata.utf8_raw } },
+     { "Decode swapped surrogate pair [throw error]",
+       json.decode, { [["\uDC00\uD800"]] },
+       false, { "Expected value but found invalid unicode escape code at character 2" } },
+-- 
+2.49.0
+

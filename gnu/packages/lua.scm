@@ -24,6 +24,7 @@
 ;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
+;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -71,6 +72,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages rdf)
@@ -253,6 +255,61 @@ language.")
 considered a fork, since changes are regularly synchronized from the upstream
 LuaJIT project.  This package also enables the Lua 5.2 compat mode needed by
 some projects.")))
+
+(define (make-lua-cjson name lua-version lua)
+  (package
+    (name name)
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://kyne.au/~mark/software/download/lua-cjson-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0y67yqlsivbhshg8ma535llz90r4zag9xqza5jx0q7lkap6nkg2i"))
+       (patches
+        (search-patches "lua-cjson-guix-packaging.patch"
+                        "lua-cjson-work-around-missing-unpack.patch"
+                        "lua-cjson-fix-clang-undefined-inline.patch"
+                        "lua-cjson-build-with-g++.patch"
+                        "lua-cjson-recover-function-name-in-error-msg.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$(this-package-input "lua"))
+              (string-append "LUA_VERSION=" #$lua-version)
+              (string-append "DESTDIR=" #$output)
+              (string-append "CC=" #$(cc-for-target))
+              "CFLAGS=-DLUA_COMPAT_5_3")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; No configure script
+          (delete 'configure)
+          (add-after 'install 'install-extra
+            (lambda* (#:key make-flags #:allow-other-keys)
+              (apply invoke "make" "install-extra" make-flags)))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "LUA_PATH" (string-append (getcwd) "/lua/?.lua"))
+                (setenv "LUA_CPATH" (string-append (getcwd) "/?.so"))
+
+                (with-directory-excursion "tests"
+                  (invoke "perl" "genutf8.pl")
+                  (invoke "lua" "test.lua"))))))))
+    (inputs (list lua))
+    (native-inputs (list perl))
+    (home-page "https://kyne.au/~mark/software/lua-cjson.php")
+    (synopsis "JSON support for Lua")
+    (description
+     "Lua-cjson provides JSON support for Lua.  It provides fast,
+standard-compilant encoding/parsing routine, with full support for JSON with
+UTF-8, including decoding the surrogate pairs.")
+    (license license:expat)))
+
+(define-public lua-cjson
+  (make-lua-cjson "lua-cjson" "5.3" lua))
 
 (define (make-lua-expat name lua)
   (package

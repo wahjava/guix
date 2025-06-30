@@ -1,0 +1,127 @@
+From 7db489d89e5e8adfb6e81ae3c8c701e033ab3914 Mon Sep 17 00:00:00 2001
+From: Mark Pulford <mark@kyne.com.au>
+Date: Wed, 13 Apr 2016 19:12:18 +1000
+Subject: [PATCH 1/3] Fix build with g++
+
+- Add explicit casts for functions returning void*
+- Rename "try" variable to avoid reserved C++ keyword
+---
+ fpconv.c    |  2 +-
+ lua_cjson.c |  8 ++++----
+ strbuf.c    | 13 +++++++------
+ 3 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/fpconv.c b/fpconv.c
+index 7990831..3ecb8f7 100644
+--- a/fpconv.c
++++ b/fpconv.c
+@@ -124,7 +124,7 @@ double fpconv_strtod(const char *nptr, char **endptr)
+     /* Duplicate number into buffer */
+     if (buflen >= FPCONV_G_FMT_BUFSIZE) {
+         /* Handle unusually large numbers */
+-        buf = malloc(buflen + 1);
++        buf = (char *)malloc(buflen + 1);
+         if (!buf) {
+             fprintf(stderr, "Out of memory");
+             abort();
+diff --git a/lua_cjson.c b/lua_cjson.c
+index ca5b88d..d715fea 100644
+--- a/lua_cjson.c
++++ b/lua_cjson.c
+@@ -193,7 +193,7 @@ static json_config_t *json_fetch_config(lua_State *l)
+ {
+     json_config_t *cfg;
+ 
+-    cfg = lua_touserdata(l, lua_upvalueindex(1));
++    cfg = (json_config_t *)lua_touserdata(l, lua_upvalueindex(1));
+     if (!cfg)
+         luaL_error(l, "BUG: Unable to fetch CJSON configuration");
+ 
+@@ -360,7 +360,7 @@ static int json_destroy_config(lua_State *l)
+ {
+     json_config_t *cfg;
+ 
+-    cfg = lua_touserdata(l, 1);
++    cfg = (json_config_t *)lua_touserdata(l, 1);
+     if (cfg)
+         strbuf_free(&cfg->encode_buf);
+     cfg = NULL;
+@@ -373,7 +373,7 @@ static void json_create_config(lua_State *l)
+     json_config_t *cfg;
+     int i;
+ 
+-    cfg = lua_newuserdata(l, sizeof(*cfg));
++    cfg = (json_config_t *)lua_newuserdata(l, sizeof(*cfg));
+ 
+     /* Create GC method to clean up strbuf */
+     lua_newtable(l);
+@@ -461,9 +461,9 @@ static void json_encode_exception(lua_State *l, json_config_t *cfg, strbuf_t *js
+ static void json_append_string(lua_State *l, strbuf_t *json, int lindex)
+ {
+     const char *escstr;
+-    int i;
+     const char *str;
+     size_t len;
++    size_t i;
+ 
+     str = lua_tolstring(l, lindex, &len);
+ 
+diff --git a/strbuf.c b/strbuf.c
+index f0f7f4b..ac779e4 100644
+--- a/strbuf.c
++++ b/strbuf.c
+@@ -58,7 +58,7 @@ void strbuf_init(strbuf_t *s, int len)
+     s->reallocs = 0;
+     s->debug = 0;
+ 
+-    s->buf = malloc(size);
++    s->buf = (char *)malloc(size);
+     if (!s->buf)
+         die("Out of memory");
+ 
+@@ -69,7 +69,7 @@ strbuf_t *strbuf_new(int len)
+ {
+     strbuf_t *s;
+ 
+-    s = malloc(sizeof(strbuf_t));
++    s = (strbuf_t*)malloc(sizeof(strbuf_t));
+     if (!s)
+         die("Out of memory");
+ 
+@@ -173,7 +173,7 @@ void strbuf_resize(strbuf_t *s, int len)
+     }
+ 
+     s->size = newsize;
+-    s->buf = realloc(s->buf, s->size);
++    s->buf = (char *)realloc(s->buf, s->size);
+     if (!s->buf)
+         die("Out of memory");
+     s->reallocs++;
+@@ -221,12 +221,13 @@ void strbuf_append_fmt(strbuf_t *s, int len, const char *fmt, ...)
+ void strbuf_append_fmt_retry(strbuf_t *s, const char *fmt, ...)
+ {
+     va_list arg;
+-    int fmt_len, try;
++    int fmt_len;
+     int empty_len;
++    int t;
+ 
+     /* If the first attempt to append fails, resize the buffer appropriately
+      * and try again */
+-    for (try = 0; ; try++) {
++    for (t = 0; ; t++) {
+         va_start(arg, fmt);
+         /* Append the new formatted string */
+         /* fmt_len is the length of the string required, excluding the
+@@ -238,7 +239,7 @@ void strbuf_append_fmt_retry(strbuf_t *s, const char *fmt, ...)
+ 
+         if (fmt_len <= empty_len)
+             break;  /* SUCCESS */
+-        if (try > 0)
++        if (t > 0)
+             die("BUG: length of formatted string changed");
+ 
+         strbuf_resize(s, s->length + fmt_len);
+-- 
+2.49.0
+

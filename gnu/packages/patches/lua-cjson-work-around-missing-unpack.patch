@@ -1,0 +1,28 @@
+From ea2ee8bb55153d9d6a711ebd633a1cf65dfe2f1a Mon Sep 17 00:00:00 2001
+From: Mark Pulford <mark@kyne.com.au>
+Date: Thu, 25 Aug 2016 21:04:35 +1000
+Subject: [PATCH 3/3] Update cjson.util to workaround missing "unpack"
+
+---
+ lua/cjson/util.lua | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lua/cjson/util.lua b/lua/cjson/util.lua
+index 6916dad..5bb0d7d 100644
+--- a/lua/cjson/util.lua
++++ b/lua/cjson/util.lua
+@@ -10,6 +10,11 @@ local json = require "cjson"
+ -- -1   Not an array
+ -- 0    Empty table
+ -- >0   Highest index in the array
++
++-- Provide unpack for Lua 5.3+ built without LUA_COMPAT_UNPACK
++local unpack = unpack
++if table.unpack then unpack = table.unpack end
++
+ local function is_array(table)
+     local max = 0
+     local count = 0
+-- 
+2.49.0
+
