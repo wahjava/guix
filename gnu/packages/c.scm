@@ -24,6 +24,7 @@
 ;;; Copyright @ 2022, Kitzman <kitzman@disroot.org>
 ;;; Copyright @ 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -59,6 +60,7 @@
   #:use-module (gnu packages bootstrap)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gcc)
@@ -968,6 +970,29 @@ a set of tags describing the message.")
     ;; liblognorm is very slowly transitioning to ASL2.0
     ;; See https://github.com/rsyslog/liblognorm/issues/329
     (license license:lgpl2.1+)))
+
+(define-public libsv
+  (package
+    (name "libsv")
+    (version "1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/uael/sv")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0gw6hjv9m9fqdr0kapxhdmd1w26axq7pa4vq9wb2j83kgqs8vy3j"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:cmake cmake-minimal-3.30))
+    (home-page "https://github.com/uael/sv")
+    (synopsis "Semantic-versioning library in C99")
+    (description "Libsv is a library for manipulating semantic-versioning
+writing in C99.")
+    (license license:public-domain)))
 
 (define-public unifdef
   (package
