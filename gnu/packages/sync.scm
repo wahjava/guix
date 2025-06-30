@@ -74,7 +74,7 @@
 (define-public nextcloud-client
   (package
     (name "nextcloud-client")
-    (version "3.8.2")
+    (version "3.16.6")
     (source
      (origin
        (method git-fetch)
@@ -85,14 +85,14 @@
        (file-name
         (git-file-name name version))
        (sha256
-        (base32 "0gmj217jmmx13wwb096prwzn3njv616njk1id97g6lrbn969fcnn"))
+        (base32 "08s8nagf9h0llv5nspgarb0992wrqlcn780dhvdl8zh1s5xkglg1"))
        (modules '((guix build utils)
                   (ice-9 ftw)
                   (srfi srfi-1)))
        (snippet
         '(begin
            ;; Not available in Guix.
-           (let* ((keep '("QProgressIndicator" "qtokenizer" "kirigami")))
+           (let* ((keep '("QProgressIndicator")))
              (with-directory-excursion "src/3rdparty"
                (for-each delete-file-recursively
                          (lset-difference string=?
@@ -107,6 +107,8 @@
                 "")
                (("[ \t]*\\.\\./3rdparty/kmessagewidget/?.*\\.(cpp|h)")
                 "")
+               (("[ \t]*\\.\\./3rdparty/kirigami/?.*\\.(cpp|h)")
+                "")
                (("[ \t]*list\\(APPEND 3rdparty_SRC \\.\\./3rdparty/?.*\\)")
                 "")
                (("\\$\\{CMAKE_SOURCE_DIR\\}/src/3rdparty/qtlockedfile")
@@ -119,11 +121,11 @@
                 "@kwidgetsaddons@")
                ;; Expand libraries, that used to be statically linked, but
                ;; no longer are post-vendoring.
-               (("KF5::Archive")
-                (string-append "KF5::Archive "
+               (("KF6::Archive")
+                (string-append "KF6::Archive "
                                "QtSolutions_LockedFile "
                                "QtSolutions_SingleApplication "
-                               "KF5WidgetsAddons")))
+                               "KF6WidgetsAddons")))
              ;; Fix compatibility with QtSingleApplication from QtSolutions.
              (substitute* '("application.h" "application.cpp")
                (("SharedTools::QtSingleApplication")
@@ -133,7 +135,8 @@
            #t))))
     (build-system qt-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:qtbase ,qtbase
+       #:configure-flags
        (list
         "-DUNIT_TESTING=ON" "-DBUILD_UPDATER=OFF")
        #:imported-modules
@@ -154,11 +157,18 @@
                                "/share/dbus-1/services\")")))
              (substitute* "shell_integration/dolphin/CMakeLists.txt"
                ;; Make sure, that Qt modules are installed under $prefix.
-               (("ON CACHE") "OFF CACHE"))
+               (("ON CACHE") "OFF CACHE")
+               ;; Fix not being able to find "FindWrapAtomic.cmake".
+               (("\\$\\{ECM_MODULE_PATH\\}")
+                "${ECM_MODULE_PATH} ${CMAKE_MODULE_PATH}"))
              (substitute* "src/gui/CMakeLists.txt"
                (("@kwidgetsaddons@")
                 (search-input-directory inputs
-                                        "/include/KF5/KWidgetsAddons/")))))
+                                        "/include/KF6/KWidgetsAddons/")))))
+         (add-after 'unpack 'unpack-3rd_party-sources
+           (lambda* (#:key inputs #:allow-other-keys)
+             (copy-recursively (assoc-ref inputs "libcrashreporter-qt")
+                               "src/3rdparty/libcrashreporter-qt")))
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
@@ -175,50 +185,60 @@
            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))))
     (native-inputs
      `(("cmocka" ,cmocka)
+       ("desktop-file-utils" ,desktop-file-utils)
        ("dot" ,graphviz)
        ("doxygen" ,doxygen)
        ("extra-cmake-modules" ,extra-cmake-modules)
        ("glib:bin" ,glib "bin")
+       ("kirigami:source" ,(package-source kirigami))
+       ("libcrashreporter-qt"
+        ,(origin
+           (method git-fetch)
+           (uri
+            (git-reference
+              (url "https://github.com/dschmidt/libcrashreporter-qt")
+              (commit "96da2900d590218b745ea79cd7aa794856e1d7ba")))
+           (sha256
+            (base32 "0r14abym96fk9zwalyvyzl5igwsrpgmk2hsfxshzh2av4riq0lmk"))))
        ("librsvg" ,(librsvg-for-system))
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)
        ("python" ,python-wrapper)
-       ("qttools-5" ,qttools-5)
+       ("python-sphinx", python-sphinx)
+       ("qttools" ,qttools)
        ("ruby" ,ruby)))
     (inputs
      (list appstream
            dbus
-           desktop-file-utils
            glib
-           karchive-5
-           kconfig-5
-           kcoreaddons-5
-           kio-5
+           karchive
+           kconfig
+           kcoreaddons
+           kguiaddons
+           kio
            kjs
-           kwidgetsaddons-5
+           kwidgetsaddons
            libcloudproviders
+           libp11
            libzip
            openssl
-           qtbase-5
-           qtdeclarative-5
-           qtgraphicaleffects
-           qtkeychain
-           qtquickcontrols2-5
+           qt5compat
+           qtdeclarative
+           qtkeychain-qt6
            qtsolutions
-           qtsvg-5
-           qtwebchannel-5
-           qtwebsockets-5
+           qtsvg
+           qtwayland
+           qtwebchannel
+           qtwebengine
+           qtwebsockets
            sqlite
            xdg-utils
            zlib))
-    (propagated-inputs
-     (list qtwebengine-5))
     (synopsis "Desktop sync client for Nextcloud")
     (description "Nextcloud-Desktop is a tool to synchronize files from
 Nextcloud Server with your computer.")
     (home-page "https://nextcloud.com")
     (license (list license:expat     ; QProgressIndicator
-                   license:lgpl2.1+  ; qtokenizer
                    license:gpl2+))))
 
 (define-public megacmd
