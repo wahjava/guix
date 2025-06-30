@@ -52,6 +52,13 @@
         (gnu system nss)
         (gnu services)
         (gnu services base)
+        (gnu services desktop)
+        (gnu services guix)             ;‘guix-home-service-type’.
+        (gnu services shepherd)
+        (gnu home)
+        (gnu home services)
+        (gnu home services desktop)
+        (gnu home services shepherd)
         (gnu packages)
         (gnu packages base)
         (guix gexp)))                             ; so gexps can be used
