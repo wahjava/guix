@@ -725,7 +725,7 @@ if its daemon is not running."
   (string-append name "-"
                  (number->string (random 1000000 (force %random-state)))))
 
-(define (assert-node-can-import session node name daemon-socket)
+(define (assert-node-can-import node name session daemon-socket)
   "Raise an exception if NODE refuses to import our archives."
   (with-store store
     (let* ((item   (add-text-to-store store "export-test" (nonce)))
@@ -741,7 +741,7 @@ if its daemon is not running."
                              (name name)
                              (data item))))))))
 
-(define (assert-node-can-export session node name daemon-socket)
+(define (assert-node-can-export node name session daemon-socket)
   "Raise an exception if we cannot import signed archives from NODE."
   (let* ((remote  (connect-to-remote-daemon session daemon-socket))
          (item    (add-text-to-store remote "import-test" (nonce name))))
@@ -762,21 +762,21 @@ if its daemon is not running."
       (when (every ->bool args)
         (apply proc args))))
 
-  (define (with-exceptions name-index proc)
-    "Wrapper that handles exceptions, using the argument at NAME-INDEX as the machine name."
+  (define (with-exceptions proc)
+    "Handle exceptions, using the second argument as the machine name."
     (lambda* args
       (when (every ->bool args)
-        (handle-offload-exception (list-ref args name-index)
+        (handle-offload-exception (list-ref args 1)
                                   (lambda () (apply proc args))))))
 
   (let* ((names    (map build-machine-name machines))
          (sockets  (map build-machine-daemon-socket machines))
          (sessions (map (cut open-ssh-session <> %short-timeout) machines))
          (nodes    (map remote-inferior* sessions)))
-    (for-each (with-exceptions 1 assert-node-has-guix) nodes names)
-    (for-each (with-exceptions 1 assert-node-repl) nodes names)
-    (for-each (with-exceptions 2 assert-node-can-import) sessions nodes names sockets)
-    (for-each (with-exceptions 2 assert-node-can-export) sessions nodes names sockets)
+    (for-each (with-exceptions assert-node-has-guix) nodes names)
+    (for-each (with-exceptions assert-node-repl) nodes names)
+    (for-each (with-exceptions assert-node-can-import) nodes names sessions sockets)
+    (for-each (with-exceptions assert-node-can-export) nodes names sessions sockets)
     (for-each (if-true close-inferior) nodes)
     (for-each disconnect! sessions)))
 
