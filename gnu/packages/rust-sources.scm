@@ -87,7 +87,7 @@
                    (substitute* "alacritty_config_derive/Cargo.toml"
                      (("dev-dependencies[.]alacritty_config")
                       "dummy.dev-dependencies.alacritty_config")))))))
-    (inputs (cargo-inputs 'alacritty-0.25))
+    (inputs (cargo-inputs 'rust-alacritty-0.25.1-dev.828457c))
     (home-page "https://github.com/zed-industries/alacritty")
     (synopsis "Terminal emulator library")
     (description
@@ -137,7 +137,7 @@
                       ;; Remove reference to it.
                       (("\"surf\",")
                        "")))))))
-     (inputs (cargo-inputs 'rust-async-stripe))
+     (inputs (cargo-inputs 'rust-async-stripe-0.40.0.3672dd4))
      (home-page "https://github.com/microsoft/python-environment-tools")
      (synopsis "Python environment tools")
      (description
@@ -173,7 +173,7 @@
                                         ; bevy "blade-render"
                                       ;; render "blade-helpers"
                                       )))
-     (inputs (cargo-inputs 'rust-blade-for-zed))
+     (inputs (cargo-inputs 'rust-blade-0.6.0.e0ec4e7))
      (home-page "https://github.com/kvark/blade")
      (synopsis "Sharp and simple graphics library")
      (description
@@ -663,7 +663,7 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
                   (add-before 'build 'generate
                     (lambda _
                       (invoke "cargo" "run" "-p" "generator"))))))
-       (inputs (cargo-inputs 'rust-dap-types))
+       (inputs (cargo-inputs 'rust-dap-types-0.0.1.b40956a))
        (home-page "https://github.com/zed-industries/dap-types/")
        (synopsis "Rust types for the Debug Adapter Protocol")
        (description
@@ -707,7 +707,7 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
                       ;; git-compatible SCM.
                       (("^sapling-.*")
                        "\n")))))))
-     (inputs (cargo-inputs 'rust-jj))
+     (inputs (cargo-inputs 'rust-jj-0.29.0.e18eb8e))
      (home-page "https://github.com/jj-vcs/jj")
      (synopsis "Git frontend for humans")
      (description
