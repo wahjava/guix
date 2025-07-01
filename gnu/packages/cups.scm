@@ -332,7 +332,8 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
        (file-name (git-file-name "cups" version))
        (sha256
         (base32 "08wjd1flyaslhnwvxl39403qi3g675rk532ysiyk6cda4r8ks1g1"))
-       (patches (search-patches "cups-minimal-Address-PPD-injection-issues.patch"))))
+       (patches (search-patches "cups-minimal-Address-PPD-injection-issues.patch"
+                                "cups-relax-root-ownership-check.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
