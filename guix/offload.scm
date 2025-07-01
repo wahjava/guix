@@ -76,7 +76,7 @@
             build-requirements
             build-requirements?
 
-            %machine-file
+            %default-machine-file
             process-build-request
             check-machines-availability-from-file*
             check-machine-status*))
@@ -143,7 +143,7 @@ field.")))
   (features        build-requirements-features    ; list of strings
                    (default '())))
 
-(define %machine-file
+(define %default-machine-file
   ;; File that lists machines available as build slaves.
   (string-append %config-directory "/machines.scm"))
 
@@ -159,7 +159,7 @@ determined."
     (module-use! module (resolve-interface '(guix offload)))
     module))
 
-(define* (build-machines #:optional (file %machine-file))
+(define* (build-machines #:optional (file %default-machine-file))
   "Read the list of build machines from FILE and return it."
   (catch #t
     (lambda ()
@@ -798,7 +798,7 @@ machine."
   "Extend procedures taking a machine-file and a predicate to instead take
 optionally a machine-file and a regexp."
   (lambda* (#:optional (machine-file #f) (regexp #f))
-    (let ((machine-file (or machine-file %machine-file))
+    (let ((machine-file (or machine-file %default-machine-file))
           (pred (if regexp
                     (compose (cut string-match regexp <>) build-machine-name)
                     (const #t))))

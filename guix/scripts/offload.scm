@@ -128,7 +128,7 @@ COMMAND must be one of the sub-commands listed below:
 
 The build machines are read from '~a' by default, or from FILE when specified.
 When REGEXP is provided, only machines whose names match REGEXP are considered.\n")
-           %machine-file)
+           %default-machine-file)
   (display (G_ "
 
 When invoked without a sub-command, 'guix offload' processes build offload
