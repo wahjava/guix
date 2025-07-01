@@ -10779,10 +10779,6 @@
                 "1mdi4s5f164dbhczi5mvjz2z4q2s73qhdvwqyf9nzq3d45ykrw2x"
                 #:snippet '(delete-file-recursively "examples")))
 
-;(define rust-pear-0.1.4
-;  (crate-source "pear" "0.1.4"
-;                "12mb00ick6y1slbxk6r4i8qxdbq8km3bs4pygjv94xwnvc9g482k"))
-
 (define rust-pear-0.1.5
   (crate-source "pear" "0.1.5"
                 "02lnp8c414z5ds0lskd4zxlalrjljzpkg8g6kizszij4h52sgprj"))
@@ -16863,10 +16859,6 @@
 (define rust-watchexec-supervisor-4.0.0
   (crate-source "watchexec-supervisor" "4.0.0"
                 "0zbmk998hb01zac9z931glc151slnrkdw6f7vl1pn97npzk7yvb7"))
-
-;(define rust-watchman-client-0.9.0
-;  (crate-source "watchman_client" "0.9.0"
-;                "0lpvdkvf500cr6454c722m9q15y3zxxq19sg1phsm9s3njdlrg48"))
 
 (define rust-wax-0.6.0
   (crate-source "wax" "0.6.0"
