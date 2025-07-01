@@ -640,28 +640,67 @@ If TIMEOUT is #f, simply evaluate EXP..."
   ;; shouldn't take long.
   15)
 
+(define-condition-type &offload-error &error
+  offload-error?
+  (reason offload-error-reason)
+  (name offload-error-name)
+  (data offload-error-data))
+
+(define (handle-offload-exception name thunk)
+  "Execute THUNK and handle any offload exceptions by calling leave."
+  (guard (condition
+          ((offload-error? condition)
+           (let ((reason (offload-error-reason condition))
+                 (data (offload-error-data condition)))
+             (match reason
+               ('repl-failed (report-guile-error name))
+               ('failed-repl
+                (leave (G_ "failed to run 'guix repl' on '~a'~%") name))
+               ('guix-module-unusable
+                (leave (G_ "(guix) module not usable on remote host '~a'")
+                       name))
+               ('daemon-failed
+                (leave (G_ "\
+failed to talk to guix-daemon on '~a' (test returned ~s)~%")
+                       name data))
+               ('import-failed
+                (leave (G_ "'~a' was not properly imported on '~a'~%")
+                       data name))
+               ('export-failed
+                (leave (G_ "failed to import '~a' from '~a'~%")
+                       data name))))))
+    (thunk)))
+
 (define (assert-node-repl node name)
-  "Bail out if NODE is not running Guile."
+  "Raise an exception if NODE is not running Guile."
   (match (node-guile-version node)
     (#f
-     (report-guile-error name))
+     (raise (condition (&offload-error
+                        (reason 'repl-failed)
+                        (name name)
+                        (data node)))))
     ((? string? version)
      (info (G_ "'~a' is running GNU Guile ~a~%")
            name (node-guile-version node)))))
 
 (define (assert-node-has-guix node name)
-  "Bail out if NODE if #f or if we fail to use the (guix) module, or if its
-daemon is not running."
+  "Raise an exception if NODE if #f or if we fail to use the (guix) module, or
+if its daemon is not running."
   (unless (inferior? node)
-    (leave (G_ "failed to run 'guix repl' on '~a'~%") name))
+    (raise (condition (&offload-error
+                       (reason 'failed-repl)
+                       (name name)
+                       (data node)))))
 
   (match (inferior-eval '(begin
                            (use-modules (guix))
                            (and add-text-to-store 'alright))
                         node)
     ('alright #t)
-    (_ (leave (G_ "(guix) module not usable on remote host '~a'")
-              name)))
+    (_ (raise (condition (&offload-error
+                          (reason 'guix-module-unusable)
+                          (name name)
+                          (data node))))))
 
   (match (inferior-eval '(begin
                            (use-modules (guix))
@@ -673,8 +712,10 @@ daemon is not running."
      (info (G_ "Guix is usable on '~a' (test returned ~s)~%")
            name str))
     (x
-     (leave (G_ "failed to talk to guix-daemon on '~a' (test returned ~s)~%")
-            name x))))
+     (raise (condition (&offload-error
+                        (reason 'daemon-failed)
+                        (name name)
+                        (data x)))))))
 
 (define %random-state
   (delay
@@ -685,7 +726,7 @@ daemon is not running."
                  (number->string (random 1000000 (force %random-state)))))
 
 (define (assert-node-can-import session node name daemon-socket)
-  "Bail out if NODE refuses to import our archives."
+  "Raise an exception if NODE refuses to import our archives."
   (with-store store
     (let* ((item   (add-text-to-store store "export-test" (nonce)))
            (remote (connect-to-remote-daemon session daemon-socket)))
@@ -695,11 +736,13 @@ daemon is not running."
       (if (valid-path? remote item)
           (info (G_ "'~a' successfully imported '~a'~%")
                 name item)
-          (leave (G_ "'~a' was not properly imported on '~a'~%")
-                 item name)))))
+          (raise (condition (&offload-error
+                             (reason 'import-failed)
+                             (name name)
+                             (data item))))))))
 
 (define (assert-node-can-export session node name daemon-socket)
-  "Bail out if we cannot import signed archives from NODE."
+  "Raise an exception if we cannot import signed archives from NODE."
   (let* ((remote  (connect-to-remote-daemon session daemon-socket))
          (item    (add-text-to-store remote "import-test" (nonce name))))
     (with-store store
@@ -707,8 +750,10 @@ daemon is not running."
                (valid-path? store item))
           (info (G_ "successfully imported '~a' from '~a'~%")
                 item name)
-          (leave (G_ "failed to import '~a' from '~a'~%")
-                 item name)))))
+          (raise (condition (&offload-error
+                             (reason 'export-failed)
+                             (name name)
+                             (data item))))))))
 
 (define (check-machines-availability machines)
   "Check that MACHINES are usable as build machines."
@@ -717,14 +762,21 @@ daemon is not running."
       (when (every ->bool args)
         (apply proc args))))
 
+  (define (with-exceptions name-index proc)
+    "Wrapper that handles exceptions, using the argument at NAME-INDEX as the machine name."
+    (lambda* args
+      (when (every ->bool args)
+        (handle-offload-exception (list-ref args name-index)
+                                  (lambda () (apply proc args))))))
+
   (let* ((names    (map build-machine-name machines))
          (sockets  (map build-machine-daemon-socket machines))
          (sessions (map (cut open-ssh-session <> %short-timeout) machines))
          (nodes    (map remote-inferior* sessions)))
-    (for-each (if-true assert-node-has-guix) nodes names)
-    (for-each (if-true assert-node-repl) nodes names)
-    (for-each (if-true assert-node-can-import) sessions nodes names sockets)
-    (for-each (if-true assert-node-can-export) sessions nodes names sockets)
+    (for-each (with-exceptions 1 assert-node-has-guix) nodes names)
+    (for-each (with-exceptions 1 assert-node-repl) nodes names)
+    (for-each (with-exceptions 2 assert-node-can-import) sessions nodes names sockets)
+    (for-each (with-exceptions 2 assert-node-can-export) sessions nodes names sockets)
     (for-each (if-true close-inferior) nodes)
     (for-each disconnect! sessions)))
 
