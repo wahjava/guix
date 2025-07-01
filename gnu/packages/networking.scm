@@ -190,6 +190,7 @@
   #:use-module (gnu packages upnp)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages wget)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
@@ -5246,3 +5247,25 @@ recording packets that are dropped by the kernel.  It provides the commands
 Protocol.  RDAP is modern a replacement for WHOIS, which provides domain name
 and IP address registration information in JSON format over HTTP.")
     (license license:expat)))
+
+(define-public fwknop
+  (package
+    (name "fwknop")
+    (version "2.6.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.cipherdyne.org/fwknop/download/fwknop-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1j0yrbwrayj2f6f3gn8pdgxk73pnf62dl1nmhd8cxkjzxgif1d5w"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags '("--disable-server")))
+    (inputs (list wget))
+    (synopsis "Single Packet Authorization (and Port Knocking) client")
+    (description
+     "fwknop stands for the \"FireWall KNock OPerator\", and implements an
+authorization scheme called Single Packet Authorization (SPA).")
+    (home-page "https://www.cipherdyne.org/fwknop/")
+    (license license:gpl2+)))
