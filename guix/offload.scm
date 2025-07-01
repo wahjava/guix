@@ -757,14 +757,16 @@ if its daemon is not running."
                              (name name)
                              (data item))))))))
 
-(define (check-machine-availability machine)
-  "Check that MACHINES are usable as build machines."
+(define* (check-machine-availability machine #:key (bail-out? #t))
+  "Check that MACHINES are usable as build machines.  Bail out if BAIL-OUT?"
 
   (define (with-exceptions proc)
     "Handle exceptions, using the second argument as the machine name."
     (lambda* args
-      (handle-offload-exception (list-ref args 1)
-                                (lambda () (apply proc args)))))
+      (if bail-out?
+          (handle-offload-exception (list-ref args 1)
+                                    (lambda () (apply proc args)))
+          (apply proc args))))
 
   (and-let* ((name    (build-machine-name machine))
              (socket  (build-machine-daemon-socket machine))
