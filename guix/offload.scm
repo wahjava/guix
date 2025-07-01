@@ -48,6 +48,7 @@
   #:use-module (guix scripts)
   #:use-module (guix diagnostics)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
@@ -78,6 +79,7 @@
 
             %default-machine-file
             process-build-request
+            check-machine-availability
             check-machines-availability-from-file*
             check-machine-status*))
 
@@ -755,30 +757,25 @@ if its daemon is not running."
                              (name name)
                              (data item))))))))
 
-(define (check-machines-availability machines)
+(define (check-machine-availability machine)
   "Check that MACHINES are usable as build machines."
-  (define (if-true proc)
-    (lambda args
-      (when (every ->bool args)
-        (apply proc args))))
 
   (define (with-exceptions proc)
     "Handle exceptions, using the second argument as the machine name."
     (lambda* args
-      (when (every ->bool args)
-        (handle-offload-exception (list-ref args 1)
-                                  (lambda () (apply proc args))))))
+      (handle-offload-exception (list-ref args 1)
+                                (lambda () (apply proc args)))))
 
-  (let* ((names    (map build-machine-name machines))
-         (sockets  (map build-machine-daemon-socket machines))
-         (sessions (map (cut open-ssh-session <> %short-timeout) machines))
-         (nodes    (map remote-inferior* sessions)))
-    (for-each (with-exceptions assert-node-has-guix) nodes names)
-    (for-each (with-exceptions assert-node-repl) nodes names)
-    (for-each (with-exceptions assert-node-can-import) nodes names sessions sockets)
-    (for-each (with-exceptions assert-node-can-export) nodes names sessions sockets)
-    (for-each (if-true close-inferior) nodes)
-    (for-each disconnect! sessions)))
+  (and-let* ((name    (build-machine-name machine))
+             (socket  (build-machine-daemon-socket machine))
+             (session ((cut open-ssh-session <> %short-timeout) machine))
+             (node    (remote-inferior* session)))
+    ((with-exceptions assert-node-has-guix) node name)
+    ((with-exceptions assert-node-repl) node name)
+    ((with-exceptions assert-node-can-import) node name session socket)
+    ((with-exceptions assert-node-can-export) node name session socket)
+    (and=> node close-inferior)
+    (disconnect! session)))
 
 (define (check-machines-availability-from-file machine-file pred)
   "Check that each machine matching PRED in MACHINE-FILE is usable as a build
@@ -794,7 +791,7 @@ machine."
                                              build-machine=?))))
     (info (G_ "testing ~a build machines defined in '~a'...~%")
           (length machines) machine-file)
-    (check-machines-availability machines)))
+    (map check-machine-availability machines)))
 
 (define (check-machine-status machine-file pred)
   "Print the load of each machine matching PRED in MACHINE-FILE."
