@@ -1949,6 +1949,9 @@ extremely large and complex data collections.")
                  "src/H5Eterm.h"
                  "src/H5overflow.h"
                  "src/H5version.h"))))
+       ;; TODO: If this patch is removed and hdf5-config.cmake no longer
+       ;; contains 'find_dependency' calls, packages that have hdf5 as an
+       ;; input may no longer require zlib and libaec inputs.
        (patches (search-patches "hdf5-config-dependencies.patch"))))
     (build-system cmake-build-system)
     (arguments
