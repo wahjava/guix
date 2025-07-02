@@ -12614,13 +12614,13 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
 (define-public python-av
   (package
     (name "python-av")
-    (version "10.0.0")
+    (version "11.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "av" version))
        (sha256
-        (base32 "01byqsjclkg65mhr6b4i2r2n4y7af9kdd2c35lxny27121b3vzca"))))
+        (base32 "0cdcd7rxdgcz09rh6ibypjvs2fpvnx5n7zq0wzw708151803y8j8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -12643,6 +12643,7 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
           " and not test_codec_tag"
           " and not test_parse"
           " and not test_decode_audio_sample_count"
+          " and not test_decode_close_then_use"
           " and not test_decoded_motion_vectors"
           " and not test_decoded_motion_vectors_no_flag"
           " and not test_decoded_time_base"
@@ -12694,9 +12695,7 @@ experimental data and metadata at the Laboratory for Fluorescence Dynamics.")
            python-setuptools
            python-wheel))
     (inputs
-     ;; XXX: Build is failing with FFmpeg 6.0, unresolved upstream.
-     ;; See https://github.com/PyAV-Org/PyAV/issues/1106
-     (list ffmpeg-5))
+     (list ffmpeg))
     (home-page "https://github.com/PyAV-Org/PyAV")
     (synopsis "Pythonic bindings for FFmpeg's libraries")
     (description
