@@ -2,6 +2,7 @@
 ;;; Copyright © 2021 David Dashyan <mail@davie.li>
 ;;; Copyright © 2024 Nikita Domnitskii
 ;;; Copyright © 2024 Andrew Tropin <andrew@trop.in>
+;;; Copyright © 2025 Romain Garbage <romain.garbage@inria.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,8 +19,8 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; This file is a copy of rde/src/rde/system/services/cloud-init.scm from the
-;;; rde project (https://git.sr.ht/~abcdw/rde)
+;;; This is based on the file rde/src/rde/system/services/cloud-init.scm from
+;;; the rde project (https://git.sr.ht/~abcdw/rde)
 (define-module (gnu services openstack)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
@@ -48,14 +49,11 @@
 
 ;; TODO: [Nikita Domnitskii, 2024-02-12] think of a better way to
 ;; implement datasources
-(define metadata-host
-  (make-parameter "169.254.169.254"))
+(define metadata-host "169.254.169.254")
 
-(define metadata-port
-  (make-parameter 80))
+(define metadata-port 80)
 
-(define metadata-path
-  (make-parameter "/metadata/v1.json"))
+(define metadata-path "/metadata/v1.json")
 
 (define-record-type* <openstack-config>
   openstack-config make-openstack-config
@@ -63,9 +61,9 @@
   (primary-drive openstack-config-primary-drive
                  (default "/dev/vda"))
   (metadata-host openstack-config-metadata-host
-                 (default (metadata-host)))
+                 (default metadata-host))
   (metadata-path openstack-config-metadata-path
-                 (default (metadata-path)))
+                 (default metadata-path))
   (log-file      openstack-config-file
                  (default "/var/log/openstack.log"))
   (requirements  openstack-config-requirements
@@ -89,9 +87,9 @@
                           (web uri)
                           (rnrs bytevectors)
                           (srfi srfi-71))
-             (let* ((xhost #$(metadata-host))
-                    (xpath #$(metadata-path))
-                    (xport #$(metadata-port))
+             (let* ((xhost #$metadata-host)
+                    (xpath #$metadata-path)
+                    (xport #$metadata-port)
                     (uri (build-uri 'http
                                     #:host xhost
                                     #:path xpath
