@@ -53,7 +53,7 @@
 
 (define metadata-port 80)
 
-(define metadata-path "/metadata/v1.json")
+(define openstack-api-version "latest")
 
 (define-record-type* <openstack-config>
   openstack-config make-openstack-config
@@ -64,20 +64,38 @@
                  (default metadata-host))
   (metadata-port openstack-config-metadata-port
                  (default metadata-port))
+  (api-version   openstack-config-api-version
+                 (default openstack-api-version))
+  (dynamic-config-file
+                 openstack-dynamic-config-file
+                 (default "/run/openstack/metadata.scm"))
   ;; List of strings containing the link device names.
   (links         openstack-config-links
                  (default '()))
-  (log-file      openstack-config-file
+  (log-file      openstack-config-log-file
                  (default "/var/log/openstack.log"))
   (requirements  openstack-config-requirements
                  (default '()))) ;; + loopback
 
-(define* (query-metadata)
+;; Openstack provides metadata through 2 JSON files:
+;; - meta_data.json for general configuration
+;; - network_data.json for network specific configuration
+(define-record-type* <openstack-metadata>
+  openstack-metadata make-openstack-metadata
+  openstack-metadata?
+  (meta     openstack-metadata-meta
+            (default '()))
+  (network  openstack-metadata-network
+            (default '())))
+
+(define (get-openstack-metadata config)
+  "Build an OPENSTACK-METADATA record from CONFIG, an OPENSTACK-CONFIG
+record."
   (let ((select? (match-lambda
                    (('json rest ...)  #t)
                    (_ #f))))
-    (scheme-file
-     "query-metadata"
+    (program-file
+     "get-openstack-metadata"
      (with-extensions (list guile-json-4)
        (with-imported-modules
            (source-module-closure '((json)) #:select? select?)
@@ -90,20 +108,34 @@
                           (web uri)
                           (rnrs bytevectors)
                           (srfi srfi-71))
-             (let* ((xhost #$metadata-host)
-                    (xpath #$metadata-path)
-                    (xport #$metadata-port)
-                    (uri (build-uri 'http
-                                    #:host xhost
-                                    #:path xpath
-                                    #:port xport))
-                    (response body (http-request uri #:method 'GET)))
-               (if (eq? (response-code response) 200)
-                   (cond
-                    ((and (string? body) body) => json-string->scm)
-                    ((and (bytevector? body) body) =>
-                     (compose json-string->scm utf8->string)))
-                   (throw 'metadata-query-error response)))))))))
+             (define (query-file file)
+               (let* ((xhost #$(openstack-config-metadata-host config))
+                      (xpath (string-append "openstack/"
+                                            #$(openstack-config-api-version config)
+                                            "/"
+                                            file))
+                      (xport #$(openstack-config-metadata-port config))
+                      (uri (build-uri 'http
+                                      #:host xhost
+                                      #:path xpath
+                                      #:port xport))
+                      (response body (http-request uri #:method 'GET)))
+                 (if (eq? (response-code response) 200)
+                     (cond
+                      ((and (string? body) body) => json-string->scm)
+                      ((and (bytevector? body) body) =>
+                       (compose json-string->scm utf8->string)))
+                     (throw 'metadata-query-error response))))
+             (let* ((meta (query-file "meta_data.json"))
+                    (network (query-file "network_data.json"))
+                    (metadata `((meta . ,meta)
+                                (network . ,network)))
+                    (dynamic-config-file #$(openstack-dynamic-config-file config))
+                    (dynamic-directory (basename dynamic-config-file)))
+               (mkdir-p dynamic-directory)
+               (call-with-output-file dynamic-config-file
+                 (lambda (port)
+                   (write metadata port))))))))))
 
 (define (openstack-early-network-setup config)
   (program-file "openstack-early-network-setup"
@@ -158,6 +190,13 @@
                                  (loop rest))))))
                       #t))))
 
+(define (read-metadata-file config)
+  "Return the parsed Openstack metadata configuration as an a-list, given
+CONFIG, an <openstack-config> record."
+  (call-with-input-file (openstack-dynamic-config-file config)
+    (lambda (port)
+      (read port))))
+
 (define (resize-partition config)
   (define primary-drive (openstack-config-primary-drive config))
   (program-file
@@ -210,12 +249,19 @@
      (start #~(lambda _
                 (system* #$(openstack-early-network-setup config)))))
    (shepherd-service
+     (documentation "Retrieve Openstack configuration for the machine.")
+     (provision '(openstack-metadata))
+     (requirement '(early-networking root-file-system))
+     (start #~(lambda _
+                (system* #$(get-openstack-metadata config)))))
+   (shepherd-service
     (documentation "Initialize the machine's host name.")
     (provision '(cloud-host-name))
     (requirement '(host-name networking))
     (start #~(lambda _
-               (let* ((metadata (load #$(query-metadata)))
-                      (hostname (assoc-ref metadata "hostname")))
+               (let* ((metadata #$(read-metadata-file config))
+                      (hostname (assoc-ref (assoc-ref metadata 'meta)
+                                           'hostname)))
                  (sethostname hostname))))
     (one-shot? #t))
    (shepherd-service
