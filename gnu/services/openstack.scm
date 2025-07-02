@@ -43,8 +43,8 @@
   #:use-module (web client)
   #:use-module (web response)
   #:use-module (web uri)
-  #:export (cloud-init-service-type
-            cloud-init-config))
+  #:export (openstack-service-type
+            openstack-config))
 
 ;; TODO: [Nikita Domnitskii, 2024-02-12] think of a better way to
 ;; implement datasources
@@ -57,18 +57,18 @@
 (define metadata-path
   (make-parameter "/metadata/v1.json"))
 
-(define-record-type* <cloud-init-config>
-  cloud-init-config make-cloud-init-config
-  cloud-init-config?
-  (primary-drive cloud-init-config-primary-drive
+(define-record-type* <openstack-config>
+  openstack-config make-openstack-config
+  openstack-config?
+  (primary-drive openstack-config-primary-drive
                  (default "/dev/vda"))
-  (metadata-host cloud-init-config-metadata-host
+  (metadata-host openstack-config-metadata-host
                  (default (metadata-host)))
-  (metadata-path cloud-init-config-metadata-path
+  (metadata-path openstack-config-metadata-path
                  (default (metadata-path)))
-  (log-file      cloud-init-config-file
-                 (default "/var/log/cloud-init.log"))
-  (requirements  cloud-init-config-requirements
+  (log-file      openstack-config-file
+                 (default "/var/log/openstack.log"))
+  (requirements  openstack-config-requirements
                  (default '()))) ;; + loopback
 
 (define* (query-metadata)
@@ -105,7 +105,7 @@
                    (throw 'metadata-query-error response)))))))))
 
 (define (resize-partition config)
-  (define primary-drive (cloud-init-config-primary-drive config))
+  (define primary-drive (openstack-config-primary-drive config))
   (program-file
    "resize-partition"
    (with-extensions (list guile-parted guile-bytestructures)
@@ -147,7 +147,7 @@
              (system* (string-append #$e2fsprogs "/sbin/resize2fs")
                       (string-append #$primary-drive "1"))))))))
 
-(define (cloud-init-shepherd-services config)
+(define (openstack-shepherd-services config)
   (list
    (shepherd-service
     (documentation "Initialize the machine's host name.")
@@ -168,21 +168,21 @@
 ;; FIXME: [Nikita Domnitskii, 2024-02-13] Would be nice to have, but not
 ;; necessary at the moment. Needs modifications to openssh-service to
 ;; correctly work with gexp extensions
-(define (cloud-init-ssh-keys config)
+(define (openstack-ssh-keys config)
   `(("root")))
 
-(define cloud-init-service-type
+(define openstack-service-type
   (service-type
-   (name 'cloud-init)
+   (name 'openstack)
    (description "")
    (extensions
     (list (service-extension
            shepherd-root-service-type
-           cloud-init-shepherd-services)
+           openstack-shepherd-services)
           #;(service-extension
            openssh-service-type
-           cloud-init-ssh-keys)
+           openstack-ssh-keys)
           #;(service-extension
           static-networking-service-type
-          cloud-init-static-networking)))
-   (default-value (cloud-init-config))))
+          openstack-static-networking)))
+   (default-value (openstack-config))))
