@@ -31,8 +31,10 @@
   #:use-module (guix modules)
   #:use-module (guix records)
   #:use-module (ice-9 match)
-  #:export (%readymedia-default-cache-directory
+  #:export (%readymedia-default-pid-directory
+            %readymedia-default-cache-directory
             %readymedia-default-log-directory
+            %readymedia-pid-file
             %readymedia-log-file
             %readymedia-user-account
             %readymedia-user-group
@@ -40,6 +42,7 @@
             readymedia-configuration?
             readymedia-configuration-readymedia
             readymedia-configuration-port
+            readymedia-configuration-pid-directory
             readymedia-configuration-cache-directory
             readymedia-configuration-extra-config
             readymedia-configuration-friendly-name
@@ -59,8 +62,10 @@
 ;;;
 ;;; Code:
 
+(define %readymedia-default-pid-directory "/var/run/readymedia")
 (define %readymedia-default-cache-directory "/var/cache/readymedia")
 (define %readymedia-default-log-directory "/var/log/readymedia")
+(define %readymedia-pid-file "minidlna.pid")
 (define %readymedia-log-file "minidlna.log")
 (define %readymedia-user-group "readymedia")
 (define %readymedia-user-account "readymedia")
@@ -72,6 +77,13 @@
               (default readymedia))
   (port readymedia-configuration-port
         (default #f))
+  (pid-directory readymedia-configuration-pid-directory
+                   (default (if for-home?
+                                (string-append (or (getenv "XDG_CONFIG_HOME")
+                                                   (string-append
+                                                    (getenv "HOME") "/.config"))
+                                               "/readymedia")
+                              %readymedia-default-pid-directory)))
   (cache-directory readymedia-configuration-cache-directory
                    (default (if for-home?
                                 (string-append (or (getenv "XDG_CACHE_HOME")
@@ -143,7 +155,8 @@
 (define (readymedia-shepherd-service config)
   "Return a least-authority ReadyMedia/MiniDLNA Shepherd service."
   (match-record config <readymedia-configuration>
-    (cache-directory log-directory media-directories home-service?)
+    (pid-directory cache-directory log-directory media-directories
+     home-service?)
     (let ((minidlna-conf (readymedia-configuration->config-file config)))
       (shepherd-service
        (documentation "Run the ReadyMedia/MiniDLNA daemon.")
@@ -157,6 +170,10 @@
                     #:name "minidlna"
                     #:mappings
                     (cons* (file-system-mapping
+                            (source pid-directory)
+                            (target source)
+                            (writable? #t))
+                           (file-system-mapping
                             (source cache-directory)
                             (target source)
                             (writable? #t))
@@ -175,6 +192,8 @@
                     #:namespaces (delq 'net %namespaces))
                  "-f"
                  #$minidlna-conf
+                 "-P"
+                 #$(string-append pid-directory "/" %readymedia-pid-file)
                  "-S")
            #:log-file #$(string-append log-directory "/" %readymedia-log-file)
            #:user #$(if home-service? #f %readymedia-user-account)
@@ -196,7 +215,8 @@
 (define (readymedia-activation config)
   "Set up directories for ReadyMedia/MiniDLNA."
   (match-record config <readymedia-configuration>
-    (cache-directory log-directory media-directories home-service?)
+    (pid-directory cache-directory log-directory media-directories
+     home-service?)
     (with-imported-modules (source-module-closure '((gnu build activation)))
       #~(begin
           (use-modules (gnu build activation))
@@ -217,7 +237,9 @@
                                                     #~(getuid)
                                                     %readymedia-user-account))
                                        #o755)))
-                    (list #$cache-directory #$log-directory))))))
+                    (list #$pid-directory
+                           #$cache-directory
+                           #$log-directory))))))
 
 (define readymedia-service-type
   (service-type

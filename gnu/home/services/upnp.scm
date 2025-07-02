@@ -29,6 +29,7 @@
                readymedia-configuration?
                readymedia-configuration-readymedia
                readymedia-configuration-port
+               readymedia-configuration-pid-directory
                readymedia-configuration-cache-directory
                readymedia-configuration-extra-config
                readymedia-configuration-friendly-name

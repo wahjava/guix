@@ -83,6 +83,25 @@
                 #t)
              marionette))
 
+          ;; Pid directory and file
+          (test-assert "Pid directory exists"
+            (marionette-eval
+             '(eq? (stat:type (stat #$%readymedia-default-pid-directory))
+                   'directory)
+             marionette))
+          (test-assert "Pid directory has correct ownership"
+            (marionette-eval
+             '(let ((pid-dir (stat #$%readymedia-default-pid-directory))
+                    (user (getpwnam #$%readymedia-user-account)))
+                (and (eqv? (stat:uid pid-dir) (passwd:uid user))
+                     (eqv? (stat:gid pid-dir) (passwd:gid user))))
+             marionette))
+          (test-assert "pid directory has expected permissions"
+            (marionette-eval
+             '(eqv? (stat:perms (stat #$%readymedia-default-pid-directory))
+                    #o755)
+             marionette))
+
           ;; Cache directory and file
           (test-assert "cache directory exists"
             (marionette-eval
