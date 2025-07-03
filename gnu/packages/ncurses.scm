@@ -266,11 +266,17 @@ ncursesw library provides wide character support.")
                (base32
                 "0riqmp2xl2j2yxx69nyg8jbm2fyi5fp4clcf6zi5jfm3irn3l8y9"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags #~'("--with-shared" "--enable-rpath")
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'install 'install-lib
+                          (lambda _
+                            (invoke "make" "install-lib"))))))
     (inputs
      (list ncurses))
     (synopsis "Curses widgets")
-    (description "Dialog is a script-interpreter which provides a set of
-curses widgets, such as dialog boxes.")
+    (description "Dialog is a script-interpreter and a library which provides
+a set of curses widgets, such as dialog boxes.")
     (home-page "https://invisible-island.net/dialog/dialog.html")
     (license lgpl2.1)))
 
