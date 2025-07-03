@@ -308,6 +308,32 @@ a set of curses widgets, such as dialog boxes.")
     (home-page "https://invisible-island.net/dialog/dialog.html")
     (license lgpl2.1)))
 
+(define-public cdk
+  (package
+    (name "cdk")
+    (version "5.0-20250116")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://invisible-mirror.net/archives/cdk/cdk-"
+                    version ".tgz"))
+              (sha256
+               (base32
+                "10ywvbnxwk6sfvlbkzfnbx9whsq9xv227znaiir742ym4h9d800m"))))
+    (build-system gnu-build-system)
+    ;; NOTE: This package does not have automated tests.
+    (arguments
+     (list #:configure-flags #~'("--with-shared" "--enable-rpath")))
+    (inputs
+     (list ncurses))
+    (synopsis "Curses widgets")
+    (description "Curses Development Kit (CDK) is a C library of widgets
+which allow a programmer to quickly create TUI applications.  Widgets are
+objects whose appearance and behavior can be customized, e.g. a pulldown
+menu or a file-viewer.")
+    (home-page "https://invisible-island.net/cdk/cdk.html")
+    (license (non-copyleft "file://share/doc/cdk/COPYING"))))
+
 (define-public perl-curses
   (package
     (name "perl-curses")
