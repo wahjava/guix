@@ -42933,7 +42933,7 @@ and preferred services can easily be configured.")
 (define-public emacs-vertico
   (package
     (name "emacs-vertico")
-    (version "2.2")
+    (version "2.4")
     (source
      (origin
        (method git-fetch)
@@ -42942,10 +42942,11 @@ and preferred services can easily be configured.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15zf0kj12an9dmdi55ghpkxj053bqzm50fwlhpga4sjzx7qmv5q8"))))
+        (base32 "089ngnx3avqs0xlf25hmpp2sximdc9wxkq9fvmjf87viiz175k1y"))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
           ;; Move the extensions source files to the top level, which is
