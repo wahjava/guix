@@ -1779,7 +1779,10 @@ safety and thread safety guarantees.")
                     (format #f "prefix = ~s" (assoc-ref outputs "tools"))))
                  (invoke "./x.py" "install" "clippy")
                  (invoke "./x.py" "install" "rust-analyzer")
-                 (invoke "./x.py" "install" "rustfmt")))
+                 (invoke "./x.py" "install" "rustfmt")
+                 ;; Get rid of a LOT of duplicates that are also in rust-src.
+                 (delete-file-recursively (string-append (assoc-ref outputs "out")
+                                                         "/lib/rustlib/src/rust"))))
              (add-before 'patch-cargo-checksums 'save-old-library-manifest
                (lambda _
                  (copy-file "library/Cargo.lock" ".old-library-manifest")))
@@ -1837,7 +1840,11 @@ exec -a \"$0\" \"~a\" \"$@\""
                       `("procps" ,procps)
                       (package-native-inputs base-rust)))
       (native-search-paths
-       (cons
+       (cons*
+         (search-path-specification
+          (variable "RUST_SRC_PATH")
+          (separator #f)              ;single entry
+          (files '("lib/rustlib/src/rust/library")))
          ;; For HTTPS access, Cargo reads from a single-file certificate
          ;; specified with $CARGO_HTTP_CAINFO. See
          ;; https://doc.rust-lang.org/cargo/reference/environment-variables.html
