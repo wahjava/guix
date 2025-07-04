@@ -1226,6 +1226,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/elm-ghc9.2.patch	\
   %D%/packages/patches/elm-offline-package-registry.patch	\
   %D%/packages/patches/elm-reactor-static-files.patch		\
+  %D%/packages/patches/emacs-30-fix-compilation-errors.patch	\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
   %D%/packages/patches/emacs-bash-completion-preserve-exit-code.patch	\
   %D%/packages/patches/emacs-bash-completion-preserve-ps1.patch	\
