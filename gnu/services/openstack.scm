@@ -62,8 +62,11 @@
                  (default "/dev/vda"))
   (metadata-host openstack-config-metadata-host
                  (default metadata-host))
-  (metadata-path openstack-config-metadata-path
-                 (default metadata-path))
+  (metadata-port openstack-config-metadata-port
+                 (default metadata-port))
+  ;; List of strings containing the link device names.
+  (links         openstack-config-links
+                 (default '()))
   (log-file      openstack-config-file
                  (default "/var/log/openstack.log"))
   (requirements  openstack-config-requirements
@@ -101,6 +104,59 @@
                     ((and (bytevector? body) body) =>
                      (compose json-string->scm utf8->string)))
                    (throw 'metadata-query-error response)))))))))
+
+(define (openstack-early-network-setup config)
+  (program-file "openstack-early-network-setup"
+                (with-extensions (list guile-netlink)
+                  #~(begin
+                      (use-modules (ip addr)
+                                   (ip link)
+                                   (ip route)
+                                   (srfi srfi-1)
+                                   (ice-9 format)
+                                   (ice-9 match))
+
+                      (define host #$(openstack-config-metadata-host config))
+
+                      ;; XXX: Ensure links is not empty (i.e. no configuration
+                      ;; provided and no link is found on the machine.
+                      (define links (if (null? (openstack-config-links config))
+                                        ;; Retrieve the list of actual network
+                                        ;; links, filtering loopback out.
+                                        (filter-map (lambda (link)
+                                                      (and (= 1 (link-type link))
+                                                           (link-name link)))
+                                                    (get-links))
+                                        (openstack-config-links config)))
+
+                      (define (static-setup link)
+                        (let ((addr+netmask (string-append (match (string-split host #\.)
+                                                             ((a b c d)
+                                                              (format #f "~s.~s.~s." a b c (if (= 1 d) 2 1))))
+                                                           "/24")))
+                          (link-set link #:up #t)
+                          (addr-add link addr+netmask)))
+
+                      (define (server-accessible?)
+                        (let* ((port #$(openstack-config-metadata-port config))
+                               (path "/")
+                               (uri (build-uri 'http
+                                               #:host host
+                                               #:path path
+                                               #:port port))
+                               (response body (http-request uri #:method 'GET))))
+                        (= 200 (response-code response)))
+
+                      ;; Attempt to get a functional network configuration.
+                      (let loop ((links links))
+                        (match links
+                          ((link . rest)
+                           (static-setup link)
+                           (unless (server-accessible?)
+                             (if (null? rest)
+                                 (exit #f)
+                                 (loop rest))))))
+                      #t))))
 
 (define (resize-partition config)
   (define primary-drive (openstack-config-primary-drive config))
@@ -147,6 +203,12 @@
 
 (define (openstack-shepherd-services config)
   (list
+   (shepherd-service
+     (documentation "Setup networking to access metadata server.")
+     (provision '(early-networking))
+     (requirement '(udev)) ; XXX: check if needed.
+     (start #~(lambda _
+                (system* #$(openstack-early-network-setup config)))))
    (shepherd-service
     (documentation "Initialize the machine's host name.")
     (provision '(cloud-host-name))
