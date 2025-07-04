@@ -88,6 +88,7 @@
   #:use-module ((gnu build file-systems)
                 #:select (mount-flags->bit-mask
                           swap-space->flags-bit-mask))
+  #:use-module (gnu build networking)
   #:autoload   (guix channels) (%default-channels channel->code)
   #:use-module (guix gexp)
   #:use-module ((guix packages) #:select (package-version))
@@ -3086,10 +3087,6 @@ Linux @dfn{kernel mode setting} (KMS).")))
 ;;; Static networking.
 ;;;
 
-(define (ipv6-address? str)
-  "Return true if STR denotes an IPv6 address."
-  (false-if-exception (->bool (inet-pton AF_INET6 str))))
-
 (define-compile-time-procedure (assert-valid-address (address string?))
   "Ensure ADDRESS has a valid netmask."
   (unless (cidr->netmask address)
@@ -3105,11 +3102,6 @@ Linux @dfn{kernel mode setting} (KMS).")))
 Write, say, @samp{\"~a/24\"} for a 24-bit network mask.")
                                 address)))))))
   address)
-
-(define (mac-address? str)
-  "Return true if STR is a valid MAC address."
-  (let ((pattern (make-regexp "^([0-9A-Fa-f]{2}:?){6}$")))
-    (false-if-exception (vector? (regexp-exec pattern str)))))
 
 (define-compile-time-procedure (assert-network-link-mac-address (value identity))
   (cond
@@ -3182,32 +3174,6 @@ Write, say, @samp{\"~a/24\"} for a 24-bit network mask.")
                      (and=> (network-route-gateway this-record)
                             ipv6-address?))))
   (gateway     network-route-gateway (default #f)))
-
-(eval-when (expand load eval)
-  (define* (cidr->netmask str #:optional (family AF_INET))
-    "Given @var{str}, a string in CIDR notation (e.g., \"1.2.3.4/24\"), return
-the netmask as a string like \"255.255.255.0\"."
-    (match (string-split str #\/)
-      ((ip (= string->number bits))
-       (let ((mask (ash (- (expt 2 bits) 1)
-                        (- (if (= family AF_INET6) 128 32)
-                           bits))))
-         (inet-ntop family mask)))
-      (_ #f))))
-
-(define (cidr->ip str)
-  "Strip the netmask bit of @var{str}, a CIDR-notation IP/netmask address."
-  (match (string-split str #\/)
-    ((or (ip _) (ip))
-     ip)))
-
-(define* (ip+netmask->cidr ip netmask #:optional (family AF_INET))
-  "Return the CIDR notation (a string) for @var{ip} and @var{netmask}, two
-@var{family} address strings, where @var{family} is @code{AF_INET} or
-@code{AF_INET6}."
-  (let* ((netmask (inet-pton family netmask))
-         (bits    (logcount netmask)))
-    (string-append ip "/" (number->string bits))))
 
 (define (static-networking->hurd-pfinet-options config)
   "Return command-line options for the Hurd's pfinet translator corresponding
