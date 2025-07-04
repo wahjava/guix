@@ -11467,7 +11467,7 @@ system_freetype = true
 system_qhull = true
 
 [rc_options]
-backend=Agg
+backend=TkAgg
 
 [directories]
 basedirlist = ~a,~a
