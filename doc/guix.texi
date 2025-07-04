@@ -45470,21 +45470,6 @@ A custom name that will be displayed on connected clients.
 The list of media folders to serve content from.  Each item is a
 @code{readymedia-media-directory}.
 
-@item @code{pid-directory} (default: @code{"/var/run/readymedia"}) (type: string)
-A folder for ReadyMedia's pid file.  If not existing already, the
-folder will be created as part of the service activation and the
-ReadyMedia user will be assigned ownership.
-
-@item @code{cache-directory} (default: @code{"/var/cache/readymedia"}) (type: string)
-A folder for ReadyMedia's cache files.  If not existing already, the
-folder will be created as part of the service activation and the
-ReadyMedia user will be assigned ownership.
-
-@item @code{log-directory} (default: @code{"/var/log/readymedia"}) (type: string)
-A folder for ReadyMedia's log files.  If not existing already, the
-folder will be created as part of the service activation and the
-ReadyMedia user will be assigned ownership.
-
 @item @code{port} (default: @code{#f}) (type: maybe-integer)
 A custom port that the service will be listening on.
 

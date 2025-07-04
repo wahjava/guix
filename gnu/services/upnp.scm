@@ -42,11 +42,8 @@
             readymedia-configuration?
             readymedia-configuration-readymedia
             readymedia-configuration-port
-            readymedia-configuration-pid-directory
-            readymedia-configuration-cache-directory
             readymedia-configuration-extra-config
             readymedia-configuration-friendly-name
-            readymedia-configuration-log-directory
             readymedia-configuration-media-directories
             readymedia-media-directory
             readymedia-media-directory-path
@@ -77,28 +74,6 @@
               (default readymedia))
   (port readymedia-configuration-port
         (default #f))
-  (pid-directory readymedia-configuration-pid-directory
-                   (default (if for-home?
-                                (string-append (or (getenv "XDG_CONFIG_HOME")
-                                                   (string-append
-                                                    (getenv "HOME") "/.config"))
-                                               "/readymedia")
-                              %readymedia-default-pid-directory)))
-  (cache-directory readymedia-configuration-cache-directory
-                   (default (if for-home?
-                                (string-append (or (getenv "XDG_CACHE_HOME")
-                                                   (string-append
-                                                    (getenv "HOME") "/.cache"))
-                                               "/readymedia")
-                              %readymedia-default-cache-directory)))
-  (log-directory readymedia-configuration-log-directory
-                 (default (if for-home?
-                              (string-append (or (getenv "XDG_STATE_HOME")
-                                                 (string-append
-                                                  (getenv "HOME")
-                                                  "/.local/state"))
-                                             "/readymedia")
-                            %readymedia-default-log-directory)))
   (friendly-name readymedia-configuration-friendly-name
                  (default #f))
   (media-directories readymedia-configuration-media-directories)
@@ -122,15 +97,13 @@
 (define (readymedia-configuration->config-file config)
   "Return the ReadyMedia/MiniDLNA configuration file corresponding to CONFIG."
   (match-record config <readymedia-configuration>
-    (port friendly-name cache-directory log-directory media-directories
-     extra-config home-service?)
+    (port friendly-name media-directories extra-config home-service?)
     (apply mixed-text-file
            "minidlna.conf"
-           (if home-service?
-               (string-append "user=" (number->string (getuid)) "\n")
-               "")
-           "db_dir=" cache-directory "\n"
-           "log_dir=" log-directory "\n"
+           "db_dir=" (if (not home-service?)
+                         %readymedia-default-cache-directory
+                         ".cache/readymedia")
+           "\n"
            (if friendly-name
                (string-append "friendly_name=" friendly-name "\n")
                "")
@@ -155,49 +128,69 @@
 (define (readymedia-shepherd-service config)
   "Return a least-authority ReadyMedia/MiniDLNA Shepherd service."
   (match-record config <readymedia-configuration>
-    (pid-directory cache-directory log-directory media-directories
-     home-service?)
+    (media-directories home-service?)
     (let ((minidlna-conf (readymedia-configuration->config-file config)))
       (shepherd-service
        (documentation "Run the ReadyMedia/MiniDLNA daemon.")
        (provision '(readymedia))
        (requirement (if home-service? '() '(networking user-processes)))
        (start
-        #~(make-forkexec-constructor
-           (list #$(least-authority-wrapper
-                    (file-append (readymedia-configuration-readymedia config)
-                                 "/sbin/minidlnad")
-                    #:name "minidlna"
-                    #:mappings
-                    (cons* (file-system-mapping
-                            (source pid-directory)
-                            (target source)
-                            (writable? #t))
-                           (file-system-mapping
-                            (source cache-directory)
-                            (target source)
-                            (writable? #t))
-                           (file-system-mapping
-                            (source log-directory)
-                            (target source)
-                            (writable? #t))
-                           (file-system-mapping
-                            (source minidlna-conf)
-                            (target source))
-                           (map (lambda (directory)
-                                  (file-system-mapping
-                                   (source (readymedia-media-directory-path directory))
-                                   (target source)))
-                                media-directories))
-                    #:namespaces (delq 'net %namespaces))
-                 "-f"
-                 #$minidlna-conf
-                 "-P"
-                 #$(string-append pid-directory "/" %readymedia-pid-file)
-                 "-S")
-           #:log-file #$(string-append log-directory "/" %readymedia-log-file)
-           #:user #$(if home-service? #f %readymedia-user-account)
-           #:group #$(if home-service? #f %readymedia-user-group)))
+        (if (not home-service?)
+            #~(make-forkexec-constructor
+               (list #$(least-authority-wrapper
+                        (file-append (readymedia-configuration-readymedia
+                                      config)
+                                     "/sbin/minidlnad")
+                        #:name "minidlna"
+                        #:mappings
+                        (cons* (file-system-mapping
+                                (source %readymedia-default-pid-directory)
+                                (target source)
+                                (writable? #t))
+                               (file-system-mapping
+                                (source %readymedia-default-cache-directory)
+                                (target source)
+                                (writable? #t))
+                               (file-system-mapping
+                                (source %readymedia-default-log-directory)
+                                (target source)
+                                (writable? #t))
+                               (file-system-mapping
+                                (source minidlna-conf)
+                                (target source))
+                               (map (lambda (directory)
+                                      (file-system-mapping
+                                       (source (readymedia-media-directory-path
+                                                directory))
+                                       (target source)))
+                                    media-directories))
+                        #:namespaces (delq 'net %namespaces))
+                     "-f"
+                     #$minidlna-conf
+                     "-P"
+                     #$(string-append %readymedia-default-pid-directory
+                                      "/" %readymedia-pid-file)
+                     "-S")
+               #:log-file #$(string-append %readymedia-default-log-directory
+                                           "/" %readymedia-log-file)
+               #:user #$(if home-service? #f %readymedia-user-account)
+               #:group #$(if home-service? #f %readymedia-user-group))
+
+            ;; Relative paths to home directories are not being able to be
+            ;; mapped within the least-authority-wrapper.  So, for home we use
+            ;; the program without wrapping it.
+            #~(make-forkexec-constructor
+               (list #$(file-append (readymedia-configuration-readymedia
+                                     config)
+                                    "/sbin/minidlnad")
+                     "-f" #$(readymedia-configuration->config-file config)
+                     "-P" (string-append "/run/user/" (number->string (getuid))
+                                         "/readymedia/"
+                                         #$%readymedia-pid-file)
+                     "-S")
+               #:log-file (string-append (passwd:dir (getpw (getuid)))
+                                         "/.local/state/readymedia/"
+                                         #$%readymedia-log-file))))
        (stop #~(make-kill-destructor))))))
 
 (define readymedia-accounts
@@ -215,8 +208,7 @@
 (define (readymedia-activation config)
   "Set up directories for ReadyMedia/MiniDLNA."
   (match-record config <readymedia-configuration>
-    (pid-directory cache-directory log-directory media-directories
-     home-service?)
+    (media-directories home-service?)
     (with-imported-modules (source-module-closure '((gnu build activation)))
       #~(begin
           (use-modules (gnu build activation))
@@ -237,9 +229,20 @@
                                                     #~(getuid)
                                                     %readymedia-user-account))
                                        #o755)))
-                    (list #$pid-directory
-                           #$cache-directory
-                           #$log-directory))))))
+                    (list (if #$(not home-service?)
+                              #$%readymedia-default-pid-directory
+                              (string-append "/run/user/"
+                                             (number->string (getuid))
+                                             "/readymedia"))
+                           (if #$(not home-service?)
+                               #$%readymedia-default-cache-directory
+                               (string-append (passwd:dir (getpw (getuid)))
+                                              "/.cache/readymedia"))
+                           (if #$(not home-service?)
+                               #$%readymedia-default-log-directory
+                               (string-append (passwd:dir (getpw (getuid)))
+                                              "/.local/state/"
+                                              "/readymedia"))))))))
 
 (define readymedia-service-type
   (service-type
