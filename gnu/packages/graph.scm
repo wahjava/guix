@@ -861,3 +861,39 @@ level of performance that is comparable (both in memory usage and computation
 time) to that of a pure C/C++ library.")
     (home-page "https://graph-tool.skewed.de/")
     (license license:lgpl3+)))
+
+(define-public qvge
+  (package
+    (name "qvge")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ArsMasiuk/qvge")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mijb0yr71xh9cq43vflbhz6zp1qvhjmvzrs2pbxka63hqk60pfk"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key (configure-flags '())
+                      #:allow-other-keys)
+              (chdir "src")
+              (apply invoke "qmake" "-r" configure-flags))))))
+    (inputs
+     (list qtbase-5
+           qtsvg-5
+           qtx11extras))
+    (home-page "https://arsmasiuk.github.io/qvge/")
+    (synopsis "Visual graph editor")
+    (description "QVGE is a multiplatform graph editor written in C++/Qt.  Its
+main goal is to make possible visually edit two-dimensional graphs in a simple
+and intuitive way.")
+    (license license:expat)))
