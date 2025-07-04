@@ -22,6 +22,7 @@
 ;;; This is based on the file rde/src/rde/system/services/cloud-init.scm from
 ;;; the rde project (https://git.sr.ht/~abcdw/rde)
 (define-module (gnu services openstack)
+  #:use-module (gnu build networking)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
   #:use-module ((gnu packages linux) #:select (e2fsprogs))
@@ -197,6 +198,68 @@ CONFIG, an <openstack-config> record."
     (lambda (port)
       (read port))))
 
+(define-json-mapping <openstack-route-configuration>
+  make-openstack-route-configuration
+  openstack-route-configuration?
+  json->openstack-route-configuration
+  (gateway openstack-route-configuration-gateway)
+  (network openstack-route-configuration-network)
+  (netmask openstack-route-configuration-netmask))
+
+(define-json-mapping <openstack-network-configuration>
+  make-openstack-network-configuration
+  openstack-network-configuration?
+  json->openstack-network-configuration
+  (link    openstack-network-configuration-link)
+  (type    openstack-network-configuration-type)
+  (ip      openstack-network-configuration-ip "ip_address")
+  (netmask openstack-network-configuration-netmask)
+  (routes  openstack-network-configuration-routes "routes"
+           (match-lambda
+             ((? unspecified?)
+              '())
+             (routes
+              (map json->openstack-route-configuration
+                   routes)))))
+
+(define (openstack-configure-network config)
+  (program-file
+   "openstack-configure-network"
+   (with-extensions (list guile-netlink)
+     #~(begin
+         (use-modules (ip addr)
+                      (ip link)
+                      (ip route)
+                      (srfi srfi-1)
+                      (ice-9 format)
+                      (ice-9 match))
+         (let ((metadata (call-with-input-file #$(openstack-dynamic-config-file config)
+                           (lambda (port)
+                             (read port)))))
+           (for-each (lambda (network)
+                       (match-record (scm->openstack-network-configuration network) <openstack-network-configuration>
+                                     (type link ip netmask routes)
+                         ;; XXX: use code from (gnu services base).
+                         ;;
+                         ;; XXX: TODO: DNS setup (see e.g
+                         ;; STATIC-NETWORKING-ETC-FILES in (gnu services base)).
+                         (link-set link #:up #t)
+                         ;; Only static configuration for now.
+                         (unless (string-suffix? "dhcp" type)
+                           (addr-add link (ip+netmask->cidr ip netmask))
+                           (for-each (lambda (route)
+                                       (match route
+                                         (`((network . ,network)
+                                            (netmask . ,netmask)
+                                            (gateway . ,gateway)
+                                            . ,rest)
+                                          (route-add (ip+netmask->cidr network netmask)
+                                                     #:VIA gateway))))))))
+                     (assoc-ref (assoc-ref metadata
+                                           'network)
+                                'networks)))
+         #t))))
+
 (define (resize-partition config)
   (define primary-drive (openstack-config-primary-drive config))
   (program-file
@@ -255,11 +318,19 @@ CONFIG, an <openstack-config> record."
      (start #~(lambda _
                 (system* #$(get-openstack-metadata config)))))
    (shepherd-service
+     (documentation "Configure the machine's network.")
+     (provision '(networking))
+     (requirement '(openstack-metadata))
+     (start #~(lambda _
+                (system* #$(openstack-configure-network config)))))
+   (shepherd-service
     (documentation "Initialize the machine's host name.")
     (provision '(cloud-host-name))
     (requirement '(host-name networking))
     (start #~(lambda _
-               (let* ((metadata #$(read-metadata-file config))
+               (let* ((metadata (call-with-input-file #$(openstack-dynamic-config-file config)
+                                  (lambda (port)
+                                    (read port))))
                       (hostname (assoc-ref (assoc-ref metadata 'meta)
                                            'hostname)))
                  (sethostname hostname))))
