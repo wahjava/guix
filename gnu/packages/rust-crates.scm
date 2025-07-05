@@ -165,6 +165,8 @@
   (crate-source "aho-corasick" "1.1.3"
                 "05mrpkvdgp5d20y2p989f187ry9diliijgwrs254fs9s1m1x6q4f"))
 
+(define rust-alacritty-terminal-0.25.1-dev.828457c rust-alacritty-0.25.1-dev.828457c)
+
 (define rust-alga-0.9.3
   (crate-source "alga" "0.9.3"
                 "1wl4z8ini9269x04g8wwdz1nn3hmmvaaysq4jwhymikyg81kv0jg"))
@@ -1331,6 +1333,10 @@
 (define rust-bitvec-1.0.1
   (crate-source "bitvec" "1.0.1"
                 "173ydyj2q5vwj88k6xgjnfsshs4x9wbvjjv7sm0h36r34hn87hhv"))
+
+(define rust-blade-graphics-0.6.0.e0ec4e7 rust-blade-0.6.0.e0ec4e7)
+(define rust-blade-macros-0.3.0.e0ec4e7 rust-blade-0.6.0.e0ec4e7)
+(define rust-blade-util-0.2.0.e0ec4e7 rust-blade-0.6.0.e0ec4e7)
 
 (define rust-blake2-0.10.6
   (crate-source "blake2" "0.10.6"
@@ -7671,6 +7677,9 @@
 (define rust-jiter-0.7.1
   (crate-source "jiter" "0.7.1"
                 "09fx71x93sh15028pd0f78flv9j4fkvg6lgi22y5gbv83c99mxh7"))
+
+(define rust-jj-lib-0.29.0.e18eb8e rust-jj-0.29.0.e18eb8e)
+(define rust-jj-lib-proc-macros-0.29.0.e18eb8e rust-jj-0.29.0.e18eb8e)
 
 (define rust-jni-0.19.0
   (crate-source "jni" "0.19.0"
