@@ -3932,6 +3932,30 @@ focused on data structures, combinators and iterators,
 without dependencies on unix, str or num.")
     (license license:bsd-2)))
 
+(define-public ocaml-lambdasoup
+  (package
+    (name "ocaml-lambdasoup")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aantron/lambdasoup/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15ppsf8jl2y1f9r3sh41wcgwg8vadc39glwhy8nhijff9qylkpgr"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocaml-markup))
+    (propagated-inputs (list ocaml-camlp-streams))
+    (home-page "https://github.com/aantron/lambdasoup")
+    (synopsis "Functional HTML scraping and rewriting with CSS in OCaml")
+    (description "Lambda Soup is a functional HTML scraping and
+manipulation library for OCaml aimed at being easy to use.")
+    (license license:expat)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
