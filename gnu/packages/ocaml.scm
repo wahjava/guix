@@ -3810,6 +3810,32 @@ written in OCaml and designed for extending OCaml programs.")
 Its UI/UX is inspired by the classic UNIX tsort(1).")
     (license license:expat)))
 
+(define-public ocaml-otoml
+  (package
+    (name "ocaml-otoml")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dmbaturin/otoml/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cchvfwzxrckr4zj5psinq47z2y9lhvb5vyc5hjvi8l7l9vnml3v"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocaml-uutf))
+    (propagated-inputs (list ocaml-menhir))
+    (home-page "https://github.com/dmbaturin/otoml")
+    (synopsis
+     "TOML parsing, manipulation, and pretty-printing library for OCaml")
+    (description
+     "The main goal for writing another TOML library is to provide a library
+for manipulating TOML files, not just reading them.")
+    (license license:expat)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
