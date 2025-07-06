@@ -3836,6 +3836,30 @@ Its UI/UX is inspired by the classic UNIX tsort(1).")
 for manipulating TOML files, not just reading them.")
     (license license:expat)))
 
+(define-public ocaml-jingoo
+  (package
+    (name "ocaml-jingoo")
+    (version "1.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tategakibunko/jingoo/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dris774qigb6adcxwg8nda10jxdnsx40chvcc2la8fs12qb42ss"))))
+    (build-system dune-build-system)
+    (native-inputs (list ocaml-menhir ocaml-re ocaml-uutf))
+    (propagated-inputs (list ocaml-ppx-deriving ocaml-uucp))
+    (arguments
+     `(#:tests? #f))
+    (home-page "https://github.com/tategakibunko/jingoo")
+    (synopsis "OCaml template engine almost compatible with jinja2")
+    (description "Jingoo is OCaml template engine
+almost compatible with Python's Jinja2.")
+    (license license:expat)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
