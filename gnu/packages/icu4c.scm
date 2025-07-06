@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2013, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016, 2017, 2020, 2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Clément Lassieur <clement@lassieur.org>
@@ -123,6 +123,36 @@ C/C++ part.")
     (license x11)
     (home-page "http://site.icu-project.org/")))
 
+(define-public icu4c-75
+  (package
+    (inherit icu4c-76)
+    (name "icu4c")
+    (version "75.1")
+    (source (origin
+              (method url-fetch)
+              (uri (icu4c-uri version))
+              (sha256
+               (base32
+                "1vya31v549pq89kgr02jajwi7gc7qw0mv6n4265pxs6jwkrqv5nb"))))))
+
+(define-public icu4c-73
+  (package
+    (inherit icu4c-76)
+    (name "icu4c")
+    (version "73.1")
+    (source (origin
+              (method url-fetch)
+              (uri (icu4c-uri version))
+              (sha256
+               (base32
+                "0iccpdvc0kvpww5a31k9gjkqigyz016i7v80r9zamd34w4fl6mx4"))
+              (patches
+                (search-patches
+                 "icu4c-icu-22132-fix-vtimezone.patch"
+                 "icu4c-fix-TestHebrewCalendarInTemporalLeapYear.patch"))))))
+
+(define-public icu4c icu4c-73)
+
 (define-public icu4c-71
   (package
     (inherit icu4c-76)
@@ -134,53 +164,9 @@ C/C++ part.")
               (sha256
                (base32 "1gqywaqj9jmdwrng9lm6inyqmi5j2cz36db9dcqg3yk13zjyd9v7"))))))
 
-(define-public icu4c icu4c-71)
-
-(define-public icu4c-73
-  (package
-    (inherit icu4c)
-    (name "icu4c")
-    (version "73.1")
-    (source (origin
-              (method url-fetch)
-              (uri (icu4c-uri version))
-              (sha256
-               (base32
-                "0iccpdvc0kvpww5a31k9gjkqigyz016i7v80r9zamd34w4fl6mx4"))
-              (patches
-               (append
-                (search-patches
-                 "icu4c-icu-22132-fix-vtimezone.patch"
-                 "icu4c-fix-TestHebrewCalendarInTemporalLeapYear.patch")
-                (origin-patches (package-source icu4c))))))))
-
-(define-public icu4c-75
-  (package
-    (inherit icu4c)
-    (name "icu4c")
-    (version "75.1")
-    (source (origin
-              (method url-fetch)
-              (uri (icu4c-uri version))
-              (sha256
-               (base32
-                "1vya31v549pq89kgr02jajwi7gc7qw0mv6n4265pxs6jwkrqv5nb"))))))
-
-(define-public icu4c-76
-  (package
-    (inherit icu4c)
-    (name "icu4c")
-    (version "76.1")
-    (source (origin
-              (method url-fetch)
-              (uri (icu4c-uri version))
-              (sha256
-               (base32
-                "0gjg1zrnqk4vmidqgqx4xbz05898px212gnff8242is7zrmv9b6z"))))))
-
 (define-public icu4c-70
   (package
-    (inherit icu4c)
+    (inherit icu4c-76)
     (version "70.1")
     (source (origin
               (method url-fetch)
@@ -205,7 +191,7 @@ C/C++ part.")
 
 (define-public icu4c-69
   (package
-    (inherit icu4c)
+    (inherit icu4c-76)
     (version "69.1")
     (source (origin
               (method url-fetch)
