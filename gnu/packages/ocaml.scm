@@ -5489,31 +5489,26 @@ collation and locale-sensitive case mappings, and more.")
 
 (define-public ocaml-charinfo-width
   ;; Add LICENSE file and Dune tests
-  (let ((commit "20aaaa6dca8f1e0b1ace55b6f2a8ba5e5910b620"))
-    (package
-      (name "ocaml-charinfo-width")
-      (version (git-version "1.1.0" "1" commit))
-      (home-page "https://github.com/kandu/charinfo_width/")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url home-page)
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "04gil5hxm2jax9paw3i24d8zyzhyl5cphzfyryvy2lcrm3c485q0"))))
-      (build-system dune-build-system)
-      (propagated-inputs
-       (list ocaml-result ocaml-camomile))
-      (native-inputs
-       (list ocaml-ppx-expect))
-      (properties
-       `((upstream-name . "charInfo_width")))
-      (synopsis "Determine column width for a character")
-      (description "This module implements purely in OCaml a character width
+  (package
+    (name "ocaml-charinfo-width")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kandu/charInfo_width")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f4siscbfm03bdgzip3n5m551v6zi8n4vgl69djnxa87mkfim015"))))
+    (build-system dune-build-system)
+    (native-inputs (list ocaml-result ocaml-camomile ocaml-ppx-expect))
+    (properties `((upstream-name . "charInfo_width")))
+    (home-page "https://github.com/kandu/charinfo_width/")
+    (synopsis "Determine column width for a character")
+    (description "This module implements purely in OCaml a character width
 function that follows the prototype of POSIX's wcwidth.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public ocaml-zed
   (package
