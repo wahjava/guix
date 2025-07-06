@@ -106,6 +106,7 @@
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
+  #:use-module (guix build-system dune)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
@@ -195,6 +196,7 @@
   #:use-module (gnu packages networking)
   #:use-module (gnu packages node)
   #:use-module (gnu packages nss)
+  #:use-module (gnu packages ocaml)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages package-management)
@@ -6654,6 +6656,49 @@ w3c webidl files and a binding configuration file.")
 rendering engine entirely written from scratch.  It is small and capable of
 handling many of the web standards in use today.")
     (license license:gpl2+)))
+
+(define-public soupault
+  (package
+    (name "soupault")
+    (version "5.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PataphysicalSociety/soupault/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12l1z8qb0qhcvpk50v2rbiydms3v2pp06iiiv3dsvvq5vj00j2f8"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (inputs (list ocaml-containers
+                  ocaml-fileutils
+                  ocaml-logs
+                  ocaml-fmt
+                  ocaml-lambdasoup
+                  ocaml-markup
+                  ocaml-otoml
+                  ocaml-ezjsonm
+                  ocaml-yaml
+                  ocaml-csv
+                  ocaml-re
+                  ocaml-odate
+                  ocaml-spelll
+                  ocaml-base64
+                  ocaml-jingoo
+                  ocaml-digestif
+                  ocaml-tsort
+                  ocaml-lua-ml
+                  ocaml-cmarkit
+                  ocaml-camomile))
+    (home-page "https://soupault.app/")
+    (synopsis "Static website generator based on HTML element tree rewriting")
+    (description "Soupault (soup-oh) is a static website generator/framework
+    that works with HTML element trees
+    and can automatically manipulate them.")
+    (license license:expat)))
 
 (define-public surfraw
   (let ((commit "ebb8131c7c623ef90d3345cd9d64203693861013")
