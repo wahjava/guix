@@ -3906,6 +3906,32 @@ It can be used for spell-checking.")
   It implements duration printer based on string format.")
     (license license:expat)))
 
+(define-public ocaml-containers
+  (package
+    (name "ocaml-containers")
+    (version "3.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/c-cube/ocaml-containers/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n8vng4g7rmwalp5ag1pl19f5zx1v2yxmj5gdma44s7329jw18ar"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list dune-configurator))
+    (propagated-inputs (list ocaml-either))
+    (home-page "https://c-cube.github.io/ocaml-containers/")
+    (synopsis
+     "Containers is a lightweight extension of OCaml’s standard library")
+    (description "Containers is an extension of OCaml’s standard library
+focused on data structures, combinators and iterators,
+without dependencies on unix, str or num.")
+    (license license:bsd-2)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
