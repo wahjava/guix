@@ -3883,6 +3883,29 @@ almost compatible with Python's Jinja2.")
 It can be used for spell-checking.")
     (license license:bsd-2)))
 
+(define-public ocaml-odate
+  (package
+    (name "ocaml-odate")
+    (version "0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hhugo/odate/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fpr37h0sj7y8qj1b6gvwdk5bhd3x85dgxv4r6ay0q3bzfjlfp8b"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocaml-menhir ocaml-ppx-expect))
+    (home-page "https://github.com/hhugo/odate")
+    (synopsis "Date and duration library in OCaml")
+    (description "Simple date and duration manipulation.
+  It implements duration printer based on string format.")
+    (license license:expat)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
