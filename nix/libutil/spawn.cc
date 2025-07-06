@@ -57,17 +57,164 @@
 #include <linux/filter.h>
 #endif
 
-#if defined(SYS_pivot_root)
+#ifdef SYS_pivot_root
 #define pivot_root(new_root, put_old) (syscall(SYS_pivot_root, new_root,put_old))
 #endif
 
-
-#define CLONE_ENABLED defined(CLONE_NEWNS)
+#ifdef CLONE_NEWNS
+#define CLONE_ENABLED 1
+#else
+#define CLONE_ENABLED 0
+#endif
 
 #if CLONE_ENABLED
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#endif
+
+#ifdef MS_BIND
+#define defined_MS_BIND 1
+#else
+#define defined_MS_BIND 0
+#endif
+
+#ifdef MS_BIND
+#define defined_MS_BIND 1
+#else
+#define defined_MS_BIND 0
+#endif
+
+#ifdef MS_BIND
+#define defined_MS_BIND 1
+#else
+#define defined_MS_BIND 0
+#endif
+
+#ifdef MS_NOATIME
+#define defined_MS_NOATIME 1
+#else
+#define defined_MS_NOATIME 0
+#endif
+
+#ifdef MS_NODEV
+#define defined_MS_NODEV 1
+#else
+#define defined_MS_NODEV 0
+#endif
+
+#ifdef MS_NODIRATIME
+#define defined_MS_NODIRATIME 1
+#else
+#define defined_MS_NODIRATIME 0
+#endif
+
+#ifdef MS_NOEXEC
+#define defined_MS_NOEXEC 1
+#else
+#define defined_MS_NOEXEC 0
+#endif
+
+#ifdef MS_NOSUID
+#define defined_MS_NOSUID 1
+#else
+#define defined_MS_NOSUID 0
+#endif
+
+#ifdef MS_PRIVATE
+#define defined_MS_PRIVATE 1
+#else
+#define defined_MS_PRIVATE 0
+#endif
+
+#ifdef MS_RDONLY
+#define defined_MS_RDONLY 1
+#else
+#define defined_MS_RDONLY 0
+#endif
+
+#ifdef MS_RDONLY
+#define defined_MS_RDONLY 1
+#else
+#define defined_MS_RDONLY 0
+#endif
+
+#ifdef MS_REC
+#define defined_MS_REC 1
+#else
+#define defined_MS_REC 0
+#endif
+
+#ifdef MS_RELATIME
+#define defined_MS_RELATIME 1
+#else
+#define defined_MS_RELATIME 0
+#endif
+
+#ifdef MS_REMOUNT
+#define defined_MS_REMOUNT 1
+#else
+#define defined_MS_REMOUNT 0
+#endif
+
+#ifdef PR_SET_NO_NEW_PRIVS
+#define defined_PR_SET_NO_NEW_PRIVS 1
+#else
+#define defined_PR_SET_NO_NEW_PRIVS 0
+#endif
+
+#ifdef PR_SET_SECCOMP
+#define defined_PR_SET_SECCOMP 1
+#else
+#define defined_PR_SET_SECCOMP 0
+#endif
+
+#ifdef SECCOMP_MODE_FILTER
+#define defined_SECCOMP_MODE_FILTER 1
+#else
+#define defined_SECCOMP_MODE_FILTER 0
+#endif
+
+#ifdef ST_NOATIME
+#define defined_ST_NOATIME 1
+#else
+#define defined_ST_NOATIME 0
+#endif
+
+#ifdef ST_NODEV
+#define defined_ST_NODEV 1
+#else
+#define defined_ST_NODEV 0
+#endif
+
+#ifdef ST_NODIRATIME
+#define defined_ST_NODIRATIME 1
+#else
+#define defined_ST_NODIRATIME 0
+#endif
+
+#ifdef ST_NOEXEC
+#define defined_ST_NOEXEC 1
+#else
+#define defined_ST_NOEXEC 0
+#endif
+
+#ifdef ST_NOSUID
+#define defined_ST_NOSUID 1
+#else
+#define defined_ST_NOSUID 0
+#endif
+
+#ifdef ST_RDONLY
+#define defined_ST_RDONLY 1
+#else
+#define defined_ST_RDONLY 0
+#endif
+
+#ifdef ST_RELATIME
+#define defined_ST_RELATIME 1
+#else
+#define defined_ST_RELATIME 0
 #endif
 
 namespace nix {
@@ -288,7 +435,7 @@ void setIDsAction(SpawnContext & ctx)
 void setNoNewPrivsAction(SpawnContext & ctx)
 {
   if(ctx.setNoNewPrivs)
-#if __linux__ && defined(PR_SET_NO_NEW_PRIVS)
+#if __linux__ && defined_PR_SET_NO_NEW_PRIVS
       if(prctl(PR_SET_NO_NEW_PRIVS, 0, 0, 0, 0) == -1)
           throw SysError("setting PR_SET_NO_NEW_PRIVS");
 #else
@@ -299,7 +446,7 @@ void setNoNewPrivsAction(SpawnContext & ctx)
 void addSeccompFilterAction(SpawnContext & ctx)
 {
     if(ctx.addSeccompFilter) {
-#if __linux__ && defined(PR_SET_SECCOMP) && defined(SECCOMP_MODE_FILTER)
+#if __linux__ && defined_PR_SET_SECCOMP && defined_SECCOMP_MODE_FILTER
         /* We use no extra functionality from the seccomp system call, so
          * just use prctl. */
         if(ctx.seccompFilter.size() > USHRT_MAX)
@@ -458,7 +605,7 @@ void setHostAndDomainAction(SpawnContext & sctx)
 
 void makeFilesystemsPrivateAction(SpawnContext & sctx)
 {
-#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_REC) && defined(MS_PRIVATE)
+#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined_MS_REC && defined_MS_PRIVATE
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
     if((ctx.cloneFlags & CLONE_NEWNS) != 0) {
         if(mount(0, "/", 0, MS_REC|MS_PRIVATE, 0) == -1)
@@ -470,7 +617,7 @@ void makeFilesystemsPrivateAction(SpawnContext & sctx)
 
 void makeChrootSeparateFilesystemAction(SpawnContext & sctx)
 {
-#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_BIND)
+#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined_MS_BIND
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
     if(((ctx.cloneFlags & CLONE_NEWNS) != 0) && ctx.doChroot) {
         /* Bind-mount chroot directory to itself, to treat it as a different
@@ -493,25 +640,25 @@ static int statfsToMountFlags(int f_flags)
 {
 #if HAVE_SYS_MOUNT_H && HAVE_STATVFS
     int ret = 0;
-#if defined(ST_RDONLY) && defined(MS_RDONLY)
+#if defined_ST_RDONLY && defined_MS_RDONLY
     if((f_flags & ST_RDONLY) != 0)     ret |= MS_RDONLY;
 #endif
-#if defined(ST_NOSUID) && defined(MS_NOSUID)
+#if defined_ST_NOSUID && defined_MS_NOSUID
     if((f_flags & ST_NOSUID) != 0)     ret |= MS_NOSUID;
 #endif
-#if defined(ST_NODEV) && defined(MS_NODEV)
+#if defined_ST_NODEV && defined_MS_NODEV
     if((f_flags & ST_NODEV) != 0)      ret |= MS_NODEV;
 #endif
-#if defined(ST_NOEXEC) && defined(MS_NOEXEC)
+#if defined_ST_NOEXEC && defined_MS_NOEXEC
     if((f_flags & ST_NOEXEC) != 0)     ret |= MS_NOEXEC;
 #endif
-#if defined(ST_NOATIME) && defined(MS_NOATIME)
+#if defined_ST_NOATIME && defined_MS_NOATIME
     if((f_flags & ST_NOATIME) != 0)    ret |= MS_NOATIME;
 #endif
-#if defined(ST_NODIRATIME) && defined(MS_NODIRATIME)
+#if defined_ST_NODIRATIME && defined_MS_NODIRATIME
     if((f_flags & ST_NODIRATIME) != 0) ret |= MS_NODIRATIME;
 #endif
-#if defined(ST_RELATIME) && defined(MS_RELATIME)
+#if defined_ST_RELATIME && defined_MS_RELATIME
     if((f_flags & ST_RELATIME) != 0)   ret |= MS_RELATIME;
 #endif
     return ret;
@@ -523,7 +670,7 @@ static int statfsToMountFlags(int f_flags)
 
 void bindMount(Path source, Path target, bool readOnly)
 {
-#if HAVE_SYS_MOUNT_H && defined(MS_BIND)
+#if HAVE_SYS_MOUNT_H && defined_MS_BIND
     struct stat st;
     if (lstat(source.c_str(), &st) == -1)
         throw SysError(format("getting attributes of path `%1%'") % source);
@@ -571,7 +718,7 @@ void bindMount(Path source, Path target, bool readOnly)
     if (mount(source.c_str(), target.c_str(), 0, MS_BIND|MS_REC, 0) == -1)
         throw SysError(format("bind mount from `%1%' to `%2%' failed") % source % target);
     if(readOnly) {
-#if defined(MS_REMOUNT) && defined(MS_RDONLY)
+#if defined_MS_REMOUNT && defined_MS_RDONLY
         /* Extra flags passed with MS_BIND are ignored, hence the extra
            MS_REMOUNT.  */
         unsigned long mount_flags = MS_BIND | MS_REMOUNT | MS_RDONLY;
@@ -599,7 +746,7 @@ void mountIntoChroot(std::map<Path, Path> filesInChroot,
                      set<Path> readOnlyFiles,
                      Path chrootRootDir)
 {
-#if HAVE_SYS_MOUNT_H && defined(MS_BIND)
+#if HAVE_SYS_MOUNT_H && defined_MS_BIND
     for(auto i = filesInChroot.begin(); i != filesInChroot.end(); i++) {
         Path source = i->second;
         Path target = chrootRootDir + i->first;
@@ -614,7 +761,7 @@ void mountIntoChroot(std::map<Path, Path> filesInChroot,
 
 void mountIntoChrootAction(SpawnContext & sctx)
 {
-#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined(MS_BIND)
+#if CLONE_ENABLED && HAVE_SYS_MOUNT_H && defined_MS_BIND
     CloneSpawnContext & ctx = (CloneSpawnContext &) sctx;
     if((ctx.cloneFlags & CLONE_NEWNS) != 0 && ctx.doChroot) {
         mountIntoChroot(ctx.filesInChroot, ctx.readOnlyFilesInChroot, ctx.chrootRootDir);

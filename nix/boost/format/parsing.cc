@@ -253,6 +253,7 @@ namespace detail {
       {
       case 'X':
         fpar->ref_state_.flags_ |= std::ios::uppercase;
+        __attribute__ ((fallthrough));
       case 'p': // pointer => set hex.
       case 'x':
         fpar->ref_state_.flags_ &= ~std::ios::basefield;
@@ -266,6 +267,7 @@ namespace detail {
 
       case 'E':
         fpar->ref_state_.flags_ |=  std::ios::uppercase;
+        __attribute__ ((fallthrough));
       case 'e':
         fpar->ref_state_.flags_ &= ~std::ios::floatfield;
         fpar->ref_state_.flags_ |=  std::ios::scientific;
@@ -277,6 +279,7 @@ namespace detail {
       case 'f':
         fpar->ref_state_.flags_ &= ~std::ios::floatfield;
         fpar->ref_state_.flags_ |=  std::ios::fixed;
+        __attribute__ ((fallthrough));
       case 'u':
       case 'd':
       case 'i':

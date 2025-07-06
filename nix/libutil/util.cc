@@ -223,7 +223,7 @@ Path readLink(const Path & path)
     struct stat st = lstat(path);
     if (!S_ISLNK(st.st_mode))
         throw Error(format("`%1%' is not a symlink") % path);
-    char buf[st.st_size];
+    char buf[PATH_MAX];
     ssize_t rlsize = readlink(path.c_str(), buf, st.st_size);
     if (rlsize == -1)
         throw SysError(format("reading symbolic link '%1%'") % path);
@@ -481,7 +481,7 @@ static void copyFileRecursively(int sourceroot, const Path &source,
 	copyFile(sourceFd, destinationFd);
 	fchown(destinationFd, st.st_uid, st.st_gid);
     } else if (S_ISLNK(st.st_mode)) {
-	char target[st.st_size + 1];
+	char target[PATH_MAX + 1];
 	ssize_t result = readlinkat(sourceroot, source.c_str(), target, st.st_size);
 	if (result != st.st_size) throw SysError("reading symlink target");
 	target[st.st_size] = '\0';
@@ -752,7 +752,8 @@ string drainFD(int fd)
 void waitForMessage(int fd, const char *message)
 {
     size_t size = strlen(message);
-    char str[size] = { '\0' };
+    char *str = (char *) alloca(size);
+    str[0] = 0;
     readFull(fd, (unsigned char*)str, size);
     if (strncmp(str, message, size) != 0)
 	throw Error(format("did not receive message '%1%' on file descriptor %2%")
@@ -1348,7 +1349,7 @@ bool hasSuffix(const string & s, const string & suffix)
 
 void expect(std::istream & str, const string & s)
 {
-    char s2[s.size()];
+    char *s2 = (char *) alloca(s.size());
     str.read(s2, s.size());
     if (string(s2, s.size()) != s)
         throw FormatError(format("expected string `%1%'") % s);

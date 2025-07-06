@@ -715,7 +715,7 @@ public:
 
     void timedOut() override;
 
-    string key()
+    string key() override
     {
         /* Ensure that derivations get built in order of their name,
            i.e. a derivation named "aardvark" always comes before
@@ -724,7 +724,7 @@ public:
         return "b$" + storePathToName(drvPath) + "$" + drvPath;
     }
 
-    void work();
+    void work() override;
 
     Path getDrvPath()
     {
@@ -770,8 +770,8 @@ private:
     void deleteTmpDir(bool force);
 
     /* Callback used by the worker to write to the log. */
-    void handleChildOutput(int fd, const string & data);
-    void handleEOF(int fd);
+    void handleChildOutput(int fd, const string & data) override;
+    void handleEOF(int fd) override;
 
     /* Return the set of (in)valid paths. */
     PathSet checkPathValidity(bool returnValid, bool checkHash);
@@ -1629,15 +1629,15 @@ void chmod_(const Path & path, mode_t mode)
 
 
 /* UID and GID of the build user inside its own user namespace.  */
-static const uid_t guestUID = 30001;
-static const gid_t guestGID = 30000;
+static const uid_t defaultGuestUID = 30001;
+static const gid_t defaultGuestGID = 30000;
 
 /* Initialize the user namespace of CHILD.  */
 static void initializeUserNamespace(pid_t child,
 				    uid_t hostUID = getuid(),
 				    gid_t hostGID = getgid(),
-                                    uid_t guestUID = guestUID,
-                                    gid_t guestGID = guestGID)
+                                    uid_t guestUID = defaultGuestUID,
+                                    gid_t guestGID = defaultGuestGID)
 {
     writeFile("/proc/" + std::to_string(child) + "/uid_map",
 	      (format("%d %d 1") % guestUID % hostUID).str());
@@ -2687,14 +2687,14 @@ void DerivationGoal::startBuilder()
             (format(
                 "nixbld:x:%1%:%2%:Nix build user:/:/noshell\n"
                 "nobody:x:65534:65534:Nobody:/:/noshell\n")
-                % (buildUser.enabled() ? buildUser.getUID() : guestUID)
-                % (buildUser.enabled() ? buildUser.getGID() : guestGID)).str());
+                % (buildUser.enabled() ? buildUser.getUID() : defaultGuestUID)
+                % (buildUser.enabled() ? buildUser.getGID() : defaultGuestGID)).str());
 
         /* Declare the build user's group so that programs get a consistent
            view of the system (e.g., "id -gn"). */
         writeFile(chrootRootDir + "/etc/group",
             (format("nixbld:!:%1%:\n")
-                % (buildUser.enabled() ? buildUser.getGID() : guestGID)).str());
+                % (buildUser.enabled() ? buildUser.getGID() : defaultGuestGID)).str());
 
         if (fixedOutput) {
             /* Fixed-output derivations typically need to access the network,

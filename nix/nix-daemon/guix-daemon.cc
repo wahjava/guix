@@ -248,7 +248,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
 	    fprintf (stderr, _("error: %s: invalid number of rounds\n"), arg);
 	    exit (EXIT_FAILURE);
 	  }
-	settings.set ("build-repeat", std::to_string (std::max (0UL, n - 1)));
+	settings.set ("build-repeat", std::to_string (n - 1));
 	break;
       }
     case GUIX_OPT_IMPERSONATE_LINUX_26:

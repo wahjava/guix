@@ -129,24 +129,27 @@ std::vector<struct sock_filter> seccompMatchu64(std::vector<struct sock_filter> 
     out.push_back(BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offset));
     size_t jmp1Index = out.size();
 
-    out.push_back(BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K,
+    uint32_t endian_corrected_value_lower, endian_corrected_value_higher;
+
 #ifdef WORDS_BIGENDIAN
-                           (uint32_t)((value >> 32) & 0xffffffff),
+    endian_corrected_value_lower = (uint32_t)((value >> 32) & 0xffffffff);
+    endian_corrected_value_higher = (uint32_t)(value & 0xffffffff);
 #else
-                           (uint32_t)(value & 0xffffffff),
+    endian_corrected_value_lower = (uint32_t)(value & 0xffffffff);
+    endian_corrected_value_higher = (uint32_t)((value >> 32) & 0xffffffff);
 #endif
-                           0,
+ 
+
+    out.push_back(BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K,
+                          endian_corrected_value_lower,
+                          0,
                            /* To be fixed up */
                            0));
     /* Load higher-addressed 32 bits */
     out.push_back(BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offset + (uint32_t)sizeof(uint32_t)));
     size_t jmp2Index = out.size();
     out.push_back(BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K,
-#ifdef WORDS_BIGENDIAN
-                           (uint32_t)(value & 0xffffffff),
-#else
-                           (uint32_t)((value >> 32) & 0xffffffff),
-#endif
+                           endian_corrected_value_higher,
                            0,
                            /* To be fixed up */
                            0));

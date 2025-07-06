@@ -28,7 +28,11 @@ CLEANFILES += %D%/libstore/schema.sql.hh
 noinst_LIBRARIES = libformat.a libutil.a libstore.a
 
 # Use '-std=c++11' for 'std::shared_ptr', 'auto', lambdas, and more.
-AM_CXXFLAGS = -Wall -std=c++11
+AM_CXXFLAGS = -Wall -std=c++11 -Werror -Wall -Wextra -pedantic \
+  -Wno-invalid-utf8                 \
+  -Wno-unused-parameter             \
+  -Wno-missing-field-initializers   \
+  -Wno-unneeded-internal-declaration
 
 libformat_a_SOURCES =				\
   %D%/boost/format/free_funcs.cc		\
