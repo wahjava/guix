@@ -3090,8 +3090,8 @@ doing practical, real world data analysis in Python.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/pandas-dev/pandas")
-             (commit (string-append "v" version))))
+              (url "https://github.com/pandas-dev/pandas")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "00f6jnplwg7iffnxdm4hpfls0ncbarc23933xq1rm5nk5g8dcldx"))))
@@ -3119,6 +3119,9 @@ doing practical, real world data analysis in Python.")
                      ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[lxml]
                      ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[etree]
                      "test_wrong_url"
+                     ;; skip test with incompatibility expected test environment
+                     ;; see also https://github.com/pandas-dev/pandas/issues/60589
+                     "test_array_inference"
                      ;; TODO: Missing input
                      "TestS3"
                      "s3"
