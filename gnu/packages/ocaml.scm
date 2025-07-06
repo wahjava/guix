@@ -5463,30 +5463,27 @@ the plugins facilitate extensibility, and the frontends serve as entry points.")
 (define-public ocaml-camomile
   (package
     (name "ocaml-camomile")
-    (version "1.0.2")
-    (home-page "https://github.com/yoriyuki/Camomile")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append home-page "/releases/download/" version
-                                  "/camomile-" version ".tbz"))
-              (sha256
-               (base32
-                "0chn7ldqb3wyf95yhmsxxq65cif56smgz1mhhc7m0dpwmyq1k97h"))))
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ocaml-community/Camomile/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1br1as5xb8w0jds7yi23546nrf6sag8gkzkv5avkdlf3agwmfj8y"))))
     (build-system dune-build-system)
     (arguments
-     `(#:tests? #f ; Tests fail, see https://github.com/yoriyuki/Camomile/issues/82
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'fix-usr-share
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* '("Camomile/dune" "configure.ml")
-               (("/usr/share") (string-append (assoc-ref outputs "out") "/share")))
-             #t)))))
-    (synopsis "Comprehensive Unicode library")
-    (description "Camomile is a Unicode library for OCaml.  Camomile provides
-Unicode character type, UTF-8, UTF-16, UTF-32 strings, conversion to/from about
-200 encodings, collation and locale-sensitive case mappings, and more.  The
-library is currently designed for Unicode Standard 3.2.")
+     `(#:tests? #f))
+    (propagated-inputs (list ocaml-camlp-streams dune-site))
+    (home-page "https://github.com/ocaml-community/Camomile")
+    (synopsis "Unicode library for OCaml")
+    (description
+     "Camomile is a Unicode library for ocaml.
+Camomile provides Unicode character type, UTF-8, UTF-16, UTF-32 strings,
+conversion to/from about 200 encodings,
+collation and locale-sensitive case mappings, and more.")
     ;; with an exception for linked libraries to use a different license
     (license license:lgpl2.0+)))
 
