@@ -3760,6 +3760,32 @@ representation of the data.")
     (description
      "Cmarkit is an OCaml libary for parsing the CommonMark specification.")
     (license license:isc)))
+
+(define-public ocaml-lua-ml
+  (package
+    (name "ocaml-lua-ml")
+    (version "0.9.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lindig/lua-ml/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rz9v7wss4i8jc87c9rmn7b3mhv1cdnxy1kcln6ibbd574gm7h4h"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocamlbuild opam-installer ocaml-menhir))
+    (home-page "https://github.com/lindig/lua-ml")
+    (synopsis
+     "Lua-ML is an embeddable Lua 2.5 interpreter implemented in OCaml")
+    (description
+     "Lua-ML is an implementation of the Lua 2.5 programming language
+written in OCaml and designed for extending OCaml programs.")
+    (license license:bsd-2)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
