@@ -749,12 +749,11 @@ string drainFD(int fd)
 
 
 /* Wait on FD until MESSAGE has been read.  */
-void waitForMessage(int fd, const char *message)
+void waitForMessage(int fd, const string & message)
 {
-    size_t size = strlen(message);
-    char str[size] = { '\0' };
-    readFull(fd, (unsigned char*)str, size);
-    if (strncmp(str, message, size) != 0)
+    string str(message.length(), '\0');
+    readFull(fd, (unsigned char*)str.data(), message.length());
+    if (str != message)
 	throw Error(format("did not receive message '%1%' on file descriptor %2%")
 	    % message % fd);
 }
