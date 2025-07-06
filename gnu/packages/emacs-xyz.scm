@@ -44186,6 +44186,37 @@ move in the tree to go back to previous buffer states.  To use vundo, type
 should pop up.")
     (license license:gpl3+)))
 
+(define-public emacs-hardcore-mode
+  ;; Master tip has improvements like autoload cookie and customize group
+  (let ((commit "b1dda19692b4a7a58a689e81784a9b35be39e70d")
+        (revision "1"))
+    (package
+      (name "emacs-hardcore-mode")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/magnars/hardcore-mode.el")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "124k803pgxc7fz325yy6jcyam69f5fk9kdwfgmnwwca9ablq4cfb"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        ;; there are no tests
+        #:tests? #f))
+    (synopsis "Disable arrow keys and (optionally) backspace and return")
+    (description
+     "This package disables arrow keys and (in its default state) backspace
+and return, displaying a message on the minibuffer advising the corresponding
+`C-` keystroke.  For those not hardcore enough, the variables
+@code{too-hardcore-backspace} and @code{too-hardcore-return} can be set to
+@code{t} in order to keep the behavior of these keys.")
+    (home-page "https://github.com/magnars/hardcore-mode.el")
+    (license license:gpl3+))))
+
 (define-public emacs-hare-mode
   ;; XXX: Upstream did not tag any commit.  Using "Version:" keyword as base
   ;; version.
