@@ -3860,6 +3860,29 @@ for manipulating TOML files, not just reading them.")
 almost compatible with Python's Jinja2.")
     (license license:expat)))
 
+(define-public ocaml-spelll
+  (package
+    (name "ocaml-spelll")
+    (version "0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/c-cube/spelll/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rx8i98wqn8pp5rzb185i1xl4q40m06242gms1xp9jnq19s1z3ww"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (native-inputs (list ocaml-seq ocaml-stdlib-shims))
+    (home-page "https://github.com/c-cube/spelll")
+    (synopsis "Fuzzy string searching, using Levenshtein automaton")
+    (description "Fuzzy string searching, using Levenshtein automaton.
+It can be used for spell-checking.")
+    (license license:bsd-2)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
