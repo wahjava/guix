@@ -3786,6 +3786,30 @@ representation of the data.")
 written in OCaml and designed for extending OCaml programs.")
     (license license:bsd-2)))
 
+(define-public ocaml-tsort
+  (package
+    (name "ocaml-tsort")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dmbaturin/ocaml-tsort/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ymgrw5zb0zdr6gl7ng60s21cnlg7zchhpchs7nxchb16if6637y"))))
+    (build-system dune-build-system)
+    (arguments
+     `(#:tests? #f))
+    (home-page "https://github.com/dmbaturin/ocaml-tsort")
+    (synopsis
+     "Easy to use and user-friendly topological sort module for OCaml")
+    (description
+     "ocaml-tsort is a library for sorting graphs in topological order.
+Its UI/UX is inspired by the classic UNIX tsort(1).")
+    (license license:expat)))
+
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
