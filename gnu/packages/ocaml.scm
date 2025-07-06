@@ -3735,6 +3735,31 @@ format.  It can process XML documents without a complete in-memory
 representation of the data.")
     (license license:isc)))
 
+(define-public ocaml-cmarkit
+  (package
+    (name "ocaml-cmarkit")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dbuenzli/cmarkit/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cgqfj6ginpq53nngkr06gahmcqq47glc9rzb1vlw94rkzsqqvrc"))))
+    (build-system ocaml-build-system)
+    (arguments
+     `(#:tests? #f
+       #:build-flags (list "build")
+       #:phases (modify-phases %standard-phases
+                  (delete 'configure))))
+    (native-inputs (list ocamlbuild opam-installer ocaml-topkg ocaml-cmdliner))
+    (home-page "https://erratique.ch/software/cmarkit")
+    (synopsis "CommonMark parser and renderer for OCaml")
+    (description
+     "Cmarkit is an OCaml libary for parsing the CommonMark specification.")
+    (license license:isc)))
 (define-public ocaml-gen
   (package
     (name "ocaml-gen")
