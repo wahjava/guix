@@ -3244,8 +3244,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "7245089d3226de41ab55faee62ffe326f6efcb69")
-        (version "2025.06.01")
+  (let ((commit "3880cb3214ca5ab89553093781a075d15722863d")
+        (version "2025.07.02")
         (revision "0"))
     (package
       (name "openscad")
@@ -3261,13 +3261,12 @@ ontinuous-time and discret-time expressions.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "0lynjxa5y9wi443vxgaj2r8lr98dyfxinq7n4gcw9gz7cfc52a4a"))
-         (patches (search-patches
-                   "openscad-fix-path-in-expected-test-results-to-acommodate-diff.patch"))
+          (base32 "1rqmgqclqh3lblzff3y7fyxjzw1440pskss0c3p8m1fliqv668qh"))
          (file-name (git-file-name name version))))
       (build-system qt-build-system)
       (arguments
        (list
+        #:out-of-source? #f
         #:configure-flags
         #~(list "-DCMAKE_BUILD_TYPE=Release"
                 "-DUSE_BUILTIN_CLIPPER2=OFF"
@@ -3282,7 +3281,8 @@ ontinuous-time and discret-time expressions.")
                 (string-append "-DOPENSCAD_COMMIT="
                                #$commit)
                 "-DENABLE_EGL=ON"
-                "-DENABLE_GLX=ON")
+                "-DENABLE_GLX=ON"
+                "-B./build")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-source
@@ -3310,20 +3310,13 @@ ontinuous-time and discret-time expressions.")
                   ;; Use the system sanitizers-cmake module.
                   (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
                    (string-append (assoc-ref inputs "sanitizers-cmake")
-                                  "/share/sanitizers-cmake/cmake")))
-                ;; Fix test-tool expecting build directory to be a direct
-                ;; subdirectory of the source directory (see
-                ;; https://github.com/openscad/openscad/issues/5937).
-                (substitute* "tests/test_cmdline_tool.py"
-                  (("build_to_test_sources = \"../../tests\"")
-                   "build_to_test_sources = \"../../source/tests\""))))
+                                  "/share/sanitizers-cmake/cmake")))))
+            (add-before 'build 'create-build-dir
+              (lambda _
+                (mkdir-p "./build")
+                (chdir "./build")))
             (add-before 'check 'patch-tests
               (lambda _
-                ;; Fix tests expecting build directory to be a direct descendant
-                ;; of the source dir (see
-                ;; https://github.com/openscad/openscad/issues/5938).
-                (copy-recursively "../source/color-schemes" "./color-schemes")
-                (copy-recursively "../source/shaders" "./shaders")
                 ;; Required for fontconfig
                 (setenv "HOME" "/tmp"))))))
       (inputs (list boost
