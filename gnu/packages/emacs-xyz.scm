@@ -211,6 +211,7 @@
   #:use-module (gnu packages emacs-build)
   #:use-module (gnu packages enchant)
   #:use-module (gnu packages fonts)
+  #:use-module (gnu packages fpga)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages games)
   #:use-module (gnu packages gawk)
@@ -44159,6 +44160,49 @@ for pdb allowing completion in a @code{*gud-pdb*} buffer.")
 be useful when working with the bitbake files in Yocto and OpenEmbedded
 projects.")
    (license license:gpl3+)))
+
+(define-public emacs-vunit-mode
+  (let ((commit "e730a771355dd02c92dedfe3aaea1889d523c198")
+        (revision "0"))
+    (package
+      (name "emacs-vunit-mode")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/embed-me/vunit-mode/")
+                (commit commit)))
+         (sha256
+          (base32
+           "1nrqiwyrngpr60c5i6438fghywgs7wf4yyb4h6a7zmih4q76z8rs"))
+         (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:test-command #~(list "make" "tests")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'install 'patch-autoloads
+              ;; Required to avoid errors during build phase.
+              (lambda _
+                (substitute* "vunit-mode-autoloads.el"
+                  ((";;; Code:")
+                   ";;; Code:\n(require 'hydra)"))))
+            (add-after 'unpack 'patch-vunit-executable
+              (lambda* (#:key inputs #:allow-other-keys)
+                (emacs-substitute-variables "vunit-mode.el"
+                  ("vunit-python-executable"
+                   (search-input-file inputs "/bin/python3"))))))))
+      (native-inputs (list emacs-el-mock))
+      (inputs (list python))
+      (propagated-inputs (list emacs-hydra python-vunit))
+      (home-page "https://github.com/embed-me/vunit-mode/")
+      (synopsis "Emacs front end to @code{python-vunit}")
+      (description
+       "This emacs package can be used to interface with VUnit, a testing
+framework for VHDL/SystemVerilog.")
+      (license license:gpl3+))))
 
 (define-public emacs-vundo
   (package
