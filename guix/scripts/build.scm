@@ -3,6 +3,7 @@
 ;;; Copyright © 2013 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2025 Simon Tournier <zimon.toutoune@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -32,6 +33,8 @@
   #:use-module (guix gexp)
   #:use-module (guix profiles)
   #:use-module (guix diagnostics)
+  #:use-module (guix discovery)
+  #:use-module ((guix modules) #:select (file-name->module-name))
   #:autoload   (guix http-client) (http-fetch http-get-error?)
   #:autoload   (guix scripts graph) (%bag-node-type)
   #:autoload   (guix graph) (node-back-edges)
@@ -40,6 +43,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-35)
@@ -243,15 +247,75 @@ talking to a remote daemon\n")))
 (define set-build-options-from-command-line*
   (store-lift set-build-options-from-command-line))
 
+(define (check-collision-load-path folder)
+  "Check if FOLDER contains module collision."
+  (define path
+    (if (string-suffix? "/" folder)
+        (string-drop-right folder 1)
+        folder))
+
+  (define (drop-directory directory)
+    (let ((len (1+ (string-length directory)))) ;1+: Remove first slash.
+      (lambda (file)
+        (string-drop file len))))
+
+  (define local-files
+    (begin
+      (unless (file-exists? path)
+        ;; Error handling in 'scheme-files' is hidden.
+        (warning (G_ "No file or directory '~a'~%") path))
+      (map (drop-directory path)
+           (scheme-files path)))) ;Return empty list when directory doesn't exist.
+
+  (unless (null? local-files)
+    (let loop-channels ((package-module-paths (%package-module-path))
+                        (matched-files '()))
+      (match package-module-paths
+        ((store-path . others)
+         (let ((channel-files
+                (let-values (((directory directory*)
+                              (match store-path
+                                ((directory . prefix)
+                                 (values directory
+                                         (string-append directory "/" prefix)))
+                                (directory
+                                 (values directory directory)))))
+                  (map (drop-directory directory)
+                       ;; Don't read the files content:
+                       ;; traverse only directory* and the sub-directories.
+                       (scheme-files directory*)))))
+
+           (let loop ((files local-files)
+                      (matches matched-files)
+                      (counter 0))     ;Avoid to traverse matches at each loop
+             (if (= counter 3)
+                 (warning (G_ "Several modules appear twice as~{ '~s'~}. Is it expected under '~a'?~%")
+                          (map file-name->module-name matches) path)
+                 (match files
+                   ((file . rest)
+                    (if (member file channel-files string=?)
+                        (loop rest (cons file matches) (1+ counter))
+                        (loop rest matches counter)))
+                   (()
+                    (loop-channels others matches)))))))
+        (()
+         (for-each (lambda (file)
+                     (warning (G_ "The module '~s' appears twice.  Is it expected under '~a'?~%")
+                              (file-name->module-name file) path))
+                   matched-files))))))
+
 (define %standard-build-options
   ;; List of standard command-line options for tools that build something.
   (list (option '(#\L "load-path") #t #f
                 (lambda (opt name arg result . rest)
-                  ;; XXX: Imperatively modify the search paths.
-                  (%package-module-path (cons arg (%package-module-path)))
-                  (%patch-path (cons arg (%patch-path)))
-                  (set! %load-path (cons arg %load-path))
-                  (set! %load-compiled-path (cons arg %load-compiled-path))
+                  (begin
+                    ;; Check for module collision
+                    (check-collision-load-path arg)
+                    ;; XXX: Imperatively modify the search paths.
+                    (%package-module-path (cons arg (%package-module-path)))
+                    (%patch-path (cons arg (%patch-path)))
+                    (set! %load-path (cons arg %load-path))
+                    (set! %load-compiled-path (cons arg %load-compiled-path)))
 
                   (apply values (cons result rest))))
         (option '(#\K "keep-failed") #f #f
