@@ -91,12 +91,14 @@
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages music)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages pulseaudio)
@@ -3393,6 +3395,131 @@ assembler, and debugger for the Intel 8085 microprocessor.
        "A PlayStation emulator based on PCSX-df Project with bugfixes and
 improvements.")
       (license license:gpl2+))))
+
+(define pcsx2-patches
+  (let ((commit "fad1fa9a1461bc6893d587d59363fcbc2bac6161")
+        (revision "0"))
+    (package
+      (name "pcsx2-patches")
+      (version (git-version "2025.7.4" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+	       (url "https://github.com/PCSX2/pcsx2_patches")
+	       (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "09z0byrcxv9j226mfp452hpdp5kqql0kjw6l8vqky8baly54wwan"))))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+	    (add-before 'install 'compress
+	      (lambda _ (apply invoke "7z" "a" "-r" "patches.zip"
+			       (find-files "patches")))))
+        #:install-plan #~(list '("patches.zip" "patches.zip"))))
+      (native-inputs (list p7zip))
+      (home-page "https://github.com/PCSX2/pcsx2_patches")
+      (synopsis "PCSX2 widescreen and de-interlacing patches")
+      (description "This package provides game-specific widescreen and
+de-interlacing patches for use with PCSX2.")
+      (license license:gpl3+))))           ;same as pcsx2
+
+(define-public pcsx2
+  (package
+    (name "pcsx2")
+    (version "2.1.190")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PCSX2/pcsx2")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09x62kqpj1iz25n2xw86vwq7f883svmcgc58yws9rhzya5w02crk"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (substitute* "pcsx2/Pcsx2Config.cpp"
+	      (("Path::Canonicalize\\(Path::GetDirectory\\(program_path\\)\\);")
+	       "Path::Canonicalize(
+((std::string)Path::GetDirectory(program_path)).append(\"/../share/\"));"))
+            (delete-file-recursively "3rdparty/d3d12memalloc")
+            (delete-file-recursively "3rdparty/winpixeventruntime")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:test-target "unittests"
+      #:parallel-build? #t
+      #:configure-flags
+      #~(list "-DCMAKE_C_COMPILER=clang"
+              "-DCMAKE_CXX_COMPILER=clang++"
+              "-DCMAKE_PREFIX_PATH=\"$PWD/deps\""
+              "-GNinja")
+      #:imported-modules `((guix build copy-build-system)
+                           ,@%cmake-build-system-modules)
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'build
+            (lambda _
+              (invoke "ninja" "-j" (number->string (parallel-job-count)))))
+          (replace 'check
+            (lambda* (#:key test-target tests? #:allow-other-keys)
+              (when tests? (invoke "ninja" test-target))))
+          (replace 'install
+            (lambda* args
+              (apply
+               (assoc-ref (@ (guix build copy-build-system) %standard-phases)
+                          'install)
+               #:install-plan
+               '(("bin/pcsx2-qt" "bin/")
+                 ("bin/resources" "share/")
+                 ("bin/translations" "share/")
+                 ("../source/.github/workflows/scripts/linux/pcsx2-qt.desktop"
+                  "share/applications/"))
+               args)))
+          (add-after 'install 'install-patches
+            (lambda* (#:key inputs #:allow-other-keys)
+              (install-file (search-input-file %build-inputs "/patches.zip")
+                            (string-append #$output "/share/resources")))))))
+    (inputs (list (module-ref
+                   (resolve-interface '(gnu packages debug)) 'libbacktrace)
+                  `(,zstd-1.5.7 "lib")
+                  curl
+                  dbus
+                  eudev
+                  ffmpeg
+                  freetype
+                  libaio
+                  libjpeg-turbo
+                  libpcap
+                  libpng-for-pcsx2
+                  libwebp
+                  libxrandr
+                  lz4
+                  pcsx2-patches
+                  qtbase
+                  qtsvg
+                  qttools
+                  qtwayland
+                  sdl2
+                  shaderc-for-pcsx2
+                  soundtouch
+                  vulkan-headers
+                  wayland))
+    (native-inputs (list clang extra-cmake-modules ninja pkg-config))
+    (home-page "https://pcsx2.net")
+    (synopsis "PlayStation 2 (PS2) emulator")
+    (description
+     "PCSX2 is a free and open-source PlayStation 2 (PS2)
+emulator.  Its purpose is to emulate the PS2's hardware, using a combination
+of MIPS CPU interpreters, recompilers and a virtual machine which manages
+hardware states and PS2 system memory.  This allows you to play PS2 games on
+your PC, with many additional features and benefits.")
+    (license license:gpl3+)))
 
 (define-public gens-gs
   (package
