@@ -1388,7 +1388,7 @@ KDE Frameworks components.")
 (define-public kwin
   (package
     (name "kwin")
-    (version "6.2.5")
+    (version "6.3.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1397,7 +1397,7 @@ KDE Frameworks components.")
               (patches (search-patches "kwin-unwrap-executable-name-for-dot-desktop-search.patch"))
               (sha256
                (base32
-                "0j38fxgxqyvhyj84cagvmab7y8rind82bdr9k72ch18iwjk51i2w"))))
+                "19a54h4grbl81zvpmqarzwakn0bmn73w5di0svdlhcjxrkn62jp7"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1484,6 +1484,7 @@ KDE Frameworks components.")
                           "kwin-testLibinputDevice"
                           "kwin-testLockScreen"
                           "kwin-testTabBox"
+                          "kwin-testKeyboardInput"
                           "kwin-testKeyboardLayout"
                           "kwin-testQuickTiling"
                           "kwin-testDbusInterface"
