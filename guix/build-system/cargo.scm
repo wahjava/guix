@@ -59,10 +59,8 @@ to NAME and VERSION."
   (string-append crate-url name "/" version "/download"))
 
 (define (default-rust target)
-  "Return the default Rust package."
-  ;; Lazily resolve the binding to avoid a circular dependency.
-  (let ((rust (resolve-interface '(gnu packages rust))))
-    (module-ref rust 'rust)))
+  "Return the default Rust package, resolved lazily."
+  (@* (gnu packages rust) rust))
 
 (define (default-rust-sysroot target)
   "Return the default Rust sysroot for <target>."
