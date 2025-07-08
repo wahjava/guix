@@ -1373,7 +1373,12 @@ safety and thread safety guarantees.")
                        (dest "/lib/rustlib/src/rust"))
                    (mkdir-p (string-append out dest))
                    (copy-recursively "library" (string-append out dest "/library"))
-                   (copy-recursively "src" (string-append out dest "/src")))))
+                   (copy-recursively "src" (string-append out dest "/src"))
+                   ;; We have fake checksums in there and cargo will freak
+                   ;; out about those.  Just remove them.  Still better.
+                   (substitute* (string-append out dest "/library/Cargo.lock")
+                    (("^checksum = .*")
+                     "\n")))))
              (add-after 'install 'remove-uninstall-script
                (lambda* (#:key outputs #:allow-other-keys)
                  ;; This script has no use on Guix
