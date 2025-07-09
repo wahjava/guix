@@ -20893,8 +20893,8 @@ been adapted to also work with mu4e.")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/minad/tempel")
-                    (commit version)))
+                     (url "https://github.com/minad/tempel")
+                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
