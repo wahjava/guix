@@ -81,6 +81,7 @@
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Nikita Mitasov <me@ch4og.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3951,6 +3952,49 @@ systems.")
 generated file can be include in the rootmenu section of your jwm config
 file.")
     (license license:gpl2+)))
+
+(define-public mwc
+  (package
+    (name "mwc")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dqrk0jeste/mwc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07fchsw4mrj5236parals1yiqv1x0hh0w93m9512yg608xv4by9v"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config wayland-protocols))
+    (inputs (list bash-minimal
+                  libinput-minimal
+                  libdrm
+                  libxkbcommon
+                  pixman
+                  scenefx
+                  wayland
+                  wlroots))
+    (arguments
+     (list
+      #:build-type "release"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-mwc
+            (lambda* _
+              (wrap-program (string-append #$output "/bin/mwc")
+                `("MWC_DEFAULT_CONFIG_PATH" =
+                  (,(string-append #$output "/share/mwc/default.conf")))))))))
+
+    (home-page "https://github.com/dqrk0jeste/mwc")
+    (synopsis "Tiling wayland compositor based on wlroots and scenefx")
+    (description
+     "@acronym{mwc, master wayland compositor} is a tiling Wayland compositor
+that implements a master layout where windows are tiled horizontally and then
+vertically.  It also offers optional visual features like animations,
+transparency, rounded corners and blur.")
+    (license license:expat)))
 
 (define-public devour
   (package
