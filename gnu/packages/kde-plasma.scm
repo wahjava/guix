@@ -2700,14 +2700,14 @@ sensors, process information and other system resources.")
 (define-public plasma-workspace
   (package
     (name "plasma-workspace")
-    (version "6.2.5")
+    (version "6.3.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0bs1dks8b7y2536706j051wzqcldin68574n1gvbiqb2dzj129dq"))))
+                "0mfirp8lz8yk1ggbgj6jxx992fgf8m6d4czhgacmhdx3v389vnc5"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules kdoctools pkg-config qtsvg
                          qttools
@@ -2808,6 +2808,7 @@ sensors, process information and other system resources.")
                   polkit-qt6
                   ucd
 
+                  xcb-util-cursor
                   libxcursor
                   libkexiv2
                   gpsd
@@ -2904,7 +2905,8 @@ deviceerrormonitor_p.cpp"
 
                                "dbusmethodcalltest"
                                "klipper-testHistoryCycler"
-                               "klipper-testHistoryModel")
+                               "klipper-testHistoryModel"
+                               "klipper_v3migrationtest")
                               "|")))))
                ;; share/dbus-1/system-services have same name file
                ;; when dbus-root-service-type merge it, wail report
