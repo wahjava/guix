@@ -357,7 +357,7 @@ superfluous when building natively and incorrect when cross-compiling."
     (apply (lambda* (#:key (target 'not-set)
 		     make-flags #:allow-other-keys)
              (define make-flags/sexp
-               (if (gexp? make-flags/sexp)
+               (if (gexp? make-flags)
                    (gexp->approximate-sexp make-flags)
                    make-flags))
 	     ;; Some packages like 'tzdata' are never cross-compiled;
