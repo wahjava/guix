@@ -195,7 +195,7 @@ locations in the store in '.el' files."
                package--default-summary)
            (let ((require-lines (lm-header-multiline "package-requires")))
              (and require-lines
-                  (package--prepare-dependencies
+                  (lm--prepare-package-dependencies
                    (package-read-from-string
                     (mapconcat 'identity require-lines " ")))))
            :kind       'single
