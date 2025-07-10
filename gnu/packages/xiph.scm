@@ -110,15 +110,14 @@ polyphonic) audio and music at fixed and variable bitrates from 16 to
 (define-public libtheora
   (package
     (name "libtheora")
-    (version "1.1.1")
+    (version "1.2.0")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://downloads.xiph.org/releases/theora/"
                                  "libtheora-" version ".tar.xz"))
              (sha256
               (base32
-               "0q8wark9ribij57dciym5vdikg2464p8q2mgqvfb78ksjh4s8vgk"))
-             (patches (search-patches "libtheora-config-guess.patch"))))
+               "1v1247z43njlbxxwxznin57b60lml17q88r3wjlzga60ynl7gpzb"))))
     (build-system gnu-build-system)
     (arguments
      (append
