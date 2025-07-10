@@ -1429,10 +1429,10 @@ KDE Frameworks components.")
                  (string-append
                   "QByteArrayLiteral(\"" (which "Xwayland") "\")")))
               (substitute* '("src/xwayland/xwaylandlauncher.cpp")
-                (("(m_xwaylandProcess->setProgram.QStringLiteral..)(Xwayland)(...;)"
-                  _ a Xwayland b)
-                 (string-append a
-                                (which "Xwayland") b)))
+                (("findExecutable\\(\"Xwayland\"\\)")
+                 (string-append
+                  "findExecutable(\""
+                  (search-input-file inputs "/bin/Xwayland") "\")")))
               ;; https://github.com/NixOS/nixpkgs/blob/6da4bc6cb07cba1b8e53d139cbf1d2fb8061d967/pkgs/desktops/plasma-5/kwin/0003-plugins-qpa-allow-using-nixos-wrapper.patch
               (substitute* "src/plugins/qpa/main.cpp"
                 (("(\\(QLatin1String\\(\"kwin_wayland\"\\)\\))" _ start)
@@ -1505,7 +1505,6 @@ KDE Frameworks components.")
                          wayland-protocols
                          xorg-server-for-tests
                          python-minimal
-                         gcc-14 ;; for <format> header
                          ;; for QtWaylandScanner
                          qtwayland))
     (inputs (list breeze
