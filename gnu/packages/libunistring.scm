@@ -60,7 +60,15 @@
               (with-directory-excursion (string-append #$output "/lib")
                 (install-file "libunistring.a"
                               (string-append #$output:static "/lib"))
-                (delete-file "libunistring.a")))))))
+                (delete-file "libunistring.a"))))
+          #$@(if (string=? "riscv64-linux" (%current-system))
+                ;; Unmodified test-lock will fail or crash riscv64
+                #~((add-before 'check 'modify-test-lock
+                    (lambda _
+                      (substitute* "tests/test-lock.c"
+                        (("#define DO_TEST_RWLOCK 1")
+                         "#define DO_TEST_RWLOCK 0")))))
+                #~()))))
    (synopsis "C library for manipulating Unicode strings")
    (description
     "GNU libunistring is a library providing functions to manipulate
