@@ -2659,7 +2659,7 @@ HTTP servers, RESTful APIs, and web services.")
            python-pytest-localserver
            python-pytest-socket
            python-setuptools
-           python-setuptools-scm-next
+           python-setuptools-scm
            python-wheel))
     (propagated-inputs
      (list python-aiofiles

@@ -4219,7 +4219,7 @@ Python.")
     (arguments
      (list #:tests? #f))        ; No test system found.
     (native-inputs
-     (list python-setuptools python-setuptools-scm-next python-wheel))
+     (list python-setuptools python-setuptools-scm python-wheel))
     (propagated-inputs
      (list python-packaging python-setuptools))
     (home-page "https://www.riverbankcomputing.com/software/sip/intro")
@@ -4572,7 +4572,7 @@ set of three modules.")))
          "13l4aw8cgi062c8srmnazlzw4y6g1v4bqi39ia9azq0wzjm316ff"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-setuptools
-                         python-setuptools-scm-next
+                         python-setuptools-scm
                          python-wheel))
     (inputs
      (list python-sip))
