@@ -915,7 +915,7 @@ corrections.")
            python-pytest-doctestplus
            python-pytest-astropy
            python-pytest-astropy-header
-           python-setuptools-next))
+           python-setuptools))
     (inputs
      (list python-astropy
            python-numpy
@@ -1893,7 +1893,7 @@ model-fitting photometry or morphological analyses.")
            python-pytest-cov
            python-pytest-doctestplus
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next))
     (propagated-inputs
      (list python-sunpy))
@@ -1990,7 +1990,7 @@ Main features:
            python-pytest-doctestplus
            python-pytest-remotedata
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
@@ -2061,7 +2061,7 @@ implementation of the ASDF Standard.")
            python-pytest-astropy
            python-pytest-xdist
            python-scipy
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -2087,7 +2087,7 @@ Astropy objects.")
             #:phases #~(modify-phases %standard-phases
                          (delete 'sanity-check))))
      (native-inputs
-      (list python-setuptools-next
+      (list python-setuptools
             python-wheel))
     (propagated-inputs
      (list python-importlib-metadata
@@ -2122,7 +2122,7 @@ Astropy objects.")
       (native-inputs
        (list python-numpy
              python-pytest
-             python-setuptools-next
+             python-setuptools
              python-setuptools-scm
              python-wheel))
       (propagated-inputs
@@ -2159,7 +2159,7 @@ support for reading and writing various compression algorithms including:
      (native-inputs
       (list python-asdf-bootstrap
             python-pytest
-            python-setuptools-next
+            python-setuptools
             python-setuptools-scm
             python-wheel))
      (propagated-inputs
@@ -2180,7 +2180,7 @@ implementation package such as asdf-astropy.")
             #:phases #~(modify-phases %standard-phases
                          (delete 'sanity-check))))
      (native-inputs
-      (list python-setuptools-next
+      (list python-setuptools
             python-wheel))
      (propagated-inputs '()))))
 
@@ -2203,7 +2203,7 @@ implementation package such as asdf-astropy.")
       (list python-asdf
             python-pytest
             python-pytest-openfiles
-            python-setuptools-next
+            python-setuptools
             python-setuptools-scm
             python-wheel))
      (propagated-inputs
@@ -3081,7 +3081,7 @@ Origins Spectrograph}.")
     (native-inputs
      (list gfortran
            python-packaging
-           python-setuptools-next
+           python-setuptools
            python-wheel
            which)) ; for fortran/Makefile
     (propagated-inputs
@@ -3227,7 +3227,7 @@ bad pixel tracking throughout the reduction process.")
            python-pytest
            python-pytest-cov
            python-pytest-remotedata
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-xarray))
     (propagated-inputs
@@ -3313,7 +3313,7 @@ attempting to maintain ISTP compliance
     (native-inputs
      (list python-pytest-astropy-header
            python-pytest
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
@@ -3621,7 +3621,7 @@ Spectrograph}.")
            python-pytest
            python-pytest-astropy
            python-pytest-doctestplus
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-stsynphot
            python-wheel))
@@ -3725,7 +3725,7 @@ Cesium.")
            python-pytest-mpl
            python-pytest-remotedata
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next))
     (propagated-inputs
      (list python-aiohttp
@@ -3783,8 +3783,9 @@ help you search, obtain and use DKIST data as part of your Python software.")
      (list python-astropy-minimal
            python-gwcs
            python-pytest
-           python-setuptools-next
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/spacetelescope/drizzle")
@@ -3909,7 +3910,7 @@ used with local NetDRMS sites.")
     (native-inputs
      (list python-pytest
            python-pytest-doctestplus
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-astropy
            python-scipy))
@@ -3938,7 +3939,7 @@ implemented using the astropy.modeling framework.")
       #:tests? #f)) ;no tests in tarball
     (native-inputs
      (list python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-astropy
            python-fastapi
@@ -4039,7 +4040,7 @@ tools for astronomers.")
     (native-inputs
      (list python-cython
            python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/sncosmo/extinction")
@@ -4254,7 +4255,7 @@ astronomy-specific functionality")
     (native-inputs
      (list python-pytest
            python-pytest-mpl
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next))
     (propagated-inputs
      (list python-astrodendro
@@ -4312,7 +4313,7 @@ across many files.")
     (native-inputs
      (list python-objgraph
            python-pytest
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            xorg-server-for-tests))
     (propagated-inputs
@@ -4437,8 +4438,10 @@ specifically pulsar timing array signals.")
     (native-inputs
      (list python-pytest
            python-pytest-astropy
-           python-setuptools-next
-           python-setuptools-scm-next))
+           python-pyyaml
+           python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
     (propagated-inputs
      (list python-asdf
            python-asdf-astropy
@@ -4766,7 +4769,7 @@ observationally-derived galaxy merger catalogs.")
      (list ffmpeg
            python-pooch
            python-pytest-astropy
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm))
     (propagated-inputs
      (list python-dkist
@@ -4873,7 +4876,7 @@ milliarcsecond).")
            python-pytest-cov
            python-pytest-doctestplus
            python-requests-mock
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -5874,7 +5877,7 @@ position-frequency slice.")
            python-pandas
            python-pytest
            python-scipy
-           python-setuptools-next))
+           python-setuptools))
     (inputs
      (list cpl))
     (propagated-inputs
@@ -5953,7 +5956,7 @@ functions, so that they can be called with scalar or array inputs.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-pycpl))
     (native-search-paths
@@ -6445,7 +6448,7 @@ PSF} describing how the optical system spreads light from sources.")
            python-pytest
            python-pytest-astropy
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-stpreview))
     (propagated-inputs
@@ -6986,7 +6989,7 @@ but has evolved to support other missions as well.")
               (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
     (native-inputs
      (list ;; python-pytest
-           python-setuptools-next
+           python-setuptools
            python-wheel))
     (propagated-inputs
      (list python-astropy
@@ -7451,7 +7454,7 @@ of axis order, spatial projections, and spectral units that exist in the wild.
     (native-inputs
      (list python-matplotlib
            python-pytest-astropy
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-spectral-cube))
     (propagated-inputs
@@ -7689,7 +7692,7 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
            python-pytest
            python-pytest-xdist
            python-pytest-doctestplus
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -7740,7 +7743,7 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
            python-pytest-doctestplus
            python-pytest-xdist
            python-scipy
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
@@ -7780,7 +7783,7 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
     (native-inputs
      (list python-pytest
            python-pytest-doctestplus
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
@@ -7811,7 +7814,7 @@ implementing calibration pipeline software.")
     (native-inputs
      (list python-pytest
            python-roman-datamodels
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -7848,7 +7851,7 @@ implementing calibration pipeline software.")
        ;; <https://github.com/spacetelescope/stpsf/issues/76>.
       #:tests? #f))
     (native-inputs
-     (list python-setuptools-next
+     (list python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -8072,7 +8075,7 @@ spectra, and data.")
            python-pypa-build
            python-pytest
            python-packaging
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (home-page "https://asdf-standard.readthedocs.io/")
@@ -8106,7 +8109,7 @@ up-front for extensibility.")
      (native-inputs
       (list python-pytest
             python-pytest-xdist
-            python-setuptools-next
+            python-setuptools
             python-setuptools-scm
             python-wheel))
      (propagated-inputs
@@ -8187,8 +8190,9 @@ implementation package such as asdf-astropy.")
      (list python-pytest
            python-pytest-doctestplus
            python-semantic-version
-           python-setuptools-next
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-asdf
            python-asdf-astropy))
@@ -8309,7 +8313,7 @@ channels
            python-pytest-doctestplus
            python-pytest-env
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm
            python-wheel))
     (propagated-inputs
@@ -8356,7 +8360,7 @@ pipelines.")
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (native-inputs
      (list python-pytest
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
@@ -8415,7 +8419,7 @@ task}.")
     (arguments
      (list #:tests? #f)) ; no tests in PyPI or git
     (native-inputs
-     (list python-setuptools-next
+     (list python-setuptools
            python-setuptools-scm-next))
     (propagated-inputs
      (list python-astropy
@@ -8691,7 +8695,7 @@ Telescope, HST}).")
            python-pytest-doctestplus
            python-pytest-xdist
            python-reproject
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-streamtracer
            python-sympy))
@@ -8827,7 +8831,7 @@ SunPy.")
            python-pytest-mock
            python-pytest-mpl
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next))
     (propagated-inputs
      (list python-asdf
@@ -8982,7 +8986,7 @@ to the SolarSoft data analysis environment.")
            python-pytest-astropy
            python-pytest-doctestplus
            python-pytest-xdist
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-sunpy-minimal))
     (propagated-inputs
@@ -9089,7 +9093,7 @@ of the old packages.")
     (native-inputs
      (list python-pytest
            python-scipy
-           python-setuptools-next
+           python-setuptools
            python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
