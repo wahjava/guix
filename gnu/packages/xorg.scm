@@ -96,6 +96,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
@@ -3788,6 +3789,45 @@ monitor via the X video mode extension.")
      "XHost is used to manage the list of host names or user names
 allowed to make connections to the X server.")
     (license license:x11)))
+
+(define-public xiccd
+  (let* ((version "0.4.1")
+         (tag (string-append "v" version)))
+    (package
+      (name "xiccd")
+      (version version)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/agalakhov/xiccd")
+               (commit tag)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01favi5v4qbpj6v6k6iab7wxhjy4vjnqwcykhhv2rgcqw5dx4w4a"))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     (substitute* "configure.ac"
+                       (("m4_esyscmd_s\\([^\n\\(\\)\\[\\]]*\\)")
+                        #$tag)
+                       (("tar-ustar")
+                        "tar-ustar foreign")) #t))))
+      (build-system gnu-build-system)
+      (inputs (list colord glib libx11 libxrandr))
+      (native-inputs (list autoconf automake gettext-minimal libtool
+                           pkg-config))
+      (home-page "https://github.com/agalakhov/xiccd")
+      (synopsis "X color profile daemon")
+      (description
+       "A simple bridge between colord and X. It does the following tasks:
+@itemize
+@item Enumerates displays and register them in colord.
+@item Creates default ICC profiles based on EDID data.
+@item Applies ICC profiles provided by colord.
+@item Maintains user's private ICC storage directory.
+@end itemize
+")
+      (license license:gpl3))))
 
 (define-public xineramaproto
   (package
