@@ -1241,7 +1241,7 @@ verification.")
      (list iverilog
            nvc
            python-pytest
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-find-libpython))
     (home-page "https://github.com/cocotb/cocotb")
@@ -1285,7 +1285,7 @@ and Verilog RTL using Python.")
        (list iverilog
              nvc
              python-pytest
-             python-setuptools-next))
+             python-setuptools))
       (propagated-inputs
        (list python-cocotb
              python-packaging
@@ -1323,7 +1323,7 @@ and reusable bus interfaces to be used with @code{cocotb}.")
                           "test_xcelium")
                     " and not "))))
     (native-inputs
-     (list python-pytest python-setuptools-next))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-jinja2))
     (home-page "https://github.com/olofk/edalize/")
@@ -1359,7 +1359,7 @@ some tool-specific options are set.")
                                       (lambda _
                                         (chdir "testsuite"))))
                        #:test-flags #~(list "test_all.py")))
-      (native-inputs (list python-pytest python-setuptools-next))
+      (native-inputs (list python-pytest python-setuptools))
       (propagated-inputs (list python-networkx python-six))
       (home-page "https://ohwr.gitlab.io/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")
@@ -1391,7 +1391,7 @@ and simulation Makefiles.")
       (build-system pyproject-build-system)
       (native-inputs
        (list python-pytest
-             python-setuptools-next))
+             python-setuptools))
       (propagated-inputs
        (list python-colorama))
       (home-page "https://m-labs.hk/gateware/migen/")
@@ -1430,7 +1430,7 @@ Python program.")
                   (invoke "make" "iverilog" "core")))))))
       (build-system pyproject-build-system)
       (native-inputs
-       (list iverilog python-setuptools-next python-pytest))
+       (list iverilog python-setuptools python-pytest))
       (home-page "http://www.myhdl.org/")
       (synopsis "Python as a Hardware Description Language")
       (description "This package provides a library to turn Python into
@@ -1534,7 +1534,7 @@ design.")
      (list python-pytest-cov
            python-pytest-html
            python-pytest-xdist
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-pyyaml))
     (home-page "https://github.com/jeremiah-c-leary/vhdl-style-guide/")
