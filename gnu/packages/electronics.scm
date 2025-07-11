@@ -904,7 +904,7 @@ and reusable bus interfaces to be used with @code{cocotb}.")
                           "test_xcelium")
                     " and not "))))
     (native-inputs
-     (list python-pytest python-setuptools-next))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-jinja2))
     (home-page "https://github.com/olofk/edalize/")
@@ -1016,7 +1016,7 @@ design.")
      (list python-pytest-cov
            python-pytest-html
            python-pytest-xdist
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-pyyaml))
     (home-page "https://github.com/jeremiah-c-leary/vhdl-style-guide/")

@@ -244,7 +244,7 @@ family of functions.")
                              python-tqdm))
     (native-inputs (list python-numpy
                          python-pytest
-                         python-setuptools-next))
+                         python-setuptools))
     (home-page "https://github.com/SYSTRAN/faster-whisper")
     (synopsis "Whisper transcription reimplementation")
     (description
@@ -292,7 +292,7 @@ CTranslate2, which is a inference engine for transformer models.")
                          python-pytest
                          python-requests
                          python-scipy
-                         python-setuptools-next
+                         python-setuptools
                          python-torchvision))
     (home-page "https://github.com/pyro-ppl/funsor")
     (synopsis "Tensor-like library for functions and distributions")
@@ -1202,7 +1202,7 @@ cardinality matching from a bipartite graph.")
         (base32 "03d4kgakpgj54c3pl9dkqrkbmj6w13gmczkds5jagf3n85c1hgg1"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest python-setuptools-next))
+     (list python-pytest python-setuptools))
     (propagated-inputs
      (list python-deprecated
            python-hopcroftkarp
@@ -1783,7 +1783,7 @@ operators and standard data types.")
      (append
       (list cmake-minimal
             python-pytest
-            python-setuptools-next)
+            python-setuptools)
       (filter
        (lambda (pkg)
          (member (or (%current-target-system)
@@ -1921,7 +1921,7 @@ with a single function call.")
            python-pytest
            python-pytorch
            python-sentencepiece
-           python-setuptools-next))
+           python-setuptools))
     (propagated-inputs
      (list python-coloredlogs
            python-flatbuffers
@@ -2618,7 +2618,7 @@ data by providing clean labels during training.")
                           (lambda* (#:key tests? #:allow-other-keys)
                             (when tests?
                               (invoke "python" "-m" "cma.test")))))))
-    (native-inputs (list python-pytest python-setuptools-next))
+    (native-inputs (list python-pytest python-setuptools))
     (propagated-inputs (list python-numpy))
     (home-page "https://github.com/CMA-ES/pycma")
     (synopsis "Python implementation of CMA-ES")
@@ -5698,7 +5698,7 @@ as torchvision, torchtext, and others.")
     (native-inputs
      (list python-pytest
            python-pytest-cov
-           python-setuptools-next))
+           python-setuptools))
     (home-page "https://github.com/magmax/python-readchar")
     (synopsis "Library to easily read single chars and key strokes")
     (description "This package provides a Python library to easily read single
