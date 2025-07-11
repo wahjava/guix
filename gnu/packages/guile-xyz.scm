@@ -4873,21 +4873,6 @@ operations: @code{(chain g (e f _) (c d _) (a b _))}.")
 
                 ;; Require (chibi test) to run.
                 (delete-file "test.scm")))
-            (add-after 'move-source 'make-standardized-srfi-library-name
-              (lambda _
-                ;; SRFI author assign 'bisect' for the name of SRFI-223
-                ;; see https://srfi-email.schemers.org/srfi-223/msg/25356333/
-                (call-with-output-file "srfi/srfi-223/bisect.scm"
-                  (lambda (p)
-                    (write
-                     '(define-module (srfi srfi-223 bisect)
-                        #:use-module (srfi srfi-223)
-                        #:export (bisect-left
-                                  bisect-right
-                                  bisection
-                                  vector-bisect-left
-                                  vector-bisect-right))
-                     p)))))
             ;; FIXME: Use #:documentation-file-regexp.
             (replace 'install-documentation
               (lambda _
