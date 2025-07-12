@@ -30,6 +30,7 @@
 ;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -778,7 +779,7 @@ For PDF support, install the @emph{mupdf} package.")
 (define-public qpageview
   (package
     (name "qpageview")
-    (version "0.6.2")
+    (version "1.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -787,12 +788,15 @@ For PDF support, install the @emph{mupdf} package.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xdhiglzqxyp05blp66l52nbzbpn10hmdm2idhncz6pf7qw16lsw"))))
-    (build-system python-build-system)
+                "0h3b7qhmjk1bz7ws7jwa9012wh2yvmk45j21ciyzj28mcjx9ygz4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests
+    (native-inputs (list python-hatchling))
+    (propagated-inputs
+     (list python-pyqt-6))
     (home-page "https://qpageview.org/")
     (synopsis "Page based document viewer widget for Qt5/PyQt5")
-    (inputs
-     (list python-pyqt qtbase-5))
     (description
      "@code{qpageview} provides a page based document viewer widget for Qt5
 and PyQt5.  It has a flexible architecture potentionally supporting many
