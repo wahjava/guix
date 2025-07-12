@@ -407,29 +407,6 @@ valid.  Append SUFFIX to the job name."
                 ("x86_64-linux" %x86-64-micro-architectures)
                 (_ '()))))
 
-(define (all-packages)
-  "Return the list of packages to build."
-  (define (adjust package result)
-    (cond ((package-replacement package)
-           ;; XXX: If PACKAGE and its replacement have the same name/version,
-           ;; then both Cuirass jobs will have the same name, which
-           ;; effectively means that the second one will be ignored.  Thus,
-           ;; return the replacement first.
-           (cons* (package-replacement package)   ;build both
-                  package
-                  result))
-          ((package-superseded package)
-           result)                                ;don't build it
-          (else
-           (cons package result))))
-
-  (fold-packages adjust
-                 (fold adjust '()                 ;include base packages
-                       (match (%final-inputs)
-                         (((labels packages _ ...) ...)
-                          packages)))
-                 #:select? (const #t)))           ;include hidden packages
-
 (define (arguments->manifests arguments channels)
   "Return the list of manifests extracted from ARGUMENTS."
   (map (lambda (manifest)
