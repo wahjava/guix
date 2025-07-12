@@ -682,7 +682,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/terraform.scm			\
   %D%/packages/texinfo.scm			\
   %D%/packages/tex.scm				\
-  %D%/packages/texlive.scm                      \
   %D%/packages/textutils.scm			\
   %D%/packages/text-editors.scm			\
   %D%/packages/time.scm				\
