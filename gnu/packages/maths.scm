@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Luca Cirrottola <luca.cirrottola@inria.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
+;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3570,6 +3571,46 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
                     "https://www.unicode.org/license.html")
                    ;; File src/NCollection/NCollection_StdAllocator.hxx:
                    license:public-domain))))
+
+;; PrusaSlicer has a hard dependency on this slightly older version of
+;; OpenCASCADE. According to them, all newer versions have a bug.
+;; See https://github.com/prusa3d/PrusaSlicer/commit/c6a02106fd1d3caa9a48a6b7c2bdd04546b24485.
+(define-public opencascade-occt-7.6.1
+  (package
+    (inherit opencascade-occt)
+    (name "opencascade-occt")
+    (version "7.6.1")
+    (properties '((release-tag-prefix . "^V")
+                  (release-tag-version-delimiter . "_")))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.dev.opencascade.org/repos/occt.git")
+             (commit (string-append "V"
+                                    (string-map (lambda (x)
+                                                  (if (eq? x #\.) #\_ x))
+                                                version)))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cc7n4rs26lm1awwn2bijvjq9b3kz204ffnks02lrpgs7pf8yk8b"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   ;; Remove files specific to non-free operating systems.
+                   (delete-file-recursively "samples/ios")
+                   (delete-file-recursively "samples/mfc")
+                   (delete-file-recursively "samples/qt/FuncDemo")
+                   (delete-file "genconf.bat")
+                   (delete-file "gendoc.bat")
+                   (delete-file "genproj.bat")
+                   (delete-file "upgrade.bat")
+                   ;; Remove references to deleted files.
+                   (substitute* "dox/FILES_HTML.txt"
+                     ((".*standard.*")
+                      "")
+                     ((".*UIKitSample.*")
+                      ""))
+                   #t))))))
 
 (define-public fast-downward
   (package
