@@ -56,6 +56,7 @@
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -789,6 +790,18 @@ pattern.")
     (description "Catch2 stands for C++ Automated Test Cases in Headers and is
 a multi-paradigm automated test framework for C++ and Objective-C.")
     (license license:boost1.0)))
+
+(define-public catch2-3.8
+  (package
+    (inherit catch2-3)
+    (name "catch2")
+    (version "3.8.1")
+    (source
+     (origin
+       (inherit (package-source catch2-3))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v1k14n02aiw4rv5sxhc5612cjhkdj59cjpm50qfxhapsdv54n3f"))))))
 
 (define-public cmdtest
   (package
