@@ -23,12 +23,17 @@
 (define-module (gnu packages cybersecurity)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system python)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages commencement)
   #:use-module (gnu packages engineering)
+  #:use-module (gnu packages file)
+  #:use-module (gnu packages gdb)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -169,3 +174,68 @@ chains of gadgets to execute system calls.")
 Written in Python, it is designed for rapid prototyping and development, and
 intended to make exploit writing as simple as possible.")
     (license license:expat)))
+
+(define-public gef-src
+  (package
+    (name "gef-src")
+    (version "2025.01")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hugsy/gef")
+             (commit "ed10244b0fe4665e8ee03fa326b1b1c711b39563")))
+       (sha256
+        (base32 "1b6c1rqhk6950phyal7pcxfy7qxm0p1c9rx70plxh48nbhgp7kr4"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("gef.py" "share/"))))
+    (inputs (list python-3.11 gcc-toolchain file gdb))
+    (synopsis "gdb extension for exploit development and vulnerability
+              research.")
+    (description
+     "@acronym{GEF, Gdb Extended Functions} is a gdb extension for
+                 exploit development and security research.it includes
+                 enhancements for heap analysis and vulnerability detection, as
+                 well as nice ways to view memory.")
+    (home-page "https://hugsy.github.io/gef/")
+    (license license:expat)))
+
+(define (make-gef gdb-exec)
+  (package
+    (name (string-append "gef-" (package-name gdb-exec)))
+    (version (package-version gdb-exec))
+    (source
+     (program-file "gef"
+        (with-imported-modules '((guix build utils) (srfi srfi-1))
+        #~(begin
+            (use-modules (guix build utils) (srfi srfi-1))
+                (system (string-append
+                      "gdb -q -x "
+                      #$gef-src
+                      "/share/gef.py "
+                      (fold-right string-append ""
+                                  (map (lambda x (string-append " " (car x)))
+                                       (cdr (command-line))))))))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("gef" "bin/"))))
+    (propagated-inputs (list python-3.11 gcc-toolchain file gdb-exec gef-src))
+    (synopsis "script to run gdb with @acronym{GEF,Gdb Extended Functions}
+    extension")
+    (description "This package provides an executable, @command{gef} ,which
+    executes gdb with the gef extension.")
+    (home-page "https://hugsy.github.io/gef/")
+    (license license:gpl3+)))
+
+(define-public gef-gdb-15
+  (make-gef gdb-15))
+
+(define-public gef-gdb-14
+  (make-gef gdb-16))
+
+(define-public gef-gdb-16
+  (make-gef gdb-16))
+
+(define-public gef-gdb-multiarch
+  (make-gef gdb-multiarch))
