@@ -24,6 +24,7 @@
 ;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
+;;; Copyright © 2025 Aaron Boyd <aaron.boyd.org@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
