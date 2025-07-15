@@ -551,7 +551,8 @@ interface and is based on GNU Guile.")
 
     (native-inputs (list pkg-config guile-3.0
                          guile-fibers-1.1))       ;for cross-compilation
-    (inputs (list guile-3.0 guile-fibers-1.1))))
+    (inputs (list guile-3.0))
+    (propagated-inputs (list guile-fibers-1.1))))
 
 (define-public shepherd-0.10
   (package
@@ -575,9 +576,10 @@ interface and is based on GNU Guile.")
                                (target-riscv64?))
                            guile-fibers-1.1
                            guile-fibers))))
-    (inputs (modify-inputs (package-inputs shepherd-0.9)
-              (replace "guile-fibers"
-                (this-package-native-input "guile-fibers"))))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs shepherd-0.9)
+       (replace "guile-fibers"
+         (this-package-native-input "guile-fibers"))))))
 
 (define-public shepherd-1.0
   (package
@@ -632,14 +634,16 @@ interface and is based on GNU Guile.")
        (synopsis
         "The Shepherd for Guix Home, without @command{halt} and @command{reboot}")
        (native-inputs '())
-       (inputs (list base))))))
+       (inputs (list base))
+       (propagated-inputs '())))))
 
 (define-public guile2.2-shepherd
   (package
     (inherit shepherd-0.10)
     (name "guile2.2-shepherd")
     (native-inputs (list pkg-config guile-2.2))
-    (inputs (list guile-2.2 guile2.2-fibers))))
+    (inputs (list guile-2.2))
+    (propagated-inputs (list guile2.2-fibers))))
 
 (define-public shepherd-run
   (package
