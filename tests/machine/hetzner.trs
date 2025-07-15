@@ -1,0 +1,7 @@
+:test-result: SKIP deploy-arm-machine [0.000s]
+:test-result: SKIP deploy-x86-machine [0.000s]
+:test-result: PASS deploy-machine-mock-with-provisioned-server [0.002s]
+:test-result: PASS deploy-machine-mock-with-unprovisioned-server [5.008s]
+:global-test-result: SKIP
+:recheck: no
+:copy-in-global-log: yes

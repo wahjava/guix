@@ -66,6 +66,7 @@
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
@@ -1408,6 +1409,41 @@ fibers and actor-inspired threading.  The experimental builtin HTTP module is
 enabled.")
     (license license:boost1.0)))
 
+(define-public dkjson
+  (package
+    (name "dkjson")
+    (version "2.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://dkolf.de/dkjson-lua/dkjson-" version ".lua"))
+       (sha256
+        (base32 "0i3x9qzx2m25fpf1pd6j45imm1gpykpjxibbvfi9bcwgd1hg2fzb"))))
+    (build-system trivial-build-system)
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder (begin
+                   (use-modules (guix build utils))
+                   (let* ((luajit-major+minor ,(version-major+minor (package-version
+                                                                     lua)))
+                          (package-dkjson (lambda (input output)
+                                            (mkdir-p (string-append output
+                                                      "/share/lua/"
+                                                      luajit-major+minor))
+                                            (copy-file input
+                                                       (string-append output
+                                                        "/share/lua/"
+                                                        luajit-major+minor
+                                                        "/dkjson.lua")))))
+                     (package-dkjson (assoc-ref %build-inputs "source")
+                                     (assoc-ref %outputs "out"))) #t)))
+    (synopsis "JSON module for Lua")
+    (description
+     "dkjson is a lua module for processing json in lua. It can handle various tasks such as
+encoding or decoding JSON objects to and from lua tables.")
+    (home-page "http://dkolf.de/dkjson-lua")
+    (license license:expat)))
+
 (define-public fennel
   (package
     (name "fennel")
@@ -1547,3 +1583,45 @@ This compiler does the opposite of what the Fennel compiler does.")
      "Fnlfmt is a tool for automatically formatting Fennel code in a consistent
 way, following established lisp conventions.")
     (license license:lgpl3+)))
+
+(define-public fennel-ls
+  (package
+    (name "fennel-ls")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~xerool/fennel-ls")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cag9swc03mmhdfzxwcs0bxp9jcz1kjnfhb5fip4nij1612wd5p9"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'rm-deps
+            (lambda _
+              (invoke "make" "rm-deps")))
+          (delete 'check)
+          (replace 'install
+            (lambda _
+              (install-file "fennel-ls"
+                            (string-append #$output "/bin"))))
+          (add-after 'install 'wrap
+            (lambda _
+              (let ((luajit-major+minor #$(version-major+minor (package-version lua))))
+                (wrap-program (string-append #$output "/bin/fennel-ls")
+                  `("LUA_PATH" ";" suffix
+                    (,(string-append #$fennel "/share/lua/" luajit-major+minor "/?.lua")
+                     ,(string-append #$dkjson "/share/lua/" luajit-major+minor "/?.lua"))))
+                #t))))))
+    (inputs (list lua fennel pandoc dkjson))
+    (synopsis "Language server for Fennel")
+    (description
+     "Fennel Language Server is a language server for the Fennel programming language.")
+    (home-page "https://git.sr.ht/~xerool/fennel-ls")
+    (license license:expat)))
