@@ -1440,9 +1440,9 @@ enabled.")
                                      (assoc-ref %outputs "out"))) #t)))
     (synopsis "JSON module for Lua")
     (description
-     "dkjson is a lua module for processing json in lua. It can handle various tasks such as
+     "dkjson is a lua module for processing json in lua.  It can handle tasks like
 encoding or decoding JSON objects to and from lua tables.")
-    (home-page "http://dkolf.de/dkjson-lua")
+    (home-page "http://dkolf.de/dkjson-lua/")
     (license license:expat)))
 
 (define-public fennel
@@ -1614,13 +1614,16 @@ way, following established lisp conventions.")
                             (string-append #$output "/bin"))))
           (add-after 'install 'wrap
             (lambda _
-              (let ((luajit-major+minor #$(version-major+minor (package-version lua))))
+              (let ((luajit-major+minor #$(version-major+minor (package-version
+                                                                lua))))
                 (wrap-program (string-append #$output "/bin/fennel-ls")
                   `("LUA_PATH" ";" suffix
-                    (,(string-append #$fennel "/share/lua/" luajit-major+minor "/?.lua")
-                     ,(string-append #$dkjson "/share/lua/" luajit-major+minor "/?.lua"))))
+                    (,(string-append #$fennel "/share/lua/" luajit-major+minor
+                                     "/?.lua") ,(string-append #$dkjson
+                                                 "/share/lua/"
+                                                 luajit-major+minor "/?.lua"))))
                 #t))))))
-    (inputs (list lua fennel pandoc dkjson))
+    (inputs (list bash-minimal lua fennel pandoc dkjson))
     (synopsis "Language server for Fennel")
     (description
      "Fennel Language Server is a language server for the Fennel programming language.")
