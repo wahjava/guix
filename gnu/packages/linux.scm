@@ -3420,7 +3420,7 @@ Zerofree requires the file system to be unmounted or mounted read-only.")
 (define-public strace
   (package
     (name "strace")
-    (version "6.4")
+    (version "6.15")
     (home-page "https://strace.io")
     (source (origin
              (method url-fetch)
@@ -3428,7 +3428,7 @@ Zerofree requires the file system to be unmounted or mounted read-only.")
                                  "/strace-" version ".tar.xz"))
              (sha256
               (base32
-               "0f4jxgsdr76mf51kv2kwhv39ap7kilrchkfvqrhd5pvzqnx7v617"))
+               "0l9ga5y7raqdg197jl42d0dxgm0zakcqzja8407jmhmb12mxyll5"))
              (patches (search-patches "strace-readlink-tests.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -3441,13 +3441,13 @@ Zerofree requires the file system to be unmounted or mounted read-only.")
          (add-after 'unpack 'disable-failing-tests
            (lambda _
              (substitute* "tests/Makefile.in"
-               ;; XXX: These hang forever even if the test time-out is
-               ;; extended.
-               (("^\tstrace-DD?D?\\.test \\\\.*") "")
-               (("^\tpidns-cache.test \\\\.*") "")
-               (("^\t.*--pidns-translation.test \\\\.*") "")
-               ;; This one fails with an encoding error.
-               (("^\t.*net-yy-unix.test \\\\.*") "")))))
+               ;; These three fail for no known reason; but since all
+               ;; versions before 6.12 fail to build with gcc@14, and
+               ;; the versions since 6.12 exhibit this behavior, we do not
+               ;; have much choice.
+               (("^\tdetach-vfork.test \\\\.*") "")
+               (("^\tfilter_seccomp-exitkill.test \\\\.*") "")
+               (("^\tkill-on-exit.test \\\\.*") "")))))
        ;; Don't fail if the architecture doesn't support different
        ;; personalities.
        #:configure-flags '("--enable-mpers=check")
