@@ -10037,6 +10037,101 @@ shared object databases, search tools and indexing.")
                    license:lgpl2.1+
                    license:lgpl2.0+))))
 
+(define-public tinysparql
+  (package
+    (name "tinysparql")
+    (version "3.9.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/tinysparql/"
+                                  (version-major+minor version) "/"
+                                  "tinysparql-" version ".tar.xz"))
+              (sha256
+               (base32
+                "13mddmszrk4ihfwi5n67v5ykf01fmld4pkmw4881hphk4j807khl"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:glib-or-gtk? #t
+      #:configure-flags
+      #~(list "-Ddocs=false" "-Dsystemd_user_services=false")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda _
+              (substitute* "tests/functional-tests/test_cli.py"
+                (("^([\t ]*)def test_help\\(self\\)" all indent)
+                 (string-append indent "@unittest.skip('apparently broken')\n"
+                                all)))
+              #$@(if (not (target-64bit?))
+                     ;; On 32-bit systems, the far away dates are incorrect,
+                     ;; and the floats are not parsed exactly.
+                     '((substitute*
+                           "tests/libtinysparql/tracker-statement-test.c"
+                         (("g_assert_cmpfloat *\\((.*), ==, ([0-9.e-]+)\\);"
+                           total actual expected)
+                          (string-append "g_assert_cmpfloat_with_epsilon ("
+                                         actual ", " expected ", 1e-12);")))
+                       (substitute* "tests/core/tracker-sparql-test.c"
+                         (("\\{ \"datetime/direct-1\", .* \\},")
+                          "/* datetime test disabled */")))
+                     '())
+              *unspecified*))
+          (add-before 'configure 'set-shell
+            (lambda _
+              (setenv "SHELL" (which "bash"))))
+          (delete 'check)               ;moved after install
+          (add-after 'install 'set-gi-typelib-path
+            (lambda* (#:key outputs #:allow-other-keys)
+              (setenv "GI_TYPELIB_PATH"
+                      (search-input-directory outputs "lib/girepository-1.0"))))
+          (add-after 'set-gi-typelib-path 'check
+            (lambda* (#:key tests? test-options #:allow-other-keys)
+              (when tests?
+                ;; Some tests expect to write to $HOME.
+                (setenv "HOME" "/tmp")
+                (apply invoke "dbus-run-session" "--" "meson" "test"
+                       "--print-errorlogs" "-t0" test-options)))))))
+    (native-inputs
+     (list gettext-minimal
+           `(,glib "bin")
+           (libc-utf8-locales-for-target)
+           gobject-introspection
+           docbook-xsl
+           docbook-xml
+           gsettings-desktop-schemas
+           asciidoc
+           libxslt
+           cmake-minimal
+           python-pygobject
+           gtk-doc/stable
+           dbus
+           pkg-config
+           python
+           vala))
+    (inputs
+     (list bash-minimal
+           dbus
+           libstemmer
+           libsoup))
+    (propagated-inputs
+     ;; These are in Requires or Requires.private of tracker-sparql-3.0.pc.
+     (list glib
+           icu4c                ;libunistring gets miner-miner-fs test to fail
+           json-glib
+           libxml2
+           sqlite))
+    (synopsis "Lightweight RDF triple store")
+    (home-page "https://gitlab.gnome.org/GNOME/tinysparql")
+    (description
+     "TinySPARQL is a RDF triple store with a SPARQL 1.1 interface.  It allows
+creating local databases in memory or the filesystem, and accessing/creating
+endpoints for federated queries.")
+    ;; https://gitlab.gnome.org/GNOME/tinysparql/-/blob/master/COPYING (stale):
+    ;; src/common/* and src/libtinysparql/* are covered by lgpl2.1+,
+    ;; the rest is gpl2+.
+    (license (list license:gpl2+ license:lgpl2.1+))))
+
 (define-public nautilus
   (package
     (name "nautilus")
