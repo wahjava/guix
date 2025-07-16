@@ -10132,6 +10132,112 @@ endpoints for federated queries.")
     ;; the rest is gpl2+.
     (license (list license:gpl2+ license:lgpl2.1+))))
 
+(define-public localsearch
+  (package
+    (name "localsearch")
+    (version "3.9.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/localsearch/"
+                                  (version-major+minor version)
+                                  "/localsearch-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1f8l1kyvsr4lq18yrsf2p66q3xgc3mgvzax9ymagwa7vqf6l0byl"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:glib-or-gtk? #t
+      #:configure-flags
+      #~(list ;; Ensure the RUNPATH contains all installed library locations.
+         (string-append "-Dc_link_args=-Wl,-rpath="
+                        #$output "/lib/localsearch-3.0")
+         ;; TODO: Check if this is only a build-time failure, or add
+         ;; variants to explicitly enable this features, (see:
+         ;; https://gitlab.gnome.org/GNOME/tracker-miners/-/issues/300).
+         "-Dlandlock=disabled"
+         ;; TODO: Enable functional tests. Currently, the following error
+         ;; appears:
+         ;; Exception: The functional tests require DConf to be the default
+         ;; GSettings backend. Got GKeyfileSettingsBackend instead.
+         "-Dfunctional_tests=false"
+         "-Dsystemd_user_services=false")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-tests
+            (lambda _
+              ;; Disable those tests that require the functional_tests option
+              ;; to be true and the UPower daemon to be started.
+              (substitute* "examples/python/meson.build"
+                (("foreach example_name:.*")
+                 "foreach example_name: []"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Some tests expect to write to $HOME.
+                (setenv "HOME" "/tmp")
+                (setenv "LANG" "en_US.UTF-8")
+                (invoke "dbus-run-session" "--" "meson" "test"
+                        "--print-errorlogs" "-t0"
+                        ;; Do not run the slow test, which fail (see:
+                        ;; https://gitlab.gnome.org/GNOME/tracker-miners
+                        ;; /-/issues/226).
+                        "--no-suite" "slow")))))))
+    (native-inputs
+     (list `(,glib "bin")
+           asciidoc
+           dbus
+           docbook-xml
+           docbook-xsl
+           gettext-minimal
+           gobject-introspection
+           gsettings-desktop-schemas
+           libxslt
+           pkg-config
+           python-pygobject))
+    (inputs
+     (list exempi
+           ffmpeg
+           flac
+           giflib
+           glib
+           gstreamer
+           gst-plugins-base
+           icu4c
+           json-glib
+           libcue
+           libexif
+           libgsf
+           libgxps
+           libiptcdata
+           libjpeg-turbo
+           libosinfo
+           libpng
+           libseccomp
+           libsoup
+           libtiff
+           libvorbis
+           libxml2
+           poppler
+           shared-mime-info
+           taglib
+           totem-pl-parser
+           tinysparql
+           upower
+           zlib))
+    (synopsis "Desktop search framework")
+    (home-page "https://gitlab.gnome.org/GNOME/localsearch")
+    (description
+     "LocalSearch is the file search framework of the GNOME desktop.  It stores
+data about user files structured by the Nepomuk definitions, features a
+sandboxed metadata extractor, and provides facilities to alter file metadata.
+The data is exposed through a SPARQL endpoint, which applications may access
+through portals.")
+    ;; src/common/*, src/cli/* (except src/cli/main.c) and src/extractor/* are
+    ;; covered by lgpl2.1+, src/control/*, src/indexer/* and src/writeback/*
+    ;; is gpl2+.
+    (license (list license:gpl2+ license:lgpl2.1+))))
+
 (define-public nautilus
   (package
     (name "nautilus")
