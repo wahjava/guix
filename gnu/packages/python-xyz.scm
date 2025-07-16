@@ -10577,6 +10577,30 @@ objects.")
      "This is a Python library for color math and conversions.")
     (license license:bsd-3)))
 
+(define-public python-targ
+  (package
+    (name "python-targ")
+    (version "0.6.0")
+    (source (origin
+              ; PyPI build fails with FileNotFound (requirements.txt)
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/piccolo-orm/targ/")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "05avykfnbni4iwkv4a2nwpwyiznqv51jn3bn5am91iv7dbq1w94v"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-colorama python-docstring-parser))
+    (home-page "https://github.com/piccolo-orm/targ/")
+    (synopsis "Python CLI builder using type hints and docstrings")
+    (description
+     "Targ is a package to build a Python CLI for any app, just using type
+hints and docstrings.")
+    (license license:expat)))
+
 (define-public python-sparse
   (package
     (name "python-sparse")
