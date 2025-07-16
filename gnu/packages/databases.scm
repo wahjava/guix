@@ -3771,6 +3771,40 @@ engraved in its design that you are working not with just tables, you work
 with relational data.")
     (license license:asl2.0)))
 
+(define-public python-piccolo
+  (package
+    (name "python-piccolo")
+    (version "1.27.1")
+    (source (origin
+              ; PyPI build fails with FileNotFound (requirements.txt)
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/piccolo-orm/piccolo/")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1vwx8kramyvvhmf7nyhj83h4jbmz45lzi7vcnjxb4d52ci977d7l"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; A local database must be running with credentials explained in
+     ;; https://github.com/piccolo-orm/piccolo/tree/master/tests
+     (list #:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-black ; this is listed in requirements.txt
+                             python-colorama
+                             python-inflection
+                             python-jinja2
+                             python-pydantic-2
+                             python-targ
+                             python-typing-extensions))
+    (home-page "https://github.com/piccolo-orm/piccolo")
+    (synopsis "ORM and query builder which supports asyncio")
+    (description
+     "Piccolo is a fast, user friendly ORM and query builder which supports
+asyncio and is fully type-annotated.")
+    (license license:expat)))
+
 (define-public aerich
   (package
     (name "aerich")
