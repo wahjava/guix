@@ -784,18 +784,17 @@ included.")
                      (append bc)))))
 
 (define-public libbfd
-  (package
-    (inherit binutils)
+  (package/inherit binutils
     (name "libbfd")
     (inputs
       (modify-inputs (package-native-inputs binutils)
         (append texinfo))) ; because makeinfo is needed when building bfd alone
     (arguments
       (substitute-keyword-arguments (package-arguments binutils)
-        ; Only build as a shared library
+        ;; Only build as a shared library
         ((#:configure-flags flags)
           #~(append #$flags '("--enable-shared" "--disable-static")))
-        ;; Only build  and install bfd
+        ;; Only build and install bfd
         ((#:phases phases #~%standard-phases)
           #~(modify-phases #$phases
           (replace 'build
@@ -809,10 +808,9 @@ included.")
                       "MAKEINFO=true")))
           (replace 'install
             (lambda _ (invoke "make" "install-bfd")))))))
-    (synopsis "BFD is a library which allows applications to use the same
-routines to operate on object files whatever the object file format")
+    (synopsis "GNU BFD library for operating on object files")
     (description "This package provides a standalone shared library version of
-BFD, which is otherwise distributed and installed as part of the binutils
+BFD, which is otherwise distributed and installed as part of the Binutils
 package release.")))
 
 (define* (make-ld-wrapper name #:key
