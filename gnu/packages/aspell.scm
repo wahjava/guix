@@ -48,7 +48,7 @@
 (define-public aspell
   (package
     (name "aspell")
-    (version "0.60.8")
+    (version "0.60.8.1")
     (source
      (origin
       (method url-fetch)
@@ -56,9 +56,8 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "1wi60ankalmh8ds7nplz434jd7j94gdvbahdwsr539rlad8pxdzr"))
-      (patches (search-patches "aspell-default-dict-dir.patch"
-                               "aspell-CVE-2019-25051.patch"))))
+        "06yjhwlgpcvbrl5g83qjrpzjwjx7hka5lhsfc3x5gm229nri5nnn"))
+      (patches (search-patches "aspell-default-dict-dir.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -74,8 +73,7 @@
                (substitute* "common/config.cpp"
                  (("\"filter-path(.*)DICT_DIR" _ middle)
                   (string-append "\"filter-path" middle
-                                 "\"" libdir "\"")))
-               #t))))))
+                                 "\"" libdir "\"")))))))))
     (native-inputs (list perl))
 
     (native-search-paths
