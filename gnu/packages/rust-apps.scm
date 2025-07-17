@@ -35,6 +35,7 @@
 ;;; Copyright © 2024 normally_js <normally_js@posteo.net>
 ;;; Copyright © 2025 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Mattia Bunel <mattia.bunel@ehess.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5256,3 +5257,26 @@ compose file, or existing object.")
     (description
      "This package provides a command-line tool for flashing Espressif devices.")
     (license (list license:expat license:asl2.0))))
+
+(define-public cjseq
+  (package
+    (name "cjseq")
+    (version "0.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cjseq" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "15y7cdirkl4f9y46q1sh6wr02k42b3i6zn5v11sr1qxn95wjbprc"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-clap" ,rust-clap-4)
+                       ("rust-rand" ,rust-rand-0.8)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1))))
+    (home-page "https://github.com/cityjson/cjseq")
+    (synopsis "Command-line tool for create and process CityJSONSeq")
+    (description
+     "This package provides a command-line tool for create and process @code{CityJSONSeq}.")
+    (license license:expat)))
