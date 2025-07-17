@@ -11513,7 +11513,6 @@ tests = True~%" #$(this-package-input "tcl") #$(this-package-input "tk"))))))
            python-pytest-xdist
            python-setuptools
            python-setuptools-scm
-           python-setuptools-scm-git-archive
            python-wheel))
     (home-page "https://matplotlib.org/")
     (synopsis "2D plotting library for Python")
