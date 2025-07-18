@@ -3,6 +3,7 @@
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,7 +45,9 @@
             thermald-service-type
 
             powertop-configuration
-            powertop-service-type))
+            powertop-service-type
+
+            disable-wakeup-service-type))
 
 ;;;
 ;;; power-profiles-daemon
@@ -579,3 +582,19 @@ prevent overheating.")))
    (default-value (powertop-configuration))
    (description "Tune power-related kernel parameters to reduce energy
  consumption.")))
+
+(define (disable-wakeup node)
+  #~(call-with-output-file
+      #$(let ((split (string-index node #\:)))
+          (format #f "/sys/bus/~a/devices/~a/power/wakeup"
+                  (substring node 0 split) (substring node (1+ split))))
+      (lambda (port) (display "disabled" port))))
+
+(define disable-wakeup-service-type
+  (service-type
+    (name 'disable-wakeup)
+    (extensions
+     (list (service-extension activation-service-type disable-wakeup)))
+    (description
+     "Disable the ACPI wakeup trigger for the given sysfs node, see
+@file{/proc/acpi/wakeup}.")))
