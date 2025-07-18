@@ -29,6 +29,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages networking)
   #:use-module (gnu services)
   #:use-module (gnu services base)
   #:use-module (gnu services configuration)
@@ -46,6 +47,9 @@
 
             powertop-configuration
             powertop-service-type
+
+            wake-on-lan-configuration
+            wake-on-lan-service-type
 
             disable-wakeup-service-type))
 
@@ -582,6 +586,27 @@ prevent overheating.")))
    (default-value (powertop-configuration))
    (description "Tune power-related kernel parameters to reduce energy
  consumption.")))
+
+(define-configuration wake-on-lan-configuration
+  (ethtool (package ethtool) "ethtool package to use.")
+  (interface (string) "Interface to wake host."))
+
+(define wake-on-lan-service-type
+  (shepherd-service-type
+    'wake-on-lan
+    (match-record-lambda <wake-on-lan-configuration> (ethtool interface)
+      (shepherd-service
+        (documentation "Set interface to wake on magic packet.")
+        (provision '(wake-on-lan))
+        (requirement '(networking))
+        (start
+         #~(lambda _
+             (zero? (system* #$(file-append ethtool "/sbin/ethtool")
+                             "-s" #$interface "wol" "g"))))
+        (one-shot? #t)))
+    (description
+     "Set the network interface to wake the host when receiving the
+Wake-on-LAN magic packet.")))
 
 (define (disable-wakeup node)
   #~(call-with-output-file
