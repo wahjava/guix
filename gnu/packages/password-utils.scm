@@ -1046,7 +1046,10 @@ from the @code{password-store} package.  Files are encrypted with the
                 (string-append
                  "OATH="
                  (assoc-ref inputs "oath-toolkit")
-                 "/bin/oathtool\n")))
+                 "/bin/oathtool\n"))
+               ;; courtesy: https://github.com/tadfisher/pass-otp/pull/172
+               (("&counter=[$]counter" all)
+                (format #f "~s" all)))
              #t)))
        #:test-target "test"))
     (inputs
