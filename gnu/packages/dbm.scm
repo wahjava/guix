@@ -77,7 +77,8 @@
              (sha256
               (base32
                "0ampbl2f0hb1nix195kz1syrqqxpmvnvnfvphambj7xjrl3iljg0"))
-             (patches (search-patches "bdb-5.3-atomics-on-gcc-9.patch"))
+             (patches (search-patches "bdb-5.3-atomics-on-gcc-9.patch"
+                                      "bdb-configure.patch"))
              (modules '((guix build utils)
                         (srfi srfi-1)))
              (snippet bdb-snippet)))
