@@ -9432,6 +9432,7 @@ errors when data is invalid.")
            python-pytest-mock))
     (propagated-inputs
      (list python-annotated-types
+           python-email-validator
            python-pydantic-core
            python-rich
            python-typing-extensions))))
