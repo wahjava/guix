@@ -298,7 +298,14 @@ a fast alternative to @code{IOStreams}.")
        (uri (string-append "https://github.com/fmtlib/fmt/releases/download/"
                            version "/fmt-" version ".zip"))
        (sha256
-        (base32 "0p8f82ijqa57sk72hjf0qviv1wwinmns0p87wiv2v8fvisnqnxr3"))))))
+        (base32 "0p8f82ijqa57sk72hjf0qviv1wwinmns0p87wiv2v8fvisnqnxr3"))))
+    (arguments
+     (if (target-x86-32?)
+         (substitute-keyword-arguments (package-arguments fmt-9)
+           ((#:phases phases)
+            #~(modify-phases #$phases
+                (delete 'patch))))
+         (package-arguments fmt-9)))))
 
 (define-public fmt-8.0
   (package
