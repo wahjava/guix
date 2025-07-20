@@ -12,8 +12,9 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022 Daniel Maksymow <daniel.maksymow@tuta.io>
 ;;; Copyright © 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2023, 2025 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,17 +37,24 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system trivial)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages digest)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages tbb)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages xml)
   #:use-module (srfi srfi-1)
@@ -407,3 +415,108 @@ debugging information format.")
     (license (list license:lgpl2.1
                    license:gpl2
                    license:bsd-2))))
+
+(define-public mold
+  (package
+    (name "mold")
+    (version "2.40.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rui314/mold")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pz88wkm0mmj2vfg9wzy6vimajlbrvlqnkllfj4vwnchf328ig8d"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (for-each
+             (lambda (x)
+               (delete-file-recursively (string-append "third-party/" x)))
+             '("mimalloc" "tbb" "xxhash" "zlib" "zstd"))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; Mold only uses mimalloc on 64-bit systems, even with the
+      ;; configure flag set, saying it is unstable on 32-bit systems.
+      #:configure-flags #~(list #$@(if (target-64bit?)
+                                       '("-DMOLD_USE_SYSTEM_MIMALLOC=ON")
+                                       '("-DMOLD_USE_MIMALLOC=OFF"))
+                                "-DMOLD_USE_SYSTEM_TBB=ON"
+                                "-DBUILD_TESTING=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'force-system-xxhash
+            (lambda _
+              (substitute* "lib/lib.h"
+                (("#include \"../third-party/xxhash/xxhash.h\"")
+                 "#include <xxhash.h>"))))
+          (add-before 'configure 'fix-compiler-name-in-test
+            (lambda _
+              (substitute* "test/common.inc"
+                (("CC=\"\\$\\{TEST_CC:-cc\\}\"") "CC=gcc")
+                (("CXX=\"\\$\\{TEST_CXX:-c\\+\\+\\}\"")
+                 "CXX=g++"))))
+          (add-before 'configure 'skip-tbb-lto-test
+            (lambda _
+              ;; This test needs tbb 2021.9.0 or newer
+              (delete-file "test/lto-version-script.sh")))
+          (add-before 'configure 'disable-rpath-test
+            (lambda _
+              ;; This test fails because mold expect the RUNPATH as-is,
+              ;; but compiler in Guix will insert the path of gcc-lib and
+              ;; glibc into the output binary.
+              (delete-file "test/rpath.sh"))))))
+    (inputs
+     (append
+       (if (target-64bit?)
+           (list mimalloc)
+           '())
+       (list tbb xxhash zlib `(,zstd "lib"))))
+    (home-page "https://github.com/rui314/mold")
+    (synopsis "Fast linker")
+    (description
+     "Mold is a faster drop-in replacement for existing linkers.
+It is designed to increase developer productivity by reducing build time,
+especially in rapid debug-edit-rebuild cycles.")
+    (license license:agpl3)))
+
+(define* (make-mold-wrapper mold #:key mold-as-ld?)
+  "Return a MOLD wrapper.  When MOLD-AS-LD? is true, create a 'ld' symlink that
+points to 'mold'."
+  (package
+    (inherit mold)
+    (name (if mold-as-ld? "mold-as-ld-wrapper" "mold-wrapper"))
+    (source #f)
+    (native-inputs '())
+    (inputs (list (make-ld-wrapper "ld.mold-wrapper" #:binutils mold
+                                   #:linker "ld.mold")
+                  (make-ld-wrapper "mold-wrapper" #:binutils mold #:linker
+                                   "mold")))
+    (propagated-inputs '())
+    (build-system trivial-build-system)
+    (arguments
+     (list #:builder
+           #~(let ((ld.mold (string-append #$(this-package-input
+                                              "ld.mold-wrapper")
+                                           "/bin/ld.mold"))
+                   (mold (string-append #$(this-package-input "mold-wrapper")
+                                        "/bin/mold")))
+               (mkdir #$output)
+               (mkdir (string-append #$output "/bin"))
+               (symlink ld.mold (string-append #$output "/bin/ld.mold"))
+               (symlink mold (string-append #$output "/bin/mold"))
+               (when #$mold-as-ld?
+                 (symlink ld.mold (string-append #$output "/bin/ld"))))))
+    (synopsis "Mold linker wrapper")
+    (description "This is a linker wrapper for Mold; like @code{ld-wrapper}, it
+wraps the linker to add any missing @code{-rpath} flags, and to detect any
+misuse of libraries outside of the store.")))
+
+(define-public mold-wrapper
+  (make-mold-wrapper mold))
+
+(define-public mold-as-ld-wrapper
+  (make-mold-wrapper mold #:mold-as-ld? #t))
