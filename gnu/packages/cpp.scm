@@ -888,18 +888,27 @@ same name.")
         (base32 "0cx38hnislqyd4vd47mlpgjpr1zmpf1fms2bj6nb00fjv53q1sb7"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DHWY_SYSTEM_GTEST=on"
-                               "-DBUILD_SHARED_LIBS=ON")
-       ,@(if (string-prefix? "i686-linux" (or (%current-system)
-                                              (%current-target-system)))
-             '(#:phases
-               (modify-phases %standard-phases
-                 (add-after 'unpack 'really-skip-precision-tests
-                   (lambda _
-                     (substitute* "hwy/contrib/math/math_test.cc"
-                       (("Skipping math_test due to GCC issue with excess precision.*" m)
-                        (string-append m "return;\n")))))))
-             '())))
+     (list
+      #:configure-flags #~(list "-DHWY_SYSTEM_GTEST=on"
+                                "-DBUILD_SHARED_LIBS=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          #$@(if (string-prefix? "i686-linux" (or (%current-system)
+                                                  (%current-target-system)))
+                 #~((add-after 'unpack 'really-skip-precision-tests
+                      (lambda _
+                        (substitute* "hwy/contrib/math/math_test.cc"
+                          (("Skipping math_test due to GCC issue with excess precision.*" m)
+                           (string-append m "return;\n"))))))
+                 #~())
+          #$@(if (target-arm?)
+                 #~((add-after 'unpack 'highway-ub-patch
+                      (lambda _
+                        (invoke
+                         "patch" "-p1" "-i"
+                         #$(local-file
+                            (search-patch "highway-arm-ub.patch"))))))
+                 #~()))))
     (native-inputs
      (list googletest))
     (home-page "https://github.com/google/highway")
