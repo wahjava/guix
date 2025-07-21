@@ -860,7 +860,14 @@ is based on Vim's builtin plugin support.")
                    ;; doubles its size.  We remove the reference here.
                    (substitute* "cmake.config/versiondef.h.in"
                      (("\\$\\{CMAKE_C_COMPILER\\}") "/gnu/store/.../bin/gcc"))
-                   #t)))))
+                   #t))
+          (add-after 'install 'install-guix-store-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((nvimdir (string-append (assoc-ref outputs "out")
+                                            "/share/nvim")))
+                (mkdir-p nvimdir)
+                (copy-file (assoc-ref inputs "guix-nvim.vim")
+                           (string-append nvimdir "/sysinit.vim"))))))))
     (inputs (list libuv-for-luv
                   msgpack
                   libtermkey
@@ -878,7 +885,10 @@ is based on Vim's builtin plugin support.")
                   lua5.1-bitop
                   lua5.1-libmpack
                   tree-sitter))
-    (native-inputs (list pkg-config gettext-minimal gperf))
+    (native-inputs `(("pkg-config" ,pkg-config)
+                     ("gettext-minimal" ,gettext-minimal)
+                     ("gperf" ,gperf)
+                     ("guix-nvim.vim" ,(search-auxiliary-file "guix-nvim.vim"))))
     (home-page "https://neovim.io")
     (synopsis "Fork of vim focused on extensibility and agility")
     (description
