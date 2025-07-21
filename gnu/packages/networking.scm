@@ -3977,7 +3977,8 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                 "--enable-proxy-server"
                 "--enable-push-notifications"
                 "--enable-proxy-server-identity"
-                "--enable-proxy-client")
+                "--enable-proxy-client"
+                "CFLAGS=-Wno-implicit-function-declaration")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'disable-problematic-tests
