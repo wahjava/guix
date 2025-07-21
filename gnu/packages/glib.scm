@@ -1367,6 +1367,11 @@ of abstraction on top of @code{sd-bus}, the C D-Bus implementation by systemd.")
         #~(modify-phases #$phases
             (add-after 'unpack 'fix-elogind-requirement
               (lambda _
+                ;; fix for GCC 14.0
+                (substitute* "include/sdbus-c++/Message.h"
+                  (("#include <string>" all)
+                   (string-append all
+                     "\n#include <algorithm>\n")))
                 ;; sdbus-c++.pc requires 'elogind', but it should
                 ;; require 'libelogind'. Fixed after 1.4.0 with
                 ;; fb9e4ae37152648a67814458d3ff673b1d3ca089
