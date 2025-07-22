@@ -337,12 +337,12 @@ XXX TODO: use Linux xattr/setxattr to remove (settrans in) /libexec/RUNSYSTEM
          (format #t "Creating essential device nodes...\n")
          (make-hurd-device-nodes))
 
-       (let ((profile/hurd (readlink* (string-append profile "/hurd"))))
+       (let ((hurd/hurd (readlink* (string-append system "/hurd/hurd"))))
          (when (file-exists? "/hurd")
            (format #t "Removing stale /hurd link\n")
            (delete-file "/hurd"))
-         (format #t "Linking /hurd from ~a...\n" profile/hurd)
-         (symlink profile/hurd "/hurd"))
+         (format #t "Linking /hurd from ~a...\n" hurd/hurd)
+         (symlink hurd/hurd "/hurd"))
 
        (format #t "Setting-up essential translators...\n")
        (set-hurd-device-translators)
