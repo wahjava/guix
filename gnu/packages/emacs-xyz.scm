@@ -9949,7 +9949,7 @@ the speedbar window.")
 (define-public emacs-shell-maker
   (package
     (name "emacs-shell-maker")
-    (version "0.76.2")
+    (version "0.78.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9958,11 +9958,14 @@ the speedbar window.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0df0mxaz2g4fzdlhxygifmsjnxw7n8v1ghz1pnlhad0anpwdsdv9"))))
+                "1zhvd47j5ji82dp8zm5hlhji5r3gcvr877qal1kwxd43lsm0660m"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
     (home-page "https://github.com/xenodium/shell-maker")
-    (synopsis "Create Emacs shells")
-    (description "Shell Maker is a convenience wrapper around Comint mode.")
+    (synopsis "Create new Emacs shells derived from comint-mode.")
+    (description "@code{Shell-maker} is a convenience wrapper around
+@code{comint mode}.  I eases building Emacs shells backed by either local or
+cloud services.")
     (license license:gpl3+)))
 
 (define-public emacs-shell-switcher
