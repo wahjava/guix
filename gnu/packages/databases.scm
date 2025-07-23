@@ -3710,6 +3710,48 @@ reuses most of @code{pymysql} and @code{aiomysql} but rewrites the core
 protocol with Cython for performance.")
     (license license:asl2.0)))
 
+(define-public python-asyncodbc
+  (package
+    (name "python-asyncodbc")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tortoise/asyncodbc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fdcvx2r09vsxx3zw8zvj7ww6wyby8sk3r2a3174nfngiajbi6g1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests fail similarly to python-pyodbc
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (substitute* "Makefile"
+                  (("test_mssql: deps")
+                   "test_mssql:"))
+                (invoke "make" "test_mssql")))))))
+    (propagated-inputs (list python-pyodbc))
+    (native-inputs
+     (list gnu-make
+           python-poetry-core
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-cov
+           python-pytest-xdist
+           unixodbc))
+    (home-page "https://github.com/tortoise/asyncodbc")
+    (synopsis "Access ODBC databases with asyncio")
+    (description "This package provides an improved fork of
+@code{python-aioodbc}, and makes it possible to Access ODBC databases with
+@code{python-asyncio}.")
+    (license license:asl2.0)))
+
 (define-public python-aiomysql
   (package
     (name "python-aiomysql")
