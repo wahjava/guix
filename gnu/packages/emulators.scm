@@ -129,6 +129,51 @@
   #:use-module (guix build-system qt)
   #:use-module (guix build-system trivial))
 
+(define-public ares
+  (package
+    (name "ares")
+    (version "145")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ares-emulator/ares")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "074kkgrbiga7grkwhnhw51ih7krxgf91m9zrrwjkj4q1hdjhlz5a"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                  ; No tests
+           #:cmake cmake-next           ; Requires cmake >= 3.28
+           #:configure-flags
+           #~(list "-DARES_BUILD_LOCAL=FALSE"
+                   "-DARES_BUILD_OFFICIAL=TRUE"
+                   "-DARES_BUNDLE_SHADERS=FALSE"
+                   "-DARES_SKIP_DEPS=TRUE"
+                   (string-append "-DARES_VERSION_OVERRIDE=" #$version))))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list alsa-lib
+           ao
+           gtk+
+           gtksourceview-3
+           libglvnd                     ; GLX
+           libx11
+           libxv
+           mesa                         ; OpenGL
+           sdl3
+           vulkan-loader
+           zlib))
+    (synopsis "Multi-system accuracy-focused emulator")
+    (description
+     "@command{ares} is a multi-system emulator that began development
+on 2004-10-14.  It is a descendant of higan and bsnes, and focuses on accuracy
+and preservation.")
+    (home-page "https://ares-emu.net/")
+    (license license:isc)))
+
 (define-public vice
   (package
     (name "vice")
