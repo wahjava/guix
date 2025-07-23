@@ -3780,7 +3780,7 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
 (define-public python-tortoise-orm
   (package
     (name "python-tortoise-orm")
-    (version "0.20.0")
+    (version "0.22.2")
     (source
      (origin
        (method git-fetch)
@@ -3789,16 +3789,31 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19rgyvs2y9gn27x71y7djdz6rb6bszgvprv55q1hr4266wy6g999"))))
+        (base32 "1xzwywvb3898hm41vwkzn785ziqprxh6lcf0lpmrgfcsc9qnnhzk"))))
     (build-system pyproject-build-system)
-    ;; The test suite relies on asynctest, which is abandoned and doesn't
-    ;; support Python >= 3.8.
-    (arguments '(#:tests? #f))
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list "not test_enum"  ; Fixed in the next release.
+                          ;; tortoise.exceptions.OperationalError
+                          "test_delete"
+                          "test_delete_limit"
+                          "test_delete_limit_order_by"
+                          "test_update_with_limit_ordering")
+                    " and not "))))
     (native-inputs
-     (list poetry))
+     (list poetry
+           python-asyncodbc
+           python-fastapi
+           python-psycopg
+           python-psycopg-pool
+           python-pydantic-2
+           python-pyodbc
+           python-pytest))
     (propagated-inputs
      (list python-aiomysql
-           python-aiosqlite-0.17
+           python-aiosqlite
            python-asyncmy
            python-asyncpg
            python-ciso8601
