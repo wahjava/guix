@@ -360,7 +360,7 @@ Qt.  Some of its features include:
 (define-public kvantum
   (package
     (name "kvantum")
-    (version "1.1.2")
+    (version "1.1.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -369,7 +369,7 @@ Qt.  Some of its features include:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1prlv2fqwbxj9fqs4xf925qh9m9ginh0mcc618yg3h23vxq9g9ym"))))
+                "17fjhnc8dpxb27dmv1c8mkcy2jwdny06zzqgd9zpamlqi97alp0v"))))
     (build-system qt-build-system)
     (arguments
      (list
