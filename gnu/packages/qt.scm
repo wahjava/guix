@@ -2102,6 +2102,7 @@ Vulkan, OpenGL and other main graphic APIs.")
      (list alsa-lib
            glib
            gstreamer
+           gst-plugins-bad              ;media player support
            gst-plugins-base             ;gstreamer-gl
            gst-plugins-good             ;camera support, additional plugins
            gst-libav                    ;ffmpeg plugin
