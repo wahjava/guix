@@ -44,6 +44,7 @@
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -167,6 +168,7 @@
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages sagemath)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages stb)
   #:use-module (gnu packages swig)
@@ -2497,7 +2499,7 @@ an embedded event driven algorithm.")
   ;; TODO: Remove when we have modular Trilinos packages?
   (package
     (name "trilinos-serial-xyce")
-    (version "12.12.1")
+    (version "14.4.0")                  ;used by xyce; sync updates
     (source
      (origin
        (method git-fetch)
@@ -2512,86 +2514,130 @@ an embedded event driven algorithm.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1smz3wlpfyjn0czmpl8bj4hw33p1zi9nnfygpsx7jl1523nypa1n"))))
+         "19ny75z1x2sfa9jv20prq4wqxznkzqryxj4gv12rzzlz9ihd1dcd"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:out-of-source? #t
-       #:phases
-       (modify-phases %standard-phases
-         ;; Delete unneeded tribits(build system) directory which makes validate-runpath
-         ;; phase to fail.
-         (add-before 'validate-runpath 'delete-tribits
-           (lambda* (#:key outputs #:allow-other-keys)
-             (delete-file-recursively
-              (string-append (assoc-ref outputs "out")
-                             "/lib/cmake/tribits")))))
-       #:configure-flags
-       (list "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
-             "-DCMAKE_C_FLAGS=-O3 -fPIC"
-             "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
-             "-DTrilinos_ENABLE_NOX=ON"
-             "-DNOX_ENABLE_LOCA=ON"
-             "-DTrilinos_ENABLE_EpetraExt=ON"
-             "-DEpetraExt_BUILD_BTF=ON"
-             "-DEpetraExt_BUILD_EXPERIMENTAL=ON"
-             "-DEpetraExt_BUILD_GRAPH_REORDERINGS=ON"
-             "-DTrilinos_ENABLE_TrilinosCouplings=ON"
-             "-DTrilinos_ENABLE_Ifpack=ON"
-             "-DTrilinos_ENABLE_Isorropia=ON"
-             "-DTrilinos_ENABLE_AztecOO=ON"
-             "-DTrilinos_ENABLE_Belos=ON"
-             "-DTrilinos_ENABLE_Teuchos=ON"
-             "-DTeuchos_ENABLE_COMPLEX=ON"
-             "-DTrilinos_ENABLE_Amesos=ON"
-             "-DAmesos_ENABLE_KLU=ON"
-             "-DAmesos_ENABLE_UMFPACK=ON"
-             "-DTrilinos_ENABLE_Sacado=ON"
-             "-DTrilinos_ENABLE_Kokkos=OFF"
-             "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF"
-             "-DTPL_ENABLE_AMD=ON"
-             "-DTPL_ENABLE_UMFPACK=ON"
-             "-DTPL_ENABLE_BLAS=ON"
-             "-DTPL_ENABLE_LAPACK=ON")))
-    (native-inputs (list gfortran swig))
-    (inputs (list boost lapack suitesparse))
-    (home-page "https://trilinos.org")
+     (list
+      #:configure-flags
+      #~(list "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
+              "-DCMAKE_C_FLAGS=-O3 -fPIC"
+              "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
+              "-DBUILD_SHARED_LIBS=ON"
+              (string-append "-DBLAS_LIBRARY_DIRS="
+                             #$(this-package-input "openblas") "/lib")
+              (string-append "-DLAPACK_LIBRARY_DIRS="
+                             #$(this-package-input "lapack") "/lib")
+              ;; Required packages by xyce (from xyce build phase):
+              "-DTrilinos_ENABLE_Zoltan=ON"
+              "-DTrilinos_ENABLE_NOX=ON"
+              "-DNOX_ENABLE_LOCA=ON"
+              "-DTrilinos_ENABLE_EpetraExt=ON"
+              "-DEpetraExt_BUILD_BTF=ON"
+              "-DEpetraExt_BUILD_EXPERIMENTAL=ON"
+              "-DEpetraExt_BUILD_GRAPH_REORDERINGS=ON"
+              "-DTrilinos_ENABLE_TrilinosCouplings=ON"
+              "-DTrilinos_ENABLE_Ifpack=ON"
+              "-DTrilinos_ENABLE_Isorropia=ON"
+              "-DTrilinos_ENABLE_AztecOO=ON"
+              "-DTrilinos_ENABLE_Belos=ON"
+              "-DTrilinos_ENABLE_Teuchos=ON"
+              "-DTeuchos_ENABLE_COMPLEX=ON"
+              "-DTrilinos_ENABLE_Amesos=ON"
+              "-DAmesos_ENABLE_KLU=ON"
+              "-DAmesos_ENABLE_UMFPACK=ON"
+              "-DTrilinos_ENABLE_Sacado=ON"
+              "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF"
+              "-DTPL_ENABLE_AMD=ON"
+              "-DTPL_ENABLE_UMFPACK=ON"
+              "-DTPL_ENABLE_BLAS=ON"
+              "-DTPL_ENABLE_LAPACK=ON")))
+    (native-inputs (list gfortran perl python-wrapper swig tcsh))
+    (inputs (list boost lapack openblas suitesparse))
+    (home-page "https://trilinos.github.io/")
     (synopsis "Engineering and scientific problems algorithms")
     (description
      "The Trilinos Project is an effort to develop algorithms and enabling
 technologies within an object-oriented software framework for the solution of
 large-scale, complex multi-physics engineering and scientific problems.  A
 unique design feature of Trilinos is its focus on packages.")
+    ;; The Trilinos project is a collection of open-source packages licensed
+    ;; individually under multiple open-source licenses. Licensing terms are
+    ;; available at the Trilinos website:
+    ;; https://trilinos.github.io/license.html
+    ;; For information about the software license for a particular package,
+    ;; see package-specific documentation (e.g., Trilinos/packages/<package
+    ;; name>/LICENSE).
+    ;; Only found these two licenses:
     (license (list license:lgpl2.1+
                    license:bsd-3))))
 
 (define-public xyce-serial
   (package
     (name "xyce-serial")
-    (version "6.8")
+    (version "7.9.0")           ;uses trilinos-serial-xyce 14.4; sync updates
     (source
-     (origin (method url-fetch)
-             (uri (string-append "https://archive.org/download/Xyce-"
-                                 version "/Xyce-" version ".tar.gz"))
+     (origin (method git-fetch)
+             (uri (git-reference
+                    (url "https://github.com/Xyce/Xyce")
+                    (commit (string-append "Release-" version))))
+             (file-name (git-file-name name version))
              (sha256
               (base32
-               "09flp1xywbb2laayd9rg8vd0fjsh115y6k1p71jacy0nrbdvvlcg"))))
-    (build-system gnu-build-system)
+               "14193l1vjkw4h5y0y4rmvriqy40mr6qc5v1hlpg1ilkch10lgjwv"))))
+    (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f
-       #:configure-flags
-       (list
-        "CXXFLAGS=-O3"
-        (string-append "ARCHDIR="
-                       (assoc-ref %build-inputs "trilinos")))))
+     (list
+      #:configure-flags
+      #~(list "-DXyce_PLUGIN_SUPPORT=ON"
+              "-DCMAKE_CXX_FLAGS=-O3 -fPIC"
+              "-DCMAKE_C_FLAGS=-O3 -fPIC"
+              "-DCMAKE_Fortran_FLAGS=-O3 -fPIC"
+              (string-append "-DBLAS_LIBRARY_DIRS="
+                             #$(this-package-input "openblas") "/lib")
+              (string-append "-DLAPACK_LIBRARY_DIRS="
+                             #$(this-package-input "lapack") "/lib"))
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            ;; FIXME. 27 failed and 1723 exited with error tests out of
+            ;; thousands of tests. Use the taglist below to limit the number
+            ;; of tests.
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Xyce_Regression purpose is to test Xyce. See:
+                ;; https://xyce.sandia.gov/documentation/RunningTheTests.html
+                (copy-recursively
+                 #$(origin
+                     (method git-fetch)
+                     (uri
+                      (git-reference
+                        (url "https://github.com/Xyce/Xyce_Regression/")
+                        (commit (string-append "Release-" version))))
+                     (sha256
+                      (base32
+                       (string-append "0j9snw5xz6x08kmng2iv2p7hrv"
+                                      "44wwhz8acksss2vn1hnpcfv6zc"))))
+                 "Xyce_Regression")
+                (with-directory-excursion "Xyce_Regression/TestScripts"
+                  (substitute* "run_xyce_regression"
+                    (("/usr/bin/env perl")
+                     (string-append #$(this-package-native-input "perl")
+                                    "/bin/perl")))
+                  (substitute* "xyce_verify.pl"
+                    (("/usr/bin/env perl")
+                     (string-append #$(this-package-native-input "perl")
+                                    "/bin/perl")))
+                  ;; (invoke "./suggestXyceTagList.sh" "../..") ;get a taglist
+                  (invoke "./run_xyce_regression"
+                          ;; "--taglist=${TAGLIST}" \
+                          (format #f "~a/src/Xyce"
+                                  (dirname (dirname (getcwd))))))))))))
     (native-inputs
-     `(("bison" ,bison-3.0)                  ;'configure' fails with Bison 3.4
-       ("flex" ,flex)
-       ("fortran" ,gfortran)))
+     (list adms bc bison flex gfortran perl perl-digest-md5 python-numpy
+           python-scipy python-minimal-wrapper))
     (inputs
-     `(("fftw" ,fftw)
-       ("suitesparse" ,suitesparse)
-       ("lapack" ,lapack)
-       ("trilinos" ,trilinos-serial-xyce)))
+     (list fftw lapack openblas suitesparse trilinos-serial-xyce))
     (home-page "https://xyce.sandia.gov/")
     (synopsis "High-performance analog circuit simulator")
     (description
@@ -2607,9 +2653,9 @@ parallel computing platforms.  It also supports serial execution.")
             (substitute-keyword-arguments
                 (package-arguments trilinos-serial-xyce)
               ((#:configure-flags flags)
-               #~(cons* "-DTrilinos_ENABLE_ShyLU=ON"
-                        "-DTrilinos_ENABLE_Zoltan=ON"
-                        "-DTPL_ENABLE_MPI=ON"
+               #~(cons* "-DTPL_ENABLE_MPI=ON"
+                        "-DCMAKE_C_COMPILER=mpicc"
+                        "-DCMAKE_Fortran_COMPILER=mpifort"
                         #$flags))))
            (inputs
             (modify-inputs (package-inputs trilinos-serial-xyce)
@@ -2622,15 +2668,17 @@ parallel computing platforms.  It also supports serial execution.")
             (substitute-keyword-arguments
                 (package-arguments xyce-serial)
               ((#:configure-flags flags)
-               #~(cons* "CXXFLAGS=-O3"
-                        "CXX=mpiCC"
-                        "CC=mpicc"
-                        "F77=mpif77"
-                        "--enable-mpi"
-                        #$flags))))
-           (propagated-inputs (list openmpi))
+               #~(cons* "-DTPL_ENABLE_MPI=ON"
+                        "-DCMAKE_C_COMPILER=mpicc"
+                        "-DCMAKE_Fortran_COMPILER=mpifort"
+                        "-DCMAKE_CXX_FLAGS=-O3 -fPIC -lmpi"
+                        "-DCMAKE_C_FLAGS=-O3 -fPIC -lmpi"
+                        (delete "-DCMAKE_C_FLAGS=-O3 -fPIC"
+                                (delete
+                                 "-DCMAKE_CXX_FLAGS=-O3 -fPIC" #$flags))))))
            (inputs
             (modify-inputs (package-inputs xyce-serial)
+              (prepend openmpi)
               (replace "trilinos-serial-xyce" trilinos-parallel-xyce)))))
 
 (define-public librepcb
