@@ -1594,18 +1594,20 @@ algebra, such as the row echelon form.")
     (home-page "https://linbox-team.github.io/fflas-ffpack/")))
 
 (define-public linbox
+  (let ((commit "d9d2a801e311cc0b7c6980b1c78df7528b7d4e17")
+        (revision "0"))
   (package
     (name "linbox")
-    (version "1.7.0")
+    (version (git-version "1.7.0" revision commit))
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/linbox-team/linbox")
-                    (commit (string-append "v" version))))
+                    (commit commit)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kr95ah0ss5s4j8kwxqlg395wraf32rdrmy83jfblg0avxmkhvwr"))))
+                "0h153yvanxdzsqqzh0ai5v0adziii34r03jmmjd34wqv2vrbqbqw"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool pkg-config))
@@ -1617,7 +1619,7 @@ algebra, such as the row echelon form.")
 with dense, sparse, and structured matrices over the integers and over
 finite fields.")
     (license license:lgpl2.1+)
-    (home-page "https://linbox-team.github.io/linbox/")))
+    (home-page "https://linalg.org/"))))
 
 (define-public m4ri
   (package
