@@ -2602,17 +2602,18 @@ parallel computing platforms.  It also supports serial execution.")
 
 (define trilinos-parallel-xyce
   (package (inherit trilinos-serial-xyce)
-    (name "trilinos-parallel-xyce")
-    (arguments
-     `(,@(substitute-keyword-arguments (package-arguments trilinos-serial-xyce)
-           ((#:configure-flags flags)
-            `(append (list "-DTrilinos_ENABLE_ShyLU=ON"
-                           "-DTrilinos_ENABLE_Zoltan=ON"
-                           "-DTPL_ENABLE_MPI=ON")
-                     ,flags)))))
-    (inputs
-     `(("mpi" ,openmpi)
-       ,@(package-inputs trilinos-serial-xyce)))))
+           (name "trilinos-parallel-xyce")
+           (arguments
+            (substitute-keyword-arguments
+                (package-arguments trilinos-serial-xyce)
+              ((#:configure-flags flags)
+               #~(cons* "-DTrilinos_ENABLE_ShyLU=ON"
+                        "-DTrilinos_ENABLE_Zoltan=ON"
+                        "-DTPL_ENABLE_MPI=ON"
+                        #$flags))))
+           (inputs
+            (modify-inputs (package-inputs trilinos-serial-xyce)
+              (prepend openmpi)))))
 
 (define-public xyce-parallel
   (package (inherit xyce-serial)
