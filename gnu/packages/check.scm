@@ -2942,7 +2942,7 @@ seamlessly into your existing Python unit testing work flow.")
              (when tests?
                (invoke "python" "lit.py" "tests")))))))
     ;; This can be built with any version of llvm.
-    (native-inputs (list llvm))
+    (native-inputs (list llvm python-setuptools))
     (home-page "https://llvm.org/")
     (synopsis "LLVM Software Testing Tool")
     (description "@code{lit} is a portable tool for executing LLVM and Clang

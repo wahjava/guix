@@ -380,6 +380,8 @@ facilitate packaging Python projects, where packaging includes:
      ;; fails to find the newly-built bdist_wheel library, even though it is
      ;; available on PYTHONPATH.  What search path is consulted by setup.py?
      '(#:tests? #f))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/pypa/wheel")
     (synopsis "Format for built Python packages")
     (description

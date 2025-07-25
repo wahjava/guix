@@ -8361,6 +8361,8 @@ Google and Numpydoc format.")
                       (if tests?
                           (invoke "python" "test/alltests.py")
                           (format #t "test suite not run~%")))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://docutils.sourceforge.net/")
     (synopsis "Python Documentation Utilities")
     (description
@@ -9887,6 +9889,8 @@ and is very extensible.")
            (lambda _
              (with-directory-excursion "tests"
                (invoke "sh" "runtests")))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "http://projectmallard.org")
     (synopsis "Convert Ducktype to Mallard documentation markup")
     (description
@@ -9940,7 +9944,7 @@ For some datatypes the overhead can be reduced by using khash by factor 4-8.")
      (list python))
     (native-inputs
      ;; Needed for some tests that link against it.
-     (list libxcrypt))
+     (list libxcrypt python-setuptools))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -12875,6 +12879,8 @@ a multithreaded image-processing system with low memory needs.")
                                       (string-append doc file)))
                          '("/README.rst" "/CHANGES" "/LICENSE"))
                (copy-recursively "examples" examples)))))))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/eliben/pycparser")
     (synopsis "C parser in Python")
     (description
@@ -17148,7 +17154,7 @@ number of lines in the contained files easily.")
                  "1msibi5cmi5znykkg66dq7xshl07lkqjxhrz5hcipqvlggsvjd4j"))))
      (build-system python-build-system)
      (native-inputs
-      (list unzip))
+      (list unzip python-setuptools))
      (arguments '(#:tests? #f))
      (home-page "https://github.com/fonttools/fonttools")
      (synopsis "Tools to manipulate font files")
@@ -17237,6 +17243,8 @@ provided that can be used to do various manipulations with LilyPond files.")
           (base32
             "0hfzmwknxqhg20aj83fx80vna74xfimg8sk18wb85fmin9kh2pbx"))))
     (build-system python-build-system)
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/ActiveState/appdirs")
     (synopsis
       "Determine platform-specific dirs, e.g. a \"user data dir\"")
@@ -26081,6 +26089,8 @@ package attempts to address the shortcomings of @code{isodate}.")
         (base32
          "0ckzngs3scaa1mcfmsi1w40a1l8cxxnncscrxzjjwjyisx8z0fmw"))))
     (build-system python-build-system)
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://github.com/RonnyPfannschmidt/iniconfig")
     (synopsis "Simple INI-file parser")
     (description "The @code{iniconfig} package provides a small and simple
