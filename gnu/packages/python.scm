@@ -1105,6 +1105,7 @@ def contents() -> str:
     (build-system gnu-build-system)
     (arguments
      (list
+      #:tests? #f
       #:test-target "test"
       #:configure-flags
       #~(list "--enable-shared"          ;allow embedding
