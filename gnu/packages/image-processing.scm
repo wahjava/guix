@@ -1289,6 +1289,7 @@ libraries designed for computer vision research and implementation.")
                      (string-append "-DPY_SITE_PACKAGES_PATH=" python-lib-path))
                    ;; Python is not built with Py_LIMITED_API.
                    "-DITK_USE_PYTHON_LIMITED_API=OFF"
+                   "-DModule_MorphologicalContourInterpolation=ON"
                    "-DCMAKE_CXX_STANDARD=17"
                    "-DBUILD_TESTING=OFF")
 
@@ -1314,7 +1315,18 @@ libraries designed for computer vision research and implementation.")
                             ;; <https://codeberg.org/guix/guix/issues/776>.
                             ;; <https://github.com/microsoft/vcpkg/pull/27187>
                             (substitute* "Modules/ThirdParty/GoogleTest/itk-module.cmake"
-                              (("DEPENDS") "DEPENDS\n  EXCLUDE_FROM_DEFAULT")))))))
+                              (("DEPENDS") "DEPENDS\n  EXCLUDE_FROM_DEFAULT"))))
+                        (add-after 'unpack 'prepare-remote-modules
+                          (lambda _
+                            ;; ITK module MorphologicalContourInterpolation is
+                            ;; for ITK-SNAP.
+                            (symlink #$(this-package-native-input
+                                        "MorphologicalContourInterpolation-checkout")
+                                     "Modules/Remote/MorphologicalContourInterpolation")
+                            (delete-file
+                             (string-append
+                              "Modules/Remote/"
+                              "MorphologicalContourInterpolation.remote.cmake")))))))
     (inputs
      (list eigen
            expat
@@ -1331,7 +1343,18 @@ libraries designed for computer vision research and implementation.")
            vxl-1
            zlib))
     (native-inputs
-     (list castxml gcc-13 git-minimal pkg-config swig-next which))
+     (list castxml gcc-13 git-minimal pkg-config swig-next which
+           ;; For a remote MODULE, use the commit in
+           ;; 'Modules/Remote/MODULE.remote.cmake'.
+           (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url (string-append "https://github.com/KitwareMedical"
+                                       "/ITKMorphologicalContourInterpolation"))
+                   (commit "821bf9b3ef8eaaab10391ed060dc9ca5e4d37b39")))
+             (file-name "MorphologicalContourInterpolation-checkout")
+             (sha256
+              (base32 "00myhgvlk3n062i8bnknz1d10zkv3jlvs7f4jnk24727gd4v2n4i")))))
 
     ;; The 'CMake/ITKSetStandardCompilerFlags.cmake' file normally sets
     ;; '-mtune=native -march=corei7', suggesting there's something to be
