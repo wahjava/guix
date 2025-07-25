@@ -304,7 +304,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/finance.scm			\
   %D%/packages/firmware.scm			\
   %D%/packages/flashing-tools.scm		\
-  %D%/packages/flex.scm				\
   %D%/packages/fltk.scm				\
   %D%/packages/fonts.scm			\
   %D%/packages/fontutils.scm			\
