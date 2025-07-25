@@ -44,8 +44,9 @@
   #:use-module (guix search-paths)
   #:use-module (guix sets)
   #:use-module (guix deprecation)
-  #:use-module ((guix diagnostics)
-                #:select (formatted-message define-with-syntax-properties))
+  #:use-module ((guix diagnostics) #:select (define-with-syntax-properties
+                                              formatted-message
+                                              leave))
   #:autoload   (guix licenses) (license?)
   #:use-module (guix i18n)
   #:use-module (ice-9 match)
@@ -201,7 +202,14 @@
             package-file
             package->derivation
             package->cross-derivation
-            origin->derivation))
+            origin->derivation
+
+            git-version*
+            git-version?
+            make-git-version
+            git-version-semantic
+            git-version-revision
+            git-version-commit))
 
 ;; The 'source-module-closure' procedure ca. 1.2.0 did not recognize
 ;; #:re-export-and-replace: <https://issues.guix.gnu.org/52694>.
@@ -614,7 +622,8 @@ Texinfo.  Otherwise, return the string."
   package?
   this-package
   (name   package-name)                   ; string
-  (version package-version)               ; string
+  (version %package-version               ; <git-version> instance or string
+           (sanitize warn-unexpected-package-version))
   (source package-source)                 ; <origin> instance
   (build-system package-build-system)     ; <build-system> instance
   (arguments package-arguments            ; arguments for the build method
@@ -1786,7 +1795,9 @@ and return it."
                  ;; name from the package version in various user-facing parts
                  ;; of Guix, checkStoreName (in nix/libstore/store-api.cc)
                  ;; prohibits the use of "@", so use "-" instead.
-                 (or (make-bag build-system (string-append name "-" version)
+                 (or (make-bag build-system
+                               (string-append name "-"
+                                              (package-version package))
                                #:system system
                                #:target target
                                #:source source
@@ -2201,3 +2212,32 @@ outside of the store) or SOURCE itself (if SOURCE is already a store item.)"
          (add-to-store store (basename file) #t "sha256" file))
         (_
          (lower store source system))))))
+
+(define-record-type* <git-version>
+  git-version* ; TODO Rename to git-version at the end of the deprecation.
+  make-git-version
+  git-version? this-git-version
+  (semantic git-version-semantic) ; string
+  (revision git-version-revision) ; string
+  (commit   git-version-commit))  ; string
+
+(define (package-version package)
+  "Return the canonical string version of the package."
+  (match (%package-version package)
+    (($ <git-version> version revision commit)
+     ;; XXX: Copied from (@ (guix git-download) git-version).
+     (when (< (string-length commit) 7)
+       (raise
+        (condition
+         (&message (message "git-version: commit ID unexpectedly short")))))
+     (string-append version "-" revision "." (string-take commit 7)))
+    (version
+     version)))
+
+(define-with-syntax-properties (warn-unexpected-package-version
+                                (value properties))
+  (unless (or (string? value) (git-version? value))
+    (leave (source-properties->location properties)
+           (G_ "The package-version object's implementation field supports \
+only <git-version> instances and strings.")))
+  value)

@@ -22,6 +22,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix git-download)
+  #:use-module (guix deprecation)
   #:use-module (guix gexp)
   #:use-module (guix store)
   #:use-module (guix monads)
@@ -59,7 +60,14 @@
             git-fetch/lfs
             git-version
             git-file-name
-            git-predicate))
+            git-predicate
+            vc-version)
+  #:re-export (git-version*
+               git-version?
+               make-git-version
+               git-version-semantic
+               git-version-revision
+               git-version-commit))
 
 ;;; Commentary:
 ;;;
@@ -283,8 +291,8 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
                            #:guile guile
                            #:git git))))
 
-(define (git-version version revision commit)
-  "Return the version string for packages using git-download."
+(define (vc-version version revision commit)
+  "Return the canonical version string for packages using version control."
   ;; git-version is almost exclusively executed while modules are being loaded.
   ;; This makes any errors hide their backtrace. Avoid the mysterious error
   ;; "Value out of range 0 to N: 7" when the commit ID is too short, which
@@ -296,9 +304,24 @@ HASH-ALGO (a symbol).  Use NAME as the file name, or a generic name if #f."
         (&message (message "git-version: commit ID unexpectedly short")))))
   (string-append version "-" revision "." (string-take commit 7)))
 
+(define-deprecated (git-version version revision commit)
+  ;; XXX: Should actually recommend git-version* instead, but the macro
+  ;; expander doesn't like that.  Still, it's OK to migrate to
+  ;; make-git-version in the meantime.
+  make-git-version
+  (vc-version version revision commit))
+
 (define (git-file-name name version)
   "Return the file-name for packages using git-download."
-  (string-append name "-" version "-checkout"))
+  (string-append name "-"
+                 (match version
+                   ((? git-version?)
+                    (vc-version (git-version-semantic version)
+                                (git-version-revision version)
+                                (git-version-commit version)))
+                   (semantic
+                    semantic))
+                 "-checkout"))
 
 
 ;;;
