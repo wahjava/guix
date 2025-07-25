@@ -1571,6 +1571,7 @@ propagated input, so installing this package already makes both the versioned
 and the unversioned commands available.")))
 
 (define-public python-wrapper (wrap-python3 python))
+(define-public python-next-wrapper (wrap-python3 python-next))
 (define-public python-minimal-wrapper (wrap-python3 python-minimal))
 
 ;; The Python used in pyproject-build-system.
