@@ -2617,24 +2617,21 @@ parallel computing platforms.  It also supports serial execution.")
 
 (define-public xyce-parallel
   (package (inherit xyce-serial)
-    (name "xyce-parallel")
-    (arguments
-     `(,@(substitute-keyword-arguments (package-arguments xyce-serial)
-           ((#:configure-flags flags)
-            `(list "CXXFLAGS=-O3"
-                   "CXX=mpiCC"
-                   "CC=mpicc"
-                   "F77=mpif77"
-                   "--enable-mpi"
-                   (string-append
-                    "ARCHDIR="
-                    (assoc-ref %build-inputs "trilinos")))))))
-    (propagated-inputs
-     `(("mpi" ,openmpi)))
-    (inputs
-     `(("trilinos" ,trilinos-parallel-xyce)
-       ,@(alist-delete "trilinos"
-                       (package-inputs xyce-serial))))))
+           (name "xyce-parallel")
+           (arguments
+            (substitute-keyword-arguments
+                (package-arguments xyce-serial)
+              ((#:configure-flags flags)
+               #~(cons* "CXXFLAGS=-O3"
+                        "CXX=mpiCC"
+                        "CC=mpicc"
+                        "F77=mpif77"
+                        "--enable-mpi"
+                        #$flags))))
+           (propagated-inputs (list openmpi))
+           (inputs
+            (modify-inputs (package-inputs xyce-serial)
+              (replace "trilinos-serial-xyce" trilinos-parallel-xyce)))))
 
 (define-public librepcb
   (package
