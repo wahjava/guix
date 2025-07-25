@@ -24,7 +24,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix git-download)
   #:use-module (gnu packages autotools)
-  #:use-module (gnu packages c)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gcc)
