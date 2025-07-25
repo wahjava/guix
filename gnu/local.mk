@@ -438,6 +438,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/lego.scm				\
   %D%/packages/less.scm				\
   %D%/packages/lesstif.scm			\
+  %D%/packages/lex-yacc.scm			\
   %D%/packages/libbsd.scm			\
   %D%/packages/libcanberra.scm			\
   %D%/packages/libdaemon.scm			\

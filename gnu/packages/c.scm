@@ -1005,28 +1005,6 @@ portability.")
     (license (list license:bsd-2        ;all files except...
                    license:bsd-3))))    ;...the unidef.1 manual page
 
-(define-public byacc
-  (package
-    (name "byacc")
-    (version "20240109")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://invisible-mirror.net/archives/byacc/byacc-"
-                   version ".tgz"))
-             (sha256
-              (base32
-               "0il4w1vwbglayakywyghiqhcjpg1yvv5ww2p8ylz32bi05wpg2gj"))))
-    (build-system gnu-build-system)
-    (home-page "https://invisible-island.net/byacc/byacc.html")
-    (synopsis "Berkeley Yacc LALR parser generator")
-    (description
-     "Berkeley Yacc is an LALR(1) parser generator.  Yacc reads the grammar
-specification from a file and generates an LALR(1) parser for it.  The parsers
-consist of a set of LALR(1) parsing tables and a driver routine written in the
-C programming language.")
-    (license license:public-domain)))
-
 (define-public argparse
   (package
     (name "argparse")
