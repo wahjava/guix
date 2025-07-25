@@ -1,15 +1,13 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright @ 2022, Kitzman <kitzman@disroot.org>
-;;; Copyright @ 2025 Dariqq <dariqq@posteo.net>
-;;; Copyright © 2012, 2013, 2014, 2019 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2016 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2016, 2017, 2018, 2019, 2021 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016, 2018 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2018, 2019 Pierre Neidhardt <mail@ambrevar.xyz>
+;;; Copyright © 2012-2016, 2018-2019 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016, 2017-2019, 2021 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2019-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2020–2022 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018-2019 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2019 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2019, 2020, 2022-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2021 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
+;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Katherine Cox-Buday <cox.katherine.e@gmail.com>
 ;;; Copyright © 2020, 2021 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2020, 2021 Marius Bakke <marius@gnu.org>
@@ -17,16 +15,17 @@
 ;;; Copyright © 2020, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2021 David Dashyan <mail@davie.li>
 ;;; Copyright © 2021 Foo Chuan Wei <chuanwei.foo@hotmail.com>
-;;; Copyright © 2022 ( <paren@disroot.org>
 ;;; Copyright © 2022 (unmatched parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2022 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2022, Kitzman <kitzman@disroot.org>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
 ;;; Copyright © 2023, 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2023, 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,9 +44,9 @@
 
 (define-module (gnu packages lex-yacc)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (gnu packages bison)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages man)
+  #:use-module (gnu packages perl)
   #:use-module (gnu packages)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
@@ -56,6 +55,62 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1))
+
+(define-public bison
+  (package
+    (name "bison")
+    (version "3.8.2")
+    (source
+     (origin
+      (method url-fetch)
+      (uri (string-append "mirror://gnu/bison/bison-"
+                          version ".tar.xz"))
+      (sha256
+       (base32
+        "1wjvbbzrr16k1jlby3l436an3kvv492h08arbnf0gwgprha05flv"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(;; Building in parallel on many-core systems may cause an error such as
+       ;; "mv: cannot stat 'examples/c/reccalc/scan.stamp.tmp': No such file or
+       ;; directory".  See <https://bugs.gnu.org/36238>.
+       #:parallel-build? #f
+       ;; Similarly, when building tests in parallel, Make may produce this error:
+       ;; "./examples/c/reccalc/scan.l:13:10: fatal error: parse.h: No such file
+       ;; or directory".  Full log in <https://bugs.gnu.org/36238>.
+       #:parallel-tests? #f
+       ;; On the Hurd with glibc 2.41 bison uses weak symbols from pthread
+       ;; but does not link to it.
+       ,@(if (target-hurd?)
+             (list #:configure-flags ''("LIBS=-lpthread"))
+             '())))
+    (native-inputs (list perl
+                         ;; m4 is not present in PATH when cross-building.
+                         m4))
+    (inputs (list flex))
+    (propagated-inputs (list m4))
+    (home-page "https://www.gnu.org/software/bison/")
+    (synopsis "Yacc-compatible parser generator")
+    (description
+     "GNU Bison is a general-purpose parser generator.  It can build a
+deterministic or generalized LR parser from an annotated, context-free
+grammar.  It is versatile enough to have many applications, from parsers for
+simple tools through complex programming languages.
+
+Bison also provides an implementation of @command{yacc}, as specified by POSIX.")
+    (license license:gpl3+)))
+
+(define-public bison-3.0
+  (package
+    (inherit bison)
+    (version "3.0.5")
+    (source
+     (origin
+      (method url-fetch)
+      (uri (string-append "mirror://gnu/bison/bison-"
+                          version ".tar.xz"))
+      (sha256
+       (base32
+        "0f7kjygrckkx8vas2nm673592jif0a9mw5g8207f6hj6h4pfyp07"))))))
 
 (define-public byacc
   (package

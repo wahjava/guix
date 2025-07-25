@@ -174,7 +174,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/bioconductor.scm			\
   %D%/packages/bioinformatics.scm		\
   %D%/packages/bittorrent.scm			\
-  %D%/packages/bison.scm			\
   %D%/packages/books.scm			\
   %D%/packages/boost.scm			\
   %D%/packages/bootloaders.scm			\
