@@ -1518,6 +1518,7 @@ files.  It is designed to be fast and to handle large input files.")
        (sha256
         (base32 "0s9ym98jrd819v4arv9gmcr6mgljhxd9q866sxi5p4c5n4nh7cqv"))))
     (build-system pyproject-build-system)
+    (arguments (list #:python python-wrapper))
     (home-page "https://github.com/tiran/defusedxml")
     (native-inputs
      (list python-setuptools
