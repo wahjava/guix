@@ -313,7 +313,7 @@ files and generates build instructions for the Ninja build system.")
               (sha256
                (base32
                 "02wi62k9w7716xxdgrrx68q89vaq3ncnbpw5ms0g27npn2df0mgr"))))
-    (build-system pyproject-build-system)
+    (build-system python-build-system)
     (arguments
      (list #:python python-wrapper
            #:tests? #f                  ;disabled to avoid extra dependencies
