@@ -4272,6 +4272,7 @@ exec ~a/bin/freedink -refdir ~a/share/dink\n"
                 "0yay0qc81x0irlvxqpy7jywjxpkmpjabdhq2hdh28r9z85wp2nwb"))
               (patches (search-patches "fuzzylite-use-catch2.patch"
                                        "fuzzylite-soften-float-equality.patch"
+                                       "fuzzylite-remove-deprecated-function.patch"
                                        "fuzzylite-relative-path-in-tests.patch"))))
     (build-system cmake-build-system)
     (arguments

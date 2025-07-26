@@ -1,0 +1,30 @@
+From d7d8de788f4475bc4d465faad50cb6f5e81f8629 Mon Sep 17 00:00:00 2001
+From: Johannes Schauer Marin Rodrigues <josch@mister-muffin.de>
+Date: Thu, 16 Jun 2022 22:22:29 +0200
+Subject: [PATCH] fuzzylite/src/main.cpp: support building with gcc-12
+Origin: https://salsa.debian.org/debian/fuzzylite/-/raw/debian/6.0+dfsg-8/debian/patches/0001-fuzzylite-src-main.cpp-support-building-with-gcc-12.patch
+
+ * std::set_unexpected() is removed in c++17
+ * We build with -Wall -Wextra -Werror and with gcc-12, using
+   std::set_unexpected will trigger the warning due to
+   -Werror=deprecated-declarations which in turn is treated as an error and
+   makes the build fail.
+---
+ fuzzylite/src/main.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/fuzzylite/src/main.cpp b/fuzzylite/src/main.cpp
+index 06ca139e..4465fbbe 100644
+--- a/fuzzylite/src/main.cpp
++++ b/fuzzylite/src/main.cpp
+@@ -21,7 +21,6 @@
+ 
+ int main(int argc, const char* argv[]) {
+     std::set_terminate(fl::Exception::terminate);
+-    std::set_unexpected(fl::Exception::terminate);
+     ::signal(SIGSEGV, fl::Exception::signalHandler);
+     ::signal(SIGABRT, fl::Exception::signalHandler);
+     ::signal(SIGILL, fl::Exception::signalHandler);
+-- 
+2.36.1
+
