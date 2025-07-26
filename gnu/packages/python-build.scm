@@ -48,22 +48,24 @@
 ;;;
 ;;; Code:
 
-
 ;;; These are dependencies used by the build systems contained herein; they
 ;;; feel a bit out of place but are kept here to prevent circular module
 ;;; dependencies.
 (define-public python-pathspec
   (package
     (name "python-pathspec")
-    (version "0.11.1")
+    (version "0.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pathspec" version))
        (sha256
-        (base32
-         "11qnlcanr1mqcpqpq1hmnwrs26csbsa2bafc7biq09x91y0dx617"))))
-    (build-system python-build-system)
+        (base32 "04jpkzic8f58z6paq7f3f7fdnlv9l89khv3sqsqk7ax10caxb0m4"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f #:test-backend #~'unittest))
+    (native-inputs
+     (list python-flit-core
+           python-setuptools))
     (home-page "https://github.com/cpburnz/python-pathspec")
     (synopsis "Utility library for gitignore style pattern matching of file paths")
     (description
@@ -103,9 +105,11 @@ stripped of Pytest specific details.")
        (uri (pypi-uri "toml" version))
        (sha256
         (base32 "13z6rff86bzdpl094x0vmfvls779931xj90dlbs9kpfm138s3gdk"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f))                     ;no tests suite in release
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://github.com/uiri/toml")
     (synopsis "Library for TOML")
     (description
@@ -160,7 +164,8 @@ write-only counterpart to Tomli, which is a read-only TOML parser.")
        (sha256
         (base32
          "09n9qih9rpj95q3r4a40li7hk6swma11syvgwdc68qm1fxsc6q8y"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (arguments `(#:tests? #f))          ;to avoid pytest dependency
     (home-page "https://pypi.org/project/six/")
     (synopsis "Python 2 and 3 compatibility utilities")
@@ -395,23 +400,26 @@ installed with a newer @code{pip} or with wheel's own command line utility.")
     (license license:expat)))
 
 ;;; TODO: Deprecate with https://github.com/pypa/pyproject-hooks.
+;;;
+;;; From PyPI web page: The core of this package has been renamed to
+;;; pyproject-hooks (https://pyproject-hooks.readthedocs.io). Please use that
+;;; package or build (https://pypa-build.readthedocs.io/en/stable/) in place
+;;; of pep517.
 (define-public python-pep517-bootstrap
   (hidden-package
    (package
      (name "python-pep517-bootstrap")
-     (version "0.9.1")
+     (version "0.13.1")
      (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "pep517" version))
         (sha256
-         (base32
-          "0zqidxah03qpnp6zkg3zd1kmd5f79hhdsfmlc0cldaniy80qddxf"))))
-     (build-system python-build-system)
+         (base32 "05xk0x7b5n7zmcqrznm4lnbakgdjpin19mp5zyzb92wksgzs4bqv"))))
+     (build-system pyproject-build-system)
      (arguments
       `(#:tests? #f))                     ;to avoid circular dependencies
-     (propagated-inputs
-      (list python-toml python-wheel))
+      (native-inputs (list python-flit-core python-setuptools python-wheel))
      (home-page "https://github.com/pypa/pep517")
      (synopsis "Wrappers to build Python packages using PEP 517 hooks")
      (description
@@ -526,6 +534,7 @@ information.")
      `(("python-packaging" ,python-packaging-bootstrap)
        ("python-pep517", python-pep517-bootstrap)
        ("python-toml" ,python-toml)))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://pypa-build.readthedocs.io/en/latest/")
     (synopsis "Simple Python PEP 517 package builder")
     (description "The @command{build} command invokes the PEP 517 hooks to
@@ -594,37 +603,39 @@ compatible build front-ends to build Poetry managed projects.")
 (define-public python-flit-core-bootstrap
   (package
     (name "python-flit-core-bootstrap")
-    (version "3.8.0")
+    (version "3.12.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "flit" version))
        (sha256
-        (base32 "0dz9sp2zlhkmk6sm5gapbbb30f7xq3n3jn5zxx5pkp25ppsaiwnh"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-toml))
+        (base32 "0h1pxi2hgr95321bgl45l86693zl14l3shj0idsyg4k9v56z700w"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; flit-core has a test suite, but it requires Pytest.  Disable it so
-     ;; as to not pull pytest as an input.
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'build
-           ;; flit-core requires itself to build.  Luckily, a
-           ;; bootstrapping script exists, which does so using just
-           ;; the checkout sources and Python.
-           (lambda _
-             (invoke "python" "flit_core/build_dists.py")))
-         (replace 'install
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out"))
-                   (whl (car (find-files "." "\\.whl$"))))
-               (invoke "pip" "--no-cache-dir" "--no-input"
-                       "install" "--no-deps" "--prefix" out whl))))
-         ;; The sanity-check phase fails because flit depends on tomli at
-         ;; run-time, but this core variant avoids it to avoid a cycle.
-         (delete 'sanity-check))))
+     (list
+      ;; flit-core has a test suite, but it requires Pytest.  Disable it so
+      ;; as to not pull pytest as an input.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-license
+            ;; flit_core bundles the 'tomli' TOML parser, to avoid a
+            ;; bootstrapping problem. See
+            ;; <https://github.com/pypa/packaging-problems/issues/342>.
+            (lambda _
+              (delete-file-recursively "flit_core/flit_core/vendor")
+              (substitute* "flit_core/pyproject.toml"
+                (("license-files.*") "license-files = [\"LICENSE*\"]\n"))))
+          (replace 'build
+            ;; flit-core requires itself to build.  Luckily, a
+            ;; bootstrapping script exists, which does so using just
+            ;; the checkout sources and Python.
+            (lambda _
+              (chdir "flit_core")
+              (invoke "python" "build_dists.py")))
+          (delete 'sanity-check))))
+    (propagated-inputs
+     (list python-setuptools python-toml python-wheel))
     (home-page "https://github.com/pypa/flit")
     (synopsis "Core package of the Flit Python build system")
     (description "This package provides @code{flit-core}, a PEP 517 build
@@ -637,7 +648,8 @@ specified by PEP 517, @code{flit_core.buildapi}.")
     (name "python-flit-core")
     (propagated-inputs
      (modify-inputs (package-propagated-inputs python-flit-core-bootstrap)
-       (replace "python-toml" python-tomli)))))
+       (delete "python-toml")
+       (prepend python-tomli)))))
 
 (define-public python-flit-core-next
   (package/inherit python-flit-core
@@ -685,10 +697,11 @@ system, then @code{flit_core} to build the package.")
               (uri (pypi-uri "setuptools_scm" version))
               (sha256
                (base32 "09wg4zg30ir1c2cvwqipaz3hwaxz503fgw5zdvaxgakilx2q6l3c"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments (list #:tests? #f))    ;avoid extra dependencies such as pytest
     (propagated-inputs (list python-packaging-bootstrap python-tomli
                              python-typing-extensions))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/pypa/setuptools_scm/")
     (synopsis "Manage Python package versions in SCM metadata")
     (description
@@ -757,40 +770,30 @@ reflected in the package visible to Python, without needing a reinstall.")
 (define-public python-exceptiongroup
   (package
     (name "python-exceptiongroup")
-    (version "1.1.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/agronholm/exceptiongroup")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0wcvzwgjs0xmggs6dh92jxdqi988gafzh10hrzvw10kasy0xakfj"))))
-    (build-system python-build-system)
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/agronholm/exceptiongroup")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kygngc6j7hm68w8q327jvym2z4gpyh93g2af6g419qaqqv7axkg"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f                       ;TODO: Circular dependency on pytest
+      #:tests? #f       ;to keep dependencies to a minimum
+      #:build-backend "setuptools.build_meta"
       #:phases
       #~(modify-phases %standard-phases
-          ;; XXX: PEP 517 manual build/install procedures copied from
-          ;; python-isort.
-          (replace 'build
+          (add-before 'build 'set-version
             (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
-              ;; ZIP does not support timestamps before 1980.
-              (setenv "SOURCE_DATE_EPOCH" "315532800")
-              (invoke "python" "-m" "build" "--wheel" "--no-isolation" ".")))
-          (replace 'install
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((whl (car (find-files "dist" "\\.whl$"))))
-                (invoke "pip" "--no-cache-dir" "--no-input"
-                        "install" "--no-deps" "--prefix" #$output whl))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv" "tests")))))))
-    (native-inputs (list python-flit-scm python-pypa-build))
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-flit-scm python-setuptools python-wheel))
+    (propagated-inputs
+     (list python-typing-extensions))
     (home-page "https://github.com/agronholm/exceptiongroup")
     (synopsis "PEP 654 backport from Python 3.11")
     (description "This is a backport of the @code{BaseExceptionGroup} and

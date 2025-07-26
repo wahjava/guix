@@ -409,7 +409,7 @@ analysing code quality.")
            (lambda _
              (invoke "pytest" "-vv"))))))
     (native-inputs
-     (list python-coverage python-pytest))
+     (list python-coverage python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/asottile/covdefaults")
     (synopsis "Coverage plugin to provide opinionated default settings")
     (description
@@ -2200,7 +2200,7 @@ advanced doctest support and enables the testing of reStructuredText files.")
         (base32 "1hl0ln0cicdid4qjk7mv90lw9xkb0v71dlj7q7rn89vzxxm9b53y"))))
     (build-system python-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/MobileDynasty/pytest-env")
     (synopsis "Pytest plugin that allows you to add environment variables")
     (description

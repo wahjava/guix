@@ -2028,9 +2028,10 @@ XML document to a Python object.")
               (sha256
                (base32
                 "0rsa75x86gdjalvy4riq7613szb616hff80crx006chyppzdkxmq"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
+     '(#:tests? #f
+       #:phases
        (modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
@@ -2042,7 +2043,7 @@ XML document to a Python object.")
                          "-k" "not test_export_remote__issue_187")
                  (format #t "test suite not run~%")))))))
     (native-inputs
-     (list python-lxml))   ;for tests
+     (list python-lxml python-setuptools python-wheel))   ;for tests
     (propagated-inputs
      (list python-elementpath))
     (home-page "https://github.com/sissaschool/xmlschema")

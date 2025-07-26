@@ -1577,16 +1577,26 @@ and the unversioned commands available.")))
 
 ;; The Python used in pyproject-build-system.
 (define-public python-sans-pip
-  (hidden-package
-   (package/inherit python
-     (arguments
-      (substitute-keyword-arguments (package-arguments python)
-        ((#:configure-flags flags #~())
-         #~(append '("--with-ensurepip=no")
-                   (delete "--with-ensurepip=install" #$flags))))))))
+  (package/inherit python
+    (arguments
+     (substitute-keyword-arguments (package-arguments python)
+       ((#:configure-flags flags #~())
+        #~(append '("--with-ensurepip=no")
+                  (delete "--with-ensurepip=install" #$flags)))))))
+
+(define-public python-next-sans-pip
+  (package/inherit python-next
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-next)
+       ((#:configure-flags flags #~())
+        #~(append '("--with-ensurepip=no")
+                  (delete "--with-ensurepip=install" #$flags)))))))
 
 (define-public python-sans-pip-wrapper
   (wrap-python3 python-sans-pip))
+
+(define-public python-next-sans-pip-wrapper
+  (wrap-python3 python-next-sans-pip))
 
 (define-public python-toolchain
   (let ((base (package/inherit python-sans-pip-wrapper)))

@@ -3374,18 +3374,20 @@ access the technical and tag data for video and audio files.")
 (define-public python-psutil
   (package
     (name "python-psutil")
-    (version "5.9.2")
+    (version "7.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "psutil" version))
        (sha256
-        (base32 "0p1bf6ndcssqh0ic828ggwhzhm67mzj3ffq6043v0fvc1fhn3f7y"))))
-    (build-system python-build-system)
+        (base32 "0mn42p9pzh0wynhk9i18iyvp8h54hbcsyczajmjcpv4blgmw7sbv"))))
+    (build-system pyproject-build-system)
     (arguments
      ;; FIXME: some tests do not return and time out.  Some tests fail because
      ;; some processes survive kill().
      '(#:tests? #f))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://github.com/giampaolo/psutil")
     (synopsis "Library for retrieving information on running processes")
     (description
@@ -5466,16 +5468,29 @@ in the current session, Python, and the OS.")
     (license license:bsd-3)))
 
 (define-public python-six
-  (package/inherit python-six-bootstrap
+  (package
     (name "python-six")
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "-v"))))))
+    (version "1.17.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "six" version))
+       (sha256
+        (base32 "109ajcsfhrz33lbwbb337w34crc3lb9rjnxrcpnbczlf8rfk6w7z"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     `(("python-pytest" ,python-pytest-bootstrap)))))
+     (list python-pytest-bootstrap
+           python-setuptools
+           python-wheel))
+    (home-page "https://pypi.org/project/six/")
+    (synopsis "Python 2 and 3 compatibility utilities")
+    (description
+     "Six is a Python 2 and 3 compatibility library.  It provides utility
+functions for smoothing over the differences between the Python versions with
+the goal of writing Python code that is compatible on both Python versions.
+Six supports every Python version since 2.5.  It is contained in only one
+Python file, so it can be easily copied into your project.")
+    (license license:x11)))
 
 (define-public python2-six
   (let ((base (package-with-python2 python-six)))
@@ -7459,6 +7474,7 @@ JavaScript-like message boxes.  Types of dialog boxes include:
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f
       ;; One test fails with error: 'function (test.muppy.test_summary.func)'
       ;; != 'function (muppy.test_summary.func)'.
       ;; See <https://github.com/pympler/pympler/issues/134>.
@@ -7514,13 +7530,15 @@ environments and back.")
        (method url-fetch)
        (uri (pypi-uri "PyYAML" version))
        (sha256
-        (base32
-         "0hsa7g6ddynifrwdgadqcx80khhblfy94slzpbr7birn2w5ldpxz"))))
-    (build-system python-build-system)
-    (inputs
-     (list libyaml python-cython))
+        (base32 "0gmwggzm0j0iprx074g5hah91y2f68sfhhldq0f8crddj7ndk16m"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools))
+     (list python-cython-3
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list libyaml))
     (home-page "https://pyyaml.org")
     (synopsis "YAML parser and emitter for Python")
     (description
@@ -7588,6 +7606,7 @@ e.g. filters, callbacks and errbacks can all be promises.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f
       #:test-flags
       #~(list "-k" (string-join
                     (list
@@ -7797,7 +7816,7 @@ possible.")
        (sha256
         (base32
          "0jqxp5sfrc0byp6bk0gwdmildi4mck2gprp42afri3z4r5y1k4bz"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
                   (replace 'check
@@ -7805,7 +7824,7 @@ possible.")
                       (when tests?
                         (invoke "pytest" "-vv")))))))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/mitsuhiko/markupsafe")
     (synopsis "XML/HTML/XHTML markup safe string implementation for Python")
     (description
@@ -11964,7 +11983,9 @@ Python's distutils.")
        (sha256
         (base32
          "1kjxh4gr651hpqkjfv89cfzr40hyvf3vjlda7mifiail83j7j07m"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments (list #:python python-wrapper))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://www.decalage.info/python/olefileio")
     (synopsis "Read and write Microsoft OLE2 files")
     (description
@@ -18290,19 +18311,25 @@ invoked on those path objects directly.")
     (version "1.0.9")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pretend" version))
+       (method git-fetch)       ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/alex/pretend")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "040vm94lcbscg5p81g1icmwwwa2jm7wrd1ybmxnv1sz8rl8bh3n9"))))
-    (build-system python-build-system)
+        (base32 "156l685r9mg7i4xyrk9ql3sxk088irxlg8x7md5i0d05hdw1z8rs"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/alex/pretend")
     (synopsis "Library for stubbing in Python")
     (description
      "Pretend is a library to make stubbing with Python easier.  Stubbing is a
-technique for writing tests.  You may hear the term mixed up with mocks,
-fakes, or doubles.  Basically, a stub is an object that returns pre-canned
-responses, rather than doing any computation.")
+technique for writing tests.  You may hear the term mixed up with mocks,fakes,
+or doubles.  Basically, a stub is an object that returns pre-canned responses,
+rather than doing any computation.")
     (license license:bsd-3)))
 
 ;;; Variant used to break a dependency cycle with
@@ -21023,27 +21050,20 @@ of @acronym{REGEXPs, regular expressions}.")
 (define-public python-mako
   (package
     (name "python-mako")
-    (version "1.2.2")
+    (version "1.3.10")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "Mako" version))
+       (uri (pypi-uri "mako" version))
        (sha256
-        (base32
-         "0gqnv9py1dqp01jmf5zxp0vj2dbhq1l9zy55fai319iv6sdqc91p"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "pytest" "-vv")
-                          (format #t "test suite not run~%"))
-                      #t)))))
+        (base32 "0a7ala6k7kn094k3g02b85xfkr20yk0w6a0acgjsfgsq75prlmwr"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-markupsafe))
-    (native-inputs
-     (list python-mock python-pytest))
     (home-page "https://www.makotemplates.org/")
     (synopsis "Templating language for Python")
     (description "Mako is a templating language for Python that compiles
@@ -22665,9 +22685,12 @@ network support library.")
         (method url-fetch)
         (uri (pypi-uri "ply" version))
         (sha256
-          (base32
-            "18qx113g9bi1ac4indd5phma82zcdq601lxncp3vjn43m2mc3iq0"))))
-    (build-system python-build-system)
+          (base32 "18qx113g9bi1ac4indd5phma82zcdq601lxncp3vjn43m2mc3iq0"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ;XXX: not tests in PyPI archvie, there are in Git
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (home-page "http://www.dabeaz.com/ply/")
     (synopsis "Python Lex & Yacc")
     (description "PLY is a @code{lex}/@code{yacc} implemented purely in Python.
@@ -27275,16 +27298,18 @@ class ShellOutSSHClientTests"))))
 (define-public python-smmap
   (package
     (name "python-smmap")
-    (version "3.0.1")
+    (version "5.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "smmap" version))
        (sha256
-        (base32 "0ijlnv60y8f41py1wnn5n1a1i81cxd9dfpdhr0k3cgkrcbz8850p"))))
-    (build-system python-build-system)
+        (base32 "1mcai5vf9bgz389y4sqgj6w22wn7zmc7m33y3j50ryjq76h6bsi6"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-nosexcover))
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/Byron/smmap")
     (synopsis "Python sliding window memory map manager")
     (description "@code{smmap} is a pure Python implementation of a sliding
@@ -30241,15 +30266,18 @@ that is accessible to other projects developed in Cython.")
     (version "2.4.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "sortedcontainers" version))
+       (method git-fetch)       ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/grantjenks/python-sortedcontainers")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "126vpywl7aly6zir033a9indgyficlzl68qls61nn2y3djhabji5"))))
-    (build-system python-build-system)
+        (base32 "190w2mvgvx0r5k0r8117slq48nh6k7xidbpsrp02wnmcd0rx45k1"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; TODO: Circular dependency on pytest.
-     '(#:tests? #f))
+     (list #:test-flags #~(list "--pyargs" "sortedcontainers")))
+    (native-inputs
+     (list python-pytest-bootstrap python-setuptools python-wheel))
     (home-page "https://grantjenks.com/docs/sortedcontainers/")
     (synopsis "Sorted List, Sorted Dict, Sorted Set")
     (description
@@ -32311,7 +32339,7 @@ also be usable with other GSSAPI mechanisms.")
     (native-inputs
      (list git-minimal/pinned python-pytest))
     (propagated-inputs
-     (list python-pypa-build python-setuptools))
+     (list python-pypa-build python-setuptools python-wheel))
     (home-page "https://github.com/mgedmin/check-manifest")
     (synopsis "Check MANIFEST.in in a Python source package for completeness")
     (description "Python package can include a MANIFEST.in file to help with

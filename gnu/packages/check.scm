@@ -2877,50 +2877,38 @@ look and feel of py.test, using a progress bar and showing failures and errors
 instantly.")
     (license license:bsd-3)))
 
+
 (define-public python-hypothesis
   (package
     (name "python-hypothesis")
-    (version "6.54.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "hypothesis" version))
-              (sha256
-               (base32
-                "1ivyrjpnahvj359pfndnk8x3h0gw37kqm02fmnzibx4mas15d44a"))))
-    (build-system python-build-system)
-    (arguments
-     ;; XXX: Tests are not distributed with the PyPI archive.
-     (list #:tests? #f
-           #:phases
-           #~(modify-phases %standard-phases
-               ;; XXX: hypothesis requires pytest at runtime, but we can
-               ;; not propagate it due to a circular dependency.
-               (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-attrs-bootstrap python-exceptiongroup python-sortedcontainers))
-    (synopsis "Library for property based testing")
-    (description "Hypothesis is a library for testing your Python code against a
-much larger range of examples than you would ever want to write by hand.  It’s
-based on the Haskell library, Quickcheck, and is designed to integrate
-seamlessly into your existing Python unit testing work flow.")
-    (home-page "https://hypothesis.works/")
-    (license license:mpl2.0)))
-
-(define-public python-hypothesis-next
-  (package
-    (inherit python-hypothesis)
-    (name "python-hypothesis")
-    (version "6.131.8")
+    (version "6.135.26")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "hypothesis" version))
        (sha256
-        (base32 "1wx4ii5dxfp9gajfb5bqd3a2d1a38rbmvb620kj0cvlyvxkv5nk8"))))
+        (base32 "0073lb8xp789fxs5g8dmi3pr2p8q7imfsksidy0ccfahrm30xbvk"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: Tests are not distributed with the PyPI archive.
+     (list #:tests? #f))
     (native-inputs
-     (list python-setuptools-next
-           python-wheel))))
+     (list python-pytest-bootstrap      ;to pass sanity check
+           python-setuptools-next
+           python-wheel))
+    (propagated-inputs
+     (list python-attrs-bootstrap
+           python-exceptiongroup
+           python-sortedcontainers))
+    (home-page "https://hypothesis.works/")
+    (synopsis "Library for property based testing")
+    (description "Hypothesis is a library for testing your Python code against a
+much larger range of examples than you would ever want to write by hand.  It’s
+based on the Haskell library, Quickcheck, and is designed to integrate
+seamlessly into your existing Python unit testing work flow.")
+    (license license:mpl2.0)))
+
+(define-public python-hypothesis-next python-hypothesis)
 
 ;; WARNING: This package is a dependency of mesa.
 (define-public python-lit
@@ -3592,9 +3580,9 @@ scenarios.")
 inspect\\.isclass\\(attr_value\\):")
             "if (not callable(attr_value) or inspect.isclass(attr_value)\
 or isinstance(attr_value, staticmethod)):")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-dateutil))
     (arguments
@@ -4186,31 +4174,24 @@ system.  The code under test requires no modification to work with pyfakefs.")
 (define-public python-aiounittest
   (package
     (name "python-aiounittest")
-    (version "1.4.2")
-    ;; Pypi package lacks tests.
+    (version "1.5.0")
     (source
-     (origin (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/kwarunek/aiounittest.git")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "0srahyzrk5awfh4rmppvqkblfmiavdklxl9i5mcr8gl7ahiwwl7f"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "nosetests" "-v")
-                          (format #t "test suite not run~%"))
-                      #t)))))
-    (propagated-inputs (list python-wrapt))
+     (origin
+       (method git-fetch) ;no tets in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/kwarunek/aiounittest.git")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0266i5z589jh75hjzakvwcqx5shgv5zis8mr70qa209v7jjclzfd"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-coverage))
-    (home-page
-     "https://github.com/kwarunek/aiounittest")
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-wrapt))
+    (home-page "https://github.com/kwarunek/aiounittest")
     (synopsis "Test asyncio code more easily")
     (description "Aiounittest is a library that helps write tests using
 asynchronous code in Python (asyncio).")
