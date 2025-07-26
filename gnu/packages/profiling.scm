@@ -341,51 +341,53 @@ the same display and thus provide the ability to easily compare the effects of
 different kinds of performance behavior.")
     (license license:bsd-3)))
 
-(define (make-cubew versionstring)
+;; Since version 4.4, CUBE has been split in three different packages.
+;; Define common data for all of them.
+(define cubeversion "4.9")
+(define cubeprefix "https://apps.fz-juelich.de/scalasca/releases/cube/")
+(define (make-cubesource name sha)
+  (origin
+    (method url-fetch)
+      (uri ((lambda _
+              (string-append cubeprefix cubeversion
+                "/dist/" name "-" cubeversion ".tar.gz"))))
+      (sha256 (base32 sha))))
+(define cubehomepage "https://www.scalasca.org/software/cube-4.x/download.html")
+(define cubelicense license:bsd-3)
+
+;; Set the sha256 of the three packages in the CUBE series.
+(define cubew-sha   "1pdcs8688y4nwcxshgs9773xmdajxahsbjsrfh8m7gv9qn0lxxsf")
+(define cubelib-sha "0hwl0aihn6fgpl0qhqckxc3sslb78wq6xav5ykfgfjzpyddqyrd0")
+(define cubegui-sha "04byhf00xnn1ppca914ag4hq2kjv37lhwyh8dl369ps47mp6viqh")
+
+(define-public cubew
   (package
     (name "cubew")
-    (version versionstring)
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://apps.fz-juelich.de/scalasca/releases/cube/"
-             version "/dist/cubew-"
-             version ".tar.gz"))
-       (sha256
-         (base32 "1pdcs8688y4nwcxshgs9773xmdajxahsbjsrfh8m7gv9qn0lxxsf"))))
-     (inputs (list zlib))
-     (build-system gnu-build-system)
-     (arguments
-       `(#:configure-flags
-         `("--enable-shared" "--disable-static" "--disable-silent-rules"
-           ,(string-append "--with-frontend-zlib="
-             (assoc-ref %build-inputs "zlib") "/lib")
-           ,(string-append "--with-backend-zlib="
-             (assoc-ref %build-inputs "zlib") "/lib"))))
-     (home-page "https://www.scalasca.org/software/cube-4.x/download.html")
+    (version cubeversion)
+    (source (make-cubesource "cubew" cubew-sha))
+    (inputs (list zlib))
+    (build-system gnu-build-system)
+    (arguments
+      `(#:configure-flags
+        `("--enable-shared" "--disable-static" "--disable-silent-rules"
+          ,(string-append "--with-frontend-zlib="
+            (assoc-ref %build-inputs "zlib") "/lib")
+          ,(string-append "--with-backend-zlib="
+            (assoc-ref %build-inputs "zlib") "/lib"))))
+    (home-page cubehomepage)
     (synopsis "CUBE high performance C writer library")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
 of performance metrics for parallel programs including MPI and OpenMP
-applications.  CUBE allows interactive exploration of a multidimensional
-performance space in a scalable fashion.  CubeW is the high performance C writer
-library of the CUBE project.")
-    (license license:bsd-3)))
+applications.  CubeW is the high performance C writer library of the CUBE
+project.")
+     (license cubelicense)))
 
-(define (make-cubelib versionstring)
+(define-public cubelib
   (package
     (name "cubelib")
-    (version versionstring)
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://apps.fz-juelich.de/scalasca/releases/cube/"
-             version "/dist/cubelib-"
-             version ".tar.gz"))
-       (sha256
-         (base32 "0hwl0aihn6fgpl0qhqckxc3sslb78wq6xav5ykfgfjzpyddqyrd0"))))
+    (version cubeversion)
+    (source (make-cubesource "cubelib" cubelib-sha))
     (native-inputs (list which))
     (inputs (list zlib))
     (build-system gnu-build-system)
@@ -399,30 +401,20 @@ library of the CUBE project.")
          "--with-compression=full")
       #:parallel-tests? #f
     ))
-    (home-page "https://www.scalasca.org/software/cube-4.x/download.html")
+    (home-page cubehomepage)
     (synopsis "CUBE C++ profile library")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
 of performance metrics for parallel programs including MPI and OpenMP
-applications.  CUBE allows interactive exploration of a multidimensional
-performance space in a scalable fashion.  CubeLib is the general purpose C++
-library and tool of the CUBE project.")
-    (license license:bsd-3)))
+applications.  CubeLib is the general purpose C++ library and tool of the CUBE
+project.")
+    (license cubelicense)))
 
-(define (make-cubegui versionstring)
+(define-public cubegui
   (package
     (name "cubegui")
-    (version versionstring)
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-         (string-append
-           "https://apps.fz-juelich.de/scalasca/releases/cube/"
-           version "/dist/cubegui-"
-           version ".tar.gz"))
-       (sha256
-         (base32 "04byhf00xnn1ppca914ag4hq2kjv37lhwyh8dl369ps47mp6viqh"))))
+    (version cubeversion)
+    (source (make-cubesource "cubegui" cubegui-sha))
     (inputs (list cubelib dbus perl))
     (native-inputs (list qtbase )) ; native because of qmake
     (build-system gnu-build-system)
@@ -434,20 +426,13 @@ library and tool of the CUBE project.")
            (assoc-ref %build-inputs "dbus") "/include/dbus-1.0")
          ,(string-append "LDFLAGS=-L"
            (assoc-ref %build-inputs "dbus") "/lib"))))
-    (home-page "https://www.scalasca.org/software/cube-4.x/download.html")
+    (home-page cubehomepage)
     (synopsis "CUBE profile explorer GUI")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
 of performance metrics for parallel programs including MPI and OpenMP
-applications.  CUBE allows interactive exploration of a multidimensional
-performance space in a scalable fashion.  CubeGUI is the graphical explorer of
-the CUBE project.")
-    (license license:bsd-3)))
-
-(define cubeversion "4.9")
-(define-public cubew   (make-cubew   cubeversion))
-(define-public cubelib (make-cubelib cubeversion))
-(define-public cubegui (make-cubegui cubeversion))
+applications.  CubeGUI is the graphical explorer of the CUBE project.")
+    (license cubelicense)))
 
 (define-public tracy-wayland
   (package
