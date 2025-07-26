@@ -2749,7 +2749,7 @@ forgotten when the session ends.")
 (define-public evince
   (package
     (name "evince")
-    (version "48.0")
+    (version "48.1")
     (source
      (origin
        (method url-fetch)
@@ -2757,7 +2757,7 @@ forgotten when the session ends.")
                            (version-major version) "/"
                            "evince-" version ".tar.xz"))
        (sha256
-        (base32 "09hi8p7pcqdk888fn52nqll0jzismyh4md75z7ypb47san1nabyd"))))
+        (base32 "047s8d4qh9jijk1kp4kfzy4afwwcd0kr11a8j1dkypd0ldprm2vx"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t
