@@ -1044,7 +1044,7 @@ useful for C++.")
 (define-public python-pygobject
   (package
     (name "python-pygobject")
-    (version "3.50.0")
+    (version "3.52.3")
     (source
      (origin
        (method url-fetch)
@@ -1053,7 +1053,7 @@ useful for C++.")
                            "/pygobject-" version ".tar.xz"))
        (sha256
         (base32
-         "04i28xrb9fxkmn9j2mmsl0lbmk9blgjcl8hnxrbx90d8nmsnx0wd"))
+         "10kd13naw7ig83gnpdx8hbzpdrwbkjgrlrddiwm4cmz9j792gr00"))
        (modules '((guix build utils)))
        (snippet
         ;; We disable these tests in a snippet so that they are inherited
