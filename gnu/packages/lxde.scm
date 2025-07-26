@@ -581,16 +581,15 @@ in LXDE.")
 (define-public lxpanel
   (package
     (name "lxpanel")
-    (version "0.10.1")
+    (version "0.11.1")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/"
-                           "LXPanel%20%28desktop%20panel%29/"
-                           "LXPanel%200.10.x/lxpanel-"
-                           version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
-        (base32 "1s0y8jjkw6qz0r8l90618b8xly0c8g906kah7b162sz3sxbqyc8y"))))
+        (base32 "14hxav4yc0iy09xh90vrw3zx6sqakw6xacyz5fafs8iprk6k47r5"))))
     (build-system gnu-build-system)
     (arguments
      (list
