@@ -1085,7 +1085,7 @@ useful for C++.")
      (list glib libffi))
     ;; For finding typelib files, since gobject-introscpetion isn't propagated.
     (native-search-paths (package-native-search-paths gobject-introspection))
-    (home-page "https://live.gnome.org/PyGObject")
+    (home-page "https://wiki.gnome.org/PyGObject")
     (synopsis "Python bindings for GObject")
     (description
      "Python bindings for GLib, GObject, and GIO.")
