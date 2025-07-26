@@ -60,7 +60,7 @@
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)

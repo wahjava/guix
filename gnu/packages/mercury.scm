@@ -28,9 +28,8 @@
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages texinfo)
-  #:use-module (gnu packages flex)
   #:use-module (gnu packages shells)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages pkg-config)
   #:use-module ((ice-9 match) #:select (match-lambda)))
 

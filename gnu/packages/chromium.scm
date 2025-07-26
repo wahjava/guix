@@ -31,7 +31,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cups)

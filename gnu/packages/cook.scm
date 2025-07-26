@@ -22,7 +22,7 @@
   #:use-module (guix packages)
   #:use-module (guix licenses)
   #:use-module (guix download)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages groff)
   #:use-module (gnu packages text-editors)

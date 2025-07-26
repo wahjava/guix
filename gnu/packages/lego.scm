@@ -25,9 +25,8 @@
   #:use-module (guix packages)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
-  #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages qt))
 

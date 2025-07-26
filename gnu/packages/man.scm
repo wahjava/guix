@@ -42,7 +42,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dbm)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages groff)

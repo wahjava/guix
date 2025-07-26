@@ -50,7 +50,7 @@
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages elf)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages perl)
   #:use-module (guix packages)
   #:use-module (guix download)

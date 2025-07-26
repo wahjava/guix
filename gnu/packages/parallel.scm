@@ -54,7 +54,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages documentation)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages freeipmi)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages glib)

@@ -53,7 +53,6 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bdw-gc)
-  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages bootstrap)          ;for 'bootstrap-guile-origin'
   #:use-module (gnu packages build-tools)
@@ -72,7 +71,7 @@
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages file)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)

@@ -34,7 +34,7 @@
 (define-module (gnu packages xiph)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)

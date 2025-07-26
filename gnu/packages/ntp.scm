@@ -33,7 +33,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages gps)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)

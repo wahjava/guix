@@ -52,7 +52,7 @@
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages elf)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages glib)

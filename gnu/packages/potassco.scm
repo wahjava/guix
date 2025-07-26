@@ -33,7 +33,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (gnu packages algebra)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages graphviz)

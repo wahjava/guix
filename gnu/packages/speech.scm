@@ -37,7 +37,7 @@
   #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)            ;for 'which'
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages emacs)

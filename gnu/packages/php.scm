@@ -28,7 +28,7 @@
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages aspell)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)

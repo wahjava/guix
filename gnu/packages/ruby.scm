@@ -36,7 +36,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages c)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)

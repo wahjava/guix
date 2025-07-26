@@ -109,7 +109,6 @@
   #:use-module (gnu packages base) ;libbdf
   #:use-module (gnu packages bash)
   #:use-module (gnu packages benchmark)
-  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages cdrom)
@@ -127,7 +126,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages file)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages fltk)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)

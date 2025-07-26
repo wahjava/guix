@@ -31,12 +31,11 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)      ;for "which"
   #:use-module (gnu packages bash)      ;for "which"
-  #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages fabric-management)
-  #:use-module (gnu packages flex)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)

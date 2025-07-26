@@ -22,7 +22,7 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages pkg-config)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages))

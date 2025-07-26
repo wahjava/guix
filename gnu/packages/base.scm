@@ -49,7 +49,7 @@
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages guile)

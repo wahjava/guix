@@ -37,7 +37,7 @@
   #:use-module (gnu packages elf)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages readline)
-  #:use-module (gnu packages bison)
+  #:use-module (gnu packages lex-yacc)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages pkg-config)
