@@ -4448,7 +4448,7 @@ dispatching systems can be built.")
     (build-system python-build-system)
     (arguments '(#:tests? #f))  ; test suite can't find python-zope-testing
     (native-inputs
-     (list python-coverage python-nose python-zope-event
+     (list python-coverage python-zope-event
            python-zope-testing))
     (home-page "https://github.com/zopefoundation/zope.interface")
     (synopsis "Python implementation of the \"design by contract\"
