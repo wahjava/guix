@@ -557,7 +557,19 @@ in LXDE.")
            (lambda _
              (for-each delete-file (find-files "." "\\.stamp$"))
              ;; Force regeneration of configure script.
-             (delete-file "configure"))))))
+             (delete-file "configure")))
+         (add-before 'check 'patch-potfiles.skip
+           ;; Fix for https://github.com/lxde/lxsession/issues/42
+           (lambda _
+             (let ((file "po/POTFILES.skip"))
+               (with-output-to-file file
+                 (lambda ()
+                   (display "lxsession-default-apps/combobox.c\n")
+                   (display "lxsession-default-apps/main.c\n")
+                   (display "data/lxpolkit.desktop.in\n")
+                   (display "lxpolkit/main.c\n")
+                   (display "lxsession/app.c\n"))))
+              #t)))))
     (inputs
      (list gtk+
            polkit))
