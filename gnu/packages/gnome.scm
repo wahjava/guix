@@ -7604,7 +7604,7 @@ environments.")
 (define-public yelp-xsl
   (package
     (name "yelp-xsl")
-    (version "42.1")
+    (version "42.4")
     (source
      (origin
        (method url-fetch)
@@ -7613,7 +7613,7 @@ environments.")
                        (version-major version) "/"
                        name "-" version ".tar.xz"))
        (sha256
-        (base32 "1kav039g62q35h508shdbrcjcfkdsc7k6wcr2g780c35n58f32r3"))))
+        (base32 "1lfpmdc4y46a528q5filn6xs8add921avrnwl2vpysp6n9zb1szx"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--enable-doc")))
