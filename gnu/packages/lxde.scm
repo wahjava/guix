@@ -69,15 +69,15 @@
 (define-public libfm
   (package
     (name "libfm")
-    (version "1.3.2")
+    (version "1.4.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/pcmanfm/"
-                                  "PCManFM%20%2B%20Libfm%20%28tarball%20release"
-                                  "%29/LibFM/" name "-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1rfira3lx8v6scz1aq69925j4vslpp36bmgrrzcfby2c60q2c155"))))
+                "00qy885rhca575dr9976wz808ay6yqr1q4mv9kwafyiskfq9q34f"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--with-gtk=3")))
     (inputs (list glib gtk+))
