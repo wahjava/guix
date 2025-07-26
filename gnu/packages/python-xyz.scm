@@ -10010,7 +10010,7 @@ writing C extensions for Python as easy as Python itself.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:python python-next-wrapper
+      #:python python-wrapper
       #:test-flags
       #~(list "-vv"
               "-j" (number->string (parallel-job-count))
