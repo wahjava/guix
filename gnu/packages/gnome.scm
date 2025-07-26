@@ -1499,7 +1499,7 @@ given profile, etc.  DLNA is a subset of UPnP A/V.")
 (define-public gupnp-av
   (package
    (name "gupnp-av")
-   (version "0.14.3")
+   (version "0.14.4")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnome/sources/" name "/"
@@ -1507,7 +1507,7 @@ given profile, etc.  DLNA is a subset of UPnP A/V.")
                                 name "-" version ".tar.xz"))
             (sha256
              (base32
-              "1d3vy6mdj3rvf11lf36y9qdc4692w6dhb2ax6qlrasp68dh09qmb"))))
+              "1izq71qphyac02ynypwk0skxqzhfr0zrl7dap3sxrdaw4yrp9n91"))))
    (build-system meson-build-system)
    (native-inputs
     (list gettext-minimal
