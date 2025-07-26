@@ -381,7 +381,7 @@ applications.")
 (define-public pango
   (package
     (name "pango")
-    (version "1.56.3")
+    (version "1.56.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -390,7 +390,7 @@ applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0dpbh423ggbcdhajaglq86rf6hx5znzqvphjcpp7x8xn8y0ih939"))))
+                "0jnmydds9dmdah4fjj5rr5gmf1imxlxjc0w98if642n98vmsdf67"))))
     (build-system meson-build-system)
     (arguments
      (list
