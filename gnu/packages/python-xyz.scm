@@ -7519,6 +7519,8 @@ environments and back.")
     (build-system python-build-system)
     (inputs
      (list libyaml python-cython))
+    (native-inputs
+     (list python-setuptools))
     (home-page "https://pyyaml.org")
     (synopsis "YAML parser and emitter for Python")
     (description
