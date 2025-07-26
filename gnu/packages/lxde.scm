@@ -106,14 +106,15 @@ libFM file management library.")))
 (define-public lxappearance
   (package
     (name "lxappearance")
-    (version "0.6.3")
+    (version "0.6.4")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/"
-                           "LXAppearance/lxappearance-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
-        (base32 "0f4bjaamfxxdr9civvy55pa6vv9dx1hjs522gjbbgx7yp1cdh8kj"))))
+        (base32 "13c3xav519cy0xv5z6v3w57lfzpx6j3g7zrgacdz330xhkmlvp4z"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--enable-gtk3")))
     (inputs (list gtk+))
@@ -127,16 +128,15 @@ able to change themes, icons, and fonts used by GTK+ applications.")
 (define-public lxrandr
   (package
     (name "lxrandr")
-    (version "0.3.2")
+    (version "0.3.3")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lxde/LXRandR"
-                                  "%20%28monitor%20config%20tool%29/LXRandR%20"
-                                  (version-major+minor version) ".x/"
-                                  "lxrandr-" version ".tar.xz"))
+              (uri (string-append
+                   "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "04n3vgh3ix12p8jfs4w0dyfq3anbjy33h7g53wbbqqc0f74xyplb"))))
+                "12jxf5in41b2dprx6s5apdbhjaw09phyv2adnqwhbcavxi4cw21z"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--enable-gtk3")
@@ -163,16 +163,15 @@ or external monitor.")
 (define-public lxtask
   (package
     (name "lxtask")
-    (version "0.1.10")
+    (version "0.1.12")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lxde/LXTask"
-                                  "%20%28task%20manager%29/LXTask%20"
-                                  (version-major+minor version) ".x/"
-                                  "lxtask-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0b2fxg8jjjpk219gh7qa18g45365598nd2bq7rrq0bdvqjdxy5i2"))))
+                "00h1lghq7n1rpv016wgrn48qw04b17q8gzcxzwck1j0scsmri6q9"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--enable-gtk3")))
     (inputs (list gtk+))
@@ -187,15 +186,15 @@ toolkit.  It allows users to monitor and control of running processes.")
 (define-public lxterminal
   (package
     (name "lxterminal")
-    (version "0.3.2")
+    (version "0.4.1")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lxde/LXTerminal"
-                                  "%20%28terminal%20emulator%29/LXTerminal%20"
-                                  version "/" name "-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1124pghrhnx6q4391ri8nvi6bsmvbj1dx81an08mird8jf2b2rii"))))
+                "0cddarxn05g7sqgi460480fkx2xsgn3hvkzhp9s0j6iykv2hn6l5"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--enable-gtk3")))
     (inputs (list gtk+ vte/gtk+-3))
@@ -211,15 +210,15 @@ performance, all instances of the terminal are sharing a single process.")
 (define-public menu-cache
   (package
     (name "menu-cache")
-    (version "1.1.0")
+    (version "1.1.1")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lxde/" name "/"
-                                  (version-major+minor version) "/"
-                                  name "-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1iry4zlpppww8qai2cw4zid4081hh7fz8nzsp5lqyffbkm2yn0pd"))))
+                "06jkyhqjcdvbj5sv740wqd6073jvkbxzhvgch3a9pfdh8ndkjcl2"))))
     (build-system gnu-build-system)
     (inputs `(("glib"  ,glib)
               ("libfm" ,libfm-extra)))
@@ -235,15 +234,15 @@ speed up the access to freedesktop.org defined application menus.")
 (define-public pcmanfm
   (package
     (name "pcmanfm")
-    (version "1.3.2")
+    (version "1.4.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/pcmanfm/"
-                                  "PCManFM%20%2B%20Libfm%20%28tarball%20release"
-                                  "%29/PCManFM/pcmanfm-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1xqc2k2jh165mm81xg0ghxx0ml1s3rhh4ndvbzkcri4kfhj7pjql"))))
+                "1pjaca1w82j3cvvrx3fyn1iicicjn8s4q1d9yp9v56h36b6nq1jm"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--with-gtk=3")))
     (inputs (list gtk+ gvfs             ;for trash and mount support
@@ -417,16 +416,16 @@ customizable menu system, and Bash integration.")
 (define-public lxmenu-data
   (package
     (name "lxmenu-data")
-    (version "0.1.5")
+    (version "0.1.6")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge//lxde/"
-                           "lxmenu-data%20%28desktop%20menu%29/"
-                           name "-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
         (base32
-         "1f5sh2dvb3pdnjlcsyzq9543ck2jsqizkx3204cr22zm5s6j3qwz"))))
+         "184dy2y5lpjywfiy8q7qk86avh1gy3f4lhqc0d77p9zd410jh7ac"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config intltool))
@@ -440,16 +439,16 @@ menu spec-compliant desktop menus for LXDE.")
 (define-public lxde-icon-theme
   (package
     (name "lxde-icon-theme")
-    (version "0.5.1")
+    (version "0.5.2")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/LXDE%20Icon%20Theme/"
-                           "lxde-icon-theme-" version "/"
-                           name "-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0v4i6x86fr2hbx4fb2si7y2qzmj7h6hcjwaifnin18r8kwwvgl73"))))
+         "0bgm8r0w43mrwvl4kxrzcm36phlv9hc0bdiiwqxlhm5lvfqb5x48"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -462,17 +461,16 @@ menu spec-compliant desktop menus for LXDE.")
 (define-public lxde-common
   (package
     (name "lxde-common")
-    (version "0.99.2")
+    (version "0.99.3")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/"
-                           "lxde-common%20%28default%20config%29/"
-                           "lxde-common%20" (version-major+minor version) "/"
-                           name "-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0mj84fa3f4ak1jjslrwc2q3ci9zxrxpciggviza9bjb0168brn8w"))))
+         "1c5xbfp5vmibcs69acnlwnkz35jpbssxa3kwwl0m8ci2c63aq6q2"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -500,16 +498,16 @@ menu spec-compliant desktop menus for LXDE.")
 (define-public lxinput
   (package
     (name "lxinput")
-    (version "0.3.5")
+    (version "0.3.6")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/"
-                           "LXInput%20%28Kbd%20and%20amp_%20mouse%20config%29/"
-                           "LXInput%200.3.x/" name "-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
         (base32
-         "123f3yn4rp1w5b3n5aj3ad9snkxab29qkrs7bcvf5bx4cn57g3sf"))))
+         "0p0w37vjyx6ccmf215d7vgbfpvy1anzy64784i28krr8yrw4jy7p"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--enable-gtk3")))
     (inputs
@@ -526,16 +524,15 @@ in LXDE.")
 (define-public lxsession
   (package
     (name "lxsession")
-    (version "0.5.5")
+    (version "0.5.6")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/lxde/"
-                           "LXSession%20%28session%20manager%29/"
-                           "LXSession%200.5.x/"
-                           "lxsession-" version ".tar.xz"))
+       (uri (string-append
+             "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+             name "-" version ".tar.xz"))
        (sha256
-        (base32 "0imv9nysip1j9lrb2z96kl05isjgp312323wnnd5b59h0ff0sgp4"))
+        (base32 "1pyi09gd0zm4za47pnk1iyhd7fda6yrkfqm8fzfyvj469j136jl8"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove C files generated by Vala so we can build from source.
