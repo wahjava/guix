@@ -2994,7 +2994,7 @@ GNOME and KDE desktops to the icon names proposed in the specification.")
 (define-public adwaita-icon-theme
   (package
     (name "adwaita-icon-theme")
-    (version "48.0")
+    (version "48.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -3002,7 +3002,7 @@ GNOME and KDE desktops to the icon names proposed in the specification.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1m5qavk603j2njfnm2jjpjp4c6n3zlmvyvdy2lqngnahhs46hw44"))))
+                "04kfi8qpvghhmj83p03k509pnsp8ywlrii1qm0xv056dxf39pznb"))))
     (build-system meson-build-system)
     (arguments
      (list #:phases
