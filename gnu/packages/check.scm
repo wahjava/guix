@@ -1684,7 +1684,6 @@ standard library.")
      ;; Tests need the "regular" bash since 'bash-final' lacks `compgen`.
      (list bash
            python-hypothesis
-           python-nose
            ;; python-pygments ; introduces cycle
            python-pytest-bootstrap
            python-setuptools
@@ -4209,7 +4208,7 @@ system.  The code under test requires no modification to work with pyfakefs.")
                       #t)))))
     (propagated-inputs (list python-wrapt))
     (native-inputs
-     (list python-coverage python-nose))
+     (list python-coverage))
     (home-page
      "https://github.com/kwarunek/aiounittest")
     (synopsis "Test asyncio code more easily")
