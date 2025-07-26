@@ -7508,7 +7508,7 @@ environments and back.")
 (define-public python-pyyaml
   (package
     (name "python-pyyaml")
-    (version "6.0.1")
+    (version "6.0.2")
     (source
      (origin
        (method url-fetch)
