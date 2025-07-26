@@ -1062,11 +1062,7 @@ useful for C++.")
     (propagated-inputs (list glib libffi)) ;required in pygobject-3.0.pc
     ;; For finding typelib files, since gobject-introscpetion isn't propagated.
     (native-search-paths (package-native-search-paths gobject-introspection))
-<<<<<<< Updated upstream
-    (home-page "https://live.gnome.org/PyGObject")
-=======
     (home-page "https://pygobject.gnome.org/")
->>>>>>> Stashed changes
     (synopsis "Python bindings for GObject")
     (description
      "Python bindings for GLib, GObject, and GIO.")
