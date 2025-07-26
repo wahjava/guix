@@ -1536,7 +1536,7 @@ new DBus session for testing.")
 (define-public libdex
   (package
     (name "libdex")
-    (version "0.10.0")
+    (version "0.10.1")
     (source
      (origin
        (method url-fetch)
@@ -1544,7 +1544,7 @@ new DBus session for testing.")
                            (version-major+minor version) "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "1q8yf7x1d379pyhm98ar8mza9zx1sa97yypabd2ssiknm8k9d9lq"))))
+        (base32 "19nhpsjkvb34mq209js02dl75s438jxdwpjh0y1j4ayvj20fhwkl"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~'("-D" "docs=true")))
