@@ -66,6 +66,7 @@
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4590,4 +4591,25 @@ Bonnie Scranton, and Edward Tufte.")
 Hack + DejaVu Sans Mono is used for ASCII, and Rounded Mgen+ for the other.
 In addition, Nerd Fonts, Noto Emoji, Icons for Devs, and some adjustment forked
 from the Ricty generator are converted and adjusted.")
+    (license license:silofl1.1)))
+
+(define-public font-tiktok-sans
+  (package
+    (name "font-tiktok-sans")
+    (version "4.000")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/tiktok/TikTokSans/releases/download/v"
+             version "/TikTokSans-v" version ".zip"))
+       (sha256
+        (base32 "0hq2p20mdvy2bnmpgji6kfda970s384izsi5c24l4lbkjkky0f5j"))))
+    (build-system font-build-system)
+    (home-page "https://www.tiktok.com/font")
+    (synopsis "Free and open-source font by TikTok")
+    (description
+     "TikTok Sans is the default font used in millions of TikTok videos.
+With its playful, fresh, and dynamic design, it is perfect for making
+video captions.")
     (license license:silofl1.1)))
