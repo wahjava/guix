@@ -83,6 +83,7 @@
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2763,57 +2764,49 @@ accepted as a quirk (ie AMD Vega 10).")
 (define-public linux-pam
   (package
     (name "linux-pam")
-    (version "1.5.2")
+    (version "1.7.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/linux-pam/linux-pam/releases/download/v"
-             version "/Linux-PAM-" version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/linux-pam/linux-pam")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0kgrsj2scv5mx6w925h9hxf11jnqqs9z8s22aw94b90xm4qp3v74"))
+         "09mzs4s586acabw5zm1a0vi4xdg352miqyr3x7i10cxa3rsmm6cc"))
        (patches (search-patches "linux-pam-unix_chkpwd.patch"
                                 "linux-pam-no-setfsuid.patch"))))
-
-    (build-system gnu-build-system)
+    (build-system meson-build-system)
+    (outputs '("out" "doc")) ;; 0.8 MiB of html
     (inputs (list libxcrypt))
     (native-inputs
-     (list flex
-           ;; TODO: optional dependencies
-           ;; ("cracklib" ,cracklib)
-           ))
+     (list gettext-minimal
+           ;; optional?
+           flex bison
+           ;; manpages
+           libxslt
+           libxml2
+           docbook-xml
+           docbook-xsl))
     (arguments
      (list
-      ;; Most users, such as `shadow', expect the headers to be under
-      ;; `security'.
-      #:configure-flags #~(list (string-append "--includedir="
-                                               (assoc-ref %outputs "out")
-                                               "/include/security")
-                                ;; explicit libdir for pkgconfig files
-                                ;; drop with 1.5.3, which fixes
-                                ;; https://github.com/linux-pam/linux-pam/issues/466
-                                (string-append "--libdir="
-                                               (assoc-ref %outputs "out")
-                                               "/lib")
-
-                                ;; XXX: <rpc/rpc.h> is missing from glibc when
-                                ;; cross-compiling, so we have to disable NIS
-                                ;; support altogether.
-                                #$@(if (%current-target-system)
-                                       #~("--disable-nis")
-                                       #~()))
-
-      #:phases (if (target-hurd?)
-                   #~(modify-phases %standard-phases
-                       (add-after 'unpack 'skip-pam-limits
-                         (lambda _
-                           ;; 'pam_limits.c' uses <sys/prctl.h>, which is
-                           ;; Linux-specific.  Skip it on GNU/Hurd.
-                           (substitute* "modules/Makefile.in"
-                             (("pam_limits") "")))))
-                   #~%standard-phases)
-
+      #:configure-flags
+      #~(list
+         ;; lastlog is deprecated since 1.5.3
+         ;; enable elogind?
+         "-Dpam_lastlog=enabled"
+         (string-append "-Ddocbook-rng="
+                        #$(this-package-native-input "docbook-xml")
+                        "/xml/docbook/"
+                        #$(package-version
+                           (this-package-native-input "docbook-xml"))
+                        "/rng/docbookxi.rng")
+         (string-append "-Dhtmldir=" #$output:doc "/share/doc/" #$name "/html")
+         #$@(if (target-hurd?)
+                #~("-Dexamples=false")
+                #~())
+         )
       ;; XXX: Tests won't run in chroot, presumably because /etc/pam.d
       ;; isn't available.
       #:tests? #f))
