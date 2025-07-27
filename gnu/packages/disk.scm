@@ -349,7 +349,9 @@ tables.  It includes a library and command-line utility.")
        #:make-flags (list (string-append "CPPFLAGS="
                                          " -I../common/include "
                                          " -I../debug/include "
-                                         " -I../exception/include"))))
+                                         " -I../exception/include")
+                          (string-append "CFLAGS=-Wno-implicit-function-declaration"
+                                         " -Wno-incompatible-pointer-types"))))
     (home-page "https://www.gnu.org/software/fdisk/")
     (synopsis "Low-level disk partitioning and formatting")
     (description
