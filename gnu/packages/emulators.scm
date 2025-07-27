@@ -170,7 +170,43 @@
     (description
      "@command{ares} is a multi-system emulator that began development
 on 2004-10-14.  It is a descendant of higan and bsnes, and focuses on accuracy
-and preservation.")
+and preservation.
+Here are some supported systems:
+@itemize
+@item Arcade
+@item Atari 2600
+@item Bandai Wonderswan
+@item Bandai Wonderswan Color
+@item Benesse Pocket Challenge V2
+@item Colecovision
+@item MSX 1 and 2
+@item Nec Pc Engine Turbografx Cd
+@item Nec Pc Engine Supergrafx
+@item Nec Pc Engine Turbografx
+@item Nichibutsu My Vision
+@item Nintendo Famicom Disk System
+@item Nintendo Game Boy
+@item Nintendo Game Boy Advance
+@item Nintendo Game Boy Color
+@item Nintendo Nes Famicom
+@item Nintendo Nintendo 64
+@item Nintendo Nintendo 64DD
+@item Nintendo Satellaview
+@item Nintendo Snes Super Famicom
+@item Nintendo Sufami Turbo
+@item Sega 32x
+@item Sega Game Gear
+@item Sega Master System Mark Iii
+@item Sega Mega Cd
+@item Sega Mega Drive Genesis
+@item Sega Sg 1000
+@item Sinclair Zx Spectrum
+@item Snk Neo Geo Aesmvs
+@item Snk Neo Geo Pocket
+@item Snk Neo Geo Pocket Color
+@item Sony Playstation
+@end itemize
+")
     (home-page "https://ares-emu.net/")
     (license license:isc)))
 
