@@ -460,7 +460,8 @@ score, keyboard, guitar, drum and controller views.")
          "--without-hal"
          "--enable-udev"
          (string-append "--with-udev-dir=" #$output "/lib/udev")
-         (string-append "--prefix=" #$output))
+         (string-append "--prefix=" #$output)
+         "CFLAGS=-Wno-incompatible-pointer-types -Wno-implicit-int")
 
       #:phases
       #~(modify-phases %standard-phases
