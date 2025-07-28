@@ -1338,6 +1338,10 @@ static void secureFilePerms(Path path)
     chmod(path.c_str(), (st.st_mode & ~S_IFMT) & ~(S_ISUID | S_ISGID | S_IWOTH));
     break;
 
+  case S_IFSOCK:
+    chmod(path.c_str(), (st.st_mode & ~S_IFMT) & ~S_IWOTH);
+    break;
+
   default:
     throw Error(format("file `%1%' has an unsupported type") % path);
   }
