@@ -9809,10 +9809,6 @@ easy, safe, and automatic.")
     (arguments
      (list
       #:glib-or-gtk? #t
-      #:test-options `(list ,@(if (or (target-riscv64?)
-                                      (target-aarch64?))
-                                  `("--timeout-multiplier" "10")
-                                  '("--timeout-multiplier" "2")))
       #:configure-flags
       ;; Otherwise, the RUNPATH will lack the final path component.
       #~(list (string-append "-Dc_link_args=-Wl,-rpath="
@@ -9860,13 +9856,18 @@ easy, safe, and automatic.")
                 (substitute* "docs/manpages/meson.build"
                   (("/etc/asciidoc[^']+")
                    file)))))
-          (replace 'check
+          (delete 'check)               ;moved after install
+          (add-after 'install 'set-gi-typelib-path
+            (lambda* (#:key outputs #:allow-other-keys)
+              (setenv "GI_TYPELIB_PATH"
+                      (search-input-directory outputs "lib/girepository-1.0"))))
+          (add-after 'set-gi-typelib-path 'check
             (lambda* (#:key tests? test-options #:allow-other-keys)
               (when tests?
                 ;; Some tests expect to write to $HOME.
                 (setenv "HOME" "/tmp")
                 (apply invoke "dbus-run-session" "--" "meson" "test"
-                       "--print-errorlogs" test-options)))))))
+                       "--print-errorlogs" "-t0" test-options)))))))
     (native-inputs
      (list gettext-minimal
            `(,glib "bin")
