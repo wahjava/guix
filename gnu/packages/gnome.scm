@@ -7077,6 +7077,81 @@ side panel;
     ;; ".gresource.eog_postasa_plugin" ELF section.
     (license license:gpl2+)))
 
+(define-public loupe
+  (package
+    (name "loupe")
+    (version "48.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/loupe/"
+                                  (version-major version) "/"
+                                  "loupe-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1pkhb5r14bgyrdqw0l1sykfrghznlm998f6kwxx0g7bqjqz3sw8h"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%meson-build-system-modules
+                           ,@%cargo-build-system-modules)
+      #:modules `(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build meson-build-system)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-for-build
+            (lambda _
+              (substitute* "meson.build"
+                (("gtk_update_icon_cache: true")
+                 "gtk_update_icon_cache: false")
+                (("update_desktop_database: true")
+                 "update_desktop_database: false")
+                ((">=1.7.beta")
+                 "1.6.0"))
+              ;; Avoid checking the lock checksums.
+              (delete-file "Cargo.lock")))
+          ;; The meson 'configure phase changes to a different directory and
+          ;; we need it created before unpacking the crates.
+          (add-after 'configure 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:vendor-dir "vendor"
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/loupe")
+                `("GSETTINGS_SCHEMA_DIR" =
+                  (,(string-append #$output "/share/glib-2.0/schemas")))))))))
+    (native-inputs
+     (list gettext-minimal
+           `(,glib "bin")
+           meson
+           ninja
+           pkg-config
+           itstool
+           rust
+           `(,rust "cargo")))
+    (inputs
+     (cons*
+      gtk
+      lcms
+      libadwaita
+      libgweather4
+      libseccomp
+      (cargo-inputs 'loupe)))
+    (home-page "https://apps.gnome.org/Loupe/")
+    (synopsis "Image viewer")
+    (description "")
+    (license license:gpl3+)))
+
 (define-public libgudev
   (package
     (name "libgudev")
