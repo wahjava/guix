@@ -27,7 +27,7 @@
 ;;; Copyright © 2021 Robby Zambito <contact@robbyzambito.me>
 ;;; Copyright © 2021, 2022, 2023 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021, 2022, 2024 John Kehayias <john.kehayias@protonmail.com>
-;;; Copyright © 2021-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
@@ -73,6 +73,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system qt)
+  #:use-module (guix search-paths)
   #:use-module (gnu packages)
   #:use-module (gnu packages acl)
   #:use-module (gnu packages admin)
@@ -3328,10 +3329,7 @@ compatible with the well-known scripts of the same name.")
              version "/xdg-desktop-portal-" version ".tar.xz"))
        (sha256
         (base32
-         "1pn0q7nn9xzd2wva9zpxn1dd2kqxwjm2a68yv9gaaa4alh9cvkb6"))
-       (patches
-        (search-patches
-         "xdg-desktop-portal-disable-configuration-search-exit.patch"))))
+         "1pn0q7nn9xzd2wva9zpxn1dd2kqxwjm2a68yv9gaaa4alh9cvkb6"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -3377,11 +3375,7 @@ compatible with the well-known scripts of the same name.")
            json-glib
            libportal
            pipewire))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "XDG_DESKTOP_PORTAL_DIR")
-            (separator #f)
-            (files '("share/xdg-desktop-portal/portals")))))
+    (native-search-paths (list $XDG_DATA_DIRS))
     (home-page "https://github.com/flatpak/xdg-desktop-portal")
     (synopsis "Desktop integration portal for sandboxed apps")
     (description
