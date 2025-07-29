@@ -8024,7 +8024,7 @@ The collection contains a set of bandwidth and latency benchmark such as:
     (native-inputs
      (list autoconf automake pkg-config))
     (inputs
-     (list libcap sysfsutils openssl))
+     (list gcc-13 libcap sysfsutils openssl))
     (synopsis "Random number generator daemon")
     (description
      "Monitor a hardware random number generator, and supply entropy
