@@ -83,6 +83,7 @@
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+;;; Copyright © 2025 Rivulet Cedar <rivulet_cedar@yeah.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -12335,3 +12336,27 @@ DualSense controller.  It has to be already connected via USB or connected
 via Bluetooth.")
     (home-page "https://github.com/nowrep/dualsensectl")
     (license license:gpl2)))
+(define-public rtl88x2bu-linux-driver
+  (let ((revision "210")
+        (commit "77a82dbac7192bb49fa87458561b0f2455cdc88f"))
+    (package
+      (name "rtl88x2bu-linux-driver")
+      (version (git-version "5.13.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/RinCat/RTL88x2BU-Linux-Driver.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1qrhd4698808axm6mliq810s3yj8aj7nv890pdvpbir8nvn6c44h"))))
+      (build-system linux-module-build-system)
+      (arguments
+       (list #:tests? #f))
+      (home-page "https://github.com/RinCat/RTL88x2BU-Linux-Driver")
+      (synopsis "Realtek RTL88x2BU WiFi USB Driver for Linux")
+      (description
+       "This package provides the Linux kernel module for Realtek RTL88x2BU WiFi USB adapters.
+This driver does NOT support newer Realtek 802.11ax (Wi-Fi 6) chipsets such as RTL8852BU.")
+      (license license:gpl2))))
