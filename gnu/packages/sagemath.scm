@@ -50,6 +50,7 @@
   #:use-module (gnu packages popt)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-xyz))
 
 (define-public brial
@@ -379,7 +380,6 @@ database.")
     (build-system pyproject-build-system)
     (native-inputs
       (list autoconf automake m4 pkg-config ; for ./bootstrap
-            python-cython-3
             python-cysignals
             python-memory-allocator
             python-pkgconfig
@@ -395,6 +395,9 @@ database.")
             python-jupyter-client
             python-notebook))
     (inputs
+     ;; FIXME: Add more standard inputs.  They follow the list at
+     ;; https://doc.sagemath.org/html/en/reference/spkg/
+     ;; They are required to pass standard Sage tests (sage-runtests).
       (list boost
             brial
             cliquer
@@ -433,11 +436,19 @@ database.")
             pari-gp
             polytopes-db
             python
+            python-cvxopt
             python-cypari2
+            python-cython-3
             python-fpylll
             python-gmpy2
+            python-lrcalc
+            python-mpmath
+            python-networkx
             python-numpy
             python-pplpy
+            python-primecountpy
+            python-scipy
+            python-sympy
             rw
             sed
             singular
