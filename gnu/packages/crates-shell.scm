@@ -1150,3 +1150,110 @@ syntax tree.")
     (synopsis "60+ Elegant terminal spinners for Rust")
     (description "This package provides 60+ Elegant terminal spinners for Rust.")
     (license license:expat)))
+(define-public rust-termcolor-1
+  (package
+    (name "rust-termcolor")
+    (version "1.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "termcolor" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0mbpflskhnz3jf312k50vn0hqbql8ga2rk0k79pkgchip4q4vcms"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-winapi-util" ,rust-winapi-util-0.1))))
+    (home-page "https://github.com/BurntSushi/termcolor")
+    (synopsis
+     "simple cross platform library for writing colored text to a terminal.")
+    (description
+     "This package provides a simple cross platform library for writing colored text
+to a terminal.")
+    (license (list license:unlicense license:expat))))
+
+(define-public rust-simplelog-0.10
+  (package
+    (name "rust-simplelog")
+    (version "0.10.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "simplelog" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0ndr5qfj34crkxqsc31a9w5c2lvqn1pw70pf03pj0hhm8bk4ml45"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-chrono" ,rust-chrono-0.4)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-termcolor" ,rust-termcolor-1))))
+    (home-page "https://github.com/drakulix/simplelog.rs")
+    (synopsis "simple and easy-to-use logging facility for Rust's log crate")
+    (description
+     "This package provides a simple and easy-to-use logging facility for Rust's log
+crate.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-nix-0.17
+  (package
+    (name "rust-nix")
+    (version "0.17.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nix" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0qvk09kib3jpvpbaps0682nav20ibql61pf1s2h8jx9v5igpir2h"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-bitflags" ,rust-bitflags-1)
+                       ("rust-cc" ,rust-cc-1)
+                       ("rust-cfg-if" ,rust-cfg-if-0.1)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-void" ,rust-void-1))))
+    (home-page "https://github.com/nix-rust/nix")
+    (synopsis "Rust friendly bindings to *nix APIs")
+    (description "This package provides Rust friendly bindings to *nix APIs.")
+    (license license:expat)))
+
+(define-public rust-weggli-0.2
+  (package
+    (name "rust-weggli")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "weggli" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "185j18znz5x5s27ai2rdzl2c0h74agplpcx2a1sqx5xydf1k5nbw"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-cc" ,rust-cc-1)
+                       ("rust-clap" ,rust-clap-2)
+                       ("rust-colored" ,rust-colored-2)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-nix" ,rust-nix-0.17)
+                       ("rust-pyo3" ,rust-pyo3-0.13)
+                       ("rust-rayon" ,rust-rayon-1)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-rustc-hash" ,rust-rustc-hash-1)
+                       ("rust-simplelog" ,rust-simplelog-0.10)
+                       ("rust-tree-sitter" ,rust-tree-sitter-0.20)
+                       ("rust-walkdir" ,rust-walkdir-2))
+       #:cargo-development-inputs (("rust-assert-cmd" ,rust-assert-cmd-2)
+                                   ("rust-criterion" ,rust-criterion-0.3)
+                                   ("rust-predicates" ,rust-predicates-1))))
+    (home-page "")
+    (synopsis
+     "weggli is a fast and robust semantic search tool for C and C++ codebases. It is designed to help security researchers identify interesting functionality in large codebases")
+    (description
+     "This package provides weggli is a fast and robust semantic search tool for C and C++ codebases.  It is
+designed to help security researchers identify interesting functionality in
+large codebases.")
+    (license license:asl2.0)))
