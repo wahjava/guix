@@ -66,7 +66,6 @@
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
-;;; Copyright © 2025 Rivulet Cedar <rivulet_cedar@yeah.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4091,9 +4090,10 @@ This package contains the following outputs:
                 "1lp3i9m6x5wrqjkh1a8vpyhmsrhvsa2znj2mx13qfkwza5rqv5ml"))))
     (build-system font-build-system)
     (home-page "https://www.freedesktop.org/wiki/Software/CJKUnifonts/")
-    (synopsis "CJK Unicode font Kai style")
+    (synopsis "Truetype fonts for Taiwanese and Hakka")
     (description
-     "The Arphic UKai font provides an open-source Kai-style (regular script) typeface supporting pan-CJK characters. It offers clear screen rendering for Chinese, Japanese, and Korean text under a free license.")
+     "This package provides a set of Truetype fonts, which contain all
+characters necessary to display Taiwanese and Hakka.")
     (license (license:fsdg-compatible
               "https://www.freedesktop.org/wiki/Arphic_Public_License/"))))
 
