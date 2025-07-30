@@ -978,7 +978,8 @@ variables from them.")
       (delete "guile-config")))
    (propagated-inputs
     (modify-inputs (package-propagated-inputs guile-dotenv)
-      (prepend guile-config
+      (prepend guile-3.0 ;without guile dependencies are not found.
+               guile-config
                guile-dotenv)))
    (description
     (string-append (package-description guile-dotenv)
