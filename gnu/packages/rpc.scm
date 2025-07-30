@@ -52,7 +52,7 @@
 (define-public grpc
   (package
     (name "grpc")
-    (version "1.34.0")
+    (version "1.46.7")
     (outputs '("out" "static"))
     (source (origin
               (method git-fetch)
@@ -62,7 +62,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fs407hnlnm0b8sncjwys9rc7ia5nb7wxrpx39nq3pzzfs1lv3vq"))))
+                "1brnm49gafzkk9df6d6la3z1kj0k943pqjlnrj3bd259qaisgcxx"))))
     (build-system cmake-build-system)
     (arguments
      (list
