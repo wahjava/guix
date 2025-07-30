@@ -2294,7 +2294,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/seq24-rename-mutex.patch			\
   %D%/packages/patches/libsequoia-fix-ffi-Makefile.patch	\
   %D%/packages/patches/libsequoia-remove-store.patch		\
-  %D%/packages/patches/shakespeare-spl-fix-grammar.patch		\
+  %D%/packages/patches/libsoup-auth-digest-fix-crash.patch      \
+  %D%/packages/patches/libsoup-deadlock-in-add_listener_in_thread.patch \
+  %D%/packages/patches/libsoup-fix-merge-of-ranges.patch        \
+  %D%/packages/patches/libsoup-memory-leak-in-soup_form_decode.patch    \
+  %D%/packages/patches/libsoup-multipart-bounds-check.patch     \
+  %D%/packages/patches/libsoup-use-libdl-instead-of-gmodule.patch       \
+  %D%/packages/patches/shakespeare-spl-fix-grammar.patch        \
   %D%/packages/patches/shared-mime-info-xdgmime-path.patch	\
   %D%/packages/patches/sharutils-CVE-2018-1000097.patch		\
   %D%/packages/patches/sipwitch-fix-build-with-exosip5.patch	\
