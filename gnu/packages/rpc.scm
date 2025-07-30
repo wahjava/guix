@@ -49,10 +49,17 @@
   #:use-module (gnu packages tls)
   #:use-module (srfi srfi-1))
 
+(define opencensus-proto-for-grpc-source
+  (origin
+    (method url-fetch)
+    (uri "https://github.com/census-instrumentation/opencensus-proto/archive/v0.3.0.tar.gz")
+    (sha256
+     (base32 "1c3jfl1zgjhhqyqii1wils2k05akkvrw50xmf0q0rs2r885kzqdp"))))
+
 (define-public grpc
   (package
     (name "grpc")
-    (version "1.46.7")
+    (version "1.47.5")
     (outputs '("out" "static"))
     (source (origin
               (method git-fetch)
@@ -62,7 +69,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1brnm49gafzkk9df6d6la3z1kj0k943pqjlnrj3bd259qaisgcxx"))))
+                "09iw916yqjf4qsqycqmcxglyfssiy78iia0f66xb1bbisivjld2s"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -80,6 +87,11 @@
               "-DCMAKE_VERBOSE_MAKEFILE=ON")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'unpack-third-party
+            (lambda _
+              (mkdir-p "third_party/opencensus-proto/src")
+              (invoke "tar" "xvf" #+opencensus-proto-for-grpc-source
+                      "-C" "third_party/opencensus-proto/src")))
           (add-before 'configure 'configure-shared
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir "../build-shared")
