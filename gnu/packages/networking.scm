@@ -3618,6 +3618,9 @@ asynchronous model using a modern C++ approach.")
     (build-system python-build-system)
     (arguments
      (list
+      ;; XXX: Package is deprecated, but it might be a good thing to try and
+      ;; keep it.
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-crypto-paths
@@ -3625,7 +3628,12 @@ asynchronous model using a modern C++ approach.")
               (substitute* "shadowsocks/shell.py"
                 (("config\\.get\\('libopenssl', None\\)")
                  (format #f "config.get('libopenssl', ~s)"
-                         (search-input-file inputs "lib/libssl.so")))))))))
+                         (search-input-file inputs "lib/libssl.so"))))))
+          (add-after 'unpack 'python-fixes
+            (lambda _
+              (substitute* "shadowsocks/lru_cache.py"
+                (("collections\\.MutableMapping")
+                 "collections.abc.MutableMapping")))))))
     (inputs (list openssl))
     (home-page "https://github.com/shadowsocks/shadowsocks")
     (synopsis "Fast tunnel proxy that helps you bypass firewalls")
