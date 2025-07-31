@@ -189,92 +189,74 @@ framebuffer graphics, audio output and input event.")
     (home-page "https://github.com/hodefoting/mmm")
     (license license:isc)))
 
-(define-public directfb
-  (package
-    (name "directfb")
-    (version "1.7.7")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://github.com/deniskropp/DirectFB")
-         (commit "DIRECTFB_1_7_7")))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0bs3yzb7hy3mgydrj8ycg7pllrd2b6j0gxj596inyr7ihssr3i0y"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags
-       '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-buildtime
-           ;; Remove embedded build time for reproducible builds
-           (lambda _
-             (substitute* "src/core/core.c"
-               (("..BUILDTIME..") ""))))
-         ;; TODO: Move patch to source.
-         ,@(if (target-arm32?)
-             `((add-after 'unpack 'patch-source
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (invoke "patch" "--force" "-p1" "-i"
-                           (assoc-ref inputs "patch-file")))))
-             '())
-         (add-after 'unpack 'disable-configure-during-bootstrap
-           (lambda _
-             (substitute* "autogen.sh"
-               (("^.*\\$srcdir/configure.*") "")))))))
-    (native-inputs
-     `(("autoconf" ,autoconf)
-       ("automake" ,automake)
-       ("libtool" ,libtool)
-       ("perl" ,perl)
-       ("pkg-config" ,pkg-config)
-       ,@(if (target-arm32?)
-         `(("patch" ,patch)
-           ("patch-file"
-            ,(search-patch "directfb-davinci-glibc-228-compat.patch")))
-         '())))
-    (inputs
-     (list alsa-lib
-           ffmpeg
-           freetype
-           glu
-           gstreamer
-           imlib2
-           jasper
-           libjpeg-turbo
-           libcddb
-           libdrm
-           libtimidity
-           libmad
-           libmng
-           libmpeg2
-           libmpeg3
-           mesa
-           libpng
-           sdl
-           (librsvg-for-system)
-           libtiff
-           tslib
-           libvdpau
-           libvorbis
-           wayland
-           libwebp
-           libx11
-           libxcomposite
-           libxext
-           xorgproto
-           zlib))
-    (propagated-inputs
-     (list flux))
-    (synopsis "DFB Graphics Library")
-    (description "DirectFB is a graphics library which was designed with embedded
+(define-public directfb2
+  ;; There are no recent release nor tags. Use the latest commit available.
+  (let ((commit "2d2dbd54f72d8db4881d4e0e2800b14d84567aae")
+        (revision "0"))
+    (package
+      (name "directfb2")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+            (url "https://github.com/directfb2/DirectFB2")
+            (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0pd7hjlljprj72dbiq5fnmkf70nblyjchp1clcwk14jhbd5pniab"))
+         (patches (search-patches "directfb2-rpath.patch"))))
+      (build-system meson-build-system)
+      (arguments
+       (list ;; #:configure-flags
+             ;; #~(list (string-append "-Dc_link_args=-Wl,-rpath="
+        ;;                        #$output "/lib"))
+        #:phases #~(modify-phases %standard-phases
+                     (delete 'validate-runpath))))
+      (native-inputs (list pkg-config python-minimal))
+      (inputs
+       (list alsa-lib
+             ffmpeg
+             freetype
+             glu
+             gstreamer
+             imlib2
+             jasper
+             libjpeg-turbo
+             libcddb
+             libdrm
+             libtimidity
+             libmad
+             libmng
+             libmpeg2
+             libmpeg3
+             mesa
+             libpng
+             sdl
+             (librsvg-for-system)
+             libtiff
+             tslib
+             libvdpau
+             libvorbis
+             wayland
+             libwebp
+             libx11
+             libxcomposite
+             libxext
+             xorgproto
+             zlib))
+      (propagated-inputs
+       (list flux))
+      (synopsis "DFB Graphics Library")
+      (description "DirectFB is a graphics library which was designed with embedded
 systems in mind.  It offers maximum hardware accelerated performance at a
 minimum of resource usage and overhead.")
-    (home-page "https://github.com/deniskropp/DirectFB")
-    (license license:lgpl2.1+)))
+      (home-page "https://github.com/directfb2/DirectFB2")
+      (license license:lgpl2.1+))))
+
+(define-public directfb
+  (deprecated-package "directfb" directfb2))
 
 (define-public minifb
   (let ((commit "43f8c1309341f4709a471b592d04434326042483")

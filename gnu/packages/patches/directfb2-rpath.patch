@@ -1,0 +1,168 @@
+Upstream-status: https://github.com/directfb2/DirectFB2/pull/160
+
+diff --git a/inputdrivers/linux_input/meson.build b/inputdrivers/linux_input/meson.build
+index 0e9c557..fc6d93a 100644
+--- a/inputdrivers/linux_input/meson.build
++++ b/inputdrivers/linux_input/meson.build
+@@ -21,7 +21,7 @@ endif
+ 
+ library('directfb_linux_input',
+         'linux_input.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'inputdrivers')
+diff --git a/interfaces/ICoreResourceManager/meson.build b/interfaces/ICoreResourceManager/meson.build
+index 9833aa8..09fa3e7 100644
+--- a/interfaces/ICoreResourceManager/meson.build
++++ b/interfaces/ICoreResourceManager/meson.build
+@@ -16,7 +16,7 @@
+ 
+ library('icoreresourcemanager_default',
+         'icoreresourcemanager_default.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'interfaces/ICoreResourceManager')
+diff --git a/interfaces/IDirectFBFont/meson.build b/interfaces/IDirectFBFont/meson.build
+index cb4e172..4d13411 100644
+--- a/interfaces/IDirectFBFont/meson.build
++++ b/interfaces/IDirectFBFont/meson.build
+@@ -16,7 +16,7 @@
+ 
+ library('idirectfbfont_dgiff',
+         'idirectfbfont_dgiff.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'interfaces/IDirectFBFont')
+diff --git a/interfaces/IDirectFBImageProvider/meson.build b/interfaces/IDirectFBImageProvider/meson.build
+index 5303ca3..df7859e 100644
+--- a/interfaces/IDirectFBImageProvider/meson.build
++++ b/interfaces/IDirectFBImageProvider/meson.build
+@@ -16,7 +16,7 @@
+ 
+ library('idirectfbimageprovider_dfiff',
+         'idirectfbimageprovider_dfiff.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'interfaces/IDirectFBImageProvider')
+diff --git a/interfaces/IDirectFBVideoProvider/meson.build b/interfaces/IDirectFBVideoProvider/meson.build
+index 0fdc8d6..f414fd3 100644
+--- a/interfaces/IDirectFBVideoProvider/meson.build
++++ b/interfaces/IDirectFBVideoProvider/meson.build
+@@ -16,7 +16,7 @@
+ 
+ library('idirectfbvideoprovider_dfvff',
+         'idirectfbvideoprovider_dfvff.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'interfaces/IDirectFBVideoProvider')
+diff --git a/interfaces/IDirectFBWindows/meson.build b/interfaces/IDirectFBWindows/meson.build
+index 1123184..70974d5 100644
+--- a/interfaces/IDirectFBWindows/meson.build
++++ b/interfaces/IDirectFBWindows/meson.build
+@@ -16,7 +16,7 @@
+ 
+ library('idirectfbwindows_default',
+         'idirectfbwindows_default.c',
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'interfaces/IDirectFBWindows')
+diff --git a/lib/fusion/meson.build b/lib/fusion/meson.build
+index a082076..da6deb7 100644
+--- a/lib/fusion/meson.build
++++ b/lib/fusion/meson.build
+@@ -92,7 +92,7 @@ endif
+ libfusion = library('fusion-@0@.@1@'.format(directfb_major_version, directfb_minor_version),
+                     fusion_sources, shm_sources,
+                     include_directories: [config_inc, lib_inc],
+-                    build_rpath: get_option('prefix') / get_option('libdir'),
++                    install_rpath: get_option('prefix') / get_option('libdir'),
+                     dependencies: direct_dep,
+                     version: '0.@0@.0'.format(directfb_micro_version),
+                     install: true)
+diff --git a/src/core/fluxcomp.py b/src/core/fluxcomp.py
+index 2f06ea5..b8dc96f 100755
+--- a/src/core/fluxcomp.py
++++ b/src/core/fluxcomp.py
+@@ -1,4 +1,4 @@
+-#!/bin/env python3
++#!/usr/bin/env python3
+ 
+ license = """
+ /*
+diff --git a/src/meson.build b/src/meson.build
+index abbc6c5..c4b78a9 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -190,7 +190,7 @@ libdirectfb = library('directfb-@0@.@1@'.format(directfb_major_version, directfb
+                       c_args: ['-DBUILDTIME="'  + run_command('date', '-u', '+%Y-%m-%d %H:%M',
+                                                               check: true).stdout().strip()                  + '"',
+                                '-DSYSCONFDIR="' + get_option('prefix') / get_option('sysconfdir') + '"'],
+-                      build_rpath: get_option('prefix') / get_option('libdir'),
++                      install_rpath: get_option('prefix') / get_option('libdir'),
+                       dependencies: [direct_dep, fusion_dep],
+                       version: '0.@0@.0'.format(directfb_micro_version),
+                       install: true)
+diff --git a/systems/drmkms/meson.build b/systems/drmkms/meson.build
+index 1e9c6a7..2aa1676 100644
+--- a/systems/drmkms/meson.build
++++ b/systems/drmkms/meson.build
+@@ -32,7 +32,7 @@ drmkms_sources = [
+ 
+ library('directfb_drmkms',
+         drmkms_sources,
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: [directfb_dep, drmkms_dep],
+         install: true,
+         install_dir: moduledir / 'systems')
+diff --git a/systems/dummy/meson.build b/systems/dummy/meson.build
+index 62fd5a3..7b15875 100644
+--- a/systems/dummy/meson.build
++++ b/systems/dummy/meson.build
+@@ -20,7 +20,7 @@ dummy_sources = [
+ 
+ library('directfb_dummy',
+         dummy_sources,
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'systems')
+diff --git a/systems/fbdev/meson.build b/systems/fbdev/meson.build
+index 4825456..374fce0 100644
+--- a/systems/fbdev/meson.build
++++ b/systems/fbdev/meson.build
+@@ -31,7 +31,7 @@ fbdev_sources = [
+ 
+ library('directfb_fbdev',
+         fbdev_sources,
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'systems')
+diff --git a/wm/default/meson.build b/wm/default/meson.build
+index adbd6c0..fb817c7 100644
+--- a/wm/default/meson.build
++++ b/wm/default/meson.build
+@@ -17,7 +17,7 @@
+ library('directfbwm_default',
+         'default.c',
+         include_directories: config_inc,
+-        build_rpath: get_option('prefix') / get_option('libdir'),
++        install_rpath: get_option('prefix') / get_option('libdir'),
+         dependencies: directfb_dep,
+         install: true,
+         install_dir: moduledir / 'wm')
