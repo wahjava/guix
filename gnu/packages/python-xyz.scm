@@ -21387,7 +21387,6 @@ applications.")
            #~(list "--ignore" "t/unit/transport/test_azurestoragequeues.py")))
     (native-inputs
      (list python-botocore
-           python-case
            python-pyro4
            python-pytest
            python-pytest-sugar
@@ -21425,8 +21424,7 @@ RabbitMQ messaging server is the most popular implementation.")
                                       '("billiard/popen_spawn_win32.py"
                                         "billiard/_win.py")))))))
     (native-inputs
-     (list python-case python-psutil python-pytest python-setuptools
-           python-wheel))
+     (list python-psutil python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/celery/billiard")
     (synopsis "Python multiprocessing fork with improvements and bugfixes")
     (description
@@ -21464,8 +21462,7 @@ Python 2.4 and 2.5, and will draw its fixes/improvements from python-trunk.")
                          (("tzdata.*")
                           "tzdata\n")))))))
     (native-inputs
-     (list python-case
-           python-dnspython
+     (list python-dnspython
            python-flaky
            python-google-cloud-storage
            python-iniconfig
