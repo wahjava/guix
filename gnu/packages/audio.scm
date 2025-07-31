@@ -6434,7 +6434,7 @@ as is the case with audio plugins.")
 (define-public carla
   (package
     (name "carla")
-    (version "2.4.1")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -6444,7 +6444,7 @@ as is the case with audio plugins.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01ngkmfcxyg1bb4qmfvlkkjbx4lx62akxqhizl8zmqnhfcy4p9bx"))))
+        (base32 "13whywiy6cyamsch1fzc6l5pgiid4cmmdffhaxsnj3k1sd7gmkql"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no "check" target
@@ -6461,11 +6461,10 @@ as is the case with audio plugins.")
                  (lambda _
                    (chmod (string-append #$output "/share/carla/carla") #o555)))
                (add-after 'install 'wrap-executables
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (wrap-script (string-append #$output "/bin/carla")
-                                #:guile (search-input-file inputs "bin/guile")
-                                `("GUIX_PYTHONPATH" ":" prefix
-                                  (,(getenv "GUIX_PYTHONPATH")))))))))
+                 (lambda _
+                   (wrap-program (string-append #$output "/bin/carla")
+                     `("GUIX_PYTHONPATH" ":" prefix
+                       (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
      (list alsa-lib
            ffmpeg
@@ -6484,10 +6483,7 @@ as is the case with audio plugins.")
            ;; (ModuleNotFoundError: No module named 'PyQt5')
            python-wrapper
            qtbase-5
-           zlib
-
-           ;; For WRAP-SCRIPT above.
-           guile-2.2))
+           zlib))
     (native-inputs
      (list pkg-config))
     (home-page "https://kx.studio/Applications:Carla")
