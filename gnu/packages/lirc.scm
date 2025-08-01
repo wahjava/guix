@@ -47,7 +47,8 @@
                (base32
                 "0ai27l6hxfgkwvkqa3fy1b1gqzw2y10md030y5ig4748fj1fqi1x"))
               (patches (search-patches "lirc-localstatedir.patch"
-                                       "lirc-reproducible-build.patch"))))
+                                       "lirc-reproducible-build.patch"
+                                       "lirc-fix-default.so-plugin-not-loading.patch"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
@@ -71,12 +72,6 @@
              (let ((headers (assoc-ref inputs "kernel-headers")))
                (substitute* "tools/lirc-make-devinput"
                  (("/usr/include") (string-append headers "/include"))))))
-         (add-after 'unpack 'fix-gcc14-build
-           (lambda _
-             ;; Fix missing sys/sysmacros.h for major() and minor() macros
-             (substitute* "plugins/default.c"
-               (("#include <sys/types.h>" all)
-                (string-append all "\n#include <sys/sysmacros.h>")))))
          (add-after 'unpack 'patch-doc/Makefile.in
            (lambda _
              ;; Lirc wants to install several images and a useless html page

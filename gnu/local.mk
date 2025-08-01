@@ -1824,6 +1824,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/linux-pam-no-setfsuid.patch		\
   %D%/packages/patches/linux-pam-unix_chkpwd.patch		\
   %D%/packages/patches/linuxdcpp-openssl-1.1.patch		\
+  %D%/packages/patches/lirc-fix-default.so-plugin-not-loading.patch	\
   %D%/packages/patches/lirc-localstatedir.patch			\
   %D%/packages/patches/lirc-reproducible-build.patch		\
   %D%/packages/patches/llvm-3.5-fix-clang-build-with-gcc5.patch	\
