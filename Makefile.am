@@ -20,7 +20,6 @@
 # Copyright © 2023 Clément Lassieur <clement@lassieur.org>
 # Copyright © 2023, 2024 Wilko Meyer <w@wmeyer.eu>
 # Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
-# Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 #
 # This file is part of GNU Guix.
 #
@@ -1258,12 +1257,7 @@ cuirass-jobs: $(GOBJECTS)
 .PHONY: update-guix-package update-NEWS cuirass-jobs release
 
 # Git auto-configuration.
-.git/hooks/:
-	$(AM_V_at)if test -d .git; then \
-	mkdir "$@"; \
-	fi
-
-.git/hooks/%: etc/git/% | .git/hooks/
+.git/hooks/%: etc/git/%
 	$(AM_V_at)if test -d .git; then \
 	cp "$<" "$@"; \
 	fi
@@ -1274,16 +1268,6 @@ cuirass-jobs: $(GOBJECTS)
 	  ../etc/git/gitconfig ../etc/git/gitconfig; \
 	fi
 
-COMMIT_MSG_MAGIC = VGhpcyBpcyB0aGUgY29tbWl0LW1zZyBob29rIG9mIEd1aXg=
-.git/hooks/commit-msg: etc/git/commit-msg | .git/hooks/
-	$(AM_V_at)if test -d .git; then \
-	if test -f $@  && ! grep -qF $(COMMIT_MSG_MAGIC) $@; then \
-	  mkdir -p $@.d && mv $@ $@.d && \
-	@ echo user commit-msg hook moved to $@.d/commit-msg; \
-	fi; \
-	cp etc/git/commit-msg $@; \
-	fi
-
 # The etc/git/ config files are not distributed and have no use when building
 # from a tarball.  Do not add dependencies on these to *_DATA when building
 # from a tarball, as that breaks the build.
@@ -1292,7 +1276,6 @@ nodist_noinst_DATA =				\
   .git/hooks/pre-push				\
   .git/hooks/post-merge				\
   .git/config					\
-  .git/hooks/commit-msg
 endif
 
 # Downloading up-to-date PO files.
