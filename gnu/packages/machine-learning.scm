@@ -139,6 +139,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages tbb)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
@@ -7047,9 +7048,10 @@ Brian 2 simulator.")
     (license license:cecill)))
 
 (define-public oneapi-dnnl
+  ;; See https://uxlfoundation.github.io/oneDNN/dev_guide_build.html.
   (package
     (name "oneapi-dnnl")
-    (version "3.5.3")
+    (version "3.8.1")
     (source
      (origin
        (method git-fetch)
@@ -7058,7 +7060,7 @@ Brian 2 simulator.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m2d7qlbfk86rmvmpvx2k3rc2k0l9hf9qpa54jl44670ls9n8i7w"))
+        (base32 "09xwgww20zf75ba2qjsqp6gif8p4fqyzqbrhh8r5ag1ivm2mx2f7"))
        (modules '((guix build utils)
                   (ice-9 rdelim)))
        ;; Copyright date used by code generation script
@@ -7080,29 +7082,32 @@ Brian 2 simulator.")
     (arguments
      (list
       #:configure-flags
-      `(list
-        ,@(if (target-riscv64?)
-              (list #:configure-flags '("-DDNNL_CPU_RUNTIME=SEQ"))
-              '())
-        ;; Used in PyTorch
-        "-DDNNL_EXPERIMENTAL_UKERNEL=ON")
+      #~(list
+         #$@(if (target-riscv64?)
+                (list "-DDNNL_CPU_RUNTIME=SEQ")
+                ;; Default; also tbb and sycl.
+                (list "-DDNNL_CPU_RUNTIME=OMP"))
+         ;; Used in PyTorch
+         "-DDNNL_EXPERIMENTAL_UKERNEL=ON")
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'configure 'codegen
-           (lambda _
-             (with-directory-excursion "../source"
-               (invoke "castxml" "--castxml-cc-gnu-c" "clang"
-                       "--castxml-output=1" "-DDNNL_EXPERIMENTAL_SPARSE"
-                       "-Iinclude" "-I../build/include"
-                       "include/oneapi/dnnl/dnnl_types.h" "-o" "types.xml")
-               (invoke "python3" "scripts/generate_dnnl_debug.py" "types.xml")
-               ;; Modifies include/oneapi/dnnl/dnnl.hpp
-               (invoke "python3" "scripts/generate_format_tags.py")))))))
-    (native-inputs (list castxml clang-17 python))
-    (home-page "https://github.com/oneapi-src/oneDNN")
+      #~(modify-phases %standard-phases
+          (add-after 'configure 'codegen
+            (lambda _
+              (with-directory-excursion "../source"
+                (invoke "castxml" "--castxml-cc-gnu-c" "clang"
+                        "--castxml-output=1" "-DDNNL_EXPERIMENTAL_SPARSE"
+                        "-Iinclude" "-I../build/include"
+                        "include/oneapi/dnnl/dnnl_types.h" "-o" "types.xml")
+                (invoke "python3" "scripts/generate_dnnl_debug.py"
+                        "types.xml")
+                ;; Modifies include/oneapi/dnnl/dnnl.hpp
+                (invoke "python3" "scripts/generate_format_tags.py")))))))
+    (inputs (list tbb))
+    (native-inputs (list castxml clang-17 googletest python-minimal-wrapper))
+    (home-page "https://uxlfoundation.github.io/oneDNN/")
     (synopsis "Deep Neural Network Library")
     (description
-     "OneAPI Deep Neural Network Library (oneDNN) is a cross-platform
+     "@acronym{OneDNN, OneAPI Deep Neural Network Library} is a cross-platform
 performance library of basic building blocks for deep learning applications.")
     (supported-systems %64bit-supported-systems)
     (license license:asl2.0)))
