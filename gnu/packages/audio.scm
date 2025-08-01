@@ -1807,11 +1807,15 @@ generators of mostly elementary and occasionally exotic nature.")
            libxrandr
            lv2))
     (native-inputs
-     (list pkg-config
-           (texlive-local-tree
-            (list texlive-geometry
-                  texlive-xetex
-                  texlive-collection-pictures))))
+     (list
+      ;; Later versions of GCC fail with:
+      ;; ‘exchange’ is not a member of ‘std’
+      gcc-11
+      pkg-config
+      (texlive-local-tree
+       (list texlive-geometry
+             texlive-xetex
+             texlive-collection-pictures))))
     (home-page "https://chowdsp.com/products.html")
     (synopsis "Physical modeling for analog tape machines")
     (description
