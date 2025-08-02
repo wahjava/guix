@@ -27,7 +27,8 @@
   #:use-module (guix build-system gnu)
   #:use-module ((guix build-system go) #:prefix go-build:)
   #:use-module (srfi srfi-1)
-  #:export (%go-module-build-system-modules
+  #:export (%default-go-module-imported-modules
+            %default-go-module-modules
             go-module-build
             go-module-build-system))
 
@@ -37,11 +38,14 @@
 ;;;
 ;;; Code:
 
-(define %go-module-build-system-modules
-  ;; Build-side modules imported by default.
+(define %default-go-module-imported-modules
   `((guix build go-module-build-system)
     (guix build union)
     ,@%default-gnu-imported-modules))
+
+(define %default-go-module-modules
+  ;; Build-side modules imported by default.
+  `(,@%default-gnu-imported-modules))
 
 (define (default-go)
   ;; Lazily resolve the binding to avoid a circular dependency.
@@ -117,7 +121,7 @@ depend on (gnu packages compression)."
                           (goos #f)
                           (guile #f)
                           (substitutable? #t)
-                          (imported-modules %go-module-build-system-modules)
+                          (imported-modules %default-go-module-imported-modules)
                           (modules '((guix build go-module-build-system)
                                      (guix build utils))))
 
@@ -192,7 +196,7 @@ depend on (gnu packages compression)."
                                 (goarch (if target (first (go-build:go-target target)) #f))
                                 (goos (if target (last (go-build:go-target target)) #f))
                                 (guile #f)
-                                (imported-modules %go-module-build-system-modules)
+                                (imported-modules %default-go-module-modules)
                                 (modules '((guix build go-module-build-system)
                                            (guix build utils)))
                                 (substitutable? #t))
