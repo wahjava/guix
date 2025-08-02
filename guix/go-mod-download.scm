@@ -68,9 +68,6 @@ depend on (gnu packages compression)."
                        #:key (system (%current-system))
                        (guile (default-guile))
                        (unzip (default-unzip)))
-  (define inputs
-    `(("unzip" ,unzip)
-      ,@(standard-packages)))
 
   (define (go-path-escape path)
     "Escape a module path by replacing every uppercase letter with an
