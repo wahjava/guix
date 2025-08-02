@@ -1553,6 +1553,32 @@ built upon modified versions of popular icon sets such as Clearlooks
 Revamp, Elementary, and Faenza.")
     (license license:gpl3+)))
 
+(define-public mint-y-icon-theme
+  (package
+    (name "mint-y-icon-theme")
+    (version "1.8.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/linuxmint/mint-y-icons")
+             (commit "1.8.5")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hhh6ziwng9iyiqrgkchz9mimx986cp6qxmq5jrgqw45r496grd7"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan `(("usr/share/icons" "share/icons"))))
+    (home-page "https://github.com/linuxmint/mint-y-icons")
+    (synopsis "The Mint-Y icon theme")
+    (description
+     "The Mint-Y icon theme offers a flat and colorful aesthetic,
+designed for GNOME/GTK desktop environments.  These themes draw inspiration
+from well-known icon projects such as Paper and Moka, which are
+recognized for their icon designs, providing users an updated visual
+experience.")
+    (license (list license:gpl3+ license:cc-by-sa4.0))))
+
 (define-public numix-gtk-theme
   (package
     (name "numix-gtk-theme")
