@@ -1,14 +1,14 @@
 A few tests require downloading models. Skip those.
 
 diff --git a/onnx/backend/test/runner/__init__.py b/onnx/backend/test/runner/__init__.py
-index 5b60e7c0..838c7ba5 100644
+index c5ce045d..de241809 100644
 --- a/onnx/backend/test/runner/__init__.py
 +++ b/onnx/backend/test/runner/__init__.py
-@@ -236,6 +236,7 @@ class Runner:
-             print(
-                 f"Start downloading model {model_test.model_name} from {model_test.url}"
-             )
-+            raise unittest.SkipTest('Skipping download')
-             urlretrieve(model_test.url, download_file.name)
-             print("Done")
-             with tarfile.open(download_file.name) as t:
+@@ -245,6 +245,7 @@ class Runner:
+                     f"Start downloading model {model_test.model_name} from {model_test.url}"
+                 )
+                 filename = os.path.join(tmpdir, "file")
++                raise unittest.SkipTest("Skipping download")
+                 urlretrieve(model_test.url, filename)
+                 print("Done")
+                 onnx.utils._extract_model_safe(filename, models_dir)

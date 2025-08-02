@@ -1662,7 +1662,7 @@ model packaging, deployment and workflow management.")
 (define-public onnx
   (package
     (name "onnx")
-    (version "1.17.0")
+    (version "1.18.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1670,7 +1670,7 @@ model packaging, deployment and workflow management.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1i6bh4z2xzz1maykr0xmrwfybm6i3g38vnx7hsls8hr58rdr30zn"))
+                "1a1ri4d8asxamn0nvpgssdh7k3z1rc16mydg7rzzxjmf4pw4a6sj"))
               (file-name (git-file-name name version))
               (patches (search-patches
                         "onnx-shared-libraries.patch"
@@ -1689,15 +1689,9 @@ model packaging, deployment and workflow management.")
       #~(modify-phases %standard-phases
           (add-before 'build 'pass-cmake-arguments
             (lambda* (#:key outputs tests? #:allow-other-keys)
-              ;; For derived package use
-              (substitute* "CMakeLists.txt"
-                (("set\\(ONNX_ROOT.*") "")
-                (("\\$\\{ROOT_DIR\\}(/tools.*)" _ rest)
-                 (string-append "${PROJECT_SOURCE_DIR}" rest)))
               ;; Pass options to the CMake-based build process.
               (define out
                 (assoc-ref outputs "out"))
-
               (define args
                 ;; Copy arguments from 'cmake-build-system', plus ask
                 ;; for shared libraries.
@@ -1711,14 +1705,13 @@ model packaging, deployment and workflow management.")
                       (string-append "-DONNX_BUILD_TESTS="
                                      (if tests? "ON" "OFF"))
                       "-DBUILD_SHARED_LIBS=ON"
+                      "-DONNX_BUILD_PYTHON=ON"
                       "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
                       (string-append
                        "-DONNX_ROOT=" #$(package-source this-package))))
-
               ;; This environment variable is honored by 'setup.py',
               ;; which passes it down to 'cmake'.
               (setenv "CMAKE_ARGS" (string-join args))
-
               ;; This one is honored by 'setup.py' and passed to 'make -j'.
               (setenv "MAX_JOBS"
                       (number->string (parallel-job-count)))))
@@ -1755,9 +1748,9 @@ model packaging, deployment and workflow management.")
                  (package-transitive-supported-systems pkg)))
        (list python-nbval))))
     (inputs
-     (list protobuf))
+     (list abseil-cpp protobuf-6))
     (propagated-inputs
-     (list python-numpy python-protobuf python-six python-tabulate
+     (list python-numpy python-protobuf-6 python-six python-tabulate
            python-typing-extensions))
     (home-page "https://onnx.ai/")
     (synopsis "Open Neural Network Exchange")
