@@ -79,8 +79,8 @@ depend on (gnu packages compression)."
     (system system)
     (target target)
     (build-inputs `(,@(if source `(("source" ,source)) '())
-                    ,@`(("go" ,go)
                     ,@native-inputs
+                    ,@`(("go" ,go)
                     ("zip" ,(default-zip)))
                     ,@(if target '() inputs)
                     ,@(if target (standard-cross-packages target 'host) '())
