@@ -81,11 +81,8 @@ https://godoc.org/golang.org/x/mod/module#hdr-Escaped_Paths)."
       (string-append "!" (string-downcase (match:substring occurrence))))
     (regexp-substitute/global #f "[A-Z]" path 'pre escape 'post))
 
-  (define modules
-    (source-module-closure '((guix build utils))))
-
   (define (build mod.zip)
-    (with-imported-modules modules
+    (with-imported-modules '((guix build utils))
       #~(begin
           (use-modules (guix build utils))
           (let* ((pkg-path (getenv "go-mod path"))
