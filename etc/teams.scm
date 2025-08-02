@@ -682,6 +682,16 @@ the haskell-build-system."
                       "tests/home-import.scm"
                       "tests/home-services.scm")))
 
+(define-team hpc
+  (team 'hpc
+        #:name "Hpc team"
+        #:description "High performance computing related packages."
+        #:scope (list "gnu/packages/mpi.scm"
+                      "gnu/packages/rocm.scm"
+                      "gnu/packages/sycl.scm"
+                      "gnu/packages/tbb.scm"
+                      "gnu/packages/vulkan.scm")))
+
 (define-team hurd
   (team 'hurd
         #:name "Team for the Hurd"
@@ -1230,7 +1240,7 @@ the \"texlive\" importer."
 (define-member (person "Cayetano Santos"
                        "csantosb@inventati.org"
                        "csantosb")
-  emacs electronics)
+  emacs electronics hpc)
 
 (define-member (person "Greg Hogan"
                        "code@greghogan.com"
