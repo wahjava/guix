@@ -1528,6 +1528,32 @@ desktop environments.  It supports GTK 2, GTK 3, GNOME Shell, Budgie,
 Cinnamon, MATE, Unity, Xfce, LightDM, GDM, Chrome theme, etc.")
     (license license:gpl2+)))
 
+(define-public mint-l-icon-theme
+  (package
+    (name "mint-l-icon-theme")
+    (version "1.7.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/linuxmint/mint-l-icons")
+             (commit "master")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bz0iqhrb7cybrfkhk583w2dq4dx3agba280f1c3ansv1m2szmp2"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan `(("usr/share/icons" "share/icons"))))
+    (home-page "https://github.com/linuxmint/mint-l-icons")
+    (synopsis "Mint-L icon theme")
+    (description
+     "The Mint-Y icon theme offers a flat, and colorful aesthetic,
+designed for GTK desktop environments.  These themes draw inspiration
+from well-known icon projects such as Paper and Moka, which are
+recognized for their icon designs, providing users an updated visual
+experience.  This theme is a modernized version of the Mint-Y icon theme.")
+    (license (list license:gpl3+ license:cc-by-sa4.0))))
+
 (define-public mint-x-icon-theme
   (package
     (name "mint-x-icon-theme")
