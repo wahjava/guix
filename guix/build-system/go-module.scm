@@ -68,7 +68,6 @@ depend on (gnu packages compression)."
                 (go (if (supported-package? (default-go))
                       (default-go)
                       (default-gccgo)))
-                (zip (default-zip))
                 #:allow-other-keys
                 #:rest arguments)
   "Return a bag for NAME."
@@ -80,8 +79,9 @@ depend on (gnu packages compression)."
     (system system)
     (target target)
     (build-inputs `(,@(if source `(("source" ,source)) '())
-                    ,@`(("go" ,go) ("zip" ,zip))
+                    ,@`(("go" ,go)
                     ,@native-inputs
+                    ("zip" ,(default-zip)))
                     ,@(if target '() inputs)
                     ,@(if target (standard-cross-packages target 'host) '())
                     ;; Keep the standard inputs of 'gnu-build-system'.
