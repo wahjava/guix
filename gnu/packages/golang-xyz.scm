@@ -85,6 +85,7 @@
 (define-module (gnu packages golang-xyz)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system go-module)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system trivial)
   #:use-module (guix gexp)
