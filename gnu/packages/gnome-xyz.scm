@@ -1528,6 +1528,31 @@ desktop environments.  It supports GTK 2, GTK 3, GNOME Shell, Budgie,
 Cinnamon, MATE, Unity, Xfce, LightDM, GDM, Chrome theme, etc.")
     (license license:gpl2+)))
 
+(define-public mint-x-icon-theme
+  (package
+    (name "mint-x-icon-theme")
+    (version "1.7.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/linuxmint/mint-x-icons")
+             (commit "1.7.3")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1blm42j1z8fizc95kbw50la66gpwzsyivinxl6i0x1bkz3ql1cxi"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan `(("usr/share/icons" "share/icons"))))
+    (home-page "https://github.com/linuxmint/mint-x-icons")
+    (synopsis "Icon theme for Linux Mint")
+    (description
+     "The Mint-X icon theme delivers a distinctive mint/metal aesthetic 
+for GNOME/GTK desktop environments like Cinnamon, MATE, and XFCE. It's 
+built upon modified versions of popular icon sets such as Clearlooks 
+Revamp, Elementary, and Faenza.")
+    (license license:gpl3+)))
+
 (define-public numix-gtk-theme
   (package
     (name "numix-gtk-theme")
