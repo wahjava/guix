@@ -596,6 +596,13 @@ different data arrays similar to those available in the numdiff software.")
              "-DOPENCV_SKIP_FEATURES2D_DOWNLOADING=ON")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'make-reproducible
+           (lambda _
+             (substitute* "modules/python/src2/typing_stubs_generation/generation.py"
+              (("([a-zA-Z.]+[.]values[(][)])" all one)
+               (string-append "sorted("
+                              one
+                              ", key=lambda x: x.export_name)")))))
          (add-after 'unpack 'disable-broken-tests
            (lambda _
              ;; This test fails with "unknown file: Failure"
