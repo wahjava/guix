@@ -21,6 +21,7 @@
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -166,7 +167,8 @@
             string-distance
             string-closest
 
-            pretty-print-table))
+            pretty-print-table
+            delete-all-but))
 
 
 ;;;
@@ -1264,6 +1266,26 @@ bound by MAX-COLUMN-WIDTH.  Each row is prefixed with LEFT-PAD spaces."
                                    column-widths)))
          (fmt (string-append (string-join column-formats "\t") "\t~a")))
     (for-each (cut format #t "~v_~?~%" left-pad fmt <>) rows)))
+
+
+
+;;;
+;;; Remove everything from a dir except.
+;;;
+
+(define (delete-all-but directory . preserve)
+  (define (directory? x)
+    (and=> (stat x #f)
+           (compose (cut eq? 'directory <>) stat:type)))
+  (with-directory-excursion directory
+    (let* ((pred
+            (negate (cut member <> (append '("." "..") preserve))))
+           (items (scandir "." pred)))
+      (for-each (lambda (item)
+                  (if (directory? item)
+                      (delete-file-recursively item)
+                      (delete-file item)))
+                items))))
 
 ;;; Local Variables:
 ;;; eval: (put 'call-with-progress-reporter 'scheme-indent-function 1)
