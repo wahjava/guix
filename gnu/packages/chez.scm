@@ -874,6 +874,10 @@ create compilers, making them easier to understand and maintain.")
 
 (define-public chez-nanopass
   (package/inherit chez-nanopass-bootstrap
+    (source
+     (origin
+       (inherit (package-source chez-nanopass-bootstrap))
+       (patches (search-patches "chez-nanopass-fix-generated-parser.patch"))))
     (properties '())
     ;; TODO: cross-compilation
     (native-inputs (list chez-scheme stex))

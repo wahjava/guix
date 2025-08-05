@@ -1,0 +1,402 @@
+From 1b5963642046917835a3054fa05e350e1bb6587e Mon Sep 17 00:00:00 2001
+From: Andy Keep <andy.keep@gmail.com>
+Date: Sun, 14 Mar 2021 21:41:04 -0700
+Subject: [PATCH] Fix the generated parser issue.
+
+The redone generated parser was failing to process anything even
+remotely complicated (like `(let ([x* e*] ...) e)`). This was reported
+by @niyarin in issue #28.  This change fixes issue #28.
+
+Fixed the reworked nano-syntax-dispatch by essentially replacing the
+syntax-rules macros, with a single syntax-case macro that expands the parts
+of the pattern into mini-matcher functions.  This essentially implements
+the same algorithm originally implemented by the original functions,
+specialized to the pattern.  It avoids the runtime dependency, and
+hopefully doesn't generated too much redundant code.  In the long run the
+parser should be redone entirely.
+  nanopass/nano-syntax-dispatch.ss, tests/unit-tests.ss
+Removed `any` and `every` since these were just `exist` and `for-all`.
+  tests/helper.ss
+---
+ LOG                              |  11 ++
+ nanopass/nano-syntax-dispatch.ss | 194 ++++++++++++++++---------------
+ tests/helpers.ss                 |  30 ++---
+ tests/unit-tests.ss              |  54 ++++++++-
+ 4 files changed, 173 insertions(+), 116 deletions(-)
+
+diff --git a/LOG b/LOG
+index 16d5224..58e5978 100644
+--- a/LOG
++++ b/LOG
+@@ -830,3 +830,14 @@ LATEST
+       nanopass/implementation-helpers.ikarus.ss,
+       nanopass/implementation-helpers.ironscheme.sls,
+       nanopass/implementation-helpers.vicare.sls
++2021-03-14 -
++  * Fixed the reworked nano-syntax-dispatch by essentially replacing the
++    syntax-rules macros, with a single syntax-case macro that expands the parts
++    of the pattern into mini-matcher functions.  This essentially implements
++    the same algorithm originally implemented by the original functions,
++    specialized to the pattern.  It avoids the runtime dependency, and
++    hopefully doesn't generated too much redundant code.  In the long run the
++    parser should be redone entirely.
++      nanopass/nano-syntax-dispatch.ss, tests/unit-tests.ss
++  * Removed `any` and `every` since these were just `exist` and `for-all`.
++      tests/helper.ss
+diff --git a/nanopass/nano-syntax-dispatch.ss b/nanopass/nano-syntax-dispatch.ss
+index 6c7a95a..dfbae0a 100644
+--- a/nanopass/nano-syntax-dispatch.ss
++++ b/nanopass/nano-syntax-dispatch.ss
+@@ -2,98 +2,110 @@
+ ;;; See the accompanying file Copyright for details
+ 
+ (library (nanopass nano-syntax-dispatch)
+-  (export nano-syntax-dispatch)
++  (export nano-syntax-dispatch any each each+ each-any)
+   (import (rnrs) (nanopass helpers))
+ 
+-  (define-syntax match-each
+-    (syntax-rules ()
+-      [(_ ?e p)
+-       (let f ([e ?e])
+-         (cond
+-           [(pair? e) (match (car e) p (f (cdr e)))]
+-           [(null? e) '()]
+-           [else #f]))]))
+-
+-  (define-syntax match-remainder
+-    (syntax-rules ()
+-      [(_ ?e () z-pat ?r)
+-       (let loop ([e ?e] [re* '()])
+-         (if (pair? e)
+-             (loop (cdr e) (cons (car e) re*))
+-             (values re* (match e z-pat ?r))))]
+-      [(_ ?e (y-pat . y-pat-rest) z-pat ?r)
+-       (let-values ([(re* r) (match-remainder ?e y-pat-rest z-pat ?r)])
+-         (if r
+-             (if (null? re*)
+-                 (values #f #f)
+-                 (values (cdr re*) (match (car re*) y-pat r)))
+-             (values #f #f)))]))
+-
+-  (define-syntax match-each+
+-    (syntax-rules ()
+-      [(_ e x-pat y-pat z-pat ?r)
+-       (let-values ([(re* r) (match-remainder e y-pat z-pat ?r)])
+-         (if r
+-             (let loop ([re* re*] [xr* '()])
+-               (if (null? re*)
+-                   (values xr* r)
+-                   (let ([xr (match (car re*) x-pat '())])
+-                     (if xr
+-                         (loop (cdr re*) (cons xr xr*))
+-                         (values #f #f)))))
+-             (values #f #f)))]))
+-
+-  (define-syntax match-each-any
+-    (syntax-rules ()
+-      [(_ ?e)
+-       (let f ([e ?e])
+-         (cond
+-           [(pair? e)
+-            (let ([l (f (cdr e))])
+-              (and l (cons (car e) l)))]
+-           [(null? e) '()]
+-           [else #f]))]))
+-
+-  (define-syntax match-empty
+-    (lambda (x)
+-      (syntax-case x (any each-any each each+)
+-        [(_ () r) #'r]
+-        [(_ any r) #'(cons '() r)]
+-        [(_ (a . d) r) #'(match-empty a (match-empty d r))]
+-        [(_ each-any r) #'(cons '() r)]
+-        [(_ #(each p1) r) #'(match-empty p1 r)]
+-        [(_ #(each+ p1 (p2 ...) p3) r)
+-         (with-syntax ([(rp2 ...) (reverse #'(p2 ...))])
+-           #'(match-empty p1 (match-empty (rp2 ...) (match-empty p3 r))))])))
+-
+-  (define-syntax match
+-    (syntax-rules (any)
+-      [(_ e any r) (and r (cons e r))]
+-      [(_ e p r) (and r (match* e p r))]))
+-
+-  (define-syntax match*
+-    (syntax-rules (any each-any each each+)
+-      [(_ e () r) (and (null? e) r)]
+-      [(_ e (a . d) r) (and (pair? e) (match (car e) a (match (cdr e) d r)))]
+-      [(_ e each-any r) (let ([l (match-each-any e)]) (and l (cons l r)))]
+-      [(_ e #(each p1) ?r)
+-       (if (null? e)
+-           (match-empty p1 ?r)
+-           (let ([r* (match-each e p1)])
+-             (and r* (let combine ([r* r*] [r ?r])
+-                       (if (null? (car r*))
+-                           r
+-                           (cons (map car r*) (combine (map cdr r*) r)))))))]
+-      [(_ e #(each+ p1 p2 p3) ?r)
+-       (let-values ([(xr* r) (match-each+ e p1 p2 p3 ?r)])
+-         (and r (if (null? xr*)
+-                    (match-empty p1 r)
+-                    (let combine ([r* xr*] [r r])
+-                      (if (null? (car r*))
+-                          r
+-                          (cons (map car r*) (combine (map cdr r*) r)))))))]))
++  (define-syntax any (lambda (x) #f))
++  (define-syntax each (lambda (x) #f))
++  (define-syntax each+ (lambda (x) #f))
++  (define-syntax each-any (lambda (x) #f))
+ 
+   (define-syntax nano-syntax-dispatch
+-    (syntax-rules (any)
+-      [(_ e any) (list e)]
+-      [(_ e p) (match* e p '())])))
++    (lambda (x)
++      (define combiner
++        (lambda ()
++          #'(lambda (r* r)
++              (let f ([r* r*])
++                (if (null? (car r*))
++                    r
++                    (cons (map car r*) (f (map cdr r*))))))))
++      (define match-each
++        (lambda (p)
++          (with-syntax ([matcher (match p)])
++            #'(lambda (e)
++                (let f ([e e])
++                  (cond
++                    [(pair? e)
++                     (let ([first (matcher (car e) '())])
++                       (and first
++                            (let ([rest (f (cdr e))])
++                              (and rest (cons first rest)))))]
++                    [(null? e) '()]
++                    [else #f]))))))
++      (define match-each+
++        (lambda (p1 p2 p3)
++          (with-syntax ([(p2* ...) p2])
++            (with-syntax ([matcher-p1 (match p1)]
++                          [(matcher-p2* ...) (map match #'(p2* ...))]
++                          [matcher-p3 (match p3)])
++              #'(lambda (e r)
++                  (let f ([e e])
++                    (cond
++                      [(pair? e)
++                       (let-values ([(xr* y-pat r) (f (cdr e))])
++                         (if r
++                             (if (null? y-pat)
++                                 (let ([xr (matcher-p1 (car e) '())])
++                                   (if xr
++                                       (values (cons xr xr*) y-pat r)
++                                       (values #f #f #f)))
++                                 (values '() (cdr y-pat) ((car y-pat) (car e) r)))
++                             (values #f #f #f)))]
++                      [else (values '() (list matcher-p2* ...) (matcher-p3 e r))])))))))
++      (define match-empty
++        (lambda (p)
++          (syntax-case p (any each-any each each+)
++            [() #'(lambda (r) r)]
++            [any #`(lambda (r) (cons '() r))]
++            [(a . d)
++             (with-syntax ([matcher-a (match-empty #'a)]
++                           [matcher-d (match-empty #'d)])
++               #'(lambda (r) (matcher-a (matcher-d r))))]
++            [#(each p) (match-empty #'p)]
++            [#(each+ p1 (p2 ...) p3)
++             (with-syntax ([matcher-p1 (match-empty #'p1)]
++                           [matcher-p2 (match-empty (reverse #'(p2 ...)))]
++                           [matcher-p3 (match-empty #'p3)])
++               #'(lambda (r) (matcher-p1 (matcher-p2 (matcher-p3 r)))))])))
++      (define match*
++        (lambda (p)
++          (syntax-case p (any each-any each each+)
++            [() #'(lambda (e r) (and (null? e) r))]
++            [(a . d)
++             (with-syntax ([matcher-a (match #'a)]
++                           [matcher-d (match #'d)])
++               #'(lambda (e r)
++                   (and (pair? e)
++                        (matcher-a (car e)
++                          (matcher-d (cdr e) r)))))]
++            [each-any #'(lambda (e r) (and (list? e) (cons e r)))]
++            [#(each p)
++             (with-syntax ([matcher-empty (match-empty #'p)]
++                           [matcher-each (match-each #'p)]
++                           [combine (combiner)])
++               #'(lambda (e r)
++                   (if (null? e)
++                       (matcher-empty r)
++                       (let ([r* (matcher-each e)])
++                         (and r* (combine r* r))))))]
++            [#(each+ p1 p2 p3)
++             (with-syntax ([matcher-each+ (match-each+ #'p1 #'p2 #'p3)]
++                           [matcher-empty (match-empty #'p1)]
++                           [combine (combiner)])
++               #'(lambda (e r)
++                   (let-values ([(r* y-pat r) (matcher-each+ e r)])
++                     (and r (null? y-pat)
++                          (if (null? r*)
++                              (matcher-empty r)
++                              (combine r* r))))))])))
++      (define match
++        (lambda (p)
++          (syntax-case p (any)
++            [any #'(lambda (e r) (and r (cons e r)))]
++            [_ (with-syntax ([matcher (match* p)])
++                 #'(lambda (e r) (and r (matcher e r))))])))
++      (syntax-case x (any)
++        [(_ ?e p)
++         (with-syntax ([matcher (match #'p)])
++           #`(matcher ?e '()))])))
++)
+diff --git a/tests/helpers.ss b/tests/helpers.ss
+index 6f22c14..108df41 100644
+--- a/tests/helpers.ss
++++ b/tests/helpers.ss
+@@ -2,7 +2,7 @@
+ ;;; See the accompanying file Copyright for details
+ 
+ (library (tests helpers)
+-  (export compose disjoin any every choose reverse-filter fold reduce
++  (export compose disjoin choose reverse-filter fold reduce
+           constant? keyword? list-of-user-primitives list-of-system-primitives
+           user-primitive? system-primitive? primitive? predicate-primitive?
+           value-primitive? effect-primitive? effect-free-primitive? gen-label
+@@ -57,22 +57,6 @@
+       [(p? . q?*) (lambda (x) 
+                     (or (p? x) ((apply disjoin q?*) x)))])) 
+   
+-  (define any
+-    (lambda (pred? ls)
+-      (let loop ([ls ls])
+-        (cond
+-          [(null? ls) #f]
+-          [(pred? (car ls)) #t]
+-          [else (loop (cdr ls))])))) 
+-  
+-  (define every
+-    (lambda (pred? ls)
+-      (let loop ([ls ls])
+-        (cond
+-          [(null? ls) #t]
+-          [(pred? (car ls)) (loop (cdr ls))]
+-          [else #f])))) 
+-  
+   (define choose
+     (lambda (pred? ls)
+       (fold (lambda (elt tail)
+@@ -123,7 +107,7 @@
+           (null? x)
+           (if (pair? x)
+             (and (datum? (car x)) (datum? (cdr x)))
+-            (and (vector? x) (for-all datum? (vector->list x))))))) 
++            (and (vector? x) (for-all datum? (vector->list x)))))))
+   
+   (define variable? symbol?)
+   
+@@ -297,10 +281,10 @@
+     (lambda (set1 . sets)
+       (cond
+         [(null? sets) set1]
+-        [(any empty? sets) (empty-set)]
++        [(exists empty? sets) (empty-set)]
+         [else (choose
+                 (lambda (elt)
+-                  (every (lambda (set) (member? elt set)) sets)) set1)]))) 
++                  (for-all (lambda (set) (member? elt set)) sets)) set1)])))
+   
+   (define list-index
+     (lambda (a ls)
+@@ -319,7 +303,7 @@
+         (cond
+           [(null? sets) set1]
+           [else (reverse-filter (lambda (elt)
+-                                  (any (lambda (set) 
+-                                         (member? elt set)) 
+-                                       sets))
++                                  (exists (lambda (set)
++                                            (member? elt set))
++                                          sets))
+                                 set1)])))))
+diff --git a/tests/unit-tests.ss b/tests/unit-tests.ss
+index e6bea4d..234e3d6 100644
+--- a/tests/unit-tests.ss
++++ b/tests/unit-tests.ss
+@@ -59,6 +59,8 @@
+       (primapp pr e1 ...)                          => (pr e1 ...)
+       (app e0 e1 ...)                              => (e0 e1 ...)))
+ 
++  (define-parser parse-LUNPARSE LUNPARSE)
++
+   (define-language LBool
+     (terminals
+       (boolean (b)))
+@@ -234,6 +236,54 @@
+                  (app (var ,f.7) (quoted 10)))) #f)))
+       )
+ 
++    (test parse-language
++      (assert-equal? '(quote 7) (unparse-LUNPARSE (parse-LUNPARSE '(quoted 7))))
++      (let ([x.1 (make-var 'x.1)])
++        (assert-equal? 'x.1 (unparse-LUNPARSE (parse-LUNPARSE `(var ,x.1)))))
++      (assert-equal? '(begin '10 '17) (unparse-LUNPARSE (parse-LUNPARSE '(seq (quoted 10) (quoted 17)))))
++      (let ([x.1 (make-var 'x.1)]
++            [x.2 (make-var 'x.2)]
++            [y.3 (make-var 'y.3)]
++            [x.4 (make-var 'x.4)]
++            [zero?.5 (make-var 'zero?.5)]
++            [*.6 (make-var '*.6)]
++            [f.7 (make-var 'f.7)])
++        (assert-equal?
++          '(letrec ([zero?.5 (lambda (x.1) (= x.1 '0))]
++                    [*.6 (lambda (x.2 y.3)
++                           (if (zero?.5 x.2)
++                               '0
++                               (if (= x.2 '1)
++                                   y.3
++                                   (+ y.3 (*.6 (- x.2 '1) y.3)))))]
++                    [f.7 (lambda (x.4)
++                           (if (zero?.5 x.4)
++                               '1
++                               (*.6 x.4 (f.7 (- x.4 '1)))))])
++             (f.7 '10))
++          (unparse-LUNPARSE
++            (parse-LUNPARSE
++              `(recbinding
++                 (,zero?.5 ,*.6 ,f.7)
++                 ((lambda (,x.1) (primapp = (var ,x.1) (quoted 0)))
++                  (lambda (,x.2 ,y.3)
++                    (if (app (var ,zero?.5) (var ,x.2))
++                        (quoted 0)
++                        (if (primapp = (var ,x.2) (quoted 1))
++                            (var ,y.3)
++                            (primapp + (var ,y.3)
++                              (app (var ,*.6)
++                                   (primapp - (var ,x.2) (quoted 1))
++                                   (var ,y.3))))))
++                  (lambda (,x.4)
++                    (if (app (var ,zero?.5) (var ,x.4))
++                        (quoted 1)
++                        (app (var ,*.6) (var ,x.4)
++                             (app (var ,f.7)
++                                  (primapp - (var ,x.4) (quoted 1)))))))
++                 (app (var ,f.7) (quoted 10)))) #f)))
++      )
++
+     (test boolean-terminals
+       (let ()
+         (define-parser parse-LBool LBool)
+@@ -867,11 +917,11 @@
+    (test-suite error-messages
+      (test run-time-error-messages
+        (assert-error
+-         (format-error-message "Exception in with-output-language: expected list of symbol but received x in field x* of (lambda (x* ...) body* ... body) from expression ~s at line 872, char 23 of ~a" ''x test-file)
++         (format-error-message "Exception in with-output-language: expected list of symbol but received x in field x* of (lambda (x* ...) body* ... body) from expression ~s at line 922, char 23 of ~a" ''x test-file)
+          (with-output-language (L-error Expr)
+            `(lambda (,'x ...) z)))
+        (assert-error
+-         (format-error-message "Exception in with-output-language: expected list of list of symbol but received x** in field x** of ~s from expression ~s at line 876, char 29 of ~a" '(let-values (((x** ...) e*) ...) body* ... body) ''x** test-file)
++         (format-error-message "Exception in with-output-language: expected list of list of symbol but received x** in field x** of ~s from expression ~s at line 926, char 29 of ~a" '(let-values (((x** ...) e*) ...) body* ... body) ''x** test-file)
+          (with-output-language (L-error Expr)
+            `(let-values ([(,'x** ...) ,'(y)] ...) z)))
+        ))
