@@ -51,6 +51,7 @@
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages code)
   #:use-module (gnu packages coq)
@@ -190,7 +191,8 @@
                (copy-file (assoc-ref inputs "guix.vim")
                           (string-append vimdir "/vimrc"))))))))
     (inputs
-     (list gawk ncurses perl tcsh))                 ; For runtime/tools/vim32
+     (list gawk ncurses perl tcsh ; For runtime/tools/vim132
+           bash-minimal))
     (native-inputs
      `(("libtool" ,libtool)
        ("guix.vim" ,(search-auxiliary-file "guix.vim"))
