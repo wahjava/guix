@@ -627,7 +627,6 @@ photographic equipment.")
            libxslt
            libheif
            lua-5.4                      ;optional, for plugins
-           opencl-icd-loader            ;optional, for OpenCL support
            openexr                      ;optional, for EXR import/export
            openjpeg                     ;optional, for JPEG2000 export
            osm-gps-map                  ;optional, for geotagging view
@@ -636,6 +635,8 @@ photographic equipment.")
            python-jsonschema
            sdl2
            sqlite))
+    (propagated-inputs
+     (list opencl-icd-loader))          ;optional, for OpenCL support
     (home-page "https://www.darktable.org")
     (synopsis "Virtual lighttable and darkroom for photographers")
     (description "Darktable is a photography workflow application and RAW
