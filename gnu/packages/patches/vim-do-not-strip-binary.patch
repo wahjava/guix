@@ -1,0 +1,20 @@
+diff --git a/src/Makefile b/src/Makefile
+index 0cf9f8836..9d9f1fe89 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -2349,7 +2349,6 @@ installvimbin: $(VIMTARGET) $(DESTDIR)$(exec_prefix) $(DEST_BIN)
+ 	  rm -f $(DEST_BIN)/$(VIMNAME).rm; \
+ 	fi
+ 	$(INSTALL_PROG) $(VIMTARGET) $(DEST_BIN)
+-	$(STRIP) $(DEST_BIN)/$(VIMTARGET)
+ 	chmod $(BINMOD) $(DEST_BIN)/$(VIMTARGET)
+ # may create a link to the new executable from /usr/bin/vi
+ 	-$(LINKIT)
+@@ -2534,7 +2533,6 @@ installtools: $(TOOLS) $(DESTDIR)$(exec_prefix) $(DEST_BIN) \
+ 	  rm -f $(DEST_BIN)/xxd.rm; \
+ 	fi
+ 	$(INSTALL_PROG) xxd/xxd$(EXEEXT) $(DEST_BIN)
+-	$(STRIP) $(DEST_BIN)/xxd$(EXEEXT)
+ 	chmod $(BINMOD) $(DEST_BIN)/xxd$(EXEEXT)
+ 	-$(SHELL) ./installman.sh xxd $(DEST_MAN) "" $(INSTALLMANARGS)
+ 

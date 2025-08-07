@@ -97,7 +97,9 @@
              (file-name (git-file-name name version))
              (sha256
               (base32
-               "19qkf9hq4rd4y3592wxd2x7bw2wxq0p607wddv4p8cv8wsk5y7dv"))))
+               "19qkf9hq4rd4y3592wxd2x7bw2wxq0p607wddv4p8cv8wsk5y7dv"))
+             (patches
+               (search-patches "vim-do-not-strip-binary.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
