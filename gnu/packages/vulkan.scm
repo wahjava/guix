@@ -217,7 +217,7 @@ translation between LLVM IR and SPIR-V.")
 (define-public glslang
   (package
     (name "glslang")
-    (version "1.4.309.0")
+    (version "1.4.321.0")
     (source
      (origin
        (method git-fetch)
@@ -226,36 +226,39 @@ translation between LLVM IR and SPIR-V.")
              (commit (string-append "vulkan-sdk-" version))))
        (sha256
         (base32
-         "0kzzjh2dxzkznp75jk9sl4fjjgdy5s6xr8vha9av6cvi3jxm2i8y"))
+         "1b0zsrv12b34q0wp9g85x11kpd5kjvx4lbn7xv8b4szfpwdkxxxh"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON"
-                           "-DALLOW_EXTERNAL_SPIRV_TOOLS=ON"
-                           ,@(if (target-riscv64?)
-                                 `("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
-                                 '()))
-       #:phases (modify-phases %standard-phases
-                  ,@(if (target-ppc32?)
-                        `((add-after 'unpack 'skip-failing-test
-                            (lambda _
-                              ;; TODO: Figure out why this test fails.
-                              (substitute* "Test/runtests"
-                                ((".*remap\\.invalid" all)
-                                 (string-append "# " all))))))
-                        '())
-                  (replace 'check
-                    (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "ctest"
-                                "-j" (if parallel-tests?
-                                       (number->string (parallel-job-count))
-                                       "1")
-                                "--rerun-failed"
-                                "--output-on-failure")))))))
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              "-DALLOW_EXTERNAL_SPIRV_TOOLS=ON"
+              #$@(if (target-riscv64?)
+                     `("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
+                     '()))
+      #:phases
+      #~(modify-phases %standard-phases
+          #$@(if (target-ppc32?)
+                 `((add-after 'unpack 'skip-failing-test
+                     (lambda _
+                       ;; TODO: Figure out why this test fails.
+                       (substitute* "Test/runtests"
+                         ((".*remap\\.invalid" all)
+                          (string-append "# " all))))))
+                 '())
+          (replace 'check
+            (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+              (when tests?
+                (invoke "ctest"
+                        "-j" (if parallel-tests?
+                                 (number->string (parallel-job-count))
+                                 "1")
+                        "--rerun-failed"
+                        "--output-on-failure")))))))
     (inputs (list spirv-tools))
     (native-inputs
-     (list pkg-config python))
+     (list pkg-config python-minimal))
     (home-page "https://github.com/KhronosGroup/glslang")
     (synopsis "OpenGL and OpenGL ES shader front end and validator")
     (description
