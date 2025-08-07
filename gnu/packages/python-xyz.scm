@@ -166,6 +166,7 @@
 ;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Luis Felipe López Acevedo <sirgazil@zoho.com>
+;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -39741,6 +39742,31 @@ etc. to check code that uses @code{orjson}.")
 for persistent data structures.  It was written initially to support replacing
 @code{python-pyrsistent}.")
     (license license:expat)))
+
+(define-public python-puccinialin
+  (package
+    (name "python-puccinialin")
+    (version "0.1.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "puccinialin" version))
+       (sha256
+        (base32 "00nnqcvvyn10zxkhgzcfn8czwvdzm0vh5z16plb0dxspccd69dmv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (propagated-inputs (list python-httpx python-platformdirs python-tqdm))
+    (native-inputs (list python-hatchling))
+    (home-page "https://github.com/konstin/puccinialin")
+    (synopsis "Helper for bootstrapping Rust-based build back-ends for Python")
+    (description
+     "This tool helps to install Rust into a temporary directory, allowing
+support of Rust-based Python builds.  Cargo and rustc are installed into a
+cache directory, to avoid modifying the host's environment, and further
+activated using a set of environment variables.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public python-nanoid
   ;; There are no tests on PyPi.
