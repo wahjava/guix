@@ -51,10 +51,15 @@
   #:use-module (gnu packages wine)
   #:use-module (gnu packages xorg))
 
+;; Spirv components are tightly integrated and can only be upgraded as a unit.
+;;; If you want to upgrade SPIRV, bump this version number and update hashes
+;;; below.
+(define %spirv-version "1.4.321.0")
+
 (define-public spirv-headers
   (package
     (name "spirv-headers")
-    (version "1.4.321.0")
+    (version %spirv-version)
     (source
      (origin
        (method git-fetch)
@@ -87,7 +92,7 @@ and for the GLSL.std.450 extended instruction set.
 (define-public spirv-tools
   (package
     (name "spirv-tools")
-    (version "1.4.321.0")
+    (version %spirv-version)
     (source
      (origin
        (method git-fetch)
@@ -121,7 +126,7 @@ parser,disassembler, validator, and optimizer for SPIR-V.")
 (define-public spirv-cross
   (package
     (name "spirv-cross")
-    (version "1.4.309.0")
+    (version %spirv-version)
     (source
      (origin
        (method git-fetch)
@@ -217,7 +222,7 @@ translation between LLVM IR and SPIR-V.")
 (define-public glslang
   (package
     (name "glslang")
-    (version "1.4.321.0")
+    (version %spirv-version)
     (source
      (origin
        (method git-fetch)
