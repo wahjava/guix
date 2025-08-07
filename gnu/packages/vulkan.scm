@@ -9,6 +9,7 @@
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -53,7 +54,7 @@
 (define-public spirv-headers
   (package
     (name "spirv-headers")
-    (version "1.4.309.0")
+    (version "1.4.321.0")
     (source
      (origin
        (method git-fetch)
@@ -62,7 +63,7 @@
              (commit (string-append "vulkan-sdk-" version))))
        (sha256
         (base32
-         "15l35w60sbw1i3a48057hvpvldf0lrlfmkz73bp456g2jn5vln23"))
+         "11nsfr6z11dx6ccyi9anz2iycxr9i06zl8dk4pdllf3dvk5wq61d"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -79,8 +80,9 @@ and for the GLSL.std.450 extended instruction set.
 @item The XML registry file.
 @end itemize\n")
     (license (license:x11-style
-              (string-append "https://github.com/KhronosGroup/SPIRV-Headers/blob/"
-                             version "/LICENSE")))))
+              (string-append
+               "https://github.com/KhronosGroup/SPIRV-Headers/blob/"
+               version "/LICENSE")))))
 
 (define-public spirv-tools
   (package
