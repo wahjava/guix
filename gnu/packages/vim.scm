@@ -187,10 +187,11 @@
                (("/bin/sh")
                 (which "sh")))))
          (add-after 'install 'install-guix.vim
-           (lambda* (#:key inputs outputs #:allow-other-keys)
+           (lambda* (#:key inputs native-inputs outputs #:allow-other-keys)
              (let ((vimdir (string-append (assoc-ref outputs "out") "/share/vim")))
                (mkdir-p vimdir)
-               (copy-file (assoc-ref inputs "guix.vim")
+               (copy-file (or (assoc-ref inputs "guix.vim")
+                              (assoc-ref native-inputs "guix.vim"))
                           (string-append vimdir "/vimrc"))))))))
     (inputs
      (list gawk ncurses perl tcsh ; For runtime/tools/vim132
