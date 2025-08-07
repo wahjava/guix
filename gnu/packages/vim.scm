@@ -192,7 +192,7 @@
                           (string-append vimdir "/vimrc"))))))))
     (inputs
      (list gawk ncurses perl tcsh ; For runtime/tools/vim132
-           bash-minimal))
+           bash-minimal tzdata))
     (native-inputs
      `(("libtool" ,libtool)
        ("guix.vim" ,(search-auxiliary-file "guix.vim"))
