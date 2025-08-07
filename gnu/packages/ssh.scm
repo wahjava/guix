@@ -194,6 +194,25 @@ applications.")
     (home-page "https://www.libssh.org")
     (license license:lgpl2.1+)))
 
+(define-public libssh/sshsig
+  (let ((commit "28c0056bca4f5ea3223db8150de4771aedc9eef7")
+        (revision "0"))
+    (package/inherit libssh
+    (name "libssh")
+    (version (git-version "0.11.2" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/libssh/libssh-mirror")
+              (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j5r6ixb88p43wfds29iwi7dlkc5f0v18jzd75d52bpw3hpc3d3h"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments libssh)
+       ((#:tests? tests? #t) #f))))))
+
 (define-public libssh2
   (package
    (name "libssh2")
