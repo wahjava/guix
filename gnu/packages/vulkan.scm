@@ -87,27 +87,29 @@ and for the GLSL.std.450 extended instruction set.
 (define-public spirv-tools
   (package
     (name "spirv-tools")
-    (version "1.4.309.0")
+    (version "1.4.321.0")
     (source
      (origin
-      (method git-fetch)
-      (uri (git-reference
-            (url "https://github.com/KhronosGroup/SPIRV-Tools")
-            (commit (string-append "vulkan-sdk-" version))))
-      (sha256
-       (base32 "1ykrsd3fl8sx9sq8pc551swacqnl0xwv3p0l1ppdpw2h2mvz8syr"))
-      (file-name (git-file-name name version))))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/KhronosGroup/SPIRV-Tools")
+              (commit (string-append "vulkan-sdk-" version))))
+       (sha256
+        (base32 "015xymrzch87f3xkzx9rvlglqp39zx4vphjb2dkl5w6qcpz5s1y8"))
+       (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DBUILD_SHARED_LIBS=ON"
-                               ;; Some packages like mpv fail to link
-                               ;; when the static libraries are built.
-                               "-DSPIRV_TOOLS_BUILD_STATIC=OFF"
-                               (string-append
-                                "-DSPIRV-Headers_SOURCE_DIR="
-                                (assoc-ref %build-inputs "spirv-headers")))))
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              ;; Some packages like mpv fail to link
+              ;; when the static libraries are built.
+              "-DSPIRV_TOOLS_BUILD_STATIC=OFF"
+              (string-append
+               "-DSPIRV-Headers_SOURCE_DIR="
+               (assoc-ref %build-inputs "spirv-headers")))))
     (inputs (list spirv-headers))
-    (native-inputs (list pkg-config python))
+    (native-inputs (list pkg-config python-minimal))
     (home-page "https://github.com/KhronosGroup/SPIRV-Tools")
     (synopsis "API and commands for processing SPIR-V modules")
     (description
