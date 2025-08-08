@@ -364,19 +364,21 @@ Additionally, various channel-specific options can be negotiated.")
     (synopsis "OpenSSH client and server without X11 support")))
 
 (define-public guile-ssh
-  (package
+  (let ((commit "b798e856fd7e485f101628a5d095540307c942ae")
+        (revision "0"))
+    (package
     (name "guile-ssh")
-    (version "0.18.0")
-    (home-page "https://github.com/artyom-poptsov/guile-ssh")
+    (version (git-version "0.18.0" revision commit))
+    (home-page "https://github.com/nicolas-graves/guile-ssh")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url home-page)
-                    (commit (string-append "v" version))))
+                    (commit commit)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zh1spkjl5q778y4rd6ml68fvz1r62xmk03khi4kp74z2rxgzcxb"))))
+                "043zyrb0a82ggx1vwg96dayssl34jnnm3ik49bk6x9ax8z300cml"))))
     (build-system gnu-build-system)
     (outputs '("out" "debug"))
     (arguments
@@ -438,7 +440,7 @@ Additionally, various channel-specific options can be negotiated.")
      "Guile-SSH is a library that provides access to the SSH protocol for
 programs written in GNU Guile interpreter.  It is a wrapper to the underlying
 libssh library.")
-    (license license:gpl3+)))
+    (license license:gpl3+))))
 
 (define-public guile2.2-ssh
   (package
