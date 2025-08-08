@@ -62,29 +62,25 @@
   #:use-module (guix build-system qt))
 
 (define-public bcunit
-  (let ((commit "74021cc7cb20a4e177748dd2948173e1f9c270ae")
-        (revision "0"))
     (package
       (name "bcunit")
-      (version (git-version "3.0.2" revision commit))
+      (version "5.4.29")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "git://git.linphone.org/bcunit")
-               (commit commit)))
+               (url "https://gitlab.linphone.org/BC/public/bcunit")
+               (commit version)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0npdwvanjkfg9vrqs5yi8vh6wliv50ycdli8pzavir84nb31nq1b"))))
+          (base32 "0rpkc9bjlf370p5fsrbp9b481zakdndmfxyg5vwza0a9z19f81vb"))))
       (build-system cmake-build-system)
-      (outputs '("out" "doc"))
       (arguments
-       `(#:configure-flags (list "-DENABLE_STATIC=NO"
-                                 "-DENABLE_CURSES=ON"
-                                 "-DENABLE_DOC=ON"
-                                 "-DENABLE_EXAMPLES=ON"
-                                 "-DENABLE_TEST=ON"
-                                 "-DENABLE_MEMTRACE=ON")
+       `(#:configure-flags (list "-DENABLE_BCUNIT_CURSES=ON"
+                                 "-DENABLE_BCUNIT_DOC=ON"
+                                 "-DENABLE_BCUNIT_EXAMPLES=ON"
+                                 "-DENABLE_BCUNIT_TEST=ON"
+                                 "-DENABLE_BCUNIT_MEMTRACE=ON")
          #:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'patch-source
@@ -104,20 +100,7 @@
            (replace 'check
              (lambda _
                (with-directory-excursion "BCUnit/Sources/Test"
-                 (invoke "./test_bcunit"))))
-           (add-after 'install 'move-doc
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out"))
-                     (doc (assoc-ref outputs "doc")))
-                 (for-each mkdir-p
-                           `(,(string-append doc "/share/doc")
-                             ,(string-append doc "/share/BCUnit")))
-                 (rename-file
-                  (string-append out "/share/doc/BCUnit")
-                  (string-append doc "/share/doc/BCUnit"))
-                 (rename-file
-                  (string-append out "/share/BCUnit/Examples")
-                  (string-append doc "/share/BCUnit/Examples"))))))))
+                 (invoke "./test_bcunit")))))))
       (inputs
        (list ncurses))
       (synopsis "Belledonne Communications Unit Testing Framework")
@@ -125,7 +108,7 @@
 several fixes and patches applied.  It is a unit testing framework for
 writing, administering, and running unit tests in C.")
       (home-page "https://gitlab.linphone.org/BC/public/bcunit")
-      (license license:lgpl2.0+))))
+      (license license:lgpl2.0+)))
 
 (define-public bctoolbox
   (package
