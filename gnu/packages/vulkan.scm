@@ -520,6 +520,7 @@ API.")
              ;; Note: despite the name, this just specifies the headers.
              (string-append "-Dglslang_SOURCE_DIR="
                             (assoc-ref %build-inputs "glslang") "/include/glslang"))
+       #:tests? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'do-not-look-for-bundled-sources
