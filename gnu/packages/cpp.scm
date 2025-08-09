@@ -954,17 +954,6 @@ utilities used across the hypr* ecosystem.")
                (base32
                 "080kibsllxfrlck4gix0ygr12gnvf9p9ybi589fsvpab9p9xw857"))))
     (build-system cmake-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-cross-compilation
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                (("find_package.PkgConfig" all)
-                 (string-append
-                  "set(PKG_CONFIG_EXECUTABLE " #$(pkg-config-for-target) ")\n"
-                  all))))))))
     (native-inputs (list gcc-15 pkg-config))
     (inputs (list hyprutils))
     (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprlang/")
@@ -988,17 +977,6 @@ language used in Hyprland.")
                (base32
                 "0rzx0anwb68qxrjinxrw1pvlzmjk2bsp79wgnkvg95sdmabxw451"))))
     (build-system cmake-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-cross-compilation
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                (("find_package.PkgConfig" all)
-                 (string-append
-                  "set(PKG_CONFIG_EXECUTABLE " #$(pkg-config-for-target) ")\n"
-                  all))))))))
     (native-inputs (list gcc-15 pkg-config))
     (inputs (list pixman))
     (home-page "https://github.com/hyprwm/hyprutils")

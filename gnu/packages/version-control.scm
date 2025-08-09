@@ -1267,14 +1267,7 @@ other git-like projects such as @code{libgit2}.")
              "-DREGEX_BACKEND=pcre2"
              "-DUSE_HTTP_PARSER=system"
              "-DUSE_SSH=ON" ; cmake fails to find libssh if this is missing
-             ,@(if (%current-target-system)
-                   `((string-append
-                      "-DPKG_CONFIG_EXECUTABLE="
-                      (search-input-file
-                       %build-inputs
-                       (string-append "/bin/" ,(%current-target-system)
-                                      "-pkg-config"))))
-                   '()))
+             )
        #:phases
        (modify-phases %standard-phases
          ,@(if (or (target-arm32?) (target-hurd?))
