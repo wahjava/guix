@@ -32,6 +32,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -47,7 +48,9 @@
   #:use-module (gnu packages c)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages databases)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages embedded)
@@ -67,6 +70,7 @@
   #:use-module (gnu packages maths)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages networking)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -1095,3 +1099,97 @@ from ALSA, ESD, and COMEDI sources.  This package currently does not include
 support for ESD sources.")
     (home-page "https://xoscope.sourceforge.net/")
     (license license:gpl2+)))
+
+(define-public slaclab-rogue
+  (package
+    (name "slaclab-rogue")
+    (version "6.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/slaclab/rogue/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gsyrwcpc0z4pgw3sgyaww0xi78r79la2pf00ya3dbsbmhwqn7k2"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      ;; Build directory is expected inside root level in hard coded paths.
+      #:out-of-source? #f
+      #:modules
+      '((guix build cmake-build-system)
+        ((guix build python-build-system) #:prefix py:)
+        (guix build utils))
+      #:imported-modules
+      `(,@%cmake-build-system-modules
+        ,@%python-build-system-modules)
+      #:configure-flags
+      ;; See: https://slaclab.github.io/rogue/installing/build.html
+      #~(list ".."
+              (string-append "-DROGUE_VERSION=v" #$version)
+              "-DROGUE_INSTALL=system"
+              "-DNO_PYTHON=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'mkdir-build
+            (lambda _
+              (mkdir "build")
+              (chdir "build")))
+          (add-after 'unpack 'ensure-no-mtimes-pre-1980
+            (assoc-ref py:%standard-phases 'ensure-no-mtimes-pre-1980))
+          (add-after 'ensure-no-mtimes-pre-1980 'enable-bytecode-determinism
+            (assoc-ref py:%standard-phases 'enable-bytecode-determinism))
+          (add-after 'enable-bytecode-determinism 'ensure-no-cythonized-files
+            (assoc-ref py:%standard-phases 'ensure-no-cythonized-files))
+          (add-after 'compress-documentation 'pybuild
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'pybuild 'pyinstall
+            (lambda* (#:key inputs outputs
+                      use-setuptools? #:allow-other-keys)
+              (let ((py-install (assoc-ref py:%standard-phases 'install)))
+                (py-install #:inputs inputs
+                            #:outputs outputs
+                            #:use-setuptools? use-setuptools?))))
+          (add-after 'pyinstall 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'add-install-to-path
+            (assoc-ref py:%standard-phases 'add-install-to-path))
+          (add-after 'add-install-to-path 'pywrap
+            (assoc-ref py:%standard-phases 'wrap))
+          (add-after 'pywrap 'pycheck
+            (lambda _
+              (invoke "sh" "setup_rogue.sh")
+              (invoke "python" "-m" "pytest" "--cov"))))))
+    (native-inputs
+     (list python-click
+           python-codecov
+           python-coverage
+           python-minimal
+           python-pyaml
+           python-pyserial
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-wheel
+           python-wrapper))
+    (inputs
+     (list boost
+           python-matplotlib
+           python-numpy
+           python-parse
+           python-pyzmq
+           python-sqlalchemy
+           zeromq
+           bzip2))
+    (home-page "https://slaclab.github.io/rogue/")
+    (synopsis "SLAC data acquisition system")
+    (description
+     "@code{Rogue} is a library providing hardware abstraction and interface
+functions to the implementation modules compatible with FPGA and ASIC
+design provided by the @code{Surf} VHDL library.")
+    ;; This is a variant of BSD-3 license.
+    (license (license:non-copyleft "file://LICENSE.txt"
+                                   "See LICENSE.txt in the distribution."))))
