@@ -170,6 +170,32 @@ to create smooth, animated user interfaces.")
               (replace "qtwayland" qtwayland-5)
               (append qtgraphicaleffects qtquickcontrols-5 qtquickcontrols2-5)))))
 
+(define-public where-is-my-sddm-theme
+    (package
+      (name "where-is-my-sddm-theme")
+      (version "1.12.0")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/stepanzubkov/where-is-my-sddm-theme")
+                      (commit (string-append "v" version))))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32 "0a30rlknxz855qsrc3ksyic4cj5axm6pwk5nya3nlbqjrrghy7gr"))))
+      (build-system copy-build-system)
+      (arguments
+       `(#:install-plan '(("where_is_my_sddm_theme" "/share/sddm/themes/")
+                          ("where_is_my_sddm_theme_qt5" "/share/sddm/themes/"))))
+      (home-page "https://github.com/stepanzubkov/where-is-my-sddm-theme")
+      (synopsis "That feeling when your SDDM theme suddenly disappeared...")
+      (description
+       "The @emph{most minimalistic and highly customizable} SDDM theme.
+Only black screen and password input field. Nothing extra, right? Even
+when you enter wrong password, the theme will show only red border
+around your screen. To login, just type your password and press
+@key{RET}.")
+      (license license:gpl3+)))
+
 (define-public abstractdark-sddm-theme
   (let ((commit "e817d4b27981080cd3b398fe928619ffa16c52e7")
         (revision "0"))
