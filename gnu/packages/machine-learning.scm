@@ -2617,36 +2617,60 @@ in PyTorch.  Backpropagation through ODE solutions is supported using the
 adjoint method for constant memory cost.")
       (license license:expat))))
 
-(define-public lightgbm
+(define-public python-lightgbm
   (package
-    (name "lightgbm")
-    (version "2.0.12")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/Microsoft/LightGBM")
-                     (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "0jlvyn7k81dzrh9ij3zw576wbgiwmmr26rzpdxjn1dbpc3njpvzi"))
-              (file-name (git-file-name name version))))
-    (native-inputs
-     (list python-pytest python-nose))
-    (inputs
-     (list openmpi))
-    (propagated-inputs
-     (list python-numpy python-scipy))
+    (name "python-lightgbm")
+    (version "4.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lightgbm" version))
+       (sha256
+        (base32 "1zmppbw19wy9l4r008wz92pp7dai4gsi8kd71ff3hsdm1rr5j76b"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Delete vendored libraries except for fast-double-parser.
+            ;; It is in maintenance mode and replaced by fast-float, but
+            ;; LightGBM did not port to fast-float yet:
+            ;; https://github.com/microsoft/LightGBM/issues/5579 and it
+            ;; doesn't seem worth packaging it now only for LightGBM.
+            (with-directory-excursion "external_libs"
+              (for-each delete-file-recursively
+                        (list "compute" "eigen" "fmt")))))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:configure-flags
-       '("-DUSE_MPI=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (with-directory-excursion "../source"
-               (invoke "pytest" "tests/c_api_test/test_.py")))))))
-    (build-system cmake-build-system)
-    (home-page "https://github.com/Microsoft/LightGBM")
+     (list
+      #:tests? #f ; no tests in PyPI and building from Git is intricate
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'setup-build-env
+            (lambda _
+              (let ((boost #$(this-package-input "boost"))
+                    (eigen #$(this-package-input "eigen"))
+                    (fmt #$(this-package-input "fmt")))
+                (setenv "SKBUILD_CMAKE_ARGS"
+                        (string-join
+                         (list
+                          "-DUSE_GPU=ON" ; using OpenCL
+                          "-DUSE_MPI=ON"
+                          (string-append "-DBOOST_COMPUTE_HEADER_DIR="
+                                         boost "/include/boost/numeric"
+                                         "/odeint/external/compute")
+                          (string-append "-DFMT_INCLUDE_DIR=" fmt "/include"))
+                         ";"))
+                ;; XXX: Falling back to substituting Eigen directory because
+                ;; setting -DEIGEN_DIR above did not work.
+                (substitute* "CMakeLists.txt"
+                  (("\\$\\{PROJECT_SOURCE_DIR\\}/external_libs/eigen")
+                   (string-append eigen "/include/eigen3")))))))))
+    (propagated-inputs (list opencl-icd-loader python-numpy python-scipy))
+    (inputs (list boost eigen fmt openmpi))
+    (native-inputs (list cmake-minimal
+                         opencl-headers
+                         python-pytest
+                         python-scikit-build-core))
+    (home-page "https://github.com/microsoft/LightGBM")
     (synopsis "Gradient boosting framework based on decision tree algorithms")
     (description "LightGBM is a gradient boosting framework that uses tree
 based learning algorithms.  It is designed to be distributed and efficient with
@@ -2658,8 +2682,11 @@ the following advantages:
 @item Better accuracy
 @item Parallel and GPU learning supported (not enabled in this package)
 @item Capable of handling large-scale data
-@end itemize\n")
+@end itemize")
     (license license:expat)))
+
+(define-public lightgbm
+  (deprecated-package "lightgbm" python-lightgbm))
 
 (define-public vowpal-wabbit
   ;; Language bindings not included.
