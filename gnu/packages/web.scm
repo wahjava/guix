@@ -1346,7 +1346,7 @@ libraries for working with JNLP applets.")
 (define-public jansson
   (package
     (name "jansson")
-    (version "2.14")
+    (version "2.14.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://github.com/akheron/jansson"
@@ -1354,7 +1354,7 @@ libraries for working with JNLP applets.")
                                  "/jansson-" version ".tar.bz2"))
              (sha256
               (base32
-               "1fdgji964mrrz19glx0zh91asji542fvybymvzk6rrbagkr5dagv"))))
+               "1kj9mya91cww75fxmnmpm8i8s4li92bkv45gv9ccvnys8cq2vn3b"))))
     (build-system gnu-build-system)
     (arguments
      (list
