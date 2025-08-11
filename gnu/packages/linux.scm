@@ -12337,7 +12337,7 @@ via Bluetooth.")
     (home-page "https://github.com/nowrep/dualsensectl")
     (license license:gpl2)))
 (define-public rtl88x2bu-linux-driver
-  (let ((revision "210")
+  (let ((revision "1")
         (commit "77a82dbac7192bb49fa87458561b0f2455cdc88f"))
     (package
       (name "rtl88x2bu-linux-driver")
@@ -12353,7 +12353,7 @@ via Bluetooth.")
           (base32 "1qrhd4698808axm6mliq810s3yj8aj7nv890pdvpbir8nvn6c44h"))))
       (build-system linux-module-build-system)
       (arguments
-       (list #:tests? #f))
+       (list #:tests? #f)) ; There is no test suite
       (home-page "https://github.com/RinCat/RTL88x2BU-Linux-Driver")
       (synopsis "Realtek RTL88x2BU WiFi USB Driver for Linux")
       (description
