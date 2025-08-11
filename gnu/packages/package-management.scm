@@ -1824,7 +1824,6 @@ environments.")
              guile-lzlib
              guile-zlib
              guile-sqlite3
-             guix
              guile-gnutls
              guile-fibers-next
              guile-knots))
