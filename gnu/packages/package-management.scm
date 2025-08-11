@@ -1112,7 +1112,6 @@ transactions from C or Python.")
       (propagated-inputs
        (list guile-gnutls
              guile-json-4
-             guix
              guix-data-service
              guix-build-coordinator
              guile-fibers-next
