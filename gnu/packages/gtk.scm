@@ -3095,7 +3095,19 @@ Unix desktop environment under X11 as well as Wayland.")
      (list
       #:configure-flags
       #~(list (string-append "-Dgdk_pixbuf_moduledir="
-                             #$output "/lib/gdk-pixbuf-2.0/2.10.0/loaders"))))
+                             #$output "/lib/gdk-pixbuf-2.0/2.10.0/loaders"))
+      #:phases
+      ;; TODO: Patch webp-pixbuf.thumbnailer to fix thumbnail generation
+      #~(modify-phases %standard-phases
+          (add-after 'install 'update-loaders-cache
+            (lambda _
+              (let* ((binary-dir (string-append #$output
+                                                "/lib/gdk-pixbuf-2.0/2.10.0"))
+                     (module-dir (string-append binary-dir "/loaders"))
+                     (loaders-path (string-append binary-dir "/loaders.cache")))
+                (setenv "GDK_PIXBUF_MODULE_FILE" loaders-path)
+                (setenv "GDK_PIXBUF_MODULEDIR" module-dir)
+                (invoke "gdk-pixbuf-query-loaders" "--update-cache")))))))
     (inputs (list gdk-pixbuf glib gtk+ libwebp))
     (native-inputs (list pkg-config))
     (home-page "https://github.com/aruiz/webp-pixbuf-loader")
