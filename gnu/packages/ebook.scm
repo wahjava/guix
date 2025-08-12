@@ -404,6 +404,33 @@ e-books for convenient reading.")
                    license:bsd-3
                    license:expat))))
 
+(define-public crqt-ng
+  (package
+    (name "crqt-ng")
+    (version "1.0.15")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.com/coolreader-ng/crqt-ng.git")
+                     (commit (string-append version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "10hd8lpv4das3fr41dqjqc34vnl4mnzaa5px8jsl40s65wap0c8p"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:tests? #f      ;; no tests
+      #:qtbase qtbase-5))
+    (native-inputs
+     (list qttools-5))
+    (inputs (list crengine-ng
+                  qtwayland-5))
+    (synopsis "Cross-platform open source e-book reader using crengine-ng")
+    (description "crqt-ng is cross-platform open source e-book reader using crengine-ng.
+ It is a fork of the CoolReader project.")
+    (home-page "https://gitlab.com/coolreader-ng/crqt-ng")
+    (license license:gpl2+)))
+
 (define-public ebook-tools
   (package
     (name "ebook-tools")
