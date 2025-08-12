@@ -13,6 +13,7 @@
 ;;; Copyright © 2021 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 VnPower <vnpower@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -83,8 +84,10 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages speech)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages unicode)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -358,6 +361,48 @@ e-books for convenient reading.")
                    license:public-domain
                    license:silofl1.1
                    license:cc-by-sa3.0))))
+
+(define-public crengine-ng
+  (package
+    (name "crengine-ng")
+    (version "0.9.12")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.com/coolreader-ng/crengine-ng.git")
+                     (commit (string-append version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "174dwh8yccvwcb37wqpdl35r1p9ypyi7m5jhw5zgjaflv4a33ldh"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ;; require network access (googletest)
+    (inputs (list zlib
+                  libpng
+                  libjpeg-turbo
+                  freetype
+                  harfbuzz
+                  fontconfig
+                  fribidi
+                  libunibreak
+                  utf8proc
+                  zstd))
+    (synopsis "Cross-platform library designed to implement text viewers
+ and e-book readers")
+    (description "crengine-ng is cross-platform library designed to implement text
+ viewers and e-book readers.")
+    (home-page "https://gitlab.com/coolreader-ng/crengine-ng")
+    ;; crengine-ng itself uses GPL2+, but the source code includes a lot of third-party
+    ;; components that uses a variety of licenses.
+    (license (list license:gpl2+
+                   license:lgpl2.1+
+                   license:lgpl2.0+
+                   license:lgpl3
+                   license:zlib
+                   license:imlib2
+                   license:bsd-2
+                   license:bsd-3
+                   license:expat))))
 
 (define-public ebook-tools
   (package
