@@ -4420,6 +4420,7 @@ on a Commodore C64, C128 etc.")
                 "-DUSE_LUA=ON"
                 "-DUSE_PULSEAUDIO=ON"
                 "-DUSE_VULKAN=ON")))
+      (native-inputs (list pkg-config))
       (inputs (list alsa-lib
                     ao
                     curl
@@ -4434,7 +4435,7 @@ on a Commodore C64, C128 etc.")
                     ;; TODO: Uncomment after vulkan-headers
                     ;; is updated to 1.3.261.0 or newer.
                     ;;vulkan-headers
-                    pkg-config))
+                    ))
       (home-page "https://github.com/flyinghead/flycast")
       (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
       (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
