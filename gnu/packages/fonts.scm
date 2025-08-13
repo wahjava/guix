@@ -1427,6 +1427,33 @@ display all Unicode symbols.")
 family.")
     (license license:silofl1.1)))
 
+(define-public font-google-noto-emoji-bw
+  (package
+    (name "font-google-noto-emoji-bw")
+    (version "3.002")
+    ;; Unlike most other Noto fonts, there is no Git repository tracking
+    ;; changes to glyphs:
+    ;; https://github.com/googlefonts/noto-emoji/issues/390.  Based on
+    ;; https://github.com/google/fonts/pull/7824, there may be a private repo
+    ;; at https://github.com/googlefonts/emoji-bw.  For now, fetch from the
+    ;; Google Fonts repo.
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/google/fonts"
+                           "/raw/b979dba422e445492b0eb9951ac52ee0b4d648c3"
+                           "/ofl/notoemoji/NotoEmoji%5Bwght%5D.ttf"))
+       (file-name (string-append name "-" version ".ttf"))
+       (sha256
+        (base32 "0lbms844cnskna6y44p8yb3vl68algb3jaqkmyfckbrq561ihv6y"))))
+    (build-system font-build-system)
+    (home-page "https://fonts.google.com/noto/specimen/Noto+Emoji")
+    (synopsis "Black and white emoji font")
+    (description
+     "Noto Emoji is a black and white emoji font.  It has multiple weights and
+features thousands of emoji.")
+    (license license:silofl1.1)))
+
 (define-public font-google-noto-sans-cjk
   (package
     (name "font-google-noto-sans-cjk")
