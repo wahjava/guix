@@ -4416,6 +4416,7 @@ on a Commodore C64, C128 etc.")
                 "-DUSE_HOST_LIBZIP=ON"
                 "-DUSE_HOST_SDL=ON"
                 "-DUSE_LIBAO=ON"
+                "-DUSE_LIBCDIO=ON"
                 "-DUSE_LUA=ON"
                 "-DUSE_PULSEAUDIO=ON"
                 "-DUSE_VULKAN=ON")))
@@ -4423,6 +4424,7 @@ on a Commodore C64, C128 etc.")
                     ao
                     curl
                     glslang
+                    libcdio
                     libzip
                     lua
                     miniupnpc
