@@ -1711,9 +1711,14 @@ current version of any major web browser.")
                     (delete-file-recursively "bin/jsonchecker")))))
       (build-system cmake-build-system)
       (arguments
-       '(#:configure-flags (list "-DCMAKE_CXX_FLAGS=-Wno-free-nonheap-object")
+       (list
+         #:configure-flags
+           #~(list
+             (string-append "-DCMAKE_CXX_FLAGS="
+                            "-Wno-error=free-nonheap-object "
+                            "-Wno-error=stringop-overflow"))
          #:phases
-         (modify-phases %standard-phases
+         #~(modify-phases %standard-phases
            (add-after 'unpack 'fix-march=native
              (lambda _
                (substitute* "CMakeLists.txt"
