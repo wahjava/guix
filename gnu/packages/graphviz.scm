@@ -84,20 +84,22 @@
      ;; FIXME: rtest/rtest.sh is a ksh script (!).  Add ksh as an input.
      (list #:tests? #f
            #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'move-guile-bindings
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let* ((lib (string-append #$output "/lib"))
-                          (extdir (string-append lib "/guile/"
-                                                 #$(version-major+minor
-                                                    (package-version
-                                                     (this-package-input "guile")))
-                                                 "/extensions")))
-                     (mkdir-p extdir)
-                     (rename-file (string-append
-                                   lib "/graphviz/guile/libgv_guile.so")
-                                  (string-append extdir
-                                                 "/libgv_guile.so"))))))))
+           (if (%current-target-system)
+               #~%standard-phases
+               #~(modify-phases %standard-phases
+                   (add-after 'install 'move-guile-bindings
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       (let* ((lib (string-append #$output "/lib"))
+                              (extdir (string-append lib "/guile/"
+                                                     #$(version-major+minor
+                                                        (package-version
+                                                         (this-package-input "guile")))
+                                                     "/extensions")))
+                         (mkdir-p extdir)
+                         (rename-file (string-append
+                                       lib "/graphviz/guile/libgv_guile.so")
+                                      (string-append extdir
+                                                     "/libgv_guile.so")))))))))
     (inputs
      (list libxrender
            libx11
