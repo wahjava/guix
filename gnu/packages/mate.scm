@@ -1258,14 +1258,14 @@ Re-decorates windows on un-maximise.
              (substitute* "configure"
                (("dbus-1") ""))))))))
     (native-inputs
-     `(("automake" ,automake)
-       ("autoconf" ,autoconf)
-       ("gettext" ,gettext-minimal)
-       ("intltool" ,intltool)
-       ("mate-common" ,mate-common)
-       ("pkg-config" ,pkg-config)
-       ("which" ,which)
-       ("xorgproto" ,xorgproto)))
+     (list automake
+           autoconf
+           gettext-minimal
+           intltool
+           mate-common
+           pkg-config
+           which
+           xorgproto))
     (inputs
      (list cairo
            dconf
