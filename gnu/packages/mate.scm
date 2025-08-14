@@ -524,18 +524,19 @@ assorted menu related utility programs.")
 (define-public mate-applets
   (package
     (name "mate-applets")
-    (version "1.28.0")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-applets-" version ".tar.xz"))
        (sha256
-        (base32 "11k66nfgs403r70isc8ccss994hv9c793zr8r2fzn9nksmmyysqv"))))
+        (base32 "0bkyzapds1ha8cvbnl7nc0qjbv5f4cy019i2sdrb3ibxa90p35m5"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config
-           intltool
+           intltool ; Listed in Debian package (but not in upstream build.yml)
+           itstool  ; Listed in upstream build.yml
            libxslt
            yelp-tools
            scrollkeeper
@@ -554,14 +555,15 @@ assorted menu related utility programs.")
            libmateweather
            libnl
            libnotify
+           libsoup-minimal-2 ; Listed in upstream configure.ac
            libx11
            libxml2
            libwnck
            mate-desktop
+           mate-menus
            mate-panel
            pango
            polkit ; either polkit or setuid
-           python-2
            upower
            wireless-tools))
     (propagated-inputs
