@@ -962,7 +962,8 @@ given QEMU package."
                 (extensions
                  (list (service-extension file-system-service-type
                                           (const
-                                           (list %binary-format-file-system)))
+                                           (list %binary-format-file-system
+                                                 %immutable-store)))
                        (service-extension shepherd-root-service-type
                                           qemu-binfmt-shepherd-services)))
                 (default-value (qemu-binfmt-configuration))
