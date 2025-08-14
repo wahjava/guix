@@ -128,6 +128,10 @@ for the process."
           (logior MS_NOEXEC MS_STRICTATIME)
           "mode=755")
 
+  (mount* "none" (scope "/tmp") "tmpfs"
+          (logior MS_NOEXEC MS_STRICTATIME)
+          "mode=755")
+
   ;; Create essential device nodes via bind-mounting them from the
   ;; host, because a process within a user namespace cannot create
   ;; device nodes.
