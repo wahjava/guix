@@ -623,20 +623,23 @@ accurately in real time at any rate desired.")
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
-             "cfitsio-" version ".tar.gz"))
+             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/" "cfitsio-"
+             version ".tar.gz"))
        (sha256
         (base32 "1jz2bldpnfcz9pc5lfhx6sjj2m40sr30s4jbsjq9da5yq260gzb6"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(list (string-append "--with-bzip2=" #$(this-package-input "bzip2")))
+      #~(list (string-append "--with-bzip2="
+                             #$(this-package-input "bzip2")))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
             (lambda _
-              (substitute* "Makefile.in" (("/bin/") ""))))
+              (substitute* "Makefile.in"
+                (("/bin/")
+                 ""))))
           (delete 'check)
           ;; TODO: Testing steps are sourced from docs/fitsio.pdf, implement
           ;; the logic in Guile in the future.
@@ -644,7 +647,9 @@ accurately in real time at any rate desired.")
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (invoke "make" "testprog")
-                (with-output-to-file "testprog.lis" (lambda _(invoke "./testprog")))
+                (with-output-to-file "testprog.lis"
+                  (lambda _
+                    (invoke "./testprog")))
                 (invoke "diff" "-r" "testprog.lis" "testprog.out")
                 (invoke "cmp" "-l" "testprog.fit" "testprog.std")))))))
     (native-inputs (list gfortran))
@@ -657,9 +662,7 @@ accurately in real time at any rate desired.")
 programmer from the internal complexities of the FITS format.  CFITSIO also
 provides many advanced features for manipulating and filtering the information
 in FITS files.")
-    (properties
-     '((release-monitoring-url .
-        "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html")))
+    (properties '((release-monitoring-url . "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html")))
     (license (license:non-copyleft "file://License.txt"
                                    "See License.txt in the distribution."))))
 
