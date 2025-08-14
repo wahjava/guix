@@ -632,7 +632,8 @@ accurately in real time at any rate desired.")
      (list
       #:configure-flags
       #~(list (string-append "--with-bzip2="
-                             #$(this-package-input "bzip2")))
+                             #$(this-package-input "bzip2"))
+              "--enable-reentrant")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
