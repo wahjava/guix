@@ -3814,7 +3814,7 @@ tools for astronomers.")
 (define-public python-extinction
   (package
     (name "python-extinction")
-    (version "0.4.7")
+    (version "0.4.8")
     (source
      (origin
        (method git-fetch) ; No tests in PyPI
@@ -3823,7 +3823,7 @@ tools for astronomers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04k9mfbijf2nwzhh9sxpkswxk7077d7gbc6nq4hjb51h8rslcjg2"))))
+        (base32 "1dcb4c1rjv0msb3kagpgrj2xlb5spv8j76giy14vxkvz33lm4pz7"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3831,8 +3831,7 @@ tools for astronomers.")
     (native-inputs
      (list python-cython
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-setuptools-next))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/sncosmo/extinction")
