@@ -61,6 +61,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages re2c)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml))
@@ -475,17 +476,42 @@ convert HTML to Markdown.")
   (package
     (name "cmark")
     (version "0.31.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/commonmark/cmark")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0llj68l9rxdhral0zyv0bz6yzqsxgq8d3730082sl3kx78lsq5qq"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/commonmark/cmark")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0llj68l9rxdhral0zyv0bz6yzqsxgq8d3730082sl3kx78lsq5qq"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; scanners.c is generated from scanners.re; let's get rid of it
+           (delete-file "src/scanners.c")))))
     (build-system cmake-build-system)
-    (native-inputs (list python))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'regenerate-scanners-c
+            ;; scanners.c is not automatically regenerated from scanners.re;
+            ;; let's do it ourselves
+            (lambda _
+              (with-directory-excursion "src"
+                (invoke "re2c" "-W" "-Werror"
+                        "--bit-vectors"
+                        "--case-insensitive"
+                        "--no-debug-info"
+                        "--no-generation-date"
+                        "-o" "scanners.c"
+                        "scanners.re")))))
+      #:test-target "test"))
+    (native-inputs
+     (list python
+           re2c))
     (synopsis "CommonMark Markdown reference implementation")
     (description
      "CommonMark is a strongly defined, highly compatible specification of
