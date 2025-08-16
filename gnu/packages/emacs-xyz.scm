@@ -23302,7 +23302,7 @@ variable instead, to remind you of that variable's meaning.")
 (define-public emacs-eldoc-box
   (package
     (name "emacs-eldoc-box")
-    (version "1.13.2")
+    (version "1.14.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -23311,8 +23311,9 @@ variable instead, to remind you of that variable's meaning.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1136rgi7qy5kmciqrz88lxvk01fdcpry2srsvv3h2rfqwmiccpl0"))))
+                "0hk716pym15crmnviwikwrdqzhs74widjlz5zrp5107klqgxicwn"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;no tests
     (home-page "https://github.com/casouri/eldoc-box")
     (synopsis "Childframe doc for eglot and anything that uses eldoc")
     (description
