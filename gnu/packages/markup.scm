@@ -559,20 +559,41 @@ CommonMark C library libcmark.  It closely follows the original API.")
     (name "cmark-gfm")
     (version "0.29.0.gfm.13")
     (home-page "https://github.com/github/cmark-gfm")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference (url home-page) (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1apy9i76rgs0bmgdlpjszv0fpqhlap2s12m68wvnsv8j3fsqc90y"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference (url home-page) (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1apy9i76rgs0bmgdlpjszv0fpqhlap2s12m68wvnsv8j3fsqc90y"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; scanners.c is generated from scanners.re; let's get rid of it
+           (delete-file "src/scanners.c")))))
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-after 'install 'install-config
-                          (lambda _
-                            ;; XXX: cmark-gfm-core-extensions.h includes this file.
-                            (install-file "src/config.h"
-                                          (string-append #$output "/include")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'regenerate-scanners-c
+            ;; scanners.c is not automatically regenerated from scanners.re;
+            ;; let's do it ourselves
+            (lambda _
+              (with-directory-excursion "src"
+                (invoke "re2c" "-W" "-Werror"
+                        "--bit-vectors"
+                        "--case-insensitive"
+                        "--no-debug-info"
+                        "--no-generation-date"
+                        "-o" "scanners.c"
+                        "scanners.re"))))
+          (add-after 'install 'install-config
+            (lambda _
+              ;; XXX: cmark-gfm-core-extensions.h includes this file.
+              (install-file "src/config.h"
+                            (string-append #$output "/include")))))
+      #:test-target "test"))
     (synopsis "GitHub flavored CommonMark")
     (description
      "This package is a fork of @code{cmark}, with GitHub-specific Markdown
