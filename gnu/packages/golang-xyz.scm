@@ -106,6 +106,7 @@
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages xdisorg)
@@ -6012,6 +6013,32 @@ software containerization.")
      "docker-credential-helpers is a suite of programs to use native stores to keep
 Docker credentials safe.")
     (license license:expat)))
+
+(define-public go-github-com-docker-go-metrics
+  (package
+    (name "go-github-com-docker-go-metrics")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/docker/go-metrics")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b6f1889chmwlsgrqxylnks2jic16j2dqhsdd1dvaklk48ky95ga"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/docker/go-metrics"))
+    (propagated-inputs (list go-github-com-prometheus-client-golang))
+    (home-page "https://github.com/docker/go-metrics")
+    (synopsis "Go library for metrics collection from Docker projects")
+    (description
+     "This Go package is a small wrapper around the prometheus
+go client to help enforce convention and best practices for
+metrics collection in Docker projects.")
+    (license (list license:asl2.0 license:cc-by-sa4.0))))
 
 (define-public go-github-com-docker-go-units
   (package
