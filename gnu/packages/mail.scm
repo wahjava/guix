@@ -2718,27 +2718,39 @@ be expected from a simple client.")
     (license (list license:lgpl2.1+ license:gpl2+))))
 
 (define-public esmtp
+  (let ((commit "01bf9fc9abc85f3f1c9c47d31591fb21da89e65f")
+        (revision "0"))
   (package
     (name "esmtp")
-    (version "1.2")
+    (version (git-version "1.2" revision commit))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/andywingo/esmtp")
-             (commit "01bf9fc")))
+             (commit commit)))
        (sha256
         (base32
          "1ay282rrl92h0m0m8z5zzjnwiiagi7c78aq2qvhia5mw7prwfyw2"))
-       (file-name (string-append name "-" version "-checkout"))
-       (patches (search-patches "esmtp-add-lesmtp.patch"))))
+       (file-name (string-append name "-" version))))
     (arguments
-     `(#:phases (modify-phases %standard-phases
+     `(#:configure-flags '("CFLAGS= -Wall -pedantic -g -DSTDC_HEADERS")
+       #:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'fix-libesmtp-discovery
+                   ;; libesmtp-1.1.0+ removes libesmtp-config, use pkg-config
+                   (lambda _
+                    (substitute* "configure.ac"
+                      (("\\$CPPFLAGS -I\\$with_libesmtp/include" _) "$CPPFLAGS `pkg-config --cflags libesmtp-1.0`")
+                      (("\\$LDFLAGS -L\\$with_libesmtp/lib" _) "$LDFLAGS `pkg-config --libs libesmtp-1.0`")
+                      (("libesmtp-config --version" _) "pkg-config --modversion libesmtp-1.0")
+                      (("libesmtp-config --cflags" _) "pkg-config --cflags libesmtp-1.0")
+                      (("libesmtp-config --libs" _) "pkg-config --libs libesmtp-1.0"))))
                   (replace 'bootstrap
-                   (lambda _ (invoke "autoreconf" "-vfi"))))))
+                   ;; Building from unreleased source
+                   (lambda _ (invoke "autoreconf" "-vfis"))))))
     (build-system gnu-build-system)
     (native-inputs
-     (list bison flex autoconf automake libtool))
+     (list bison flex autoconf automake libtool pkg-config))
     (inputs
      (list libesmtp))
     (home-page "https://sourceforge.net/projects/esmtp/")
@@ -2749,7 +2761,7 @@ user's @file{$HOME/.esmtprc} configuration file; see the @command{esmtprc} man
 page for more on configuration.  This package also provides minimal
 compatibility shims for the @command{sendmail}, @command{mailq}, and
 @command{newaliases} commands.")
-    (license license:gpl2+)))
+    (license license:gpl2+))))
 
 (define-public fdm
   (package
