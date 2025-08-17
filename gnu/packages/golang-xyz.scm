@@ -12421,6 +12421,38 @@ the first isn't available.
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-backoff
+  (package
+    (name "go-github-com-lestrrat-go-backoff")
+    (version "2.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/backoff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s939szsdv0ggp69rig8dkl74s5dvwzm5cw80h0b3dvkqhikim5d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/backoff"
+      #:unpack-path "github.com/lestrrat-go/backoff"
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'remove-benchmarks
+                     (lambda* (#:key import-path #:allow-other-keys)
+                       (delete-file-recursively
+                        (string-append "src/" import-path "/bench")))))))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-lestrrat-go-option))
+    (home-page "https://github.com/lestrrat-go/backoff")
+    (synopsis "Idiomatic backoff for Go")
+    (description
+     "This library is an implementation of backoff algorithm
+for retrying operations in an idiomatic Go way.")
+    (license license:expat)))
+
 (define-public go-github-com-lestrrat-go-envload
   (package
     (name "go-github-com-lestrrat-go-envload")
