@@ -35,10 +35,13 @@
   #:use-module (guix download)
   #:use-module (guix packages)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system ruby)
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dbm)
@@ -48,7 +51,9 @@
   #:use-module (gnu packages groff)
   #:use-module (gnu packages less)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages web-browsers)
   #:use-module (gnu packages xml))
@@ -493,6 +498,34 @@ in C99.")
     (synopsis "Convert text to man page")
     (description "Txt2man converts flat ASCII text to man page format.")
     (license license:gpl2+)))
+
+(define-public qman
+  (package
+    (name "qman")
+    (version "1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/plp13/qman")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cf7bdma4bws9wl6ml6gcjyfz39caf8fpjsp7rmfliyjfn9m2356"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:out-of-source? #t
+       #:configure-flags `("-Dconfigdir=etc/xdg/qman")))
+    (inputs (list python-cogapp cmake-minimal ncurses zlib cunit))
+    (native-inputs (list pkg-config))
+    (synopsis "Modern man page viewer for terminals")
+    (description
+     "A modern, full-featured manual page viewer featuring hyperlinks,
+web browser like navigation, a table of contents for each page,
+incremental search, on-line help, and more.  It also strives to be
+fast and tiny, so that it can be used everywhere.")
+    (home-page "https://github.com/plp13/qman")
+    (license license:bsd-2)))
 
 (define-public stdman
   ;; Stdman generates the man files from "html-book-YYYYMMDD.tar.xz" asset in
