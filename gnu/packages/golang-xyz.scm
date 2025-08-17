@@ -12453,6 +12453,30 @@ the first isn't available.
 for retrying operations in an idiomatic Go way.")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-blackmagic
+  (package
+    (name "go-github-com-lestrrat-go-blackmagic")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/blackmagic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vyij1wnsh85vqi70sq0kgwrnx4zrn4yx8nk5lqd630g1akqwr8y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:import-path "github.com/lestrrat-go/blackmagic"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/blackmagic")
+    (synopsis "Reflect-based black magic for Go")
+    (description "Reflect-based black magic for Go.")
+    (license license:expat)))
+
 (define-public go-github-com-lestrrat-go-envload
   (package
     (name "go-github-com-lestrrat-go-envload")
