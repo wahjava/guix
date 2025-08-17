@@ -1985,6 +1985,28 @@ configuration files, such as @file{.gitattributes}, @file{.gitignore}, and
 
 (define-deprecated/public-alias git-modes emacs-git-modes)
 
+(define-public emacs-wavedrom-mode
+  (package
+    (name "emacs-wavedrom-mode")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/gmlarumbe/wavedrom-mode/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06kiv7qsfj4xw55jzzbmf1l6n4an5rn13ms9z2516x26v3sjyix7"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ;no tests
+    (home-page "https://github.com/gmlarumbe/wavedrom-mode/")
+    (synopsis "Emacs major mode for Wavedrom diagrams")
+    (description
+     "This package provides a major mode for editing and rendering WaveJSON
+files to create timing diagrams using Wavedrom.")
+    (license license:gpl3+)))
+
 (define-public emacs-with-editor
   (package
     (name "emacs-with-editor")
