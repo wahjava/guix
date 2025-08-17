@@ -2513,6 +2513,43 @@ support the streaming mode required by Go's standard Hash interface.")
      (list
       #:import-path "github.com/twpayne/go-pinentry/v4"))))
 
+(define-public go-github-com-veraison-go-cose
+  (package
+    (name "go-github-com-veraison-go-cose")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/veraison/go-cose")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1f1fz2x940ri45hh2ahqvc8hgr53hkbv4rmwp9cf3dr4qxf3as63"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/veraison/go-cose"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Fix test error:
+          ;; ExampleCWTMessage refers to unknown identifier: CWTMessage
+          ;; See: https://github.com/veraison/go-cose/pull/214/
+          (add-before 'build 'fix-test
+            (lambda* (#:key import-path #:allow-other-keys)
+              (substitute*
+                (string-append "src/" import-path "/cwt_test.go")
+                  (("CWTMessage")
+                    "CWTClaims")))))))
+    (propagated-inputs (list go-github-com-fxamacker-cbor-v2))
+    (home-page "https://github.com/veraison/go-cose")
+    (synopsis "COSE specification for Go")
+    (description
+     "This package provides a Go library for the Concise Binary Object
+Representation (CBOR) Object Signing and Encryption
+@url{https://datatracker.ietf.org/doc/rfc9052/,(COSE) specification}.")
+    (license license:mpl2.0)))
+
 (define-public go-github-com-xanzy-ssh-agent
   (package
     (name "go-github-com-xanzy-ssh-agent")
