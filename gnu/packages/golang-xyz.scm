@@ -11437,6 +11437,32 @@ resources located relative to the executable file.")
      "This package provides a simple way to create a system service.")
     (license license:zlib)))
 
+(define-public go-github-com-karpeleslab-reflink
+  (package
+    (name "go-github-com-karpeleslab-reflink")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/KarpelesLab/reflink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16x01ff1w4xcdl41iicsrsxpk4ba6xf1g1hlq3qx1f098k4s3nci"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/KarpelesLab/reflink"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/KarpelesLab/reflink")
+    (synopsis "Reflink file copy in Go")
+    (description
+     "This package provides a Go library to perform efficient file copies using
+reflink operations on compatible filesystems such as btrfs and xfs.")
+    (license license:expat)))
+
 (define-public go-github-com-karrick-godirwalk
   (package
     (name "go-github-com-karrick-godirwalk")
