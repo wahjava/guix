@@ -1855,6 +1855,31 @@ Distance}.")
 inspired by the causal messaging system in the Pony programming language.")
     (license license:expat)))
 
+(define-public go-github-com-armon-circbuf
+  (package
+    (name "go-github-com-armon-circbuf")
+    (version "0.0.0-20190214190532-5111143e8da2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/armon/circbuf")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nhzs8wza5sxqjh0920jypy9irq6cspd55g8a9vgyjjfrqb5njs0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/armon/circbuf"))
+    (home-page "https://github.com/armon/circbuf")
+    (synopsis "Circular buffer for Golang")
+    (description
+     "The @@code{circbuf} Go package provides a circular buffer object.
+The buffer can be written to infinitely, but has a fixed size, so only the last
+@code{size} bytes are ever retained.")
+    (license license:expat)))
+
 (define-public go-github-com-armon-go-radix
   (package
     (name "go-github-com-armon-go-radix")
