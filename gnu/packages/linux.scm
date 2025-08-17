@@ -3897,8 +3897,9 @@ configuration files that can be used for specific audio hardware.")
     (home-page "https://www.alsa-project.org/wiki/Main_Page")
     (synopsis "The Advanced Linux Sound Architecture libraries")
     (description
-     "The Advanced Linux Sound Architecture (ALSA) provides audio and
-MIDI functionality to the Linux-based operating system.")
+     "@acronym{ALSA, Advanced Linux Sound Architecture} provides audio and
+@acronym{MIDI, Musical Instrument Digital Interface} functionality to the
+Linux-based operating system.")
     (license license:lgpl2.1+)))
 
 (define-public alsa-utils
@@ -3937,8 +3938,9 @@ MIDI functionality to the Linux-based operating system.")
     (home-page "http://www.alsa-project.org/")
     (synopsis "Utilities for the Advanced Linux Sound Architecture (ALSA)")
     (description
-     "The Advanced Linux Sound Architecture (ALSA) provides audio and
-MIDI functionality to the Linux-based operating system.")
+     "@acronym{ALSA, Advanced Linux Sound Architecture} provides audio and
+@acronym{MIDI, Musical Instrument Digital Interface} functionality to the
+Linux-based operating system.")
 
     ;; This is mostly GPLv2+ but a few files such as 'alsactl.c' are
     ;; GPLv2-only.
@@ -4006,11 +4008,12 @@ MIDI functionality to the Linux-based operating system.")
     (home-page "http://www.alsa-project.org/")
     (synopsis "Plugins for the Advanced Linux Sound Architecture (ALSA)")
     (description
-     "The Advanced Linux Sound Architecture (ALSA) provides audio and
-MIDI functionality to the Linux-based operating system.  This package enhances ALSA
-by providing additional plugins which include: upmixing, downmixing, jackd and
-pulseaudio support for native alsa applications, format conversion (s16 to a52), and
-external rate conversion.")
+     "@acronym{ALSA, Advanced Linux Sound Architecture} provides audio and
+@acronym{MIDI, Musical Instrument Digital Interface} functionality to the
+Linux-based operating system.  This package enhances @acronym{ALSA} by providing
+additional plugins which include: upmixing, downmixing, jackd and pulseaudio
+support for native alsa applications, format conversion (s16 to a52), and external
+rate conversion.")
     (license (list license:gpl2+
                    ;; `rate/rate_samplerate.c': LGPL v2.1 or later.
                    license:lgpl2.1+))))
