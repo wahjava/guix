@@ -3834,7 +3834,7 @@ hardware.")
 (define-public alsa-topology-conf
   (package
     (name "alsa-topology-conf")
-    (version "1.2.4")
+    (version "1.2.5.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3842,7 +3842,7 @@ hardware.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "01zdg6q4s6d01k39z96wi4vbhrfw1i2g4yi5dijwfk6a5vjfdq2m"))))
+                "0ydifvbhlpkgq3qs12qqxami23il5kkz95xw4hwdgg2sakhvmigp"))))
     (build-system copy-build-system)
     (arguments
      '(#:install-plan
