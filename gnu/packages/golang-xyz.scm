@@ -12531,6 +12531,56 @@ Cache-Control header and returns a struct that is convenient
 for the end-user to do what they will with.")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-iter-arrayiter
+  (package
+    (name "go-github-com-lestrrat-go-iter-arrayiter")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/iter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p5fhw5g3kh7c6hvw2mc1r4ckxb3ax262x8b736yyhpv2ynl8jyz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/iter/arrayiter"
+      #:unpack-path "github.com/lestrrat-go/iter"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/iter")
+    (synopsis "Iterator for arbitrary array types for Go")
+    (description "This Go package provides a set of utilities to
+safely iterate over arbitrary array types.")
+    (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-iter-mapiter
+  (package
+    (name "go-github-com-lestrrat-go-iter-mapiter")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/iter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p5fhw5g3kh7c6hvw2mc1r4ckxb3ax262x8b736yyhpv2ynl8jyz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/iter/mapiter"
+      #:unpack-path "github.com/lestrrat-go/iter"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/iter")
+    (synopsis "Iterator for arbitrary map types for Go")
+    (description "This Go package provides a set of utilities to
+safely iterate over arbitrary map types.")
+    (license license:expat)))
+
 (define-public go-github-com-lestrrat-go-option
   (package
     (name "go-github-com-lestrrat-go-option")
