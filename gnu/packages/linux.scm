@@ -3809,7 +3809,7 @@ intercept and print the system calls executed by the program.")
 (define-public alsa-ucm-conf
   (package
     (name "alsa-ucm-conf")
-    (version "1.2.11")
+    (version "1.2.14")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3817,7 +3817,7 @@ intercept and print the system calls executed by the program.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "10dfzvrmpp9swflw47nxf35an6gj3ilb4wlggdnng8g2637h2z1q"))))
+                "08cw0siyjgic08vzjxf43q7qsfy3jd9f6chhm9wbk4idb6gq1s9j"))))
     (build-system copy-build-system)
     (arguments
      '(#:install-plan
