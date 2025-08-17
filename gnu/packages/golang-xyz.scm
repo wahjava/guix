@@ -12449,6 +12449,36 @@ or during the tests temporarily change the value of an environment variable in
 Golang.")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-option
+  (package
+    (name "go-github-com-lestrrat-go-option")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/option")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p9744hpdxsnimha5i0gyn7hxn2fy3dxqhlpqvj5s3pc5xv3s14h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/option"
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'remove-cmd
+                     (lambda* (#:key import-path #:allow-other-keys)
+                       (delete-file-recursively
+                        (string-append "src/" import-path "/cmd")))))))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/option")
+    (synopsis "Base option type for Go")
+    (description "This package provides a Golang implementation
+of the Base object for the \"Optional Parameters Pattern\".")
+    (license license:expat)))
+
+
 (define-public go-github-com-lestrrat-go-strftime
   (package
     (name "go-github-com-lestrrat-go-strftime")
