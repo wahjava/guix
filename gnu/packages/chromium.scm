@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019-2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2019 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2023, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -679,7 +679,32 @@
                   (("third_party/vulkan_headers/include/") ""))
 
                 (substitute* "third_party/skia/include/private/gpu/vk/SkiaVulkan.h"
-                  (("include/third_party/vulkan/") "")))))
+                  (("include/third_party/vulkan/") ""))
+
+                ;; Patch for compilation with gcc-14.
+                (substitute*
+                  ;; Add includes in front of "#ifndef FILE_NAME_H_";
+                  ;; it turns out that these header files contain a
+                  ;; unique #ifndef, so that the criterion works.
+                  '("base/base_export.h"
+                    "components/viz/common/viz_common_export.h"
+                    "gpu/gpu_export.h"
+                    "net/third_party/quiche/src/quiche/common/platform/api/quiche_export.h"
+                    "net/base/net_export.h"
+                    "third_party/blink/public/common/common_export.h"
+                    "third_party/dawn/src/dawn/native/stream/ByteVectorSink.h"
+                    "third_party/perfetto/include/perfetto/ext/base/optional.h"
+                    "third_party/swiftshader/src/System/Debug.hpp"
+                    "third_party/webrtc/rtc_base/third_party/base64/base64.h"
+                    "ui/gfx/geometry/geometry_skia_export.h")
+                  (("^#ifndef" all)
+                   (string-append "#include <cstdint>\n" all)))
+                (substitute*
+                  "third_party/vulkan_memory_allocator/include/vk_mem_alloc.h"
+                  (("^#ifndef" all)
+                   (string-append "#include <stdio.h>\n" all)))
+                ;; So far, we end up at [19232/52969].
+          )))
           (add-after 'patch-stuff 'add-absolute-references
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((cups-config (search-input-file inputs "/bin/cups-config"))
@@ -722,6 +747,10 @@
                 ;; Define the GN toolchain.
                 (setenv "AR" "llvm-ar") (setenv "NM" "llvm-nm")
                 (setenv "CC" "clang") (setenv "CXX" "clang++")
+                ;; Fix build with gcc-14.
+                (setenv "CFLAGS" "-g -O2 -fno-sanitize-ignorelist")
+                (setenv "CXXFLAGS" "-g -O2 -fno-sanitize-ignorelist")
+                (setenv "LDFLAGS" "-fno-sanitize-ignorelist")
 
                 ;; TODO: pre-compile instead. Avoids a race condition.
                 (setenv "PYTHONDONTWRITEBYTECODE" "1")
@@ -853,10 +882,10 @@
                    '("24" "48" "64" "128" "256")))))))))
     (native-inputs
      (list bison
-           clang-15
+           clang-16
            gn
            gperf
-           lld-as-ld-wrapper-15
+           lld-as-ld-wrapper-16
            ninja
            node-lts
            pkg-config
