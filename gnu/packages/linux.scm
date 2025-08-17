@@ -3904,7 +3904,7 @@ MIDI functionality to the Linux-based operating system.")
 (define-public alsa-utils
   (package
     (name "alsa-utils")
-    (version "1.2.11")
+    (version "1.2.14")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3912,7 +3912,7 @@ MIDI functionality to the Linux-based operating system.")
                     name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "19r8qi6b7sd2p1mhxfqrp18wrgjw5s6rp5ygimb1w59zi0xcmils"))))
+                "0h87jv02ki2gk3l6lga0dhmk22g4i4qc2286qpkl7ngy6d6wg507"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -3930,7 +3930,8 @@ MIDI functionality to the Linux-based operating system.")
                  "true\n")))))))
     (native-inputs
      (list docbook-xml-4.2 docbook-xsl xmlto
-           gettext-minimal))
+           gettext-minimal
+           pkg-config))
     (inputs
      (list libsamplerate ncurses alsa-lib))
     (home-page "http://www.alsa-project.org/")
