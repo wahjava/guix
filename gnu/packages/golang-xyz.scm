@@ -12505,6 +12505,32 @@ or during the tests temporarily change the value of an environment variable in
 Golang.")
     (license license:expat)))
 
+(define-public go-github-com-lestrrat-go-httpcc
+  (package
+    (name "go-github-com-lestrrat-go-httpcc")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/httpcc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12wsr6ipl3h7iaq7s7a2mgkbli9z5zpxj9dxqhzqn33akb055i28"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/httpcc"))
+    (propagated-inputs (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/httpcc")
+    (synopsis "HTTP/1.1 Cache-Control header parser for Go")
+    (description
+     "This package provides a Go library that parses HTTP/1.1
+Cache-Control header and returns a struct that is convenient
+for the end-user to do what they will with.")
+    (license license:expat)))
+
 (define-public go-github-com-lestrrat-go-option
   (package
     (name "go-github-com-lestrrat-go-option")
