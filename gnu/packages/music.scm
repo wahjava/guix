@@ -3471,7 +3471,9 @@ instrument or MIDI file player.")
                     version "/zynaddsubfx-" version ".tar.bz2"))
               (sha256
                (base32
-                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))))
+                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))
+              (patches
+               (search-patches "zynaddsubfx-3.0.6-include-cstdint.patch"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
