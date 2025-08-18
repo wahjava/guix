@@ -72,6 +72,7 @@
 # Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 # Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 # Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+# Copyright @ 2025 firefly707 <firejet707@gmail.com>
 #
 # This file is part of GNU Guix.
 #
@@ -109,6 +110,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/desktop.scm			\
   %D%/home/services/dict.scm			\
   %D%/home/services/dotfiles.scm		\
+  %D%/home/services/emacs.scm			\
   %D%/home/services/symlink-manager.scm		\
   %D%/home/services/fontutils.scm		\
   %D%/home/services/gnupg.scm			\

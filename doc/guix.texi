@@ -480,6 +480,7 @@ Home Services
 * Media: Media Home Services.   Services for managing media.
 * Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
+* Emacs: Emacs Home Services.   Emacs Services.
 * Miscellaneous: Miscellaneous Home Services.  More services.
 
 Platforms
@@ -49930,6 +49931,7 @@ services)}.
 * Media: Media Home Services.   Services for managing media.
 * Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
+* Emacs: Emacs Home Services.   Emacs Services.
 * Miscellaneous: Miscellaneous Home Services.  More services.
 @end menu
 @c In addition to that Home Services can provide
@@ -52903,6 +52905,51 @@ documentation of the system service (@pxref{Networking Services,
 @code{syncthing-service-type}}).
 @end defvar
 
+
+@node Emacs Home Services
+@subsection Emacs Home Services
+
+The @code{(gnu home services emacs)} module provides Home services for
+using and configuring @url{https://www.gnu.org/software/emacs, Emacs}.
+
+@defvar emacs-server-service-type
+This is the service type for starting an @code{emacs} server as a daemon.
+It also provides @code{emacs} in the profile.  It can be configured with
+no arguments, in which case it uses the default @code{emacs} package.
+A configuration might look like this:
+
+@lisp
+(service emacs-server-service-type
+         (emacs-server-configuration
+          (emacs emacs-no-x)
+          (args '("--quick"))
+          (server-name "COMPUTATIONAL")
+          (service-name 'computation-server)))
+@end lisp
+@end defvar
+
+@deftp {Data Type} emacs-server-configuration
+Available @code{emacs-server-configuration} fileds are:
+
+@table @asis
+@item @code{emacs} (default: @code{emacs}) (type: file-like)
+Emacs package to use.  This package is also provided to the home profile.
+
+@item @code{args} (default: '()) (type: list)
+A list of extra arguments to pass to the emacs server on startup.
+
+@item @code{server-name} (default: #f) (type: maybe-string)
+The name of the emacs server to startup, to be connected to through
+@code{emacsclient --socket-name=SERVER-NAME}.
+
+@item @code{service-name} (default: 'emacs-server) (type: symbol)
+The name of the service to be managed through command like
+@code{herd status SERVICE-NAME}.  This should likely only be used in
+conjunction with @code{server-name}.
+
+@end table
+
+@end deftp
 
 @node Miscellaneous Home Services
 @subsection Miscellaneous Home Services
