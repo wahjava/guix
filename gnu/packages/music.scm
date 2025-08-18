@@ -3501,7 +3501,7 @@ instrument or MIDI file player.")
     (native-inputs
      (list pkg-config
            ruby))
-    (home-page "https://zynaddsubfx.sf.net/")
+    (home-page "https://zynaddsubfx.sourceforge.io/")
     (synopsis "Software synthesizer")
     (description
      "ZynAddSubFX is a feature heavy realtime software synthesizer.  It offers
