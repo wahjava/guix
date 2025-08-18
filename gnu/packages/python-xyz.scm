@@ -5115,8 +5115,7 @@ sending and receiving messages on a CAN bus.")
         (base32 "05l0hi279y1dc8ifm2223lpn7z9dx2h7kk599bkymvasb2qa1xrx"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pathlib2
-           python-pytest
+     (list python-pytest
            python-pytest-cov
            python-pytest-timeout
            python-setuptools
