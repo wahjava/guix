@@ -4977,11 +4977,11 @@ higher-level lispier interface.")
   (sbcl-package->ecl-package sbcl-cl-charms))
 
 (define-public sbcl-cl-collider
-  (let ((commit "a46908896982868955b29bfb3a5337a0af489b0b")
+  (let ((commit "7e0ebb0756dda0a34401abafcd5ee22e043ce4c4")
         (revision "0"))
     (package
      (name "sbcl-cl-collider")
-     (version (git-version "2018.7.15" revision commit))
+     (version (git-version "2025-08-18" revision commit))
      (source
        (origin
          (method git-fetch)
@@ -4990,7 +4990,7 @@ higher-level lispier interface.")
                (commit commit)))
          (file-name (git-file-name "cl-collider" version))
          (sha256
-          (base32 "10wvjbwvbgr0b57hpfxycg90yjmb29pirygr1sxrdaqxll328sz1"))))
+          (base32 "0a9bkr726fzj1ab9qw7hxwf7pz7ywgk31kqdqjpjj7cs57xa812w"))))
      (build-system asdf-build-system/sbcl)
      (arguments
        (list #:phases
