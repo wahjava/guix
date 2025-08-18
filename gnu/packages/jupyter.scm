@@ -46,6 +46,8 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages monitoring)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages node)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -1553,4 +1555,76 @@ rich media output.")
 the usual HTML-converted notebooks, each user connecting to the Voilà tornado
 application gets a dedicated Jupyter kernel which can execute the callbacks to
 changes in Jupyter interactive widgets.")
+    (license license:bsd-3)))
+
+;; Note: Someone has to set the following environment variable:
+;;   JUPYTERLAB_DIR=.../share/jupyter/lab
+(define-public python-jupyterlab
+  (package
+    (name "python-jupyterlab")
+    (version "4.4.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jupyterlab" version))
+       (sha256
+        (base32 "0ms1badshssiid6zkgx4f7003l7l54pz6i8pq3dnp14jagzj1dz0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "--timeout=10"
+             "-m" "not slow"
+             ;; Needs npm.
+             "--ignore=jupyterlab/tests/test_jupyterlab.py"
+             "-k"
+             ;; Needs npm.
+             (string-append "not test_yarn_config"
+                            " and not test_get_registry"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Tests need this.
+          (add-before 'check 'set-HOME
+            (lambda _ (setenv "HOME" "/tmp")))
+          (add-after 'unpack 'patch-syspath
+            (lambda _
+              (substitute* "jupyterlab/commands.py"
+                ;; sys.prefix defaults to Python’s prefix in the store, not
+                ;; jupyterlab’s. Fix that.
+                (("sys\\.prefix")
+                 (string-append "'" #$output "'"))))))))
+    (propagated-inputs (list python-async-lru
+                             python-httpx
+                             python-ipykernel
+                             python-jinja2
+                             python-jupyter-core
+                             python-jupyter-lsp
+                             python-jupyter-server
+                             python-jupyterlab-server
+                             python-notebook-shim
+                             python-packaging
+                             python-setuptools
+                             python-tornado-6
+                             python-traitlets))
+    (native-inputs (list nss-certs-for-test
+                         python-bump2version
+                         python-hatchling
+                         python-hatch-jupyter-builder
+                         python-pytest
+                         python-pytest-check-links
+                         python-pytest-console-scripts
+                         python-pytest-cov
+                         python-pytest-jupyter
+                         python-pytest-timeout
+                         python-pytest-tornasync
+                         python-requests
+                         python-requests-cache
+                         python-virtualenv))
+    (home-page "https://jupyter.org/")
+    (synopsis
+     "The JupyterLab notebook server extension")
+    (description
+     "This package provides an extensible environment for interactive and
+reproducible computing, based on the Jupyter Notebook and Architecture.")
+    ;; semver.py is under expat license.
     (license license:bsd-3)))
