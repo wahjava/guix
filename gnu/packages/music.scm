@@ -1763,6 +1763,20 @@ Guile.")
     ;; more than an hour of silence, so double the max silent time.
     (properties `((max-silent-time . 7200)))))
 
+(define-public lilypond-next
+  (package
+    (inherit lilypond)
+    (name "lilypond-next")
+    (version "2.25.27")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://lilypond.org/download/sources/"
+                           "v" (version-major+minor version) "/"
+                           "lilypond-" version ".tar.gz"))
+       (sha256
+        (base32 "173qa7m9xkghad4x37rxb9v45vp4vfmsylwnjzhj17y7f4ss0vz9"))))))
+
 (define-public emacs-lilypond-mode
   (package
     (name "emacs-lilypond-mode")
