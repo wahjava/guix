@@ -618,7 +618,8 @@ of a package, and INPUT-NAMES, a list of package specifications such as
 (define (check-inputs-should-not-be-an-input-at-all package)
   ;; Emit a warning if some inputs of PACKAGE are likely to should not be
   ;; an input at all.
-  (let ((input-names '("python-pip"
+  (let ((input-names '("python-pathlib2"
+                       "python-pip"
                        "python-pre-commit"
                        "tzdata"
                        "nss-certs")))

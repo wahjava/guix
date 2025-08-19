@@ -13700,6 +13700,8 @@ all the newest features of the standard @code{pathlib} can be used also on
 older Python versions.")
     (license license:expat)))
 
+(define-deprecated-package python-pathlib2)
+
 (define-public python-pathy
   (package
     (name "python-pathy")
