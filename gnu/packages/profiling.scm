@@ -362,12 +362,13 @@ different kinds of performance behavior.")
     (inputs (list zlib))
     (build-system gnu-build-system)
     (arguments
-      `(#:configure-flags
-        `("--enable-shared" "--disable-static" "--disable-silent-rules"
-          ,(string-append "--with-frontend-zlib="
-            (assoc-ref %build-inputs "zlib") "/lib")
-          ,(string-append "--with-backend-zlib="
-            (assoc-ref %build-inputs "zlib") "/lib"))))
+      (list
+        #:configure-flags
+        #~(list "--enable-shared" "--disable-static" "--disable-silent-rules"
+                (string-append "--with-frontend-zlib="
+                               (assoc-ref %build-inputs "zlib") "/lib")
+                (string-append "--with-backend-zlib="
+                               (assoc-ref %build-inputs "zlib") "/lib"))))
     (home-page "https://www.scalasca.org/software/cube-4.x/download.html")
     (synopsis "CUBE high performance C writer library")
     (description
@@ -393,15 +394,15 @@ project.")
     (native-inputs (list which))
     (inputs (list zlib))
     (arguments
-     `(#:configure-flags
-       `("--enable-shared" "--disable-static" "--disable-silent-rules"
-         ,(string-append "--with-frontend-zlib="
-           (assoc-ref %build-inputs "zlib") "/lib")
-         ,(string-append "--with-backend-zlib="
-           (assoc-ref %build-inputs "zlib") "/lib")
-         "--with-compression=full")
-      #:parallel-tests? #f
-    ))
+      (list
+        #:configure-flags
+        #~(list "--enable-shared" "--disable-static" "--disable-silent-rules"
+                (string-append "--with-frontend-zlib="
+                               (assoc-ref %build-inputs "zlib") "/lib")
+                (string-append "--with-backend-zlib="
+                               (assoc-ref %build-inputs "zlib") "/lib")
+                "--with-compression=full")
+      #:parallel-tests? #f))
     (synopsis "CUBE C++ profile library")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
@@ -426,12 +427,14 @@ project.")))
     (native-inputs (list qtbase )) ; native because of qmake
     (outputs '("out"))
     (arguments
-     `(#:configure-flags
-       `("--enable-shared" "--disable-static" "--disable-silent-rules"
-         ,(string-append "CXXFLAGS=-I"
-           (assoc-ref %build-inputs "dbus") "/include/dbus-1.0")
-         ,(string-append "LDFLAGS=-L"
-           (assoc-ref %build-inputs "dbus") "/lib"))))
+      (list
+        #:configure-flags
+        #~(list "--enable-shared" "--disable-static" "--disable-silent-rules"
+                (string-append "CXXFLAGS=-I"
+                               (assoc-ref %build-inputs "dbus")
+                               "/include/dbus-1.0")
+                (string-append "LDFLAGS=-L"
+                               (assoc-ref %build-inputs "dbus") "/lib"))))
     (synopsis "CUBE profile explorer GUI")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
