@@ -393,15 +393,11 @@ project.")
           (base32 "0hwl0aihn6fgpl0qhqckxc3sslb78wq6xav5ykfgfjzpyddqyrd0"))))
     (inputs (list zlib))
     (arguments
-      (list
-        #:configure-flags
-        #~(list "--enable-shared" "--disable-static" "--disable-silent-rules"
-                (string-append "--with-frontend-zlib="
-                               (assoc-ref %build-inputs "zlib") "/lib")
-                (string-append "--with-backend-zlib="
-                               (assoc-ref %build-inputs "zlib") "/lib")
-                "--with-compression=full")
-      #:parallel-tests? #f))
+      (substitute-keyword-arguments (package-arguments cubew)
+        ((#:configure-flags flags)
+         #~(append #$flags
+                   (list "--with-compression=full")))
+        ((#:parallel-tests? _ #f) #f)))
     (synopsis "CUBE C++ profile library")
     (description
      "CUBE (CUBE Uniform Behavioral Encoding) is a tool to display a variety
