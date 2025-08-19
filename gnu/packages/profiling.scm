@@ -391,7 +391,6 @@ project.")
             (package-version cubew) ".tar.gz"))
         (sha256
           (base32 "0hwl0aihn6fgpl0qhqckxc3sslb78wq6xav5ykfgfjzpyddqyrd0"))))
-    (native-inputs (list which))
     (inputs (list zlib))
     (arguments
       (list
@@ -424,8 +423,7 @@ project.")))
         (sha256
           (base32 "04byhf00xnn1ppca914ag4hq2kjv37lhwyh8dl369ps47mp6viqh"))))
     (inputs (list cubelib dbus perl))
-    (native-inputs (list qtbase )) ; native because of qmake
-    (outputs '("out"))
+    (native-inputs (list qtbase)) ; native because of qmake
     (arguments
       (list
         #:configure-flags
