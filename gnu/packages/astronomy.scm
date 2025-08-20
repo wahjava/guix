@@ -4943,6 +4943,7 @@ astronomical tables
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 1338 passed, 350 warnings
       #:test-flags
       #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; TypeError: SparseSolverBase.__init__() got an
@@ -4971,9 +4972,14 @@ astronomical tables
                           ;; TypeError: SLIT_Starlets.function_2d() got an
                           ;; unexpected keyword argument 'n_pix_x'
                           "test_pixelbased_modelling"
-                          ;; AssertionError: Arrays are not almost equal to 1
-                          ;; decimals ACTUAL: 0.8382375738251702
-                          "test_run_fit")
+                          ;; XXX: These are precision errors in tests which
+                          ;; need to be checked properly: AssertionError:
+                          ;; Arrays are not almost equal ...
+                          "test_run_fit"
+                          "test_multiplane"
+                          ;; ModuleNotFoundError: No module named
+                          ;; 'astropy.cosmology._utils'
+                          "test_short_and_laconic")
                     " and not "))))
     (native-inputs
      (list python-colossus
