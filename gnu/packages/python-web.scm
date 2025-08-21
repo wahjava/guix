@@ -5240,20 +5240,23 @@ python-requests.")
 (define-public python-requests-unixsocket2
   (package
     (name "python-requests-unixsocket2")
-    (version "0.4.2")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://gitlab.com/thelabnyc/requests-unixsocket2")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0vy0c1xwwmm6xqabhl2j7zqgsldvcs8ar547nk5r9l2yb7gngzjk"))))
+        (base32 "0xdnssgg5yjqyq0q8j9dfb3sw0vy1qfsxlbdqvgbdjylrihvqghw"))))
     (build-system pyproject-build-system)
-    (native-inputs
-     (list python-poetry-core python-pytest python-waitress))
-    (propagated-inputs
-     (list python-pbr python-requests))
+    ;; requests-unixsocket2 needs urllib3 >=2.2.2 and requests >=2.32.3
+    ;; and thus needs python-requests-next and python-urllib3-next.
+    (native-inputs (list python-poetry-core python-pytest python-waitress
+                         python-pbr nss-certs-for-test))
+    (inputs (list python-urllib3-next))
+    (propagated-inputs (list python-requests-next))
     (home-page "https://gitlab.com/thelabnyc/requests-unixsocket2")
     (synopsis "Talk HTTP via a UNIX domain socket")
     (description
