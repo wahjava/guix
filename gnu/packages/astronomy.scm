@@ -5785,6 +5785,40 @@ position-frequency slice.")
       (list python-setuptools
             python-wheel)))))
 
+(define-public python-pycpl
+  (package
+    (name "python-pycpl")
+    (version "1.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://ftp.eso.org/pub/dfs/pipelines/libraries/pycpl/pycpl-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0kfzx4k8z2k0ms6q8f16wqr120drd8fqrw9qpnks419pyc8cr5xp"))))
+    (properties '((upstream-name . "pycpl")))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel
+                         python-scipy
+                         python-pandas
+                         python-sphinx
+                         pybind11
+                         cmake-minimal))
+    (inputs (list cpl))
+    (propagated-inputs (list python-astropy))
+    (home-page "https://www.eso.org/sci/software/pycpl/pycpl-site/")
+    (synopsis
+     "Python Language Bindings for @acronym{Common Pipeline Library,CPL}")
+    (description
+     "PyCPL provides Python3 language bindings for the complete programming
+API of the @acronym{European Southern Observatory,ESO}
+@acronym{Common Pipeline Library,CPL} toolkit, including the CPL plugin
+interface.")
+    (license license:bsd-3)))
+
 (define-public python-pyerfa
   (package
     (name "python-pyerfa")
