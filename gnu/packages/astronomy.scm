@@ -3907,6 +3907,45 @@ used with local NetDRMS sites.")
 implemented using the astropy.modeling framework.")
     (license license:bsd-3)))
 
+(define-public python-edps
+  (package
+    (name "python-edps")
+    (version "1.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://ftp.eso.org/pub/dfs/pipelines/libraries/edps/edps-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0wigb3ni663a8fp9wdsnlbg789y2898j3x523isb68mnq72fqblw"))))
+    (build-system pyproject-build-system)
+    (properties '((upstream-name . "edps")))
+    (arguments
+     (list
+      #:tests? #f)) ;no tests in tarball
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-astropy
+                             python-fastapi
+                             python-networkx
+                             python-pyyaml
+                             python-requests
+                             python-uvicorn
+                             python-tinydb
+                             python-frozendict
+                             python-jinja2
+                             python-pydantic-2
+                             python-psutil))
+    (home-page "https://www.eso.org/sci/software/edps.html")
+    (synopsis "@acronym{European Southern Observatory,ESO} Data Processing System")
+    (description
+     "EDPS is a system to automatically organise data from ESO instruments
+for pipeline processing and running the pipeline on these data.  It is used
+for quality control at ESO. The current public release is a beta version
+without a GUI.  A GUI is being developed and the system is meant to
+eventually replace the older EsoReflex environment.")
+    (license license:bsd-3)))
+
 (define-public python-ephem
   (package
     (name "python-ephem")
