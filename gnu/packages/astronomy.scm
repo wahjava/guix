@@ -3604,7 +3604,7 @@ help you search, obtain and use DKIST data as part of your Python software.")
 (define-public python-drizzle
   (package
     (name "python-drizzle")
-    (version "2.1.0")
+    (version "2.1.1")
     (source
      (origin
        (method git-fetch)       ;no test data in PyPI archive
@@ -3613,7 +3613,7 @@ help you search, obtain and use DKIST data as part of your Python software.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1adp5bhzgrw0csn5wvpij7hzm5wh3zr4nkvpq0a8lb93ifk6k5gh"))))
+        (base32 "0s2vydy3fp6hvlzxdhx6my4js3vc7vpvy3hpgj4kjkl0r47s9vpx"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3631,8 +3631,7 @@ help you search, obtain and use DKIST data as part of your Python software.")
            python-gwcs
            python-pytest
            python-setuptools-next
-           python-setuptools-scm
-           python-wheel))
+           python-setuptools-scm))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/spacetelescope/drizzle")
