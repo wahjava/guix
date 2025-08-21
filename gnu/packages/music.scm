@@ -4080,6 +4080,58 @@ and managing stations, can be controlled remotely via fifo, and can run
 event-based scripts for scrobbling, notifications, etc.")
     (license license:expat)))
 
+(define-public pianobooster
+  (let ((commit "6dafdcbdfc5d35d12cecb051c30632d0f5be5806")
+	(revision "1"))
+    (package
+      (name "pianobooster")
+      (version (git-version "1.0.0" revision commit))
+      (source (origin
+		(method git-fetch)
+		(uri (git-reference
+		       (url "https://github.com/pianobooster/PianoBooster")
+		       (commit commit)))
+		(file-name (git-file-name name version))
+                (modules '((guix build utils)))
+                (snippet '(delete-file-recursively "src/3rdparty/"))
+		(sha256
+		 (base32
+		  "1v86nrcn700lyyplvmhq633zkwx0w3cg07ysgg3j6nj2vn017s34"))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:qtbase qtbase
+	     #:tests? #false		;no tests
+	     #:configure-flags
+             #~(list "-DQT_PACKAGE_NAME=Qt6"
+		     "-DWITH_INTERNAL_FLUIDSYNTH=OFF")
+	     #:phases
+	     #~(modify-phases %standard-phases
+		 (add-after 'unpack 'locate-sound-fonts
+		   (lambda _
+		     (substitute* (list "src/Settings.cpp"
+					"src/GuiMidiSetupDialog.cpp")
+		       (("/usr") #$(this-package-input "fluid-3"))
+		       (("FluidR3_GM.sf2") "FluidR3Mono_GM.sf3")))))))
+      (native-inputs (list pkg-config qttools))
+      (inputs (list alsa-lib
+		    fluid-3
+		    fluidsynth
+		    ftgl
+		    glu
+		    qt5compat
+		    rtmidi))
+      (home-page "https://www.pianobooster.org/")
+      (synopsis "MIDI player for learning to sight read on a piano")
+      (description
+       "PianoBooster is a MIDI file player that displays the musical notes and
+teaches you how to play the piano.  The difference between playing along to
+a CD or a standard MIDI file is that Piano Booster listens and reacts to what
+you are playing on a MIDI piano keyboard.  You can play along to any track in
+the MIDI file and Piano Booster will follow your playing.")
+      ;; Software is released under GPL3+ terms whereas CC-BY applies to
+      ;; courses and provided MIDI files.
+      (license (list license:gpl3+ license:cc-by4.0)))))
+
 (define-public picard
   (package
     (name "picard")
