@@ -21,12 +21,13 @@
 ;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022, 2023 Zhu Zihao <all_but_last@163.com>
-;;; Copyright © 2023 jgart <jgart@dismail.de>
+;;; Copyright © 2023, 2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Wojtek Kosior <koszko@koszko.org>
 ;;; Copyright © 2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2025 unwox <me@unwox.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -807,6 +808,49 @@ module} command.  The @command{guix module create} sub-command creates
 with the @command{module} command commonly found on @acronym{HPC,
 high-performance computing} clusters.")
     (license license:gpl3+)))
+
+(define-public toys
+  (let ((commit "3cb5d318a1c7fdd32c3ea3b1ac75c5cc6ec086b8")
+        (revision "0"))
+    (package
+      (name "toys")
+      (version (git-version "0.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://git.sr.ht/~whereiseveryone/toys")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0yca8b9zmzvj2bkqdmcm7grmwdwyx28wdh3q1iv4ypx3b2w82if6"))))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'register-guix-extension
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let ((ext-path (string-append #$output "/share/guix/extensions")))
+                  (mkdir-p ext-path)
+                  (copy-recursively "guix/extensions" ext-path))))
+            (add-after 'register-guix-extension 'clean-up
+              (lambda* _
+                (delete-file "channels.scm")
+                (delete-file-recursively "guix"))))))
+      (build-system guile-build-system)
+      (native-inputs (list guile-3.0))
+      (inputs
+       (list guile-json-4
+             guile-readline
+             guile-sqlite3
+             guix))
+      (native-search-paths (list $GUIX_EXTENSIONS_PATH))
+      (home-page "https://toys.whereis.social/")
+      (synopsis "Search engine for Guix channels")
+      (description "Toys is a search engine for collecting and displaying Guix
+channel data found across the internet.  Toys provides a command-line
+interface for interacting with the application.")
+      (license license:gpl3))))
 
 (define-public guix-xsearch
   (package
