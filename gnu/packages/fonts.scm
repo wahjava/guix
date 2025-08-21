@@ -4081,19 +4081,18 @@ This package contains the following outputs:
   (package
     (name "font-arphic-ukai")
     (version "0.2.20080216.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://deb.debian.org/debian/pool/main"
-                                  "/f/fonts-arphic-ukai/fonts-arphic-ukai_"
-                                  version ".orig.tar.bz2"))
-              (sha256
-               (base32
-                "1lp3i9m6x5wrqjkh1a8vpyhmsrhvsa2znj2mx13qfkwza5rqv5ml"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://deb.debian.org/debian/pool/main"
+                           "/f/fonts-arphic-ukai/fonts-arphic-ukai_" version
+                           ".orig.tar.bz2"))
+       (sha256
+        (base32 "1lp3i9m6x5wrqjkh1a8vpyhmsrhvsa2znj2mx13qfkwza5rqv5ml"))))
     (build-system font-build-system)
     (home-page "https://www.freedesktop.org/wiki/Software/CJKUnifonts/")
     (synopsis "CJK Unicode font Kai style")
-    (description
-     "Arphic UKai is a Kai-style pan-CJK typeface.")
+    (description "Arphic UKai is a Kai-style pan-CJK typeface.")
     (license license:arphic-1999)))
 
 (define-public font-atui-feather
