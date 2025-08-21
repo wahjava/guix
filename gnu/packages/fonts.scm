@@ -1527,7 +1527,8 @@ fonts.")
     (build-system font-build-system)
     (home-page "https://www.google.com/get/noto/")
     (synopsis "Fonts to cover all languages")
-    (description "Google Noto Fonts is a family of fonts designed to support
+    (description
+     "Google Noto Fonts is a family of fonts designed to support
 all languages with a consistent look and aesthetic.  Its goal is to properly
 display all Unicode symbols.  This package provides the Serif variant of CJK
 fonts.")
