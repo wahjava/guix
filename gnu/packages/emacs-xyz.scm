@@ -41419,6 +41419,28 @@ supports generation of phonetic and numeric passwords.")
 text into a QR Code and show it in a separate buffer.")
     (license license:gpl3+)))
 
+(define-public emacs-quiet
+  (package
+    (name "emacs-quiet")
+    (version "20230530.859")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://codeberg.org/zzkt/quiet.git")
+               (commit
+                 "985b56606517971330c08686c49a8d06db763f3c")))
+        (sha256
+          (base32
+            "0141z6acdffy96ghrwghzgqnv3mypvfkgci413dfaym4z80iwqdz"))))
+    (build-system emacs-build-system)
+    (home-page "https://codeberg.org/zzkt/quiet")
+    (synopsis
+      "Disconnect from the online world for a while")
+    (description
+      "A simple package to disconnect from the online world for a while, possibly reconnecting later. Any interruptions or distractions which occur once the command is run are guaranteed to be local.")
+    (license license:gpl3+)))
+
 (define-public emacs-csv
   (package
     (name "emacs-csv")
