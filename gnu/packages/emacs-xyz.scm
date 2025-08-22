@@ -161,6 +161,7 @@
 ;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright @ 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright @ 2025 Nik Gaffney <nik@fo.am>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41432,13 +41433,17 @@ text into a QR Code and show it in a separate buffer.")
                  "985b56606517971330c08686c49a8d06db763f3c")))
         (sha256
           (base32
-            "0141z6acdffy96ghrwghzgqnv3mypvfkgci413dfaym4z80iwqdz"))))
+           "0141z6acdffy96ghrwghzgqnv3mypvfkgci413dfaym4z80iwqdz"))))
     (build-system emacs-build-system)
+    (arguments
+     (list #:tests? #f))
     (home-page "https://codeberg.org/zzkt/quiet")
     (synopsis
       "Disconnect from the online world for a while")
     (description
-      "A simple package to disconnect from the online world for a while, possibly reconnecting later. Any interruptions or distractions which occur once the command is run are guaranteed to be local.")
+      "A simple package to disconnect from the online world for a while,
+possibly reconnecting later.  Any interruptions or distractions which occur
+once the command is run are guaranteed to be local.")
     (license license:gpl3+)))
 
 (define-public emacs-csv
