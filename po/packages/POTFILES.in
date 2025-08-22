@@ -418,6 +418,7 @@ gnu/packages/hunspell.scm
 gnu/packages/hyperledger.scm
 gnu/packages/icu4c.scm
 gnu/packages/idris.scm
+gnu/packages/idris2.scm
 gnu/packages/idutils.scm
 gnu/packages/image-processing.scm
 gnu/packages/image-viewers.scm
