@@ -145,8 +145,22 @@
        (>= x 0)))
 
 (define (serialize-monitor-transform _ t)
-  (string-append "transform, "
+  (string-append "\ttransform = "
                  (number->string t)))
+
+;;; Monitor name
+(define monitor-name? string?)
+
+(define (serialize-monitor-name _ name)
+    (string-append
+        "\toutput = " name))
+
+;;; Monitor scale
+(define monitor-scale? string?)
+
+(define (serialize-monitor-scale _ scale)
+    (string-append 
+        "\tscale = " scale))
 
 ;;; Monitor resolution
 (define (monitor-resolution? x)
@@ -158,11 +172,13 @@
       (string? x)))
 
 (define (serialize-monitor-resolution _ r)
-  (cond ((pair? r)
+  (string-append
+      "\tmode = "
+      (cond ((pair? r)
          (format #f "~ax~a" (car r) (cdr r)))
         ((symbol? r)
          (symbol->string r))
-        (#t r)))
+        (#t r))))
 
 ;;; Monitor position
 (define (monitor-position? x)
@@ -175,34 +191,37 @@
                 auto-center-up auto-center-down))))
 
 (define (serialize-monitor-position _ p)
-  (if (pair? p)
-      (format #f "~ax~a" (car p) (cdr p))
-      (symbol->string p)))
+  (string-append 
+      "\tposition = "
+      (if (pair? p)
+          (format #f "~ax~a" (car p) (cdr p))
+          (symbol->string p))))
 
 ;;; Monitor color management
 (define (monitor-color-management? c)
   (memq c '(auto srgb wide edid hdr hdredid)))
 
 (define (serialize-monitor-color-management _ c)
-  (string-append "cm, " (symbol->string c)))
+  (string-append "\tcm = " (symbol->string c)))
 
 ;;; Monitor sub-configuration
 (define-configuration monitor
-  (name (string "") "Monitor's name")
+  (name (monitor-name "") "Monitor's name")
   (resolution (monitor-resolution 'preferred) "Monitor's resolution")
   (position (monitor-position 'auto) "Monitor's position")
-  (scale (string "auto") "Monitor's scale")
+  (scale (monitor-scale "auto") "Monitor's scale")
   (disable? (boolean #f) "Disables the monitor" empty-serializer)
   (color-management-preset (monitor-color-management 'auto)
                            "Monitor color management preset")
   (transform (monitor-transform 0) "Monitor's transform"))
 
 (define (serialize-monitor _ m)
-  #~(string-append "monitor = "
+  #~(string-append "monitorv2 {\n"
                    #$(if (monitor-disable? m)
                          (string-append (monitor-name m)
-                                        ", disable")
-                         (serialize-joined m monitor-fields))))
+                                        "\n\tmode = disable\n")
+                         (serialize-joined m monitor-fields #:delimiter "\n"))
+                   "\n}\n"))
 
 ;;; List of monitors definition
 (define list-of-monitors?
@@ -345,6 +364,7 @@
   (package (package hyprland) "Hyprland package to use"
            empty-serializer)
   (monitors (list-of-monitors (list (monitor))) "Monitors definition")
+  (monitorsv2 (block '()) "Monitors definition using v2 syntax")
   (exec-once (list-of-executables '()) "Command to exec once")
   (exec (list-of-executables '()) "Command to automatically exec")
   (general (block (block)) "General configuration variables")
