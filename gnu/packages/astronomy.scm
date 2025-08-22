@@ -8502,16 +8502,16 @@ Telescope, HST}).")
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list python-pytest
+     (list nss-certs-for-test
+           python-pytest
            python-pytest-arraydiff
            python-pytest-doctestplus
            python-pytest-xdist
            python-reproject
-           python-setuptools
+           python-setuptools-next
            python-setuptools-scm-next
            python-streamtracer
-           python-sympy
-           python-wheel))
+           python-sympy))
     (propagated-inputs
      (list python-astropy
            python-numpy
