@@ -3302,6 +3302,19 @@ together.")
     (home-page "https://cleveraudio.org/")
     (license license:expat)))
 
+(define-public clap-1.1
+  (package/inherit clap
+    (version "1.1.10")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/free-audio/clap")
+                    (commit version)))
+              (file-name (git-file-name "clap" version))
+              (sha256
+               (base32
+                "0skn3cvh7zs173v3i6ywdmddqzrhxvivwdisvmqc6hvq594f8z80"))))))
+
 (define-public ladspa
   (package
     (name "ladspa")
