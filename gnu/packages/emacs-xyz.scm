@@ -32732,6 +32732,32 @@ stories.  The default feed is top stories, which corresponds to the Hacker
 News homepage.")
     (license license:gpl3)))
 
+(define-public emacs-lobsters
+  (let ((commit "eafdca576850fdfa0e802a37176227bc83ec10b0")
+        (revision "0"))
+    (package
+      (name "emacs-lobsters")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tanrax/lobsters.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1z3dzmm3yjpwfnm1lqilyx08nics9mbzlwf5hkxdalj8avwk1v2p"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #f))
+      (propagated-inputs (list emacs-request emacs-visual-fill-column))
+      (home-page "https://github.com/tanrax/lobsters.el/")
+      (synopsis "A simple and elegant Lobsters client for Emacs ")
+      (description
+       "A simple and elegant Lobsters client for Emacs that allows you to browse the latest tech stories directly from your favorite editor")
+      (license license:gpl3+))))
+
 (define-public emacs-tokei
   (package
     (name "emacs-tokei")
