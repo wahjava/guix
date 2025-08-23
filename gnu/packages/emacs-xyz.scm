@@ -4973,6 +4973,30 @@ Emacs Lisp source files.  Together, these modes guarantee that Emacs never
 loads outdated byte code files.")
     (license license:gpl3+)))
 
+(define-public emacs-compile-angel
+  (package
+    (name "emacs-compile-angel")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jamescherti/compile-angel.el.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bkws8303qligshrlndj7dh6m3s3qpj5smfgy5bv7f7lnbn0ps1l"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (home-page "https://github.com/jamescherti/compile-angel.el/")
+    (synopsis "Speed up Emacs: auto byte/native-compile all elisp files")
+    (description
+     "This package speeds up Emacs by ensuring that all Elisp libraries are
+both byte-compiled and native-compiled")
+    (license license:gpl3+)))
+
 (define-public emacs-auto-sudoedit
   (package
     (name "emacs-auto-sudoedit")
