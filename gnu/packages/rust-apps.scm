@@ -40,6 +40,7 @@
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
+;;; Copyright © 2025 Murilo <murilo@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -71,6 +72,7 @@
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
+  #:use-module (gnu packages assembly)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages build-tools)
@@ -102,6 +104,7 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages pcre)
+  #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages protobuf)
@@ -111,10 +114,13 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages terminals)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages video)
+  #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xorg))
 
@@ -3839,6 +3845,79 @@ policies, and so on.
     (description
      "This package provides a high performance CSV command line toolkit.")
     (license (list license:unlicense license:expat))))
+
+(define-public yazi
+  (package
+    (name "yazi")
+    (version "25.5.31")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sxyazi/yazi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hz1nhq02b18cljw9i4jd1wxvd4gzvcgzkg0qfacvqbpj7zmvgqj"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:rust rust-1.88 ;Requires rust >= 1.88
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-env
+            (lambda _
+              ;; Generate completions
+              (setenv "YAZI_GEN_COMPLETIONS" "1")
+              ;; This flag is needed when not using the bundled jemalloc.
+              ;; https://github.com/tikv/jemallocator/issues/19
+              (setenv "CARGO_FEATURE_UNPREFIXED_MALLOC_ON_SUPPORTED_PLATFORMS"
+               "1")
+              ;; Override jemalloc
+              (setenv "JEMALLOC_OVERRIDE"
+                      (string-append #$(this-package-input "jemalloc")
+                                     "/lib/libjemalloc.so"))))
+          (replace 'install
+            (lambda _
+              (let* ((bin (string-append #$output "/bin"))
+                     (applications (string-append #$output
+                                                  "/share/applications")))
+                (install-file "target/release/yazi" bin)
+                (install-file "target/release/ya" bin)
+                (install-file "assets/yazi.desktop" applications))))
+          (add-after 'install 'wrap-optional
+            (lambda _
+              (wrap-program (string-append #$output "/bin/yazi")
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "ffmpegthumbnailer")
+                                   "/bin") ,(string-append #$(this-package-input
+                                                              "jq") "/bin")
+                   ,(string-append #$(this-package-input "poppler") "/bin")
+                   ,(string-append #$(this-package-input "fd") "/bin")
+                   ,(string-append #$(this-package-input "ripgrep") "/bin")
+                   ,(string-append #$(this-package-input "fzf") "/bin")
+                   ,(string-append #$(this-package-input "zoxide") "/bin")))))))))
+    (native-inputs (list pkg-config nasm))
+    (inputs (cons* bash-minimal
+                   jemalloc
+                   oniguruma
+                   ;; Optional dependencies (to be wrapped)
+                   fd
+                   ffmpegthumbnailer
+                   fzf
+                   jq
+                   poppler
+                   ripgrep
+                   zoxide
+                   (cargo-inputs 'yazi)))
+    (home-page "https://yazi-rs.github.io")
+    (synopsis "Blazing fast terminal file manager")
+    (description
+     "Yazi (duck in Chinese) is a terminal file manager written
+in Rust, based on non-blocking async I/O.  It aims to provide an efficient,
+user-friendly, and customizable file management experience.")
+    (license (list license:expat))))
 
 (define-public zoxide
   (package
