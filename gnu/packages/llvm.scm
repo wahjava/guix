@@ -1384,7 +1384,12 @@ Library.")
                 "-DBUILD_SHARED_LIBS:BOOL=TRUE"
                 "-DLLVM_VERSION_SUFFIX="))))
     (properties `((hidden? . #t)
-                  ,@(package-properties llvm-19)))))
+                  ,@(package-properties llvm-19)))
+    (home-page "https://github.com/ROCm/llvm-project")
+    (string-append (package-synopsis llvm-14) " (AMD fork)")
+    (description
+     (string-append (package-description llvm-14) "\n\nThis AMD fork includes
+AMD-specific additions."))))
 
 
 
