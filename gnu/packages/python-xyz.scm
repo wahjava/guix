@@ -39215,7 +39215,8 @@ Communication.")
               (sha256
                (base32
                 "0xfn8d1by2w7pjiji887qljk1avn4fylbnz1mj28gysm5g0zvy43"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (arguments '(#:tests? #f))                    ;there are no tests
     (propagated-inputs (list python-colorama python-termcolor))
     (home-page "https://github.com/AbhijithAJ/clrprint")
