@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2015 Siniša Biđin <sinisa@bidin.eu>
+;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2015, 2016, 2022 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2015 xd1le <elisp.vim@gmail.com>
 ;;; Copyright © 2015 Paul van der Walt <paul@denknerd.org>
@@ -9,7 +10,7 @@
 ;;; Copyright © 2016 Al McElrath <hello@yrns.org>
 ;;; Copyright © 2016 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2016 2019, 2021-2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2016, 2017, 2018, 2020 Nikita <nikita@n0.is>
+;;; Copyright © 2016-2018, 2020 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 doncatnip <gnopap@gmail.com>
 ;;; Copyright © 2016 Ivan Vilata i Balaguer <ivan@selidor.net>
 ;;; Copyright © 2017 Mekeor Melire <mekeor.melire@gmail.com>
@@ -1478,6 +1479,55 @@ the XDG Autostart specification.")
     (description "Fnott is a keyboard driven and lightweight notification daemon
 for wlroots-based Wayland compositors.")
     (license license:expat)))
+
+(define-public fvwm
+  (package
+    (name "fvwm")
+    (version "2.7.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://github.com/fvwmorg/fvwm/releases/download/"
+                    version "/fvwm-" version ".tar.gz"))
+              (sha256
+               (base32
+                "12s1wgkvrvl8m62gpb2918izfx9ysj7hgn9p00blfi3p1gb6v0k6"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'install-xsession
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (xsessions (string-append out "/share/xsessions")))
+               (mkdir-p xsessions)
+               (make-desktop-entry-file
+                 (string-append xsessions "/fvwm2.desktop")
+                 #:name "FVWM"
+                 #:exec (string-append out "/bin/" ,name)
+                 #:comment '("FVWM")))
+             #t)))))
+    (native-inputs
+     `(("perl" ,perl)
+       ("pkg-config" ,pkg-config)
+       ("xsltproc" ,libxslt)))
+    (inputs
+     (list fribidi
+           libpng
+           (librsvg-for-system)
+           libxcursor
+           libxext
+           libxft
+           libxinerama
+           libxpm
+           libxt
+           readline))
+    (synopsis "Virtual window manager for X11")
+    (description
+     "FVWM is an extremely powerful ICCCM-compliant multiple virtual desktop
+window manager for the X Window system.")
+    (home-page "https://www.fvwm.org/")
+    (license license:gpl2+)))
 
 (define-public awesome
   (package
