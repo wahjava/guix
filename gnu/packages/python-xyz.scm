@@ -35659,20 +35659,32 @@ entities
      (origin
        (method url-fetch)
        (uri (pypi-uri "typogrify" version))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove packaged copies of libraries.
+           (delete-file-recursively "typogrify/packages")))
        (sha256
         (base32 "1vk17q04sax8rpdqll5zldnf6l3ixgknbnn9wimnwah3k1701aph"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'replace-bundled-package-imports
+            (lambda _
+              (substitute* "typogrify/filters.py"
+                   (("typogrify\\.packages\\.") "")))))
+      #:test-flags ;See tasks.py
       #~(list "--doctest-modules"
-              "typogrify/filters.py"
-              "typogrify/packages/titlecase/tests.py")))
+              "typogrify/filters.py")))
     (native-inputs
-     (list python-pytest
-           python-hatchling))
+     (list
+      python-setuptools ; for sanity-check.py
+      python-pytest
+      python-hatchling))
     (propagated-inputs
-     (list python-smartypants))
+     (list python-smartypants python-titlecase))
     (home-page "https://github.com/justinmayer/typogrify")
     (synopsis "Filters to transform text into typographically-improved HTML")
     (description
