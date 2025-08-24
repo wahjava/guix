@@ -2450,7 +2450,7 @@ connections.")
 (define-public plasma-mobile
   (package
     (name "plasma-mobile")
-    (version "6.3.6")
+    (version "6.4.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2472,6 +2472,7 @@ connections.")
                   kirigami-addons
                   kitemmodels
                   knotifications
+                  kpipewire
                   kwayland
                   kwin
                   layer-shell-qt
