@@ -18591,7 +18591,7 @@ invoked on those path objects directly.")
                          "and not test_get_owner"))
                   #$flags))))
     (native-inputs
-     (modify-inputs (package-native-inputs python-path-bootstrap)
+     (modify-inputs (package-native-inputs -path-bootstrap)
        (append python-appdirs
                python-more-itertools
                python-packaging
@@ -32648,7 +32648,12 @@ an upload option to send your work back to the platform.")
        (sha256
         (base32
          "1x9myq3rlbw6wh946ncch8px7wyabhzacy2fjji13nmvrivs50vx"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "titlecase/tests.py")))
+    (native-inputs (list python-setuptools python-wheel python-pytest))
     (home-page "https://github.com/ppannuto/python-titlecase")
     (synopsis "Capitalize strings similar to book titles")
     (description
