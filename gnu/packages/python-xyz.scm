@@ -21792,6 +21792,37 @@ way.")
     (home-page "https://eventable.github.io/vobject/")
     (license license:asl2.0)))
 
+(define-public python-vcardtools
+  (package
+    (name "python-vcardtools")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vcardtools" version))
+       (sha256
+        (base32 "0467l8k7dqzs0srjzj64bm5n5mnw1ca8dhrlmx58v72mk4d17p86"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ;; no tests
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'use-stdlib-argparse
+           ;; NOTE: argparse is now part of stdlib, no need to depend on
+           ;; deprecated stdlib library
+           (lambda _
+             (substitute* "setup.py"
+               (("'argparse', ")
+                "")))))))
+    (propagated-inputs (list python-six python-vobject))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/dmwilcox/vcard-tools")
+    (synopsis "Tools to split and merge vCard files")
+    (description
+     "This package provides tools to split and merge @code{vCard} files.")
+    (license license:gpl3)))
+
 (define-public python-munkres
   (package
     (name "python-munkres")
