@@ -4800,3 +4800,17 @@ information.  Useful for cross-architecture tools (such as @code{python-pyvex}).
        "SWELL is a Windows emulation Layer.  It provides a set of common APIs,
 common controls and win32-style extensions.")
     (license license:zlib))))
+
+(define-public swell-colortheme
+  (package/inherit swell
+    (name "swell-colortheme")
+    (arguments
+     (substitute-keyword-arguments (package-arguments swell)
+       ((#:make-flags _ '()) #~'("libSwell.colortheme"))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'install
+              (lambda _
+                (install-file "libSwell.colortheme"
+                                   (string-append #$output
+                                                  "/share/SWELL"))))))))))
