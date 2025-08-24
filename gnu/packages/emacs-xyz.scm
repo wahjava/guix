@@ -38944,22 +38944,23 @@ federated microblogging social network.")
     (license license:gpl3+)))
 
 (define-public emacs-org-social
-  (let ((commit "e52c727c08444a3c6ccceb75492504e59ad5e804")
-        (revision "0"))
+  ;; no tagged release, we take version from source
+  (let ((commit "0c7adf5437501a3909b59bcb00a7afc538dfc907")
+        (revision "1"))
     (package
       (name "emacs-org-social")
-      (version (git-version "1.0" revision commit))
+      (version (git-version "1.5" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/tanrax/org-social.el")
-               (commit commit)))
+                (url "https://github.com/tanrax/org-social.el")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "06izvlmqx2yhig84i4xfcc6wdv5jyj1jr3irc6xdwbvwpck2qbcg"))))
+          (base32 "0bgchiir0x3x1lxskpixs82lljjgdg7za1kzjwza5jp4fixwrfvb"))))
       (build-system emacs-build-system)
-      (arguments (list #:tests? #f))
+      (arguments (list #:tests? #f)) ;; no tests
       (propagated-inputs (list emacs-request))
       (home-page "https://github.com/tanrax/org-social.el")
       (synopsis "Emacs client for Org-social")
