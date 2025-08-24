@@ -490,7 +490,7 @@ desktop.")
 (define-public krdp
   (package
     (name "krdp")
-    (version "6.3.6")
+    (version "6.4.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -498,7 +498,7 @@ desktop.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "15ajcclx3zb5rwd0yrfvns7dh5ijn9i6a5hfb2qjfyv1adzqx22v"))))
+                "11xphz2q201zwgfq9njh5vwqhc9acf0nwryw40slpw906qwm0jdh"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      #:tests? #f
@@ -528,7 +528,7 @@ desktop.")
              kpipewire
              openssl
              plasma-wayland-protocols
-             freerdp
+             freerdp-3
              qtwayland
              qtdeclarative
              qtkeychain-qt6
