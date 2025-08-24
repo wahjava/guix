@@ -434,6 +434,31 @@ of device actions, such as installing and debugging apps, and it provides access
 to a Unix shell that can run commands on the connected device or emulator.")
     (license license:asl2.0)))
 
+(define-public betteradbsync
+  (package
+    (name "betteradbsync")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/jb2170/better-adb-sync/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06ri9a8r0a4i9ih0cqdj5j19dbkbqwd5m5g8ch220rh4firaj4w2"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; there are none
+    (home-page "https://github.com/jb2170/better-adb-sync/")
+    (native-inputs (list python-setuptools python-wheel))
+    (synopsis "Better version of adb-sync for Python3")
+    (description "This packages provides a Python3 rewrite of Google's
+adbsync, which is an rsync-like command-line utitlity facilitating file
+transfer over ADB.  Compared to Google's version, this rewrite adds support
+for the --exclude, --exclude-from, --del, and --delete-excluded commandline
+flags, likened after the corresponding rsync flags.")
+    (license license:asl2.0)))
+
 (define-public mkbootimg
   (package
     (name "mkbootimg")
