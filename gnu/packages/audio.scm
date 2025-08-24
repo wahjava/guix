@@ -939,17 +939,27 @@ purposes developed at Queen Mary, University of London.")
                  (("#include <QCodeEditor\\.hpp")
                   "#include <QCodeEditor/QCodeEditor.hpp"))))))
        (patches (search-patches "jamesdsp-fix-bulid-on-pipewire-1.4.0.patch"))))
-    (build-system qt-build-system)
+    (build-system gnu-build-system)
     (arguments
-     (list #:qtbase qtbase
-           #:tests? #f ;no tests
+     (list #:tests? #f ;no tests
+           #:make-flags
+           #~(list (string-join '("CFLAGS="
+                                  "-Wno-error=incompatible-pointer-types"
+                                  "-Wno-error=implicit-int"
+                                  "-Wno-error=implicit-function-declaration")
+                                " "))
            #:phases
            #~(modify-phases %standard-phases
                ;; Configure using qmake.
                (replace 'configure
                  (lambda* (#:key inputs #:allow-other-keys)
                    (invoke "qmake" (string-append "PREFIX=" #$output))))
-               (add-after 'install 'install-icon
+               (add-after 'install 'wrap-program
+                 (lambda _
+                   (wrap-program (string-append #$output "/bin/jamesdsp")
+                     `("QT_PLUGIN_PATH" ":" prefix
+                       (,(getenv "QT_PLUGIN_PATH"))))))
+               (add-after 'wrap-program 'install-icon
                  (lambda _
                    (let ((pixmaps (string-append #$output "/share/pixmaps")))
                      (mkdir-p pixmaps)
@@ -971,12 +981,14 @@ purposes developed at Queen Mary, University of London.")
      (list pkg-config))
     (inputs
      (list asyncplusplus
+           bash-minimal
            glibmm-2.66
            libarchive
            pipewire
            qcodeeditor
            qcustomplot
            qt-advanced-docking-system
+           qtbase
            qtcsv
            qtpromise
            qtsvg
