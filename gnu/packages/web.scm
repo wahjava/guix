@@ -9694,6 +9694,21 @@ for ZIM files.")
 It contains the code shared by all Kiwix ports.")
     (license license:gpl3)))
 
+(define-public kiwix-lib-13
+  (package
+    (inherit kiwix-lib)
+    (name "kiwix-lib")
+    (version "13.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kiwix/kiwix-lib/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0mgzmqar70rj83x27a4zh7qr6yl5pi95g6i3fvvxysdjy76v18qc"))))))
+
 (define-public kiwix-desktop
   (package
     (name "kiwix-desktop")
@@ -9764,7 +9779,7 @@ offline (such as Wikipedia), without any access to Internet.")
     (inputs
      (list curl
            icu4c
-           kiwix-lib
+           kiwix-lib-13
            libmicrohttpd
            libzim
            pugixml
