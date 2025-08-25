@@ -30,7 +30,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages autotools)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages perl)
@@ -111,7 +111,7 @@ into shell code to test the features of Unix-like systems and to adapt
 automatically their software package to these systems.  The resulting shell
 scripts are self-contained and portable, freeing the user from needing to
 know anything about Autoconf or M4.")
-    (license gpl3+))) ; some files are under GPLv2+
+    (license license:gpl3+))) ; some files are under GPLv2+
 
 ;; This is the renaissance version, which is not widely supported yet.
 (define-public autoconf-2.71
@@ -304,7 +304,7 @@ exec ~a --no-auto-compile \"$0\" \"$@\"
      "Autoconf Archive is a collection of over 450 new macros for Autoconf,
 greatly expanding the domain of its functionality.  These macros have been
 contributed as free software by the community.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public autobuild
   (package
@@ -328,7 +328,7 @@ The summary includes project name, version, build hostname, host type (cross
 compile aware), date of build, and indication of success or failure.  The
 output is indexed in many ways to simplify browsing.")
     (home-page "https://josefsson.org/autobuild/")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public automake-1.16.5
   (package
@@ -432,7 +432,7 @@ output is indexed in many ways to simplify browsing.")
 standards-compliant Makefiles.  Build requirements are entered in an
 intuitive format and then Automake works with Autoconf to produce a robust
 Makefile, simplifying the entire process for the developer.")
-    (license gpl2+)))                      ; some files are under GPLv3+
+    (license license:gpl2+)))                      ; some files are under GPLv3+
 
 (define-public automake
   (package/inherit automake-1.16.5
@@ -533,7 +533,7 @@ Makefile, simplifying the entire process for the developer.")
      "GNU Libtool helps in the creation and use of shared libraries, by
 presenting a single consistent, portable interface that hides the usual
 complexity of working with shared libraries across platforms.")
-    (license gpl3+)
+    (license license:gpl3+)
     (home-page "https://www.gnu.org/software/libtool/")))
 
 (define-public config
@@ -581,7 +581,7 @@ complexity of working with shared libraries across platforms.")
       (description "The `config.guess' script tries to guess a canonical system triple,
 and `config.sub' validates and canonicalizes.  These are used as part of
 configuration in nearly all GNU packages (and many others).")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public libltdl
   ;; This is a libltdl package separate from the libtool package.  This is
@@ -608,7 +608,7 @@ configuration in nearly all GNU packages (and many others).")
     (synopsis "System-independent dlopen wrapper of GNU libtool")
     (description (package-description libtool))
     (home-page (package-home-page libtool))
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public pyconfigure
   (package
@@ -642,5 +642,5 @@ are available, allowing you to easily make adjustments to the installation
 procedure based on the capabilities of the target computer.")
     (home-page "https://www.gnu.org/software/pyconfigure/manual/")
     (license
-     (fsf-free
+     (license:fsf-free
       "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html"))))
