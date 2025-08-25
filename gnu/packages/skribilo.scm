@@ -18,9 +18,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages skribilo)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix licenses)
   #:use-module ((guix utils) #:select (version-major+minor))
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages guile)
@@ -99,4 +99,4 @@ that borrows from Emacs' outline mode and from other conventions used in
 emails, Usenet and text.
 
 Lastly, Skribilo provides Guile Scheme APIs.")
-    (license gpl3+)))
+    (license license:gpl3+)))
