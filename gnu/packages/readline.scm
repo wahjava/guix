@@ -21,7 +21,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages readline)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages ncurses)
@@ -140,7 +140,7 @@ are typed in.  It can maintain a searchable history of previously entered
 commands, letting you easily recall, edit and re-enter past commands.  It
 features both Emacs-like and vi-like keybindings, making its usage
 comfortable for anyone.")
-    (license gpl3+)
+    (license license:gpl3+)
     (home-page "https://savannah.gnu.org/projects/readline/")))
 
 (define-public readline-7
@@ -199,4 +199,4 @@ should consider rlwrap especially when you need user-defined completion (by way
 of completion word lists) and persistent history, or if you want to program
 `special effects' using the filter mechanism.")
     (home-page "https://github.com/hanslub42/rlwrap")
-    (license gpl2+)))
+    (license license:gpl2+)))
