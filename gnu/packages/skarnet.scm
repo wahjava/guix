@@ -21,9 +21,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages skarnet)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -61,7 +61,7 @@
 from portability issues, providing a unified systems API on all platforms,
 including primitive data types, cryptography, and POSIX concepts like sockets
 and file system operations.  It is used by all skarnet.org software.")
-    (license isc)))
+    (license license:isc)))
 
 (define-public execline
   (package
@@ -97,7 +97,7 @@ and file system operations.  It is used by all skarnet.org software.")
                         `("PATH" ":" prefix (,bin)))))))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/execline/")
-    (license isc)
+    (license license:isc)
     (synopsis "Non-interactive shell-like language with minimal overhead")
     (description
      "Execline is a (non-interactive) scripting language, separated into a
@@ -135,7 +135,7 @@ complexity.")))
                    (doc (string-append out "/share/doc/s6-" ,version)))
               (copy-recursively "doc" doc)))))))
    (home-page "https://skarnet.org/software/s6")
-   (license isc)
+   (license license:isc)
    (synopsis "Small suite of programs for process supervision")
    (description
     "s6 is a small suite of programs for UNIX, designed to allow process
@@ -166,7 +166,7 @@ functionality with a very small amount of code.")))
                                          "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-dns")
-    (license isc)
+    (license license:isc)
     (synopsis "Suite of DNS client programs")
     (description
      "s6-dns is a suite of DNS client programs and libraries for Unix systems,
@@ -192,7 +192,7 @@ as an alternative to the BIND, djbdns or other DNS clients.")))
                                          "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-networking")
-    (license isc)
+    (license license:isc)
     (synopsis "Suite of network utilities for Unix systems")
     (description
      "s6-networking is a suite of small networking utilities for Unix systems.
@@ -220,7 +220,7 @@ clock synchronization.")))
                                          "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-rc")
-    (license isc)
+    (license license:isc)
     (synopsis "Service manager for s6-based systems")
     (description
      "s6-rc is a service manager for s6-based systems, i.e. a suite of
@@ -251,7 +251,7 @@ environment.")))
                                          "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-portable-utils")
-    (license isc)
+    (license license:isc)
     (synopsis "Tiny command-line Unix utilities")
     (description
      "s6-portable-utils is a set of tiny general Unix utilities, often
@@ -283,7 +283,7 @@ systems and other constrained environments, but they work everywhere.")))
                        "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-linux-init")
-    (license isc)
+    (license license:isc)
     (synopsis "Minimalistic tools to create an s6-based init system on Linux")
     (description
      "s6-linux-init is a set of minimalistic tools to create a s6-based init
@@ -315,7 +315,7 @@ all the details.")))
                                          "/lib/skalibs/sysdeps"))
        #:tests? #f))                    ; no tests exist
     (home-page "https://skarnet.org/software/s6-linux-utils")
-    (license isc)
+    (license license:isc)
     (synopsis "Set of minimalistic Linux-specific system utilities")
     (description
      "s6-linux-utils is a set of minimalistic Linux-specific system utilities,
