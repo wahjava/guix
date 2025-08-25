@@ -24,7 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages acl)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages attr)
   #:use-module (gnu packages base)
   #:use-module (gnu packages check)
@@ -90,7 +90,8 @@
      "Library and tools for manipulating access control lists")
     (description
      "Library and tools for manipulating access control lists.")
-    (license (list gpl2+ lgpl2.1+))))
+    (license (list license:gpl2+
+                   license:lgpl2.1+))))
 
 (define-public python-pylibacl
   (package
@@ -128,4 +129,4 @@
      "This Python extension module manipulates the POSIX.1e @acronym{ACLs,
 Access Control Lists} available on many file systems.  These allow more
 fine-grained access control than traditional user/group permissions.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
