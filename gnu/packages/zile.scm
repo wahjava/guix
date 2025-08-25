@@ -23,7 +23,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages zile)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages)
@@ -99,7 +99,7 @@
     (description
      "GNU Zile is a lightweight Emacs clone.  It usage is similar to the
 default Emacs configuration, but it carries a much lighter feature set.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public zile-on-guile
   ;; This is a fork of Zile that uses Guile, announced here:
