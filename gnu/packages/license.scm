@@ -24,6 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages license)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
@@ -40,7 +41,6 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module (guix licenses)
   #:use-module (guix packages))
 
 ;;;
@@ -69,7 +69,7 @@
 expression patterns related to legal software licenses.
 
 Regexp::Pattern is a convention for organizing reusable regex patterns.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public perl-string-copyright
   (package
@@ -93,7 +93,7 @@ Regexp::Pattern is a convention for organizing reusable regex patterns.")
     (synopsis "Representation of text-based copyright statements")
     (description "String::Copyright Parses common styles of copyright
 statements and serializes in normalized format.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public perl-string-license
   (package
@@ -125,7 +125,7 @@ statements and serializes in normalized format.")
     (synopsis "Detect source code license statements in a text string")
     (description "@code{String::License} identifies license statements in a
 string and serializes them in a normalized format.")
-    (license agpl3+)))
+    (license license:agpl3+)))
 
 (define-public perl-software-license
   (package
@@ -207,7 +207,7 @@ string and serializes them in a normalized format.")
     (description "Licensecheck attempts to determine the license that applies
 to each file passed to it, by searching the start of the file for text
 belonging to various licenses.")
-    (license agpl3+)))
+    (license license:agpl3+)))
 
 (define-public reuse
   (package
@@ -262,7 +262,10 @@ to file headers, and contains a linter to identify problems.  There are other
 tools that have a lot more features and functionality surrounding the analysis
 and inspection of copyright and licenses in software projects.  This one is
 designed to be simple.")
-    (license (list asl2.0 cc0 cc-by-sa4.0 gpl3+))))
+    (license (list license:asl2.0
+                   license:cc0
+                   license:cc-by-sa4.0
+                   license:gpl3+))))
 
 (define-public licenseheaders
   (package
@@ -294,4 +297,4 @@ designed to be simple.")
      "Licenseheaders is a Python 3 tool to update, change or add license
 headers to all files of any of the supported types in or below some
 directory.")
-    (license expat)))
+    (license license:expat)))
