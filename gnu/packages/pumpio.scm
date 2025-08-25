@@ -19,7 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pumpio)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -65,4 +65,4 @@
     (synopsis "Qt-based pump.io client")
     (description "Pumpa is a simple pump.io client written in C++ and Qt.")
     (home-page "https://pumpa.branchable.com/")
-    (license gpl3+)))
+    (license license:gpl3+)))
