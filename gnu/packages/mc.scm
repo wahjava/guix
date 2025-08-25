@@ -20,6 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages mc)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages aspell)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
@@ -35,7 +36,6 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages))
 
 (define-public mc
@@ -114,7 +114,7 @@ copying and moving, Midnight Commander also supports viewing the contents of
 RPM package files and other archives and managing files on other computers via
 FTP or FISH.  It also includes a powerful text editor for opening text
 files.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 
 (define-public gnudos
@@ -137,4 +137,4 @@ system in growing accustomed to the system, particularly users who might be
 coming from a DOS background.  It consists of a file manager, a text editor
 and a form designer for the console as well as a core library for building
 similar utilities.")
-    (license gpl3+)))
+    (license license:gpl3+)))
