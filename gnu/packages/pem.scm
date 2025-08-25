@@ -17,8 +17,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pem)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages perl))
@@ -45,4 +45,4 @@ expenses.  It operates from the command line and it stores its data
 in a basic text format in your home directory.  It can easily print
 reports of your spending on different expenses via a basic search
 feature.")
-    (license gpl3+)))
+    (license license:gpl3+)))
