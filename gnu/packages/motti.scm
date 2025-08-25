@@ -17,9 +17,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages motti)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download))
 
@@ -42,4 +42,4 @@
 The objective of the game is to conquer enemy capitals by occupying and
 encircling territory.")
     (home-page "https://www.gnu.org/software/motti")
-    (license gpl3+)))
+    (license license:gpl3+)))
