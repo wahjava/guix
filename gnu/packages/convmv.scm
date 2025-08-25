@@ -17,9 +17,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages convmv)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages perl)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -56,5 +56,6 @@
      "convmv is a file renamer, that converts between different encodings,
 e.g. from ISO-8859-1 to UTF-8.  It is particularly usefuls for files with
 names, that display incorrectly.")
-    (license (list gpl2 gpl3))
+    (license (list license:gpl2
+                   license:gpl3))
     (home-page "https://www.j3e.de/")))
