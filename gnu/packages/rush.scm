@@ -18,10 +18,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages rush)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages))
 
 (define-public rush
@@ -43,4 +43,4 @@
 be provided with only limited functionality or resources.  Administrators set
 user rights via a configuration file which can be used to limit, for example,
 the commands that can be executed, CPU time, or virtual memory usage.")
-    (license gpl3+)))
+    (license license:gpl3+)))
