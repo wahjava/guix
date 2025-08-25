@@ -24,10 +24,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages entr)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages ncurses)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -81,4 +81,4 @@ each time you modify a source code file.  It supports interactive utilities and
 doesn't waste resources by polling for changes.")
 
     ;; Per 'LICENSE', portability code under missing/ is under BSD-2.
-    (license isc)))
+    (license license:isc)))
