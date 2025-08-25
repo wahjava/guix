@@ -21,7 +21,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pkg-config)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -77,7 +77,7 @@
    (native-search-paths
     (list $PKG_CONFIG_PATH))
    (home-page "https://www.freedesktop.org/wiki/Software/pkg-config")
-   (license gpl2+)
+   (license license:gpl2+)
    (synopsis "Helper tool used when compiling applications and libraries")
    (description
     "pkg-config is a helper tool used when compiling applications and
@@ -204,4 +204,4 @@ pkg-config from freedesktop.org.  @code{libpkgconf} is a library which
 provides access to most of pkgconf's functionality, to allow other tooling
 such as compilers and IDEs to discover and use libraries configured by
 pkgconf.")
-    (license isc)))
+    (license license:isc)))
