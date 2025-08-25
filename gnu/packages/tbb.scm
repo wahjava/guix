@@ -22,8 +22,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages tbb)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix utils)
@@ -87,7 +87,7 @@ abstracts the low-level threading details necessary for optimal multi-core
 performance.  It uses common C++ templates and coding style to eliminate
 tedious threading implementation work.  It provides parallel loop constructs,
 asynchronous tasks, synchronization primitives, atomic operations, and more.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-tbb
   (package
@@ -215,4 +215,4 @@ the low-level threading details necessary for optimal multi-core performance.
 It uses common C++ templates and coding style to eliminate tedious threading
 implementation work.  It provides parallel loop constructs, asynchronous
 tasks, synchronization primitives, atomic operations, and more.")
-    (license asl2.0)))
+    (license license:asl2.0)))
