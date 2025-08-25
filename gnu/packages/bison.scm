@@ -21,7 +21,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages bison)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -72,7 +72,7 @@ grammar.  It is versatile enough to have many applications, from parsers for
 simple tools through complex programming languages.
 
 Bison also provides an implementation of @command{yacc}, as specified by POSIX.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public bison-3.0
   (package
