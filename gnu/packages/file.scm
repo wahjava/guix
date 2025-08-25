@@ -22,8 +22,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages file)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -52,5 +52,5 @@
 you in words what kind of data a file contains.  It does not rely on filename
 extensions to tell you the type of a file, but looks at the actual contents
 of the file.  This package provides the libmagic library.")
-   (license bsd-2)
+   (license license:bsd-2)
    (home-page "https://www.darwinsys.com/file/")))
