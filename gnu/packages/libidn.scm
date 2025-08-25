@@ -23,10 +23,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libidn)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages libunistring)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -54,7 +54,10 @@ names according to the IDNA2003 specifications.  It includes native C, C# and
 Java libraries.")
    ;; The C code is dual-licensed gpl2+ lgpl3+, the manual is fdl1.3+,
    ;; the command line tool is gpl3+.
-   (license (list gpl2+ gpl3+ lgpl3+ fdl1.3+))
+   (license (list license:gpl2+
+                  license:gpl3+
+                  license:lgpl3+
+                  license:fdl1.3+))
    (home-page "https://www.gnu.org/software/libidn/")))
 
 (define-public libidn2
@@ -82,4 +85,6 @@ library.")
     (properties '((ftp-directory . "/gnu/libidn")))
     ;; The command-line tool 'idn2' is GPL3+, while the library is dual-licensed
     ;; GPL2+ or LGPL3+.
-    (license (list gpl2+ gpl3+ lgpl3+))))
+    (license (list license:gpl2+
+                   license:gpl3+
+                   license:lgpl3+))))
