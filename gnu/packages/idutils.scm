@@ -18,10 +18,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages idutils)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages))
 
@@ -63,4 +63,4 @@ tokens used in a list of file names and then to query that index.  Thus, it
 allows the user to, for example, find all the uses of a particular function
 in a large programming project.  In addition to handling textual tokens, it
 can also handle numeric constants and the contents of character strings.")
-    (license gpl3+)))
+    (license license:gpl3+)))
