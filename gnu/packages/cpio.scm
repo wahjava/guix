@@ -19,7 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages cpio)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (guix packages)
@@ -53,4 +53,4 @@ many formats are supported, including legacy formats.  The format is
 determined automatically by the program and is handled appropriately.
 Furthermore, the location of the archive is not important.  It can be another
 file on the drive, a tape, or data on a pipe.")
-    (license gpl3+)))
+    (license license:gpl3+)))
