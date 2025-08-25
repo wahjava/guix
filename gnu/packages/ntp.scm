@@ -30,6 +30,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ntp)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
@@ -54,7 +55,6 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module ((guix licenses) #:prefix l:)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1))
@@ -139,7 +139,7 @@ for only a few minutes at a time.
 Typical accuracy when synchronised over the Internet is several milliseconds.
 On a local network this can reach tens of microseconds.  With hardware
 time-stamping or reference clock, sub-microsecond accuracy is possible.")
-    (license l:gpl2)))
+    (license license:gpl2)))
 
 (define-public ntp
   (package
@@ -213,7 +213,7 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
     (synopsis "Real time clock synchronization system")
     (description "NTP is a system designed to synchronize the clocks of
 computers over a network.")
-    (license (l:x11-style
+    (license (license:x11-style
               "https://www.eecis.udel.edu/~mills/ntp/html/copyright.html"
               "A non-copyleft free licence from the University of Delaware"))
     (home-page "https://www.ntp.org")))
@@ -291,16 +291,17 @@ This package contains the NTP daemon and utility programs.  An NTP daemon
 needs to be running on each host that is to have its clock accuracy controlled
 by NTP.  The same NTP daemon is also used to provide NTP service to other hosts.")
     ;; All licenses are in file://LICENSES/
-    (license (list l:bsd-2
-                   l:bsd-3
-                   l:bsd-4
-                   l:isc
-                   l:expat
-                   l:asl2.0
-                   l:cc-by4.0
-                   (l:non-copyleft "file://LICENSES/Beerware.txt"
+    (license (list license:bsd-2
+                   license:bsd-3
+                   license:bsd-4
+                   license:isc
+                   license:expat
+                   license:asl2.0
+                   license:cc-by4.0
+                   (license:non-copyleft
+                    "file://LICENSES/Beerware.txt"
                     "See LICENSES/Beerware.txt in the distribution.")
-                   (l:x11-style
+                   (license:x11-style
                     "https://www.eecis.udel.edu/~mills/ntp/html/copyright.html"
                     "A non-copyleft free licence from the University of Delaware")))
     (home-page "https://www.ntpsec.org")))
@@ -347,4 +348,5 @@ minimalist than ntpd.")
     (properties
      '((release-monitoring-url . "https://cdn.openbsd.org/pub/OpenBSD/OpenNTPD")))
     ;; A few of the source files are under bsd-3.
-    (license (list l:isc l:bsd-3))))
+    (license (list license:isc
+                   license:bsd-3))))
