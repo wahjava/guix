@@ -19,8 +19,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libdaemon)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -103,4 +103,4 @@ daemons.  It consists of the following parts:
 
 APIs like these are used in most daemon software available.  It is not that
 simple to get it done right and code duplication is not a goal.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
