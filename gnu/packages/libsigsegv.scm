@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libsigsegv)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -55,4 +55,4 @@
 program tries to access an unavailable region of memory, in user mode.  By
 catching and handling page faults, the program can implement pageable virtual
 memory, stack overflow handlers, and so on.")
-   (license gpl2+)))
+   (license license:gpl2+)))
