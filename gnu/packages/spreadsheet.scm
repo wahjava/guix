@@ -19,6 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages spreadsheet)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -27,7 +28,6 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
-  #:use-module (guix licenses)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
@@ -96,7 +96,7 @@
  "@code{sc-im} is a highly configurable spreadsheet program
  providing a vim-like experience.  @code{sc-im} supports @code{gnuplot} interaction,
  functions for sorting and filtering, 256 color support, and much more.")
-      (license bsd-4)))
+      (license license:bsd-4)))
 
 (define-public visidata
   (package
@@ -140,4 +140,4 @@
 clarity of a spreadsheet, the efficiency of the terminal, and the power of
 Python, into a lightweight utility which can handle millions of rows.")
     (home-page "https://www.visidata.org/")
-    (license gpl3)))
+    (license license:gpl3)))
