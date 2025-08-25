@@ -79,6 +79,7 @@
       (or (? string?)
           (? number?)
           (? boolean?)
+          (? pair-of-numbers?)
           (? block-entries?)))
      #t)))
 
@@ -100,6 +101,8 @@
                 (string-append " = " (number->string v)))
                ((? boolean? v)
                 (if v " = true" " = false"))
+               ((? pair-of-numbers? v)
+                (string-append (number->string (car v)) "x" (number->string (cadr v))))
                ((? block-entries? v)
                 (string-append " {\n"
                                (serialize-block-entries #f v (+ tabs 1))
