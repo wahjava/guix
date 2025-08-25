@@ -23,8 +23,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages less)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (gnu packages)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages perl)
@@ -59,7 +59,7 @@ of text in page-sized chunks.  Unlike traditional pagers, it allows both
 backwards and forwards movement through the document.  It also does not have
 to read the entire input file before starting, so it starts faster than most
 text editors.")
-    (license gpl3+))) ; some files are under GPLv2+
+    (license license:gpl3+))) ; some files are under GPLv2+
 
 (define-public lesspipe
   (package
@@ -125,4 +125,4 @@ less described here is called @code{lesspipe.sh}.  It is able to process a
 wide variety of file formats.  It enables users to inspect archives and
 display their contents without having to unpack them before.  The filter is
 easily extensible for new formats.")
-    (license gpl2+)))
+    (license license:gpl2+)))
