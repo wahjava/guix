@@ -25,7 +25,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages screen)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -95,7 +95,7 @@ features such as a scroll-back buffer and a copy-and-paste mechanism.  Screen
 then manages the different virtual terminals, allowing you to easily switch
 between them, to detach them from the current session, or even splitting the
 view to show two terminals at once.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public dtach
   (package
@@ -127,7 +127,7 @@ view to show two terminals at once.")
      "dtach is a tiny program that emulates the detach feature of screen,
 allowing you to run a program in an environment that is protected from the
 controlling terminal and attach to it later.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public byobu
   (package
@@ -177,7 +177,7 @@ controlling terminal and attach to it later.")
 as folding room dividers.  The Byobu software includes an enhanced profile,
 configuration utilities, and system status notifications for the GNU Screen
 window manager as well as the Tmux terminal multiplexer.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public reptyr
   (package
@@ -212,4 +212,4 @@ to leave and don't want to interrupt it?  Just start a @code{screen}, use
 reptyr to grab it, and then kill the @code{ssh} session and head on home.")
     ;; Reptyr currently does not support mips.
     (supported-systems (delete "mips64el-linux" %supported-systems))
-    (license expat)))
+    (license license:expat)))
