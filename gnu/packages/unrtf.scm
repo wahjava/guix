@@ -19,7 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages unrtf)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -47,4 +47,4 @@
      "GNU UnRTF converts text documents from RTF to HTML, LaTeX, or troff.
 It supports changes in font characteristics, underlines and strikethroughs,
 superscripts and subscripts, and more.")
-    (license gpl3+)))
+    (license license:gpl3+)))
