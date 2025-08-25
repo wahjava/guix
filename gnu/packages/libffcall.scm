@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libffcall)
-  #:use-module ((guix licenses) #:prefix l:)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -46,4 +46,4 @@
      "GNU Libffcall is a collection of libraries that can be used to build
 foreign function call interfaces in embedded interpreters.")
     (home-page "https://www.gnu.org/software/libffcall/")
-    (license l:gpl2+)))
+    (license license:gpl2+)))
