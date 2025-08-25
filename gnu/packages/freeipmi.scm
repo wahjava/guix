@@ -20,10 +20,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages freeipmi)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages autotools)
@@ -84,4 +84,4 @@ in accordance with the IPMI v1.5/2.0 specification.  These programs provide a
 set of interfaces for platform management.  Common functionality includes
 sensor monitoring, system event monitoring, power control and
 serial-over-LAN.")
-    (license gpl3+)))
+    (license license:gpl3+)))
