@@ -21,11 +21,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages dejagnu)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages tcl))
 
@@ -94,4 +94,4 @@
      "DejaGnu is a framework for testing software.  In effect, it serves as
 a front-end for all tests written for a program.  Thus, each program can have
 multiple test suites, which are then all managed by a single harness.")
-    (license gpl3+)))
+    (license license:gpl3+)))
