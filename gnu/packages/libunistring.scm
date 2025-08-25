@@ -24,7 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libunistring)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -67,4 +67,5 @@
 Unicode strings and for manipulating C strings according to the Unicode
 standard.")
    (home-page "https://www.gnu.org/software/libunistring/")
-   (license (list lgpl3+ gpl2+))))
+   (license (list license:lgpl3+
+                  license:gpl2+))))
