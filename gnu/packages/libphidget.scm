@@ -19,10 +19,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libphidget)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages libusb))
 
 (define-public libphidget
@@ -41,6 +41,6 @@
    (inputs (list libusb))
    (outputs '("out" "debug"))
    (home-page "https://www.phidgets.com/")
-   (license lgpl3+)
+   (license license:lgpl3+)
    (synopsis "C library to manipulate Phidgets")
    (description synopsis)))
