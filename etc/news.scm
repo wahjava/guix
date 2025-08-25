@@ -31,7 +31,7 @@
 ;; Copyright © 2025 Jelle Licht <jlicht@fsfe.org>
 ;; Copyright © 2025 Rivulet Cedar <rivulet_cedar@yeah.net>
 ;; Copyright © 2025 jgart <jgart@dismail.de>
-
+;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;
 ;; Copying and distribution of this file, with or without modification, are
 ;; permitted in any medium without royalty provided the copyright notice and
@@ -39,6 +39,24 @@
 
 (channel-news
  (version 0)
+
+ (entry (commit "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        (title
+         (en "Ungoogled-chromium removed")
+         (de "Ungoogled-chromium entfernt")
+         (fr "Ungoogled-chromium effacé"))
+        (body
+         (en "The ungoogled-chromium browser (available as @code{chromium}
+from the command line) has been removed from the Guix packaging collection.
+Our version from 2023 was outdated and did not build anymore.")
+         (de "Der Webbrowser Ungoogled-Chromium (als @code{chromium} von
+der Kommandozeile aus verfügbar) wurde aus den Guix-Paketen entfernt.
+Unsere Version von 2023 war veraltet und konnte nicht mehr compiliert
+werden.")
+         (fr "Le navigateur web ungoogled-chromium (disponible en ligne de
+commande en tant que @code{chromium} a été retiré de la collection de
+paquets Guix.  Notre version de 2023 était datée et ne pouvait plus être
+compilée.")))
 
  (entry (commit "3e45fc0f37d027516ac3d112ca7768d698eeac74")
         (title
