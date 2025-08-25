@@ -25,11 +25,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages valgrind)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (srfi srfi-1)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
@@ -88,7 +88,7 @@ also use Valgrind to build new tools.")
     (supported-systems (fold delete %supported-systems
                              '("i586-gnu" "x86_64-gnu"
                                "armhf-linux" "riscv64-linux")))
-    (license gpl2+)
+    (license license:gpl2+)
 
     ;; Hide this variant so end users get the "interactive" Valgrind below.
     (properties '((hidden? . #t)))))
