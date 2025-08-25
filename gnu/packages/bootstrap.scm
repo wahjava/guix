@@ -24,7 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages bootstrap)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix platform)
   #:use-module (guix packages)
@@ -289,7 +289,7 @@ or false to signal an error."
     (synopsis description)
     (description description)
     (home-page #f)
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define package-with-bootstrap-guile
   (mlambdaq (p)
@@ -599,7 +599,7 @@ $out/bin/guile --version~%"
      (synopsis "Bootstrap Guile")
      (description "Pre-built Guile for bootstrapping purposes.")
      (home-page #f)
-     (license lgpl3+))))
+     (license license:lgpl3+))))
 
 (define %bootstrap-coreutils&co
   (package-from-tarball "bootstrap-binaries"
@@ -852,7 +852,7 @@ $out/bin/guile --version~%"
     (synopsis "Bootstrap binaries and headers of the GNU C Library")
     (description synopsis)
     (home-page #f)
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define %bootstrap-gcc
   ;; The initial GCC.  Uses binaries from a tarball typically built by
@@ -980,7 +980,7 @@ exec ~a/bin/~a -B~a/lib \
     (synopsis "Bootstrap binaries of the GNU Compiler Collection")
     (description synopsis)
     (home-page #f)
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define (%bootstrap-inputs)
   ;; The initial, pre-built inputs.  From now on, we can start building our
