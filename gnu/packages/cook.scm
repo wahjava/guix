@@ -19,8 +19,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages cook)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
@@ -88,4 +88,4 @@
 files to create, and recipes of how to create them.  In any non-trivial program
 there will be prerequisites to performing the actions necessary to creating
 any file, such as include files.  Cook provides a mechanism to define these.")
-    (license gpl3+)))
+    (license license:gpl3+)))
