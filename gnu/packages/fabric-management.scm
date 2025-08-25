@@ -20,9 +20,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fabric-management)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
@@ -89,7 +89,8 @@ the infiniband fabric to manage the fabric's routing state.  This package
 also contains various tools for diagnosing and testing Infiniband networks
 that can be used from any machine and do not need to be run on a machine
 running the opensm daemon.")
-    (license (list gpl2 bsd-2))))
+    (license (list license:gpl2
+                   license:bsd-2))))
 
 (define-public infiniband-diags
   (package
@@ -143,7 +144,8 @@ debug, and maintain Infiniband (IB) fabrics.
 In addition to the utilities, a sub-library, @file{libibnetdisc}, is provided
 to scan an entire IB fabric and return data structures representing it.  The
 interface to this library is not guaranteed to be stable.")
-    (license (list gpl2 bsd-2)))) ; dual
+    (license (list license:gpl2
+                   license:bsd-2)))) ; dual
 
 (define-public ibutils
   (package
@@ -180,7 +182,7 @@ interface to this library is not guaranteed to be stable.")
     (description "These command-line utilities allow for diagnosing and
 testing InfiniBand networks.")
     (home-page "https://www.openfabrics.org/downloads/ibutils/")
-    (license bsd-2)))
+    (license license:bsd-2)))
 
 (define-public ucx
   (package
@@ -240,7 +242,7 @@ run-time support libraries, as well as RPC and data-centric applications.
 UCX utilizes high-speed networks for inter-node communication, and shared
 memory mechanisms for efficient intra-node communication.")
     (home-page "https://www.openucx.org/")
-    (license bsd-3)
+    (license license:bsd-3)
 
     ;; <ucm/bistro/bistro.h> lists only PowerPC64, AArch64, RISC-V
     ;; and x86_64 as supported.
