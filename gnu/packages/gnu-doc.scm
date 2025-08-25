@@ -18,15 +18,14 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gnu-doc)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages base)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages texinfo)
-
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
   #:use-module (guix cvs-download)
   #:use-module (guix download)
-  #:use-module (guix licenses)
   #:use-module (guix packages))
 
 (define-public miscfiles
@@ -51,7 +50,7 @@ example, country abbreviations, names and capital cities; currency
 abbreviations and names; a Best Current Practices index; a map of the ASCII
 character set; a list of three-letter airport codes; and an English word
 list.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public gnu-standards
   (package
@@ -99,4 +98,4 @@ clean, consistent, and easy to install.
 
 The information for maintainers of GNU software has guidelines and advice for
 someone who is the maintainer of a GNU program on behalf of the GNU Project.")
-    (license fdl1.3+)))
+    (license license:fdl1.3+)))
