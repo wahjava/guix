@@ -17,7 +17,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gperf)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -43,7 +43,7 @@
 strings, it produces a hash function and hash table in C or C++ code.  That
 the hash function is perfect means that no collisions can exist and that
 look-ups can be made by single string comparisons.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public gperf-3.1
   (package
