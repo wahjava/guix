@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages wdiff)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -56,4 +56,4 @@
      "GNU Wdiff is a front-end to the diff program from Diffutils that
 allows you to compare files on a word-by-word basis, where a word is anything
 between whitespace.")
-    (license gpl3+)))
+    (license license:gpl3+)))
