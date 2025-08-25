@@ -22,7 +22,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages guile-wm)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages xorg)
@@ -70,7 +70,7 @@
        "Guile-XCB implements the XCB protocol and provides all the tools
 necessary to write X client code in Guile Scheme without any external
 dependencies.")
-      (license gpl3+))))
+      (license license:gpl3+))))
 
 (define-public guile-wm
   (let ((commit "f3c7b3be719f425ffb87265d34855a73366351be")
@@ -183,4 +183,4 @@ have total control of what it does by choosing which modules to include.
 Included with it are a few modules that provide basic TinyWM-like window
 management, some window record-keeping, multi-monitor support, and emacs-like
 keymaps and minibuffer.  At this point, it's just enough to get you started.")
-      (license gpl3+))))
+      (license license:gpl3+))))
