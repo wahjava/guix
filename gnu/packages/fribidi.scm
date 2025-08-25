@@ -19,10 +19,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fribidi)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages))
 
 (define-public fribidi
@@ -45,7 +45,7 @@
 Algorithm.  This algorithm is used to properly display text in left-to-right
 or right-to-left ordering as necessary.")
     (home-page "https://github.com/fribidi/fribidi")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public bidiv
   (package
@@ -99,4 +99,4 @@ viewing Hebrew texts, etc.  It was written for Hebrew but Arabic (or other BiDi
 languages) should work equally well.")
     (properties
      '((release-monitoring-url . "https://deb.debian.org/debian/pool/main/b/bidiv")))
-    (license gpl2+)))
+    (license license:gpl2+)))
