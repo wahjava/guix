@@ -22,9 +22,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages swig)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix licenses)
   #:use-module (guix build-system gnu)
   #:use-module (guix utils)
   #:use-module (gnu packages)
@@ -70,7 +70,7 @@ code.  In addition, SWIG provides a variety of customization features that let
 you tailor the wrapping process to suit your application.")
 
     ;; See http://www.swig.org/Release/LICENSE for details.
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public swig-next
   ;; a number of packages using swig do not build with this version
