@@ -20,6 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages nvi)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages dbm)
@@ -28,7 +29,6 @@
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix utils))
 
 (define-public nvi
@@ -114,4 +114,4 @@ original BSD vi editor.  As such, it doesn't have a lot of snazzy features as
 do some of the other vi clones such as elvis and vim.  However, if all you
 want is vi, this is the one to get.")
     (home-page "https://sites.google.com/a/bostic.com/keithbostic/vi")
-    (license bsd-3)))
+    (license license:bsd-3)))
