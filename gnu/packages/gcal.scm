@@ -17,10 +17,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gcal)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix licenses))
+  #:use-module (guix build-system gnu))
 
 (define-public gcal
   (package
@@ -60,4 +60,4 @@ countries, which can be complemented by user-made lists of fixed dates to
 make an agenda.  Gcal can also calculate astronomical data, such as the
 phases of the moon, and supports alternative calendar formats: Julian,
 Gregorian, Islamic, Chinese and more.")
-    (license gpl3+)))
+    (license license:gpl3+)))
