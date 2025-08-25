@@ -17,10 +17,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages cppi)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix licenses))
+  #:use-module (guix build-system gnu))
 
 (define-public cppi
   (package
@@ -41,4 +41,4 @@
 preprocessor directives to reflect their nesting.  It also performs other
 standardizations, such as correcting the number of spaces between directives
 and the text following them.")
-    (license gpl3+)))
+    (license license:gpl3+)))
