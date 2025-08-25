@@ -44,6 +44,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages time)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages check)
@@ -67,7 +68,6 @@
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (guix git-download)
-  #:use-module (guix licenses)
   #:use-module (guix packages))
 
 (define-public termdown
@@ -95,7 +95,7 @@
 a starting point you provide.  The user can pause and resume the countdown
 from the text user interface.  It can also be used in stop watch mode which
 counts forward or for just showing the current time.")
-    (license gpl3)))
+    (license license:gpl3)))
 
 (define-public time
   (package
@@ -116,7 +116,7 @@ counts forward or for just showing the current time.")
      "Time is a command that displays information about the resources that a
 program uses.  The display output of the program can be customized or saved
 to a file.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public pps-tools
   ;; Last tagged release was in 2021
@@ -156,7 +156,7 @@ to a file.")
        "This package includes the necessary headers for using
 @url{http://linuxpps.org/, LinuxPPS} PPSAPI kernel interface in user-space
 applications, and several support tools.")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public python-pytimeparse
   (package
@@ -191,7 +191,7 @@ applications, and several support tools.")
     (synopsis "Time expression parser")
     (description
      "This small Python module parses various kinds of time expressions.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-pytzdata
   (package
@@ -214,7 +214,7 @@ applications, and several support tools.")
     (synopsis "Timezone database for Python")
     (description
      "This library provides a timezone database for Python.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-tzdata
   (package
@@ -250,7 +250,7 @@ applications, and several support tools.")
     (home-page "https://github.com/python/tzdata")
     (synopsis "Python wrapper of IANA time zone data")
     (description "This package provides a thin Python wrapper around tzdata.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-pytz-deprecation-shim
   (package
@@ -275,7 +275,7 @@ applications, and several support tools.")
 It is intended for temporary usage only, and should allow you to drop your
 dependency on @code{pytz} while also giving your users notice that eventually
 you will remove support for the pytz-specific interface.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-pytz
   (package
@@ -296,7 +296,7 @@ you will remove support for the pytz-specific interface.")
 allows accurate and cross platform timezone calculations using Python 2.4 or
 higher.  It also solves the issue of ambiguous times at the end of daylight
 saving time.  Almost all of the Olson timezones are supported.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-pendulum
   (package
@@ -343,7 +343,7 @@ setup(name='pendulum',
 @code{datetime} class, providing an alternative API.  As it inherits from the
 standard @code{datetime} all @code{datetime} instances can be replaced by
 Pendulum instances.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-dateutil
   (package
@@ -380,7 +380,8 @@ datetime module, available in Python 2.3+.")
     ;; The license was changed from the three-clause BSD license to a dual
     ;; Apache 2.0/BSD-3 variant at 2017-12-01.  Some code is only available as
     ;; BSD-3 still; but all new code is dual licensed (the user can choose).
-    (license (list bsd-3 asl2.0))))
+    (license (list license:bsd-3
+                   license:asl2.0))))
 
 (define-public python-dateutils
   (package
@@ -403,7 +404,7 @@ operations on dates/times.  Heavy use is made of the @code{relativedelta} type
 from the @code{dateutil} library.  Much of this package is just a light
 wrapper on top of this with some added features such as range generation and
 business day calculation.")
-    (license bsd-0)))
+    (license license:bsd-0)))
 
 (define-public python-parsedatetime
   (package
@@ -428,7 +429,7 @@ business day calculation.")
     (description
      "This package provides some tools to parse human-readable date/time text
 in Python.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-ciso8601
   (package
@@ -454,7 +455,7 @@ in Python.")
     (description
      "The package ciso8601 converts ISO 8601 or RFC 3339 date time strings
 into Python datetime objects.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-relativetimebuilder
   (package
@@ -481,7 +482,7 @@ into Python datetime objects.")
 feature from the dateutil library, ensuring calendar precision with
 aniso8601.")
     ;; setup.py and PyPI: "License :: OSI Approved :: BSD License"
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public python-timezonefinder
   (package
@@ -513,7 +514,7 @@ aniso8601.")
     (synopsis "Finding the timezone of any coordinates on Earth offline")
     (description "This is a python package for looking up the corresponding
 timezone for given coordinates on earth entirely offline.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-tzlocal
   (package
@@ -544,7 +545,7 @@ timezone for given coordinates on earth entirely offline.")
 This module attempts to fix a glaring hole in pytz, that there is no way to
 get the local timezone information, unless you know the zoneinfo name, and
 under several distributions that's hard or impossible to figure out.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-isodate
   (package
@@ -568,7 +569,7 @@ under several distributions that's hard or impossible to figure out.")
     (description
      "Python-isodate is a python module for parsing and formatting
 ISO 8601 dates, time and duration.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public python-iso8601
   (package
@@ -587,7 +588,7 @@ ISO 8601 dates, time and duration.")
     (description
      "This module parses the most common forms of ISO 8601 date strings (e.g.
 @code{2007-01-14T20:34:22+00:00}) into @code{datetime} objects.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-iso8601/pinned
   (hidden-package
@@ -627,7 +628,7 @@ ISO 8601 dates, time and duration.")
     (description
      "This module provides a @code{monotonic()} function which returns the
 value (in fractional seconds) of a clock which never goes backwards.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-pyrfc3339
   (package
@@ -649,7 +650,7 @@ value (in fractional seconds) of a clock which never goes backwards.")
     (synopsis "Python timestamp library")
     (description "Python library for generating and parsing RFC 3339-compliant
 timestamps.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-arrow
   (package
@@ -685,7 +686,7 @@ timestamps.")
      "Arrow is a Python library to creating, manipulating, formatting and
 converting dates, times, and timestamps.  It implements and updates the
 datetime type.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public python-aniso8601
   (package
@@ -703,7 +704,7 @@ datetime type.")
     (synopsis "Python library for parsing ISO 8601 strings")
     (description
      "This package contains a library for parsing ISO 8601 datetime strings.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public rdate
   (let ((commit "91d84610e3695e90a884e2953908e95a856a9b74")
@@ -727,7 +728,7 @@ datetime type.")
        "@code{rdate} connects to an RFC 868 time server over a TCP/IP network,
 printing the returned time and/or setting the system clock.")
       (home-page "https://www.aelius.com/njh/rdate/")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public datefudge
   (package
@@ -768,7 +769,7 @@ printing the returned time and/or setting the system clock.")
      "Utility that fakes the system time by pre-loading a small library that
 modifies the @code{time}, @code{gettimeofday} and @code{clock_gettime} system
 calls.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public tz
   (package
@@ -798,7 +799,7 @@ calls.")
      "@command{tz} helps you schedule things across time zones.  It is an
 interactive TUI program that displays time across a few time zones of your
 choosing.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public countdown
   (package
@@ -825,4 +826,4 @@ choosing.")
      "Countdown provides a fancy text display while it counts down to zero
 from a starting point you provide.  The user can pause and resume the
 countdown from the text user interface.")
-    (license expat)))
+    (license license:expat)))
