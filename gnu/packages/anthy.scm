@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages anthy)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -64,4 +64,5 @@ dictionaries.")
     ;; Most of anthy is lgpl2.1+.  However, some files (e.g., from
     ;; alt-cannadic) use gpl2.  See the file "COPYING" in the anthy
     ;; source for details.
-    (license (list lgpl2.1+ gpl2))))
+    (license (list license:lgpl2.1+
+                   license:gpl2))))
