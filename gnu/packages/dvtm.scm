@@ -17,9 +17,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages dvtm)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (gnu packages ncurses))
 
@@ -51,4 +51,5 @@ programs.")
    ;; "dvtm reuses some code of dwm and is released under the same MIT/X11
    ;; license. The terminal emulation part is licensed under the ISC license."
    ;; source: http://www.brain-dump.org/projects/dvtm/#license
-   (license (list expat isc))))
+   (license (list license:expat
+                  license:isc))))
