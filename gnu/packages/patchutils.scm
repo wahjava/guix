@@ -25,10 +25,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages patchutils)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
@@ -116,7 +116,7 @@
       (description "Coccinelle is a tool that allows modification of C code
 using semantic patches in the @acronym{SmPL, Semantic Patch Language} for
 specifying desired matches and transformations in the C code.")
-      (license gpl2))))
+      (license license:gpl2))))
 
 (define-public patchutils
   (package
@@ -163,7 +163,7 @@ specifying desired matches and transformations in the C code.")
 in useful ways such as interpolating between two pre-patches, combining two
 incremental patches, fixing line numbers in hand-edited patches, and simply
 listing the files modified by a patch.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public quilt
   (package
@@ -243,7 +243,7 @@ listing the files modified by a patch.")
      "Quilt allows you to easily manage large numbers of patches by keeping
 track of the changes each patch makes.  Patches can be applied, un-applied,
 refreshed, and more.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public colordiff
   (package
@@ -274,7 +274,7 @@ refreshed, and more.")
     (description
      "Colordiff is Perl script wrapper on top of diff command which provides
 'syntax highlighting' for various patch formats.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public vbindiff
   (package
@@ -296,7 +296,7 @@ refreshed, and more.")
 hexadecimal and ASCII (or EBCDIC).  It can also display two files at once, and
 highlight the differences between them.  It works well with large files (up to 4
 GiB).")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public meld
   (package
@@ -361,7 +361,7 @@ directories, and has support for many popular version control systems.
 
 Meld helps you review code changes and understand patches.  It might even help
 you to figure out what is going on in that merge you keep avoiding.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public patchwork
   (package
@@ -512,7 +512,7 @@ if __name__ == \"__main__\":
 patches, and displays the patches along with comments and state information.
 Users can login allowing them to change the state of patches.")
     (home-page "http://jk.ozlabs.org/projects/patchwork/")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public wiggle
   (package
@@ -547,7 +547,7 @@ Users can login allowing them to change the state of patches.")
     (description
      "@code{wiggle} attempts to apply patches to a target file even if the
 patches do not match perfectly.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public pwclient
   (package
@@ -598,4 +598,4 @@ patches do not match perfectly.")
     (description
      "pwclient is a VCS-agnostic tool for interacting with Patchwork, the
 web-based patch tracking system.")
-    (license gpl2+)))
+    (license license:gpl2+)))
