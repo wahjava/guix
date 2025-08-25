@@ -22,13 +22,13 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libunwind)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix download)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix licenses))
+  #:use-module (guix build-system gnu))
 
 (define-public libunwind
   (package
@@ -68,4 +68,4 @@ remote (across-process) operation.  As such, the API is useful in a number of
 applications.")
     ;; Do not believe <https://savannah.nongnu.org/projects/libunwind/>:
     ;; see <https://github.com/libunwind/libunwind/issues/372>.
-    (license expat)))
+    (license license:expat)))
