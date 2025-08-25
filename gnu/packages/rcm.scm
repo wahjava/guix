@@ -18,10 +18,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages rcm)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages perl))
 
@@ -57,5 +57,5 @@ or “dotfiles” because they begin with a period.  This suite is useful
 for committing your rc files to a central repository to share, but it also
 scales to a more complex situation such as multiple source directories
 shared between computers with some host-specific or task-specific files.")
-    (license bsd-3)
+    (license license:bsd-3)
     (home-page "https://github.com/thoughtbot/rcm")))
