@@ -23,7 +23,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages bdw-gc)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -110,7 +110,7 @@ Alternatively, the garbage collector may be used as a leak detector for
 C or C++ programs, though that is not its primary goal.")
    (home-page "https://www.hboehm.info/gc/")
 
-   (license (x11-style (string-append home-page "license.txt")))))
+   (license (license:x11-style (string-append home-page "license.txt")))))
 
 ;; TODO: Add a static output in libgc in the next rebuild cycle.
 (define-public libgc/static-libs
@@ -185,4 +185,4 @@ lock-free code, experiment with thread programming paradigms, etc.")
     (home-page "https://github.com/bdwgc/libatomic_ops/")
 
     ;; Some source files are X11-style, others are GPLv2+.
-    (license gpl2+)))
+    (license license:gpl2+)))
