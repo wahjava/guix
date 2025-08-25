@@ -22,8 +22,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libedit)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -55,7 +55,7 @@
 library (libedit).  This Berkeley-style licensed command line editor library
 provides generic line editing, history, and tokenization functions, similar to
 those found in GNU Readline.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public editline
   (package
@@ -76,4 +76,4 @@ those found in GNU Readline.")
 any program to provide command line editing and history functions.  It is call
 compatible with the GNU Readline library, but at a fraction of the size,
 and as a result fewer features.")
-    (license bsd-4)))
+    (license license:bsd-4)))
