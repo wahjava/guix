@@ -34,12 +34,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pulseaudio)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix utils)
-  #:use-module ((guix licenses) #:prefix l:)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
@@ -113,7 +113,7 @@ little-endian (such as Intel and DEC/Compaq Alpha) processor systems as well
 as big-endian processor systems such as Motorola 68k, Power PC, MIPS and
 SPARC.  Hopefully the design of the library will also make it easy to extend
 for reading and writing new sound file formats.")
-    (license l:lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public libsamplerate
   (package
@@ -167,7 +167,7 @@ against computation cost.  The current best converter provides a
 signal-to-noise ratio of 145dB with -3dB passband extending from DC to 96% of
 the theoretical best bandwidth for a given pair of input and output sample
 rates.")
-    (license l:bsd-2)))
+    (license license:bsd-2)))
 
 (define-public pulseaudio
   (package
@@ -259,7 +259,7 @@ sound server.")
     ;; PulseAudio is LGPLv2+, but some of the optional dependencies (GNU dbm,
     ;; FFTW, etc.) are GPL'd, so the result is effectively GPLv2+.  See
     ;; 'LICENSE' for details.
-    (license l:gpl2+)))
+    (license license:gpl2+)))
 
 (define-public pavucontrol
   (package
@@ -291,7 +291,7 @@ sound server.")
      "PulseAudio Volume Control (pavucontrol) provides a GTK+
 graphical user interface to connect to a PulseAudio server and
 easily control the volume of all clients, sinks, etc.")
-    (license l:gpl2+)))
+    (license license:gpl2+)))
 
 (define-public ponymix
   (package
@@ -327,7 +327,7 @@ easily control the volume of all clients, sinks, etc.")
     (description "Ponymix is a PulseAudio mixer and volume controller with a
 command-line interface.  In addition, it is possible to use named sources and
 sinks.")
-    (license l:expat)))
+    (license license:expat)))
 
 (define-public pulsemixer
   (package
@@ -359,7 +359,7 @@ sinks.")
     (synopsis "Command-line and curses mixer for PulseAudio")
     (description "Pulsemixer is a PulseAudio mixer with command-line and
 curses-style interfaces.")
-    (license l:expat)))
+    (license license:expat)))
 
 (define-public pamixer
   (package
@@ -384,7 +384,7 @@ curses-style interfaces.")
     (description
      "pamixer is like amixer but for PulseAudio, allowing easy control of the
 volume levels of the sinks (get, set, decrease, increase, toggle mute, etc).")
-    (license l:gpl3+)))
+    (license license:gpl3+)))
 
 (define-public pasystray
   (package
@@ -417,7 +417,7 @@ volume levels of the sinks (get, set, decrease, increase, toggle mute, etc).")
     (description "@command{pasystray} enables control of various
 PulseAudio server settings from the X11 system tray.  See the project
 README.md for a detailed list of features.")
-    (license l:lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public paprefs
   (package
@@ -442,7 +442,7 @@ server")
 dialog for the PulseAudio sound server.  Note that this program can
 only configure local servers, and requires that a special module
 module-gsettings is loaded in the sound server.")
-    (license l:gpl2)))
+    (license license:gpl2)))
 
 (define-public noise-suppression-for-voice
   (package
@@ -476,7 +476,7 @@ however they are only reduced in volume when voice is present.
 
 The plug-in is made to work with 1 or 2 channels (LADSPA plugin),
 16 bit, 48000 Hz audio input.")
-    (license l:gpl3)))
+    (license license:gpl3)))
 
 (define-public noisetorch
   (package
@@ -525,7 +525,7 @@ suppresses noise, in any application.  Use whichever conferencing or VOIP
 application you like and simply select the NoiseTorch Virtual Microphone as
 input to torch the sound of your mechanical keyboard, computer fans, trains
 and the likes.")
-    (license l:gpl3)))
+    (license license:gpl3)))
 
 (define-public apulse
   (package
@@ -562,4 +562,4 @@ capture streams running at the same time.  dmix plugin muxes multiple playback
 streams; dsnoop plugin allow multiple applications to capture from a single
 microphone; and plug plugin transparently converts audio between various
 sample formats, sample rates and channel numbers.")
-    (license l:expat)))
+    (license license:expat)))
