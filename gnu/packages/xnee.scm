@@ -18,8 +18,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages xnee)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages gtk)
@@ -56,4 +56,4 @@
      "GNU Xnee is a program that can record, replay and distribute user
 actions in X11.  It can be used to automate user interactions for testing or
 demonstration purposes.")
-    (license gpl3+)))
+    (license license:gpl3+)))
