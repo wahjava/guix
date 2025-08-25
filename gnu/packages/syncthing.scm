@@ -26,13 +26,13 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages syncthing)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system go)
   #:use-module (guix build-system python)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
-  #:use-module (guix licenses)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages freedesktop)
@@ -133,7 +133,7 @@ Protocol.")
        (upstream-name . "syncthing-source")
        ;; The hashing code greatly benefits from newer architecture support.
        (tunable? . #t)))
-    (license mpl2.0)))
+    (license license:mpl2.0)))
 
 (define-public syncthing-gtk
   ;; The commit used below corresponds to the latest commit of the Python 3
@@ -211,7 +211,7 @@ notification area icon for Syncthing.  Supported Syncthing features:
 @item Restart, shutdown server
 @item Editing daemon settings
 @end itemize\n")
-      (license gpl2))))
+      (license license:gpl2))))
 
 (define-public qsyncthingtray
   (deprecated-package "qsyncthingtray" syncthing-gtk))
@@ -241,4 +241,4 @@ notification area icon for Syncthing.  Supported Syncthing features:
     (description
      "This package provides @code{notify}, a file system event notification
 library in Go.")
-    (license expat)))
+    (license license:expat)))
