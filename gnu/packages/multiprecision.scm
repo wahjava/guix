@@ -28,7 +28,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages multiprecision)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bison)
@@ -83,7 +83,7 @@ arbitrary-precision arithmetic on signed integers, rational numbers and floating
 point numbers.  The precision is only limited by the available memory.
 The library is highly optimized, with a design focus on execution speed.
 It is aimed at use in, for example, cryptography and computational algebra.")
-    (license lgpl3+)
+    (license license:lgpl3+)
     (home-page "https://gmplib.org/")))
 
 (define-public gmp-6.0
@@ -132,7 +132,7 @@ It is aimed at use in, for example, cryptography and computational algebra.")
     "GNU@tie{}@acronym{MPFR, Multiple Precision Floating-Point Reliably} is a C
 library for performing multiple-precision, floating-point computations with
 correct rounding.")
-   (license lgpl3+)
+   (license license:lgpl3+)
    (home-page "https://www.mpfr.org/")))
 
 (define-public mpc
@@ -155,7 +155,7 @@ correct rounding.")
     "GNU@tie{}@acronym{MPC, Multiple Precision Complex library} is a C library
 for performing arithmetic on complex numbers.  It supports arbitrarily high
 precision and correctly rounds the results.")
-   (license lgpl3+)
+   (license license:lgpl3+)
    (home-page "https://www.multiprecision.org/mpc/")))
 
 (define-public mpfi
@@ -208,7 +208,7 @@ Floating-Point Reliably} libraries.
 The purpose of arbitrary-precision interval arithmetic is to get results that
 are both guaranteed, thanks to interval computation, and accurate, thanks to
 multiple-precision arithmetic.")
-      (license lgpl2.1+))))
+      (license license:lgpl2.1+))))
 
 (define-public irram
   (package
@@ -234,7 +234,7 @@ over trigonometric functions to linear algebra and differential
 equations.  A program using iRRAM is coded in ordinary C++, but may use a
 special class that behaves like real numbers without any
 error.  Additionally, iRRAM uses the concept of multi-valued functions.")
-    (license lgpl2.0+)
+    (license license:lgpl2.0+)
     (home-page "http://irram.uni-trier.de/")))
 
 (define-public qd
@@ -273,7 +273,7 @@ convert an existing C++ or Fortran-90 program to use the library with only
 minor changes to the source code.  In most cases only a few type statements
 and (for Fortran-90 programs) read/write statements need to be changed.  PSLQ
 and numerical quadrature programs are included.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public cln
   (package
@@ -296,7 +296,7 @@ and numerical quadrature programs are included.")
     (description "CLN is a C++ library for efficient computations with all
 kinds of numbers in arbitrary precision.  It provides a rich set of number
 classes and elementary, logical and transcendental functions.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public tomsfastmath
   (package
@@ -360,7 +360,7 @@ Libs: -L~a/lib -ltfm~%"
     (description "TomsFastMath is a large integer library written in portable
 ISO C.  It is a port of LibTomMath with optional support for inline assembler
 multiplies.")
-    (license public-domain)))
+    (license license:public-domain)))
 
 (define-public libtomcrypt
   (package
@@ -436,7 +436,7 @@ cryptographic toolkit that provides developers with a vast array of well known
 published block ciphers, one-way hash functions, chaining modes, pseudo-random
 number generators, public key cryptography and a plethora of other routines.")
     (properties `((lint-hidden-cve . ("CVE-2019-17362"))))
-    (license unlicense)))
+    (license license:unlicense)))
 
 (define-public libtommath
   (package
@@ -489,4 +489,4 @@ simple to work with that provides fairly efficient routines that build out of
 the box without configuration.")
     (properties `((upstream-name . "ltm")
                   (lint-hidden-cve . ("CVE-2023-36328"))))
-    (license unlicense)))
+    (license license:unlicense)))
