@@ -48,6 +48,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages openbox)
+  #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages text-editors)
@@ -83,19 +84,26 @@
 (define-public libfm
   (package
     (name "libfm")
-    (version "1.3.2")
+    (version "1.4.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/pcmanfm/"
-                                  "PCManFM%20%2B%20Libfm%20%28tarball%20release"
-                                  "%29/LibFM/" name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1rfira3lx8v6scz1aq69925j4vslpp36bmgrrzcfby2c60q2c155"))))
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/lxde/libfm")
+         (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gxg09lcacy7dh5pg1bm3rw11jffg7y59j0cb2cfsrgf0g5bjsvn"))
+       (modules '((guix build utils)))
+       (snippet delete-generated-c-files)))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--with-gtk=3")))
     (inputs (list glib gtk+))
     (native-inputs (list intltool
+                         which
+                         automake
+                         autoconf
+                         gtk-doc
                          `(,glib "bin") ; for gtester
                          libtool
                          menu-cache
@@ -112,7 +120,7 @@ Glib/GIO giving a higher-level API.")
     (name "libfm-extra")
     (arguments '(#:configure-flags '("--with-extra-only")))
     (inputs (list glib))
-    (native-inputs (list intltool libtool pkg-config))
+    (native-inputs (list intltool which automake autoconf libtool gtk-doc pkg-config libexif))
     (synopsis "File management support (extra library)")
     (description "This package contains a stand-alone library which extends the
 libFM file management library.")))
