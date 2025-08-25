@@ -37,6 +37,13 @@
 	    submap
 	    home-hyprland-service-type))
 
+;; Utilities
+
+(define (pair-of-numbers? x)
+  (and (pair? x)
+       (number? (car x))
+       (number? (cdr x))))
+
 ;;; Commentary:
 ;;;
 ;;; A Guix Home service to configure Hyprland, an highly customizabile dynamic
@@ -164,9 +171,7 @@
 
 ;;; Monitor resolution
 (define (monitor-resolution? x)
-  (or (and (pair? x)
-           (number? (car x))
-           (number? (cdr x)))
+  (or (pair-of-numbers? x)
       (memq x '(preferred highres highrr maxwidth))
       ;; For custom modelines
       (string? x)))
@@ -182,9 +187,7 @@
 
 ;;; Monitor position
 (define (monitor-position? x)
-  (or (and (pair? x)
-           (number? (car x))
-           (number? (cdr x)))
+  (or (pair-of-numbers? x)
       (memq x '(auto
                 auto-right auto-left auto-up auto-down
                 auto-center-right auto-center-left
