@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages orpheus)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -97,4 +97,4 @@
      "Orpheus is a light-weight text mode menu- and window-driven audio player
 application for CDs, internet stream broadcasts, and files in MP3 and Vorbis
 OGG format.")
-    (license gpl2+)))
+    (license license:gpl2+)))
