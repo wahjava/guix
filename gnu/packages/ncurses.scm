@@ -26,8 +26,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ncurses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
-  #:use-module (guix licenses)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -229,7 +229,7 @@ a terminal in a terminal-independent manner.  It supports pads and color as
 well as multiple highlights and forms characters.  It is typically used to
 implement user interfaces for command-line applications.  The accompanying
 ncursesw library provides wide character support.")
-    (license x11)
+    (license license:x11)
     (home-page "https://www.gnu.org/software/ncurses/")))
 
 (define-public ncurses/gpm
@@ -279,7 +279,7 @@ objects whose appearance and behavior can be customized, e.g. a pulldown
 menu or a file-viewer.")
     (home-page "https://invisible-island.net/cdk/cdk.html")
     ;; The license is identified as MIT-X11 (Expat) by the author.
-    (license (non-copyleft "file://share/doc/cdk/COPYING"))))
+    (license (license:non-copyleft "file://share/doc/cdk/COPYING"))))
 
 (define-public dialog
   (package
@@ -306,7 +306,7 @@ menu or a file-viewer.")
     (description "Dialog is a script-interpreter and a library which provides
 a set of curses widgets, such as dialog boxes.")
     (home-page "https://invisible-island.net/dialog/dialog.html")
-    (license lgpl2.1)))
+    (license license:lgpl2.1)))
 
 (define-public perl-curses
   (package
@@ -348,7 +348,7 @@ a set of curses widgets, such as dialog boxes.")
     (description
      "@code{Curses} is the interface between Perl and the curses library
 of your system.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public stfl
   (package
@@ -400,4 +400,4 @@ horizontal boxes, as well as tables, are used to group widgets.  The actual
 layouting work is done by the STFL library.  This allows STFL GUIs to handle
 terminals of different sizes and terminal resize events transparently for the
 application programmer.")
-    (license lgpl3+)))
+    (license license:lgpl3+)))
