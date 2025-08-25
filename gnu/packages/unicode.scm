@@ -19,9 +19,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages unicode)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (guix git-download)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -77,7 +77,7 @@
 breaking algorithms as described in Unicode Standard Annex 14 and
 Unicode Standard Annex 29.  It is designed to be used in a generic text
 renderer.")
-    (license zlib)))
+    (license license:zlib)))
 
 (define-public ucd
   (package
@@ -100,7 +100,7 @@ renderer.")
      "The @dfn{Unicode Character Database} (UCD) consists of a number of data
 files listing Unicode character properties and related data.  It also includes
 test data for conformance to several important Unicode algorithms.")
-    (license unicode)))
+    (license license:unicode)))
 
 (define (unicode-emoji-file name version hash)
   (origin
@@ -158,7 +158,7 @@ test data for conformance to several important Unicode algorithms.")
      "This package includes data files listing characters and sequences, that
 Unicode emoji supporting fonts or keyboards should support according to the
 Unicode Technological Standard #51.")
-    (license unicode)))
+    (license license:unicode)))
 
 (define-public unicode-cldr-common
   (package
@@ -189,4 +189,4 @@ of locale data, including among others
 @item and various information on languages, scripts and country-specific
   conventions.
 @end itemize\n")
-    (license unicode)))
+    (license license:unicode)))
