@@ -27,9 +27,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages texinfo)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -106,7 +106,7 @@ in any of several supported output formats, such as HTML or PDF.  This
 package includes both the tools necessary to produce Info documents from
 their source and the command-line Info reader.  The emphasis of the language
 is on expressing the content semantically, avoiding physical markup commands.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public texinfo-7
   (package
@@ -306,7 +306,7 @@ GNU Texinfo.  The Texi2HTML maintainers (one of whom is the principal author
 of the GNU Texinfo implementation) do not intend to make further releases of
 Texi2HTML.")
     ;; Files in /lib under lgpl2.1+ and x11
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public texi2html-1.82
   (package
@@ -359,4 +359,4 @@ browser.  You just move across info nodes, and select links, follow them, etc.
 It supports many colors.  Pinfo also supports viewing of manual pages -- they
 are colorized like in the midnight commander's viewer, and additionally they
 are hypertextualized.")
-      (license gpl2+))))
+      (license license:gpl2+))))
