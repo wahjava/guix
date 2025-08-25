@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages m4)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -92,5 +92,5 @@ some extensions over other implementations, some of which are required by GNU
 Autoconf.  It is used as a macro processor, which means it processes text,
 expanding macros as it encounters them.  It also has some built-in functions,
 for example to run shell commands or to do arithmetic.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/m4/")))
