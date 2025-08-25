@@ -21,7 +21,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages attr)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages gettext)
   #:use-module (guix packages)
@@ -83,4 +83,4 @@
     (synopsis "Library and tools for manipulating extended attributes")
     (description
      "Portable library and tools for manipulating extended attributes.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
