@@ -18,9 +18,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages wordnet)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
@@ -98,4 +98,4 @@ meaningfully related words and concepts can be navigated with the browser.
 WordNet is also freely and publicly available for download.  WordNet's
 structure makes it a useful tool for computational linguistics and natural
 language processing.")
-    (license x11)))
+    (license license:x11)))
