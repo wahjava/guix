@@ -17,9 +17,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages cobol)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -93,4 +93,4 @@
 part of COBOL 85, X/Open COBOL and newer ISO COBOL standards as well as many
 extensions from other COBOL compilers (IBM COBOL, MicroFocus COBOL, ACUCOBOL-GT
 and others).")
-    (license gpl3+)))
+    (license license:gpl3+)))
