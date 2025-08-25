@@ -19,8 +19,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages calcurse)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
@@ -74,4 +74,4 @@ keep track of events, appointments and everyday tasks.  A configurable
 notification system reminds user of upcoming deadlines, and the curses based
 interface can be customized to suit user needs.  All of the commands are
 documented within an online help system.")
-    (license bsd-2)))
+    (license license:bsd-2)))
