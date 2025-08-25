@@ -18,8 +18,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages datamash)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
@@ -60,7 +60,7 @@
     (description
      "Perform basic numeric, textual and statistical operations on plain text
 files.  Designed to work within standard pipelines without additional code.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public vnlog
   (package
@@ -156,4 +156,4 @@ files.  Designed to work within standard pipelines without additional code.")
     (description
      "Vnlog (pronounced @dfn{vanillog}) is a toolkit for manipulating
 tabular ASCII data with labelled fields using regular command-line tools.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
