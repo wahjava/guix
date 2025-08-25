@@ -36,7 +36,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages perl-check)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages web)
@@ -74,7 +74,7 @@
 functionality in ways you don't get loading them individually.
 @code{Fennec::Lite} takes a minimalist approach to do for Fennec what Mouse
 does for Moose.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-mock-config
   (package
@@ -95,7 +95,7 @@ does for Moose.")
 overriding @code{Config} values, even for the readonly @code{XSConfig}
 implementation as used in cperl.  It does not store the mocked overrides
 lexically, just dynamically.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test2-suite
   (package
@@ -125,7 +125,7 @@ lexically, just dynamically.")
     (synopsis "Full set of tools for Test2::Suite")
     (description "This package provides a rich set of tools, plugins, bundles,
 etc built upon the Test2 testing library.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test2-tools-command
   (package
@@ -147,7 +147,7 @@ etc built upon the Test2 testing library.")
     (description "This module tests that commands given particular arguments
 result in particular outputs by way of the exit status word, standard output,
 and standard error.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public perl-test2-plugin-nowarnings
   (package
@@ -171,7 +171,7 @@ and standard error.")
     (description "Loading this plugin causes your tests to fail if there any
 warnings while they run.  Each warning generates a new failing test and the
 warning content is outputted via diag.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-base
   (package
@@ -195,7 +195,7 @@ warning content is outputted via diag.")
     (description "Test::Base gives a way to trivially write your own test
 framework base class.  It concentrates on offering reusable data driven
 patterns, so that you can write tests with a minimum of code.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-checkdeps
   (package
@@ -219,7 +219,7 @@ patterns, so that you can write tests with a minimum of code.")
     (description
      "This module provides a test that checks all dependencies have been
 installed properly.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-class
   (package
@@ -248,7 +248,7 @@ and objects to test your code in an xUnit style.
 Built using @code{Test::Builder}, it was designed to work with other
 @code{Test::Builder} based modules (@code{Test::More},
 @code{Test::Differences}, @code{Test::Exception}, etc.).")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-class-most
   (package
@@ -274,7 +274,7 @@ Built using @code{Test::Builder}, it was designed to work with other
     (synopsis "Test classes the easy way")
     (description "@code{Test::Class::Most} provides some more convenience when
 using @code{Test::Class}.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-cleannamespaces
   (package
@@ -304,7 +304,7 @@ using @code{Test::Class}.")
 imported functions you might have forgotten to remove with
 namespace::autoclean or namespace::clean and are therefore available to be
 called as methods, which usually isn't want you want.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-command
   (package
@@ -326,7 +326,7 @@ called as methods, which usually isn't want you want.")
     (description
      "This module provides routines for testing the exit status, standard
 output and standard error of external commands.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-cpan-meta
   (package
@@ -351,7 +351,7 @@ output and standard error of external commands.")
     (description
      "This module was written to ensure that a META.yml file meets the
 specification.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test-cpan-meta-json
   (package
@@ -378,7 +378,7 @@ specification.")
     (description
      "This module was written to ensure that a META.json file meets the
 specification.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test-deep
   (package
@@ -400,7 +400,7 @@ that the values match, that arrays and hashes have the same elements and that
 references are blessed into the correct class.  It also handles circular data
 structures without getting caught in an infinite loop.")
     (home-page "https://metacpan.org/release/Test-Deep")
-    (license gpl1+)))  ; or "Artistic License"
+    (license license:gpl1+)))  ; or "Artistic License"
 
 (define-public perl-test-differences
   (package
@@ -424,7 +424,7 @@ structures without getting caught in an infinite loop.")
 functions.")
     ;; See LICENSE section of Test/Differences.pm, which reads "... GNU public
     ;; license, any version, ..."
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public perl-test-dir
   (package
@@ -446,7 +446,7 @@ functions.")
     (description
      "This module provides a collection of test utilities for directory
 attributes.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-directory
   (package
@@ -470,7 +470,7 @@ to forget a file, or miss that some unexpected file was added.  This module
 simplifies maintaining test directories by tracking their status as they are
 modified or tested with this API, making it simple to test both individual
 files, as well as to verify that there are no missing or unknown files.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-distmanifest
   (package
@@ -494,7 +494,7 @@ files, as well as to verify that there are no missing or unknown files.")
     (description
      "@code{Test::DistManifest} provides a simple method of testing that a
 @file{MANIFEST} file matches its distribution.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-distribution
   (package
@@ -526,7 +526,7 @@ the SIGNATURE file, if that file exists.  It checks that the
 distribution is not missing any core description files.  It also
 checks that the complete set of pre-requisite packages are listed in
 the Makefile.PL file.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-eol
   (package
@@ -550,7 +550,7 @@ the Makefile.PL file.")
     (description
      "@code{Test::EOL} lets you check for the presence of trailing whitespace
 and/or windows line endings in your perl code.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-exception
   (package
@@ -574,7 +574,7 @@ and/or windows line endings in your perl code.")
     (description "This module provides a few convenience methods for testing
 exception based code.  It is built with Test::Builder and plays happily with
 Test::More and friends.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-failwarnings
   (package
@@ -596,7 +596,7 @@ Test::More and friends.")
     (synopsis "Add test failures if warnings are caught")
     (description
      "Test::FailWarnings adds test failures if warnings are caught.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public perl-test-fatal
   (package
@@ -617,7 +617,7 @@ Test::More and friends.")
     (description "Test::Fatal is an alternative to the popular
 Test::Exception.  It does much less, but should allow greater flexibility in
 testing exception-throwing code with about the same amount of typing.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-file
   (package
@@ -640,7 +640,7 @@ testing exception-throwing code with about the same amount of typing.")
     (description
      "@code{Test::File} provides a collection of test utilities for file
 attributes.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-file-contents
   (package
@@ -666,7 +666,7 @@ attributes.")
     (description
      "@code{Test::File::Contents} provides functions for testing the contents of
 files.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-file-sharedir
   (package
@@ -693,7 +693,7 @@ files.")
      "@code{Test::File::ShareDir} is some low level plumbing to enable a
 distribution to perform tests while consuming its own share directories in a
 manner similar to how they will be once installed.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-file-sharedir-dist
   (package
@@ -719,7 +719,7 @@ manner similar to how they will be once installed.")
     (synopsis "Dist oriented ShareDir tester")
     (description "This module creates a Fake ShareDir for your modules
 for testing.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-filename
   (package
@@ -741,7 +741,7 @@ for testing.")
     (synopsis "Portable filename comparison")
     (description "Test::Filename provides functions to convert all path
 separators automatically.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public perl-test-files
   (package
@@ -765,7 +765,7 @@ separators automatically.")
     (description "This library provides functions to enable testing of files
 and directories.  For instance, the @code{file_ok} helper can test whether the
 contents of a file is equal to a particular string.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-fork
   (package
@@ -788,7 +788,7 @@ contents of a file is equal to a particular string.")
 associated with it.  Coordinating the test number amongst the parent and child
 processes is complicated. @code{Test::Fork} provides a function to smooth over
 the complications.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-future-io-impl
   (package
@@ -809,7 +809,7 @@ the complications.")
     (synopsis "Acceptance tests for Future::IO implementations")
     (description "This module contains a collection of acceptance tests for
 implementations of @code{Future::IO}.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-harness
   (package
@@ -839,7 +839,7 @@ implementations of @code{Future::IO}.")
     (synopsis "Run Perl standard test scripts with statistics")
     (description "Simple test harness which allows tests to be run and results
 automatically aggregated and output to STDOUT.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-inter
   (package
@@ -862,7 +862,7 @@ automatically aggregated and output to STDOUT.")
 offer the ability to access specific tests in a reasonably interactive
 fashion, primarily for debugging purposes.  Much of the syntax is loosely
 inspired by @code{Test::More}.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-leaktrace
   (package
@@ -882,7 +882,7 @@ inspired by @code{Test::More}.")
     (description "Test::LeakTrace provides several functions that trace memory
 leaks.  This module scans arenas, the memory allocation system, so it can
 detect any leaked SVs in given blocks.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-longstring
   (package
@@ -902,7 +902,7 @@ detect any leaked SVs in given blocks.")
     (description "This module provides some drop-in replacements for the
 string comparison functions of Test::More, but which are more suitable when
 you test against long strings.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-manifest
   (package
@@ -924,7 +924,7 @@ you test against long strings.")
 running all of the t/*.t files in ASCII-betical order, it looks in the t/test_manifest
 file to find out which tests you want to run and the order in which you want to run them.
 It constructs the right value for the build system to do the right thing.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-memory-cycle
   (package
@@ -960,7 +960,7 @@ my $object = new MyObject;
 # Do stuff with the object.
 memory_cycle_ok( $object );
 @end example")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test-metrics-any
   (package
@@ -981,7 +981,7 @@ memory_cycle_ok( $object );
     (synopsis "Assert that code produces metrics via Metrics::Any")
     (description "This test module helps write unit tests which assert that
 the code under test reports metrics via @code{Metrics::Any}.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-mockmodule
   (package
@@ -1010,7 +1010,7 @@ set up to mock subroutines for a given module.  The mocked object remembers the
 original subroutine so it can be easily restored.  This happens automatically
 when all @code{MockModule} objects for the given module go out of scope, or when
 you @code{unmock()} the subroutine.")
-    (license gpl3)))
+    (license license:gpl3)))
 
 (define-public perl-test-mockobject
   (package
@@ -1034,7 +1034,7 @@ you @code{unmock()} the subroutine.")
     (description "Test::MockObject allows you to create objects that conform
 to particular interfaces with very little code.  You don't have to reimplement
 the behavior, just the input and the output.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-mockrandom
   (package
@@ -1061,7 +1061,7 @@ meets the expected output from @code{rand} as called with no arguments: they
 must be between 0 (inclusive) and 1 (exclusive).  In order to facilitate
 generating and testing a nearly-one number, this module exports the function
 @code{oneish}, which returns a number just fractionally less than one.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public perl-test-mocktime
   (package
@@ -1084,7 +1084,7 @@ at specific points in time.  Specifically it overrides localtime, gmtime and
 time at compile time and then relies on the user supplying a mock time via
 set_relative_time, set_absolute_time or set_fixed_time to alter future calls
 to gmtime,time or localtime.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-more-utf8
   (package
@@ -1107,7 +1107,7 @@ used @code{Test::More} module.  By default, it will do a @code{binmode
 @code{:utf8}} on all of @code{Test::Builder}'s output handles thus enabling the
 easy use flagged strings without warnings like \"Wide character in print
 @dots{}\"")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-most
   (package
@@ -1130,7 +1130,7 @@ easy use flagged strings without warnings like \"Wide character in print
     (description "This module provides the most commonly used testing
 functions, along with automatically turning on strict and warning and gives a
 bit more fine-grained control over test suites.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-needs
   (package
@@ -1158,7 +1158,7 @@ script will be skipped.  Modules that are found but fail to compile will exit
 with an error rather than skip.
 
 If used in a subtest, the remainder of the subtest will be skipped.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-notabs
   (package
@@ -1182,7 +1182,7 @@ If used in a subtest, the remainder of the subtest will be skipped.")
     (description
      "@code{Test::NoTabs} lets you check the presence of tabs in your perl
 code.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-nowarnings
   (package
@@ -1204,7 +1204,7 @@ ends to check that there were no warnings.  If there were any warnings, the
 test will fail and output diagnostics of where, when and what the warning was,
 including a stack trace of what was going on when it occurred.")
     (home-page "https://metacpan.org/release/Test-NoWarnings")
-    (license lgpl2.1)))
+    (license license:lgpl2.1)))
 
 (define-public perl-test-number-delta
   (package
@@ -1227,7 +1227,7 @@ floating-point numbers for equality.  The typical idiom is to test if the
 absolute value of the difference of the numbers is within a desired tolerance,
 usually called epsilon.  This module provides such a function for use with
 @code{Test::More}.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public perl-test-object
   (package
@@ -1255,7 +1255,7 @@ somehow ``broken'' the object's behaviour in a more general sense.
 Test::Object is a testing package designed to allow you to easily test what
 you believe is a valid object against the expected behaviour of all of the
 classes in its inheritance tree in one single call.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-output
   (package
@@ -1277,7 +1277,7 @@ classes in its inheritance tree in one single call.")
 STDOUT or STDERR.  A number of different utilities are included to try and be
 as flexible as possible to the tester.")
     (home-page "https://metacpan.org/release/Test-Output")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-pod
   (package
@@ -1297,7 +1297,7 @@ as flexible as possible to the tester.")
     (synopsis "Check for POD errors in files")
     (description "Check POD files for errors or warnings in a test file, using
 Pod::Simple to do the heavy lifting.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-pod-coverage
   (package
@@ -1318,7 +1318,7 @@ Pod::Simple to do the heavy lifting.")
     (synopsis "Check for pod coverage")
     (description "This module adds a test to your Perl distribution which
 checks for pod coverage of all appropriate files.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test-portability-files
   (package
@@ -1343,7 +1343,7 @@ portability across operating systems of the names of the files present in the
 distribution of a module.  The tests use the advices given in 'Files and
 Filesystems' in perlport.  The author of a distribution can select which tests
 to execute.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-regexp-pattern
   (package
@@ -1363,7 +1363,7 @@ to execute.")
     (synopsis "Test Regexp::Pattern patterns")
     (description "This module performs various checks on a module's
 @code{Regexp::Pattern} patterns.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-requires
   (package
@@ -1382,7 +1382,7 @@ to execute.")
     (synopsis "Checks to see if the module can be loaded")
     (description "Test::Requires checks to see if the module can be loaded.
 If this fails, then rather than failing tests this skips all tests.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-requiresinternet
   (package
@@ -1406,7 +1406,7 @@ If this fails, then rather than failing tests this skips all tests.")
 non-local Internet resources before functional tests begin.  If the sockets
 cannot connect to the specified hosts and ports, the exception is caught and
 reported, and the tests skipped.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-roo
   (package
@@ -1434,7 +1434,7 @@ reported, and the tests skipped.")
     (home-page "https://metacpan.org/release/Test-Roo")
     (synopsis "Composable, reusable tests with roles and Moo")
     (description "Test::Roo provides composable, reusable tests with roles.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public perl-test-runvalgrind
   (package
@@ -1458,7 +1458,7 @@ reported, and the tests skipped.")
     (synopsis "Tests that an external program is valgrind-clean")
     (description "Test::RunValgind checks weather Valgrind does not detect
 errors (such as memory leaks) in an arbitrary binary executable.")
-    (license x11)))
+    (license license:x11)))
 
 (define-public perl-test-script
   (package
@@ -1480,7 +1480,7 @@ errors (such as memory leaks) in an arbitrary binary executable.")
 tests for 80% of the testing you will need to do for scripts in the script (or
 bin as is also commonly used) paths of your Perl distribution.")
     (home-page "https://metacpan.org/release/Test-Script")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-sharedfork
   (package
@@ -1500,7 +1500,7 @@ bin as is also commonly used) paths of your Perl distribution.")
     (synopsis "Fork test in Perl")
     (description "Test::SharedFork is a utility module for Test::Builder.  It
 makes fork(2) safe to use in test cases.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-simple
   (package
@@ -1518,7 +1518,7 @@ makes fork(2) safe to use in test cases.")
     (description
      "Test::Simple contains basic utilities for writing tests.")
     (home-page "https://metacpan.org/release/Test-Simple")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-subcalls
   (package
@@ -1545,7 +1545,7 @@ a specific number of times.
 Test::SubCalls module provides a number of functions for doing testing
 in this way in association with your normal Test::More (or similar)
 test scripts.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-taint
   (package
@@ -1571,7 +1571,7 @@ When you're writing unit tests for code that deals with tainted data, you'll
 want to have a way to provide tainted data for your routines to handle, and
 easy ways to check and report on the taintedness of your data, in standard
 @code{Test::More} style.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-tester
   (package
@@ -1590,7 +1590,7 @@ easy ways to check and report on the taintedness of your data, in standard
      "Test::Tester allows testing of test modules based on Test::Builder with
 a minimum of effort.")
     (home-page "https://metacpan.org/release/FDALY/Test-Tester-0.109")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-perltidy
   (package
@@ -1613,7 +1613,7 @@ a minimum of effort.")
     (description
      "Using @code{Test::PerlTidy}, any file ending in .pl, .pm, .t or .PL will
 cause a test fail unless it is exactly as @code{perltidy} would like it to be.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-trap
   (package
@@ -1637,7 +1637,7 @@ cause a test fail unless it is exactly as @code{perltidy} would like it to be.")
 test scripts: A block eval configurable and extensible but by default trapping
 STDOUT, STDERR, warnings, exceptions, would-be exit codes, and return values
 from boxed blocks of test code.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-utf8
   (package
@@ -1659,7 +1659,7 @@ from boxed blocks of test code.")
 UTF-8 strings in Perl.  This module has two types of tests: The validity tests
 check if a string is valid and not corrupt, whereas the characteristics tests
 will check that string has a given set of characteristics.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-version
   (package
@@ -1685,7 +1685,7 @@ will check that string has a given set of characteristics.")
     (description
      "@code{Test::Version} checks to ensure that all modules have a version
 defined, and that the version is valid.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
 
 (define-public perl-test-warn
   (package
@@ -1706,7 +1706,7 @@ defined, and that the version is valid.")
     (synopsis "Perl extension to test methods for warnings")
     (description "This module provides a few convenience methods for testing
 warning based code.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-warnings
   (package
@@ -1728,7 +1728,7 @@ for Test::NoWarnings.  It also adds an extra test, but runs this test before
 done_testing calculates the test count, rather than after.  It does this by
 hooking into done_testing as well as via an END block.  You can declare a
 plan, or not, and things will still Just Work.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-without-module
   (package
@@ -1749,7 +1749,7 @@ plan, or not, and things will still Just Work.")
 program even though they are installed.  This is mostly useful for testing
 modules that have a fallback when a certain dependency module is not
 installed.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-writevariants
   (package
@@ -1772,7 +1772,7 @@ installed.")
     (synopsis "Dynamic generation of tests")
     (description "The Test::WriteVariants module provides for the dynamic
 generation of tests in nested combinations of contexts.")
-    (license perl-license)))  ; see LICENSE
+    (license license:perl-license)))  ; see LICENSE
 
 (define-public perl-test-xpath
   (package
@@ -1792,7 +1792,7 @@ generation of tests in nested combinations of contexts.")
     (description
      "This Perl testing library focuses on testing and working with
 XPath expressions, most likely in the context of XML document processing.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-yaml
   (package
@@ -1812,7 +1812,7 @@ XPath expressions, most likely in the context of XML document processing.")
     (synopsis "Testing module for YAML implementations")
     (description "Test::YAML is a subclass of Test::Base with YAML specific
 support.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-test-trailingspace
  (package
@@ -1839,4 +1839,4 @@ support.")
     "Test for trailing space in Perl source files")
   (description "Test::TrailingSpace tests for trailing spaces
 in Perl source files.")
-  (license x11)))
+  (license license:x11)))
