@@ -19,13 +19,13 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ncdu)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages zig)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -63,7 +63,7 @@ run on a remote server where you don't have an entire graphical setup, but have
 to do with a simple SSH connection.  ncdu aims to be fast, simple and easy to
 use, and should be able to run in any minimal POSIX-like environment with
 ncurses installed.")
-    (license (x11-style "file://COPYING"))
+    (license (license:x11-style "file://COPYING"))
     (home-page "https://dev.yorhel.nl/ncdu")))
 
 (define-public ncdu
