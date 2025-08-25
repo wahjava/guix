@@ -25,7 +25,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages groff)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -125,7 +125,7 @@
     "Groff is a typesetting package that reads plain text and produces
 formatted output based on formatting commands contained within the text.  It
 is usually the formatter of \"man\" documentation pages.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/groff/")))
 
 (define-public groff-minimal
@@ -214,7 +214,7 @@ is usually the formatter of \"man\" documentation pages.")
       (description
        "Roffit is a program that reads an nroff file and outputs an HTML file.
 It is typically used to display man pages on a web site.")
-      (license expat))))
+      (license license:expat))))
 
 (define-public ronn-ng
   (package
@@ -264,7 +264,7 @@ It is typically used to display man pages on a web site.")
      "Ronn-NG is an updated fork of ronn.  It builds manuals in HTML and Unix
 man page format from Markdown.")
     (home-page "https://github.com/apjanke/ronn-ng")
-    (license expat)))
+    (license license:expat)))
 
 (define-public grap
   (package
@@ -289,4 +289,4 @@ documents.  It is implemented as a preprocessor to Kernigan's pic language for
 describing languages, so any system that can use pic can use grap.  For sure,
 TeX and groff can use it.")
     (home-page "https://github.com/snorerot13/grap")
-    (license bsd-3)))
+    (license license:bsd-3)))
