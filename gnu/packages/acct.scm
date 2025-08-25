@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages acct)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -42,4 +42,4 @@
      "GNU acct provides a means for system administrators to determine
 system usage patterns.  It provides information on, for example, connections,
 programs executed, and system resources used.")
-    (license gpl3+)))
+    (license license:gpl3+)))
