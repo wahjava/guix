@@ -32,7 +32,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ibus)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -235,7 +235,7 @@
 input method user interface.  It comes with multilingual input support.  It
 may also simplify input method development.")
     (home-page "https://github.com/ibus/ibus/wiki")
-    (license lgpl2.1+)
+    (license license:lgpl2.1+)
     (properties '((hidden? . #t)))))
 
 (define-public ibus
@@ -341,7 +341,7 @@ may also simplify input method development.")
      "This package includes a Chinese pinyin input method and a Chinese
 ZhuYin (Bopomofo) input method based on libpinyin for IBus.")
     (home-page "https://github.com/libpinyin/ibus-libpinyin")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public libpinyin
   (package
@@ -365,7 +365,7 @@ ZhuYin (Bopomofo) input method based on libpinyin for IBus.")
      "The libpinyin C++ library provides algorithms needed for sentence-based
 Chinese pinyin input methods.")
     (home-page "https://github.com/libpinyin/libpinyin")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public ibus-chewing
   (package
@@ -413,7 +413,7 @@ Chinese pinyin input methods.")
     (synopsis "Chewing engine for IBus")
     (description "IBus-Chewing is an IBus front-end of Chewing, an intelligent
 Chinese input method for Zhuyin (BoPoMoFo) users.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public ibus-anthy
   (package
@@ -506,7 +506,7 @@ adds the Anthy Japanese language input method to IBus.  Because most graphical
 applications allow text input via IBus, installing this package will enable
 Japanese language input in most graphical applications.")
     (home-page "https://github.com/fujiwarat/ibus-anthy")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public ibus-skk
   (package
@@ -542,7 +542,7 @@ Japanese language input in most graphical applications.")
 on the IBus input method framework.  Note that SKK works quite differently from
 other Japanese input methods.")
     (home-page "https://github.com/ueno/ibus-skk")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public librime
   (package
@@ -577,7 +577,7 @@ various input schemas including glyph-based input methods, romanization-based
 input methods as well as those for Chinese dialects.  It has the ability to
 compose phrases and sentences intelligently and provide very accurate
 traditional Chinese output.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public rime-data
   (package
@@ -860,7 +860,7 @@ Method Engine.")
               ;; rime-soutzoe
               ;; rime-stenotype
               ;; rime-wugniu
-              gpl3
+              license:gpl3
 
               ;; plum
               ;; rime-bopomofo
@@ -875,13 +875,13 @@ Method Engine.")
               ;; rime-stroke
               ;; rime-terra-pinyin
               ;; rime-wubi
-              lgpl3
+              license:lgpl3
 
               ;; rime-pinyin-simp
-              asl2.0
+              license:asl2.0
 
               ;; rime-cantonese
-              cc-by4.0))))
+              license:cc-by4.0))))
 
 (define-public ibus-rime
   (package
