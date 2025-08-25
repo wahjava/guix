@@ -22,9 +22,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages nutrition)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix build-system python)
@@ -81,7 +81,7 @@
     (synopsis "HTML Recipe format extractor")
     (description "This tool extracts cooking recipe from HTML structured data
 in the @url{https://schema.org/Recipe} format.")
-    (license asl2.0)))
+    (license license:asl2.0)))
 
 (define-public gourmet
   ;; Use the latest commit to gain Python 3 support.
@@ -161,4 +161,4 @@ in the @url{https://schema.org/Recipe} format.")
 search, organize, and browse your recipes.  Gourmet can also generate shopping
 lists and calculate nutritional information.  It imports Mealmaster,
 MasterCook and KRecipe files and exports PDFs, webpages, and other formats.")
-      (license gpl2+))))
+      (license license:gpl2+))))
