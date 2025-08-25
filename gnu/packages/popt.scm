@@ -19,12 +19,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages popt)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
-  #:use-module (guix licenses)
   #:use-module (gnu packages texinfo))
 
 (define-public argtable3
@@ -50,7 +50,7 @@ command-line syntax, and because it's built on the standard getopt library, it
 ensures 100% GNU-compliant behavior.  Argtable3 automatically generates the
 error-handling logic and usage descriptions that are essential for any robust
 command-line program, saving you from tedious boilerplate code.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public popt
   (package
@@ -89,7 +89,7 @@ similar to getopt(3), it contains a number of enhancements, including:
 
   - popt provides convenience functions for parsing strings into argv[] style
     arrays.")
-    (license x11)))
+    (license license:x11)))
 
 (define-public gflags
   (package
@@ -117,7 +117,7 @@ This means that a single source-code file will define and use flags that are
 meaningful to that file.  Any application that links in that file will get the
 flags, and the gflags library will automatically handle that flag
 appropriately.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public gengetopt
   (package
@@ -148,4 +148,4 @@ formats, as specified by the GNU coding standards.  Additionally, the
 output of the standard options \"--help\" and \"--version\" is generated
 automatically.")
     (home-page "https://www.gnu.org/software/gengetopt/gengetopt.html")
-    (license gpl3+)))
+    (license license:gpl3+)))
