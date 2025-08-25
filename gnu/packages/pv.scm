@@ -18,7 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pv)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -44,4 +44,4 @@ between two processes.  It gives a visual indication of how quickly data is
 passing through, how much has been transferred and how near to completion it is
 (with a progress bar), how long it has taken, and an estimate of the remaining
 time before completion.")
-    (license artistic2.0)))
+    (license license:artistic2.0)))
