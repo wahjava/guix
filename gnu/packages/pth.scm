@@ -21,8 +21,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages pth)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu))
@@ -67,4 +67,4 @@ scheduled in a cooperative way, rather than in the standard preemptive way,
 such that they are managed according to priority and events.  However, Pth
 also features emulation of POSIX.1c threads (\"pthreads\") for backwards
 compatibility.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
