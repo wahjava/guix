@@ -4001,7 +4001,14 @@ time.  Interactively visualize vector, raster and volume data.")
       #:tests? #f
       ;; With -DSAMPLE_MAP=TRUE (the default), it tries to download a
       ;; map during the build process.
-      #:configure-flags #~(list "-DSAMPLE_MAP=FALSE")
+      #:configure-flags
+      #~(list
+         "-DSAMPLE_MAP=FALSE"
+         ;; There is no new release yet.
+         (string-join
+          (list "-DNAVIT_COMPILE_FLAGS=-Wno-error=incompatible-pointer-types"
+                "-Wno-error=int-conversion"
+                "-Wno-error=implicit-function-declaration") " "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after
