@@ -19,7 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages hugs)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -81,5 +81,5 @@ Haskell programs.  It provides an almost complete implementation of Haskell
 with support for simple interactive programs, handle-based I/O, and exception
 handling.  Hugs has a nearly complete implementation of the Haskell module
 system and supports a number of advanced extensions.")
-   (license (non-copyleft "file://License"
+   (license (license:non-copyleft "file://License"
                           "See License in the distribution."))))
