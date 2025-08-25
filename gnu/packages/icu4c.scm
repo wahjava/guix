@@ -28,6 +28,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages icu4c)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages java)
@@ -35,7 +36,6 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -133,7 +133,7 @@
      "ICU is a set of C/C++ and Java libraries providing Unicode and
 globalisation support for software applications.  This package contains the
 C/C++ part.")
-    (license x11)
+    (license license:x11)
     (home-page "https://icu.unicode.org/")))
 
 (define-public icu4c icu4c-73)
@@ -258,7 +258,7 @@ C/C++ part.")
      "ICU is a set of C/C++ and Java libraries providing Unicode and
 globalisation support for software applications.  This package contains the
 Java part.")
-    (license x11)))
+    (license license:x11)))
 
 (define-public icu4c-for-skia
   ;; The current version of skia needs this exact commit
