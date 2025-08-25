@@ -31,11 +31,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages wxwidgets)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
   #:use-module (guix git-download)
-  #:use-module ((guix licenses) #:prefix l:)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system pyproject)
@@ -172,7 +172,8 @@
      "wxWidgets is a C++ library that lets developers create applications with
 a graphical user interface.  It has language bindings for Python, Perl, Ruby
 and many other languages.")
-    (license (list l:lgpl2.0+ (l:fsf-free "file://doc/license.txt")))))
+    (license (list license:lgpl2.0+
+                   (license:fsf-free "file://doc/license.txt")))))
 
 (define-public wxwidgets-gtk2
   (package/inherit wxwidgets
@@ -365,7 +366,7 @@ programming language.  It is implemented as a set of Python extension modules
 that wrap the GUI components of the popular wxWidgets cross platform C++
 library.  In most cases, wxPython uses the native widgets on each platform to
 provide a 100% native look and feel for the application.")
-    (license l:wxwindows3.1+)))
+    (license license:wxwindows3.1+)))
 
 (define-public wxsvg
   (package
@@ -393,7 +394,8 @@ provide a 100% native look and feel for the application.")
 
     ;; wxSVG is licenced under the "wxWindows library licence", which is
     ;; the LGPL2.0+, with a few extra permissions.
-    (license (list l:lgpl2.0+ (l:fsf-free "file://COPYING")))))
+    (license (list license:lgpl2.0+
+                   (license:fsf-free "file://COPYING")))))
 
 (define-public perl-alien-wxwidgets
   (package
@@ -421,4 +423,4 @@ provide a 100% native look and feel for the application.")
     (synopsis "Perl module for wxWidgets binaries")
     (description "Alien::wxWidgets is a Perl module for detecting and
 getting configuration settings from an installed wxWidgets package.")
-    (license l:perl-license)))
+    (license license:perl-license)))
