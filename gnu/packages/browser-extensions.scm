@@ -29,7 +29,6 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system qt)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (gnu build chromium-extension)
   #:use-module (gnu build icecat-extension)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
@@ -88,9 +87,6 @@ match website theme.")
 supported content to the Kodi media center.")
     (license license:expat)))
 
-(define-public play-to-kodi/chromium
-  (make-chromium-extension play-to-kodi))
-
 (define ublock-main-assets
   ;; Arbitrary commit of branch master,
   ;; Update when updating uBlockOrigin.
@@ -138,7 +134,7 @@ supported content to the Kodi media center.")
                (base32
                 "1mmgacpp5g6ypfjp4niyyvhhc2linr752gr274ssqirzhbwdygpw"))))
     (build-system gnu-build-system)
-    (outputs '("xpi" "firefox" "chromium"))
+    (outputs '("xpi" "firefox"))
     (properties '((addon-id . "uBlock0@raymondhill.net")))
     (arguments
      (list
@@ -162,30 +158,21 @@ supported content to the Kodi media center.")
           (add-after 'patch-source-shebangs 'build-xpi
             (lambda _
               (invoke "./tools/make-firefox.sh" "all")))
-          (add-after 'build-xpi 'build-chromium
-            (lambda _
-              (invoke "./tools/make-chromium.sh")))
-          (add-after 'build-chromium 'install
+          (add-after 'build-xpi 'install
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((addon-id #$(assq-ref properties 'addon-id))
                      (firefox (in-vicinity
                                (assoc-ref outputs "firefox") addon-id))
-                     (xpi (assoc-ref outputs "xpi"))
-                     (chromium (assoc-ref outputs "chromium")))
+                     (xpi (assoc-ref outputs "xpi")))
                 (install-file "dist/build/uBlock0.firefox.xpi"
                               (string-append xpi "/lib/mozilla/extensions"))
-                (copy-recursively "dist/build/uBlock0.firefox" firefox)
-                (copy-recursively "dist/build/uBlock0.chromium" chromium)))))))
+                (copy-recursively "dist/build/uBlock0.firefox" firefox)))))))
     (native-inputs
      (list python-wrapper zip))
     (synopsis "Block unwanted content from web sites")
     (description
-     "uBlock Origin is a @dfn{wide spectrum blocker} for IceCat and
-ungoogled-chromium.")
+     "uBlock Origin is a @dfn{wide spectrum blocker} for IceCat.")
     (license license:gpl3+)))
-
-(define-public ublock-origin/chromium
-  (make-chromium-extension ublock-origin "chromium"))
 
 (define-public ublock-origin/icecat
   (make-icecat-extension ublock-origin "firefox"))
