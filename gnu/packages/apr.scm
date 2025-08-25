@@ -19,7 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages apr)
-  #:use-module ((guix licenses) #:prefix l:)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -86,7 +86,7 @@ an API to which software developers may code and be assured of predictable if
 not identical behaviour regardless of the platform on which their software is
 built, relieving them of the need to code special-case conditions to work
 around or take advantage of platform-specific deficiencies or features.")
-    (license l:asl2.0)))
+    (license license:asl2.0)))
 
 (define-public apr-util
   (package
@@ -127,4 +127,4 @@ around or take advantage of platform-specific deficiencies or features.")
     (synopsis "One of the Apache Portable Runtime Library companions")
     (description
      "APR-util provides a number of helpful abstractions on top of APR.")
-    (license l:asl2.0)))
+    (license license:asl2.0)))
