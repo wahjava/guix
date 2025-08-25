@@ -20,6 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages uucp)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-compression)
@@ -27,7 +28,6 @@
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages texinfo)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -65,7 +65,7 @@
      "Taylor UUCP is the GNU implementation of UUCP (Unix-to-Unix Copy), a
 set of utilities for remotely transferring files, email and net news
 between computers.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public nncp
   (package
@@ -174,4 +174,4 @@ server, can use push and poll behaviour model.  Multicasting areas, offline
 sneakernet/floppynet, dead drops, sequential and append-only CD-ROM/tape
 storages, air-gapped computers and online TCP daemon with full-duplex
 resumable data transmission exists are all supported.")
-    (license gpl3)))
+    (license license:gpl3)))
