@@ -17,8 +17,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages marst)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (gnu packages compression)
   #:use-module (guix build-system gnu))
@@ -43,4 +43,4 @@
 translator itself, a library that contains the necessary Algol 60 procedures,
 and a converter that converts existing Algol 60 programs from other
 representations to the MARST representation.")
-    (license gpl3+)))
+    (license license:gpl3+)))
