@@ -21,8 +21,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages autogen)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
@@ -106,4 +106,4 @@ large amounts of repetitive text.  It automates the construction of these
 sections of the code, simplifying the task of keeping the text in sync.  It
 also includes an add-on package called AutoOpts, which is specialized for the
 maintenance and documentation of program options.")
-    (license gpl3+)))
+    (license license:gpl3+)))
