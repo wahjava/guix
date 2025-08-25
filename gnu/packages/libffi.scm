@@ -27,8 +27,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libffi)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -83,7 +83,7 @@ conversions for values passed between the two languages.")
     (properties `((release-monitoring-url . ,home-page)))
 
     ;; See <https://github.com/atgreen/libffi/blob/master/LICENSE>.
-    (license expat)))
+    (license license:expat)))
 
 ;; Provide a variant without static trampolines as some packages
 ;; (particularly GHC < 9) cannot handle them.  See
@@ -164,7 +164,7 @@ conversions for values passed between the two languages.")
     (home-page "https://cffi.readthedocs.io/")
     (synopsis "Foreign function interface for Python")
     (description "Foreign Function Interface for Python calling C code.")
-    (license expat)))
+    (license license:expat)))
 
 (define-public python-cffi-documentation
   (package
@@ -256,4 +256,4 @@ dynamic libraries, binding functions within them, and calling those functions
 from Ruby code.  Moreover, a Ruby-FFI extension works without changes on Ruby
 and JRuby.")
     (home-page "https://wiki.github.com/ffi/ffi")
-    (license bsd-3)))
+    (license license:bsd-3)))
