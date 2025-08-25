@@ -20,8 +20,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gnu-pw-mgr)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
@@ -64,4 +64,4 @@ passwords when they are needed while limiting the risk of attack.  The
 user of this program inputs a self-defined transformation of a web
 site URL and obtains the password and user name hint for that web
 site.")
-    (license gpl3+)))
+    (license license:gpl3+)))
