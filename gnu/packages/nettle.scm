@@ -20,8 +20,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages nettle)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -77,7 +77,7 @@
 fit in easily in almost any context.  It can be easily included in
 cryptographic toolkits for object-oriented languages or in applications
 themselves.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public nettle
   ;; This version is not API-compatible with version 2.  In particular, lsh
