@@ -19,9 +19,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libbsd)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system gnu)
   #:use-module (guix download)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix utils)
@@ -85,6 +85,11 @@ and over again on each project.")
     (home-page "https://libbsd.freedesktop.org/wiki/")
     ;; This package is a collection of third-party functions that were
     ;; originally released under various non-copyleft licenses.
-    (license (list bsd-2 bsd-3 bsd-4 expat isc public-domain
-                   (non-copyleft "file://COPYING"
-                                 "See COPYING in the distribution.")))))
+    (license (list license:bsd-2
+                   license:bsd-3
+                   license:bsd-4
+                   license:expat
+                   license:isc
+                   license:public-domain
+                   (license:non-copyleft "file://COPYING"
+                                         "See COPYING in the distribution.")))))
