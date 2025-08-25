@@ -24,7 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages onc-rpc)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -83,7 +83,7 @@
      "This package provides a library that implements the Sun/ONC RPC (remote
 procedure calls) protocol in a transport-independent manner.  It supports both
 IPv4 and IPv6.  ONC RPC is notably used by the network file system (NFS).")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public libtirpc/hurd
   (package/inherit libtirpc
@@ -125,7 +125,7 @@ IPv4 and IPv6.  ONC RPC is notably used by the network file system (NFS).")
     (description
      "@command{Rpcbind} is a server that converts RPC program numbers into
 universal addresses.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public rpcsvc-proto
   (package
@@ -146,7 +146,7 @@ universal addresses.")
 that are not included with the @code{libtirpc} package.  Additionally it
 contains @command{rpcgen}, which is used to produce header files and sources
 from the protocol files.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public libnsl
   (package
@@ -179,4 +179,4 @@ This library was part of glibc < 2.26, but is now distributed separately.")
     (home-page "https://github.com/thkukuk/libnsl")
     ;; The package is distributed under the LGPL 2.1. Some files in
     ;; 'src/nisplus/' are LGPL 2.1+, and some files in 'src/rpcsvc/' are BSD-3.
-    (license lgpl2.1)))
+    (license license:lgpl2.1)))
