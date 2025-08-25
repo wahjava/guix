@@ -21,8 +21,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages adns)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -146,7 +146,7 @@ asynchronously.  It is intended for applications which need to perform DNS
 queries without blocking, or need to perform multiple DNS queries in parallel.
 The primary examples of such applications are servers which communicate with
 multiple clients and programs with graphical user interfaces.")
-    (license (x11-style "https://c-ares.haxx.se/license.html"))))
+    (license (license:x11-style "https://c-ares.haxx.se/license.html"))))
 
 (define-public c-ares-for-node-lts
   (hidden-package c-ares))
