@@ -18,8 +18,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages serveez)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
@@ -63,4 +63,4 @@ making it convenient for both simplifying the process of adding a
 server to your application or for learning about how network services
 work.  Several example servers are provided already, such as an HTTP
 server and an IRC server.")
-    (license gpl3+)))
+    (license license:gpl3+)))
