@@ -18,8 +18,8 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages microcom)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
-  #:use-module (guix licenses)
   #:use-module (guix git-download)
   #:use-module (guix download)
   #:use-module (gnu packages autotools)
@@ -47,4 +47,4 @@
 devices via a serial connection.  It features connection via RS232 serial
 interfaces (including setting of transfer rates) as well as in @code{telnetmode}
 as specified in rfc2217 and a (Linux specific) CAN mode.")
-    (license gpl2+)))
+    (license license:gpl2+)))
