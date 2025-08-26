@@ -1524,7 +1524,7 @@ pictures, sounds, or video.")
     (name "postgresql")
     (version "15.14")
     (source (origin
-              (inherit (package-source postgresql-16))
+              (method url-fetch)
               (uri (string-append "https://ftp.postgresql.org/pub/source/v"
                                   version "/postgresql-" version ".tar.bz2"))
               (sha256
