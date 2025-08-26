@@ -1456,14 +1456,14 @@ and high-availability (HA).")
 (define-public postgresql-16
   (package
     (name "postgresql")
-    (version "16.4")
+    (version "16.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://ftp.postgresql.org/pub/source/v"
                                   version "/postgresql-" version ".tar.bz2"))
               (sha256
                (base32
-                "0vvd73rzj0sl294v15bh8yslakqv412bxqzlkqxyjwxa8pb6c5wp"))
+                "0hib575m9x3z8c71gkcv9jsyq77d3qk7q2zgzvfy6clwrvs8b16y"))
               (patches (search-patches
                         "postgresql-disable-normalize_exec_path.patch"))))
     (build-system gnu-build-system)
