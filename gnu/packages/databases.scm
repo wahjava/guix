@@ -1522,14 +1522,14 @@ pictures, sounds, or video.")
   (package
     (inherit postgresql-16)
     (name "postgresql")
-    (version "15.8")
+    (version "15.14")
     (source (origin
               (inherit (package-source postgresql-16))
               (uri (string-append "https://ftp.postgresql.org/pub/source/v"
                                   version "/postgresql-" version ".tar.bz2"))
               (sha256
                (base32
-                "0snbxmlygf7m4cxjpscmz3yjn4lnqsw313y9xgpv7vk9k9gm20s4"))
+                "1ljis3nzi960vrya6axfz7m46ib23ik2x4xkcbp70f6d0p9pbp86"))
               (patches (search-patches
                         "postgresql-disable-resolve_symlinks.patch"))))
     (native-inputs (modify-inputs (package-native-inputs postgresql-16)
