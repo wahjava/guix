@@ -5442,7 +5442,7 @@ standalone JACK client and an LV2 plugin is also available.")
 (define-public sfizz
   (package
     (name "sfizz")
-    (version "1.2.0")
+    (version "1.2.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/sfztools/sfizz"
@@ -5450,26 +5450,24 @@ standalone JACK client and an LV2 plugin is also available.")
                                   "/sfizz-" version ".tar.gz"))
               (sha256
                (base32
-                "1wsr3dpn7a7whqn480m02kp6n4raamnfi3imhf2q8k58md1yn9jw"))
+                "08k88gcqs691bgqvbm7sdvk77aqgd1hfipsbnkvg1mr0fsn9wcx9"))
               (modules '((guix build utils)))
               (snippet
                '(for-each delete-file-recursively
-                          '("external/abseil-cpp"
-                            ;; This package needs an unreleased version of
+                          '(;; This package needs an unreleased version of
                             ;; simde.
                             ;; "external/simde"
-                            "plugins/editor/external/vstgui4"
-                            "plugins/vst"
                             "src/external/pugixml")))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DSFIZZ_LV2_UI=OFF"
               "-DSFIZZ_VST=OFF"
               "-DSFIZZ_VST2=OFF"
               "-DSFIZZ_TESTS=ON"
-              "-DSFIZZ_USE_SYSTEM_ABSEIL=ON"
+              "-DSFIZZ_USE_SYSTEM_ABSEIL=OFF"
               "-DSFIZZ_USE_SYSTEM_PUGIXML=ON"
               ;; XXX: Guix SIMDe version 0.7.2 is not enough.
               ;; "-DSFIZZ_USE_SYSTEM_SIMDE=ON"
@@ -5477,8 +5475,7 @@ standalone JACK client and an LV2 plugin is also available.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list abseil-cpp
-           glib
+     (list glib
            jack-2
            lv2
            libsamplerate
