@@ -610,6 +610,27 @@ current settings unchanged."
                            #:verify-certificate?
                            verify-certificate?)))
 
+     ;; Remote references are not created locally, neither by CLONE nor
+     ;; REMOTE-FETCH.
+     (unless (null? symref-list)
+       (let ((remote (remote-lookup repository "origin")))
+         (remote-connect remote)
+         (define remote-references (remote-ls remote))
+         (for-each (lambda (ref)
+                     (reference-create repository
+                                       (remote-head-name ref)
+                                       (remote-head-oid ref)
+                                       ;; Force so reference can be updated in
+                                       ;; cache.
+                                       #:force? #t))
+                   (filter (lambda (remote-ref)
+                             (any (lambda (symref)
+                                    (string=? (remote-head-name remote-ref)
+                                              symref))
+                                  symref-list))
+                           remote-references))
+         (remote-disconnect remote)))
+
      ;; Note: call 'commit-relation' from here because it's more efficient
      ;; than letting users re-open the checkout later on.
      (let* ((oid      (if check-out?
