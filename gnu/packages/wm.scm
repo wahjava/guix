@@ -3709,7 +3709,7 @@ for wayland conceptually based on the X11 window manager
 (define-public libdisplay-info
   (package
     (name "libdisplay-info")
-    (version "0.2.0")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)
@@ -3718,7 +3718,7 @@ for wayland conceptually based on the X11 window manager
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0x5paiq0lfvq6kbn5hgf0h8m86mjkqqj1pldjgl1i0n7nc39c6gb"))))
+        (base32 "1mxd1gcczfdqlm60qph94g4rw0whh4r9fiqrfbfand1gd8lgcxwx"))))
     (build-system meson-build-system)
     (arguments
      (list
