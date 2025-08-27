@@ -35,6 +35,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages xfce)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu artwork)
   #:use-module (gnu packages)
   #:use-module (gnu packages apr)
@@ -89,7 +90,6 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
-  #:use-module ((guix licenses) #:hide (freetype))
   #:use-module (guix packages)
   #:use-module (guix utils))
 
@@ -121,7 +121,7 @@
     (description
      "A general-purpose utility library with core application support for the
 Xfce Desktop Environment.")
-    (license lgpl2.0+)
+    (license license:lgpl2.0+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfconf
@@ -164,7 +164,7 @@ Xfce Desktop Environment.")
     (description
      "Settings daemon for Xfce, implemented as a D-Bus-based configuration
 storage system.")
-    (license lgpl2.0+)
+    (license license:lgpl2.0+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public libxfce4ui
@@ -198,7 +198,7 @@ storage system.")
     (description
      "Libxfce4ui is the replacement of the old libxfcegui4 library.  It is used
 to share commonly used Xfce widgets among the Xfce applications.")
-    (license lgpl2.0+)
+    (license license:lgpl2.0+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public catfish
@@ -252,7 +252,7 @@ to share commonly used Xfce widgets among the Xfce applications.")
      "Catfish is a file searching tool for Linux and Unix.  The interface is
 intentionally lightweight and simple, using only GTK+ 3.  You can configure
 it to your needs by using several command line options.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public elementary-xfce-icon-theme
@@ -285,7 +285,7 @@ it to your needs by using several command line options.")
      "This is a fork of the upstream elementary project. This icon
 theme is supposed to keep everything working for Xfce, but gets updates from
 upstream occasionally.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public exo
   (package
@@ -320,7 +320,8 @@ upstream occasionally.")
 that are targeted at desktop development, libexo is targeted at application
 development.")
     ;; Libraries are under LGPLv2+, and programs under GPLv2+.
-    (license (list gpl2+ lgpl2.1+))
+    (license (list license:gpl2+
+                   license:lgpl2.1+))
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public garcon
@@ -353,7 +354,7 @@ development.")
 GLib and GIO.  It was started as a complete rewrite of the former Xfce menu
 library called libxfce4menu, which, in contrast to garcon, was lacking menu
 merging features essential for loading menus modified with menu editors.")
-    (license lgpl2.0+)
+    (license license:lgpl2.0+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public tumbler
@@ -389,7 +390,7 @@ merging features essential for loading menus modified with menu editors.")
      "Tumbler is a D-Bus service for applications to request thumbnails for
 various URI schemes and MIME types.  It is an implementation of the thumbnail
 management D-Bus specification.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public libxfce4windowing
@@ -423,7 +424,7 @@ management D-Bus specification.")
      "Libxfce4windowing is an abstraction library that attempts to present
 windowing concepts (screens, toplevel windows, workspaces, etc.) in a
 windowing-system-independent manner.")
-    (license lgpl2.1+)
+    (license license:lgpl2.1+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-panel
@@ -472,7 +473,8 @@ windowing-system-independent manner.")
      "Desktop panel for Xfce, which contains program launchers, window buttons,
 applications menu, workspace switcher and more.")
     ;; Libraries are under LGPLv2.1+, and programs under GPLv2+.
-    (license (list gpl2+ lgpl2.1+))
+    (license (list license:gpl2+
+                   license:lgpl2.1+))
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-battery-plugin
@@ -500,7 +502,8 @@ applications menu, workspace switcher and more.")
      "A battery monitor panel plugin for Xfce4, compatible with APM and ACPI.")
     ;; The main plugin code is covered by gpl2+, but the files containing code
     ;; to read the battery state via ACPI or APM are covered by lgpl2.0+.
-    (license (list gpl2+ lgpl2.0+))
+    (license (list license:gpl2+
+                   license:lgpl2.0+))
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-clipman-plugin
@@ -529,7 +532,7 @@ applications menu, workspace switcher and more.")
 around while it is usually lost when you close an application.  It is able to
 handle text and images, and has a feature to execute actions on specific text by
 matching them against regular expressions.")
-    (license (list gpl2+))
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-pulseaudio-plugin
@@ -567,7 +570,7 @@ matching them against regular expressions.")
 convenient way to adjust the audio volume of the PulseAudio sound system and
 to an auto mixer tool like pavucontrol.  It can optionally handle multimedia
 keys for controlling the audio volume.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-i3-workspaces-plugin
@@ -593,7 +596,7 @@ keys for controlling the audio volume.")
 currently visible, as well as indicating which workspace has a window requiring
 attention.  Although it is intended for the Xfce4 panel, it is custom-built to work
 seamlessly with the tiling window manager i3.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public xfce4-whiskermenu-plugin
   (package
@@ -629,7 +632,8 @@ panel plugin for Xfce4.  It uses separate sections to display categories and
 applications, and includes a search bar to search for applications.")
     ;; The main plugin code is covered by gpl2, but files in panel-plugin directory
     ;; are covered by gpl2+.  The SVG icon is covered by gpl2.
-    (license (list gpl2 gpl2+))))
+    (license (list license:gpl2
+                   license:gpl2+))))
 
 (define-public xfce4-xkb-plugin
   (package
@@ -668,7 +672,7 @@ the way in which the current layout is being displayed (country
 flag image or text) and the layout policy, which is whether to
 store the layout globally (for all windows), per application or
 per window.")
-    (license bsd-2)
+    (license license:bsd-2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-appfinder
@@ -697,7 +701,7 @@ per window.")
     (description
      "Application finder for Xfce, it will show the applications installed on
 your system in categories, so you can quickly find and launch them.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-session
@@ -768,7 +772,7 @@ your system in categories, so you can quickly find and launch them.")
     (description
      "Session manager for Xfce, it will restore your session on startup and
 allows you to shut down the computer from Xfce.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-settings
@@ -819,7 +823,7 @@ allows you to shut down the computer from Xfce.")
     (description
      "Settings manager for Xfce, it can control various aspects of the desktop
 like appearance, display, keyboard and mouse settings.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar
@@ -865,7 +869,7 @@ like appearance, display, keyboard and mouse settings.")
     (description
      "A modern file manager for graphical desktop, aiming to be easy-to-use and
 fast.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar-volman
@@ -894,7 +898,7 @@ automatic management of removable drives and media.  For example, if
 thunar-volman is installed and configured properly, and you plug in your
 digital camera, it will automatically spawn your preferred photo application
 and import the new pictures from your camera.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar-archive-plugin
@@ -918,7 +922,7 @@ and import the new pictures from your camera.")
     (synopsis "Archive plugin for Thunar file manager")
     (description "The Thunar Archive Plugin allows you to create and extract
 archive files using the file context menus in the Thunar file manager.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar-shares-plugin
@@ -943,7 +947,7 @@ archive files using the file context menus in the Thunar file manager.")
     (description
      "The Thunar Shares Plugin allows you to quickly share a folder using
 Samba from Thunar (the Xfce file manager) without requiring root access.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar-media-tags-plugin
@@ -968,7 +972,7 @@ Samba from Thunar (the Xfce file manager) without requiring root access.")
     (description
      "Media tags plugin allows tags editing from Thunar file manager and
 tags-based file renaming from inside Thunar Bulk Renamer.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunar-vcs-plugin
@@ -1007,7 +1011,7 @@ tags-based file renaming from inside Thunar Bulk Renamer.")
      "Thunar VCS Plugin (formerly known as Thunar SVN Plugin) gives SVN and
 GIT integration to Thunar, it adds Subversion and GIT actions to the context
 menu.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public thunarx-python
@@ -1038,7 +1042,7 @@ menu.")
     (synopsis "Python Bindings for Thunar")
     (description
      "These bindings allow one to create python plugins for Thunar.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfwm4
@@ -1073,7 +1077,7 @@ menu.")
     (description
      "Window manager for Xfce, it handles the placement of windows
 on the screen.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfwm4-themes
@@ -1094,7 +1098,7 @@ on the screen.")
     (synopsis "Themes for the Xfce window manager")
     (description "This package provides a set of additional themes for the Xfce
 window manager.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public xfdesktop
   (package
@@ -1158,7 +1162,7 @@ window manager.")
      "Desktop manager for Xfce, it sets the background color or image with
 optional application menu or icons for minimized applications or launchers,
 devices and folders.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public gigolo
@@ -1187,7 +1191,7 @@ devices and folders.")
      "Gigolo is a graphical user interface to easily manage connections to
 remote file systems using GIO/GVfs.  It allows you to quickly connect/mount
 local and remote file systems and manage bookmarks of such.")
-    (license gpl2)                                ;version 2 only
+    (license license:gpl2)                                ;version 2 only
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public parole
@@ -1236,7 +1240,7 @@ local and remote file systems and manage bookmarks of such.")
     (description "Parole is a modern simple media player based on the
 GStreamer framework and written to fit well in the Xfce desktop.  Parole
 features playback of local media files, DVD/CD and live streams.")
-    (license gpl2)                      ;version 2 only
+    (license license:gpl2)                      ;version 2 only
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-terminal
@@ -1270,7 +1274,7 @@ with terminals within a single window, the possibility to have a
 pseudo-transparent terminal background, and a compact mode (where both the
 menubar and the window decorations are hidden) that helps you to save space
 on your desktop.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-dict
@@ -1302,7 +1306,7 @@ search for words using the aspell/ispell program.
 
 xfce4-dict contains a stand-alone application called “xfce4-dict” and a panel
 plugin for the Xfce panel.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfdashboard
@@ -1343,7 +1347,7 @@ keyboard shortcut, when executed it provides an overview of applications
 currently opened which let user to switch between different applications.  Its
 search feature works like Xfce's app finder and makes it convenient to search
 for and start applications.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public xfce
   (package
@@ -1397,7 +1401,7 @@ for and start applications.")
     (description
      "Xfce is a lightweight desktop environment.  It aims to be fast and low on
 system resources, while still being visually appealing and user friendly.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public xfce4-power-manager
   (package
@@ -1431,7 +1435,7 @@ scaling, etc).  In addition, xfce4-power-manager provides a set of
 freedesktop-compliant DBus interfaces to inform other applications about current
 power level so that they can adjust their power consumption, and it provides the
 inhibit interface which allows applications to prevent automatic sleep.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public ristretto
@@ -1462,7 +1466,7 @@ inhibit interface which allows applications to prevent automatic sleep.")
 and scroll through images.  It can be used to run a slideshow of images, open
 images with other applications like an image-editor or configure an image as
 the desktop wallpaper.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-taskmanager
@@ -1497,7 +1501,7 @@ the desktop wallpaper.")
     (description
      "This is a task manager for the Xfce desktop.  It displays the CPU and
 memory usage graphically, and it can display processes as a tree.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public orage
@@ -1526,7 +1530,7 @@ alarms and uses the iCalendar format, making it compatible with many other
 calendar applications.  It also includes a panel clock plugin and an
 international clock application capable of simultaneously showing clocks from
 several different time zones.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-notifyd
@@ -1556,7 +1560,7 @@ notifications specification.  Applications that wish to pop up a notification
 bubble in a standard way can implicitly make use of xfce4-notifyd to do so by
 sending standard messages over D-Bus using the
 @code{org.freedesktop.Notifications} interface.")
-    (license gpl2)
+    (license license:gpl2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfburn
@@ -1596,7 +1600,7 @@ sending standard messages over D-Bus using the
 the libburnia libraries.  It can blank CD/DVD/BD(-RW)s, burn and
 create iso images, audio CDs, as well as burn personal compositions
 of data to either CD/DVD/BD.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public mousepad
@@ -1636,7 +1640,7 @@ of data to either CD/DVD/BD.")
     (synopsis "Simple text editor for Xfce")
     (description
      "Mousepad is a graphical text editor for Xfce based on Leafpad.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-screenshooter
@@ -1664,7 +1668,7 @@ of data to either CD/DVD/BD.")
 window or a selected region.  You can set the delay that elapses before the screenshot
 is taken and the action that will be done with the screenshot.
 A plugin for the Xfce panel is also available.")
-   (license gpl2+)
+   (license license:gpl2+)
    (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-screensaver
@@ -1709,7 +1713,7 @@ A plugin for the Xfce panel is also available.")
     (description
      "Xfce Screensaver is a screen saver and locker that aims to have simple,
  sane, secure defaults and be well integrated with the Xfce desktop.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-volumed-pulse
@@ -1735,7 +1739,7 @@ A plugin for the Xfce panel is also available.")
     (description
      "This is a volume keys control daemon for Xfce Desktop environment.  It controls
  the volume using multimedia keys.  It also provides volume change notifications.")
-    (license gpl3+)
+    (license license:gpl3+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-cpugraph-plugin
@@ -1767,7 +1771,7 @@ customizable.
 On multi core or multi CPU systems, CPU Graph can either track and
 display all of them at once, or at the user's option only a specific
 core or CPU.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-eyes-plugin
@@ -1793,7 +1797,7 @@ core or CPU.")
     (synopsis "Display a pair of eyes for the Xfce panel")
     (description "Eyes is a toy Xfce panel plugin that adds eyes which
 watch your every step.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-datetime-plugin
@@ -1819,7 +1823,7 @@ watch your every step.")
     (synopsis "Display date and time inside the Xfce panel")
     (description "This plugin shows the date and time in the panel,
 and a calendar appears when you left-click on it.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-calculator-plugin
@@ -1846,7 +1850,7 @@ and a calendar appears when you left-click on it.")
     (description "This plugin is a calculator for the Xfce4 panel.  It
 supports common mathematical operators (+, -, *, /, ^) with usual
 precedence rules, and the following functions and common constants.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-cpufreq-plugin
@@ -1872,7 +1876,7 @@ precedence rules, and the following functions and common constants.")
     (synopsis "Xfce panel plugin for displaying CPU frequency")
     (description "This panel plugin shows information about the CPU
 governor and frequencies supported and used by your system.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-diskperf-plugin
@@ -1898,7 +1902,7 @@ governor and frequencies supported and used by your system.")
     (synopsis "Display disk performance in the Xfce panel")
     (description "This Xfce panel plugin displays instant disk/partition
 performance (bytes transferred per second).")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-fsguard-plugin
@@ -1927,7 +1931,7 @@ point frequently and displays a message when a limit is reached.  There
 are two limits: a warning limit where only the icon changes, and an
 urgent limit that advise the user with a message.  The icon button can
 be clicked to open the chosen mount point.")
-    (license bsd-2)
+    (license license:bsd-2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-genmon-plugin
@@ -1957,7 +1961,7 @@ resulting string into the panel.
 
 The string can also contain markup to displayed an image, a bar, a
 button and a personalized tooltip.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-mailwatch-plugin
@@ -1992,7 +1996,7 @@ multi-mailbox mail watcher.  Currently, the protocols supported are:
 @item MH-Maildir mail spool (local)
 @item Google Mail (GMail) mailbox (remote) (requires gnutls)
 @end itemize")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-mpc-plugin
@@ -2035,7 +2039,7 @@ the right-click menu.
 right-click menu
 @item configurable markup for tooltip and playlist, using a gmpc-like markup
 @end itemize")
-    (license isc)
+    (license license:isc)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-mount-plugin
@@ -2063,7 +2067,7 @@ right-click menu
 your various devices.  If you click on an unmounted devices it will
 mount it and vice versa.  There is a warning in case a device can't be
 mounted or when unmounting fails.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-netload-plugin
@@ -2089,7 +2093,7 @@ mounted or when unmounting fails.")
     (synopsis "Netload plugin for the Xfce Panel")
     (description "This plugin displays the current load of the network
 interfaces of your choice in the panel.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-places-plugin
@@ -2127,7 +2131,7 @@ opens up a menu with the following:
 @item Search program launcher (optional)
 @item Recent documents submenu
 @end itemize")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-smartbookmark-plugin
@@ -2154,7 +2158,7 @@ opens up a menu with the following:
     (description "This plugin allows you to send search requests
 directly to your browser, such that you can search through your
 favorite search engine or bug tracker right from the Xfce panel.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-statusnotifier-plugin
@@ -2183,7 +2187,7 @@ notifier items (application indicators).  Applications may use these
 items to display their status and interact with the user.  This
 technology is a modern alternative to systray and follows the
 freedesktop.org specification.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((superseded . ,xfce4-panel)))))
 
 (define-public xfce4-stopwatch-plugin
@@ -2208,7 +2212,7 @@ freedesktop.org specification.")
     (home-page "https://docs.xfce.org/panel-plugins/xfce4-stopwatch-plugin/")
     (synopsis "Stopwatch plugin for the Xfce panel")
     (description "This Xfce panel plugin keeps track of elapsed time.")
-    (license bsd-2)
+    (license license:bsd-2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-systemload-plugin
@@ -2235,7 +2239,7 @@ freedesktop.org specification.")
     (description "A system load plugin for the Xfce4 desktop
 environment.  It displays the current CPU load, the memory in use, the
 swap space and the system uptime in the Xfce4 panel.")
-    (license bsd-2)
+    (license license:bsd-2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-time-out-plugin
@@ -2263,7 +2267,7 @@ swap space and the system uptime in the Xfce4 panel.")
 breaks from the computer every X minutes.  During breaks it locks your
 screen.  It optionally allows you to postpone breaks for a certain
 time.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-timer-plugin
@@ -2290,7 +2294,7 @@ time.")
     (description "This is a simple plugin that lets the user run an
 alarm at a specified time or at the end of a specified countdown
 period.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-verve-plugin
@@ -2323,7 +2327,7 @@ for the Xfce panel.  It supports several features, such as:
 @item Focus grabbing via D-BUS (so you can bind a shortcut to it)
 @item Custom input field width
 @end itemize")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-wavelan-plugin
@@ -2349,7 +2353,7 @@ for the Xfce panel.  It supports several features, such as:
     (synopsis "Show stats from WLAN interface in Xfce panel")
     (description "This plugin is used to display stats from a wireless
 lan interface (signal state, signal quality, network name (SSID)).")
-    (license bsd-2)
+    (license license:bsd-2)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-weather-plugin
@@ -2379,7 +2383,7 @@ lan interface (signal state, signal quality, network name (SSID)).")
     (description "This Xfce panel plugin shows information about your
 local weather in the panel, using forecast data provided by the
 @uref{https://met.no, Norwegian Meteorological Institute}.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
 
 (define-public xfce4-dev-tools
@@ -2429,5 +2433,5 @@ local weather in the panel, using forecast data provided by the
      "The Xfce development tools are a collection of tools and macros for Xfce
 developers and people that want to build Xfce from Git In addition it contains
 the Xfce developer's handbook.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties `((release-tag-prefix . ,(string-append name "-"))))))
