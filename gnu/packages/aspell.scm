@@ -33,13 +33,13 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages aspell)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
-  #:use-module (guix licenses)
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
@@ -97,7 +97,7 @@
 a standalone program.  Notable features of Aspell include its full support of
 documents written in the UTF-8 encoding and its ability to use multiple
 dictionaries, including personal ones.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 ;;;
 ;;; Dictionaries.
@@ -142,7 +142,7 @@ dictionaries, including personal ones.")
     (synopsis (string-append full-name " dictionary for GNU Aspell")) ; XXX: i18n
     (description
      "This package provides a dictionary for the GNU Aspell spell checker.")
-    (license gpl2+)
+    (license license:gpl2+)
     (properties
       ;; Unfortunately any versions with a trailing 'dash and digit' (eg.: '-0')
       ;; will fail to register as a version.
@@ -441,7 +441,7 @@ dictionaries, including personal ones.")
     (description "Ispell is an interactive spell-checking tool supporting many
 European languages.")
     (home-page "https://www.cs.hmc.edu/~geoff/ispell.html")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 ;;; This is basically ispell but built with CMake, and which provides a CMake
 ;;; config file.
