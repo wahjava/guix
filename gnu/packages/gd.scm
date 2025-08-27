@@ -24,6 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gd)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix build-system gnu)
@@ -36,8 +37,7 @@
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages pkg-config)
-  #:use-module ((guix licenses) #:select (non-copyleft perl-license)))
+  #:use-module (gnu packages pkg-config))
 
 (define-public gd
   (package
@@ -100,8 +100,8 @@ languages.  GD creates PNG, JPEG, GIF, WebP, XPM, BMP images, among other
 formats.  GD is commonly used to generate charts, graphics, thumbnails, and
 most anything else, on the fly.  While not restricted to use on the web, the
 most common applications of GD involve website development.")
-    (license (non-copyleft "file://COPYING"
-                           "See COPYING file in the distribution."))
+    (license (license:non-copyleft "file://COPYING"
+                                   "See COPYING file in the distribution."))
     (properties '((cpe-name . "libgd")
                   (upstream-name . "libgd")
                   (release-monitoring-url
@@ -138,7 +138,7 @@ most common applications of GD involve website development.")
     (description "GD.pm is an autoloadable interface module for libgd, a
 popular library for creating and manipulating PNG files.  With this library
 you can create PNG images on the fly or modify existing files.")
-    (license perl-license)))
+    (license license:perl-license)))
 
 (define-public perl-gd-securityimage
   (package
@@ -168,4 +168,4 @@ security (captcha) images.  The final output is the actual graphic data, the
 mime type of the graphic, and the created random string.  The module also has
 some \"styles\" that are used to create the background (or foreground) of the
 image.")
-    (license perl-license)))
+    (license license:perl-license)))
