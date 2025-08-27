@@ -3,6 +3,7 @@
 ;;; Copyright © 2022 ( <paren@disroot.org>
 ;;; Copyright © 2023 conses <contact@conses.eu>
 ;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright @ 2025 firefly707 <firejet707@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,7 +26,7 @@
   #:use-module (gnu services configuration)
   #:use-module (gnu services xorg)
   #:autoload   (gnu packages glib)    (dbus)
-  #:autoload   (gnu packages xdisorg) (redshift unclutter)
+  #:autoload   (gnu packages xdisorg) (redshift unclutter xbindkeys)
   #:autoload   (gnu packages xorg) (setxkbmap xmodmap)
   #:use-module (guix records)
   #:use-module (guix gexp)
@@ -42,6 +43,9 @@
 
             home-unclutter-configuration
             home-unclutter-service-type
+
+            home-xbindkeys-configuration
+            home-xbindkeys-service-type
 
             home-xmodmap-configuration
             home-xmodmap-service-type
@@ -382,6 +386,83 @@ according to time of day.")))
    (description "Run the @code{unclutter} daemon, which, on systems using the
 Xorg graphical display server, automatically hides the cursor after a
 user-defined timeout has expired.")))
+
+
+;;;
+;;; Xbindkeys.
+;;;
+
+(define-record-type* <home-xbindkeys-configuration>
+  home-xbindkeys-configuration make-home-xbindkeys-configuration
+  home-xbindkeys-configuration?
+  (xbindkeys home-xbindkeys-xbindkeys
+             (default xbindkeys)
+             (documentation "The @code{xbindkeys} package to use."))
+  (rc home-xbindkeys-rc
+      (documentation "The rc file to use as configuration.")))
+
+(define (home-xbindkeys-shepherd-service config)
+  (match-record config <home-xbindkeys-configuration>
+                (xbindkeys rc)
+    (list
+     ((lambda (prog-args)
+        (shepherd-service
+          (provision '(xbindkeys))
+          (documentation "Run xbindkeys on user login, a program to
+map keybinds and mouse actions on an x display to running shell scripts.")
+          (requirement '(x11-display))
+          (modules '((shepherd support)))
+          (start #~(make-forkexec-constructor
+                    (list
+                     #$@prog-args
+                     "--verbose"
+                     "--nodaemon")
+                    #:log-file
+                    (string-append %user-log-dir "/xbindkeys.log")))
+          (stop #~(make-kill-destructor))
+          (actions
+           (list
+            (shepherd-action
+              (name 'key)
+              (documentation "Open key grabbing window for xbindkeys.")
+              (procedure
+               #~(lambda (running . args)
+                   (let ((pipe ((@ (ice-9 popen) open-pipe*) OPEN_READ
+                                #$@prog-args
+                                "--key")))
+                     (display ((@ (ice-9 textual-ports) get-string-all) pipe))
+                     ((@ (ice-9 popen) close-pipe) pipe))
+                   #t)))
+            (shepherd-action
+              (name 'show)
+              (documentation "Show the current keybindings.")
+              (procedure
+               #~(lambda (running . args)
+                   (let ((pipe ((@ (ice-9 popen) open-pipe*) OPEN_READ
+                                #$@prog-args
+                                "--show")))
+                     (display ((@ (ice-9 textual-ports) get-string-all) pipe))
+                     ((@ (ice-9 popen) close-pipe) pipe))
+                   #t)))
+            (shepherd-configuration-action rc)))))
+      (list (file-append
+             xbindkeys
+             "/bin/xbindkeys")
+            "-fg"
+            rc)))))
+
+(define home-xbindkeys-service-type
+  (service-type
+    (name 'home-xbindkeys)
+    (extensions
+     (list
+      (service-extension home-shepherd-service-type
+                         home-xbindkeys-shepherd-service)
+      (service-extension home-x11-service-type
+                         (const #t))))
+    (description "Run xbindkeys daemon, a program which, on systems using the
+Xorg graphical display server, maps keybinds and mouse actions on an x display
+to running shell scripts.")))
 
 
 ;;;
