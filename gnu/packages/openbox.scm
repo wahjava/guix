@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages openbox)
-  #:use-module ((guix licenses) #:select (gpl2+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix utils)
@@ -81,7 +81,7 @@ minimalistic appearance.  Openbox uses the *box visual style, while providing
 a greater number of options for theme developers than previous *box
 implementations.")
     (home-page "http://openbox.org/wiki/Main_Page")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public obconf
   (package
@@ -115,6 +115,6 @@ implementations.")
     (description
      "Obconf is a tool for configuring the Openbox window manager.
 You can configure its appearance, themes, and much more.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 ;;; openbox.scm ends here
