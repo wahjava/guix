@@ -19,12 +19,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages stb)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
-  #:use-module (guix build-system trivial)
-  #:use-module ((guix licenses) #:select (expat public-domain)))
+  #:use-module (guix build-system trivial))
 
 (define stb
   ;; stb is a collection of libraries developed within the same repository.
@@ -76,7 +76,8 @@
        "This package contains a variety of small independent libraries for
 the C programming language.")
       ;; The user can choose either license.
-      (license (list expat public-domain)))))
+      (license (list license:expat
+                     license:public-domain)))))
 
 (define* (make-stb-header-package name version description #:key deprecated?)
   (package
