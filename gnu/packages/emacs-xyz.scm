@@ -33485,7 +33485,7 @@ GUI and terminal, and requires a nerd font installed on your system.")
          (patches
           (search-patches "emacs-all-the-icons-remove-duplicate-rs.patch"))
          (sha256
-          (base32 "0ywc54gh0pg13s8ajnk977rf0kqbhqg37iahhpj8wm6r8348sl76"))))
+          (base32 "0f8fcd7b67khyp6awccazhnh9nnm9pj2fdq51c9i1kw32bc6pi2k"))))
       (build-system emacs-build-system)
       (arguments
        (list
