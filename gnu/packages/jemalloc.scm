@@ -21,10 +21,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages jemalloc)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 match)
-  #:use-module ((guix licenses) #:select (bsd-2))
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -77,4 +77,4 @@
     (description
      "This library providing a malloc(3) implementation that emphasizes
 fragmentation avoidance and scalable concurrency support.")
-    (license bsd-2)))
+    (license license:bsd-2)))
