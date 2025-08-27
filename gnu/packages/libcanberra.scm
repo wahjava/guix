@@ -20,8 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages libcanberra)
-  #:use-module ((guix licenses)
-                #:select (lgpl2.1+ gpl2 gpl2+ cc-by-sa4.0 cc-by3.0))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -98,7 +97,7 @@
 Specifications, for generating event sounds on free desktops, such as
 GNOME.  It comes with several backends (ALSA, PulseAudio, OSS, GStreamer,
 null) and is designed to be portable.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public sound-theme-freedesktop
   (package
@@ -119,7 +118,10 @@ null) and is designed to be portable.")
 sounds for various system events.")
 
     ;; The license of the various sounds is given in the 'CREDITS' file.
-    (license (list cc-by-sa4.0 cc-by3.0 gpl2 gpl2+))
+    (license (list license:cc-by-sa4.0
+                   license:cc-by3.0
+                   license:gpl2
+                   license:gpl2+))
 
     (home-page "https://www.freedesktop.org/wiki/Specifications/sound-theme-spec/")))
 
@@ -144,4 +146,4 @@ sounds for various system events.")
     (description
      "Pycanberra is a basic Python wrapper for libcanberra.")
     (home-page "http://c.n0.is/ng0/pycanberra/")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
