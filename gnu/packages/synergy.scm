@@ -20,9 +20,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages synergy)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module ((guix licenses) #:select (gpl2 expat))
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system meson)
@@ -95,7 +95,7 @@
      "Synergy brings your computers together in one cohesive experience; it's
 software for sharing one mouse and keyboard between multiple computers on your
 desk.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public waynergy
   (package
@@ -142,4 +142,4 @@ desk.")
 software for sharing one mouse and keyboard between multiple computers on your
 desk.  This package is a Wayland version of Synergy, mostly for wlroots.")
     (home-page "https://github.com/r-c-f/waynergy")
-    (license expat)))
+    (license license:expat)))
