@@ -21,9 +21,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ccache)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module ((guix licenses) #:select (gpl3+))
   #:use-module (guix download)
   #:use-module (guix build-system cmake)
   #:use-module (gnu packages)
@@ -74,4 +74,4 @@
      "Ccache is a compiler cache.  It speeds up recompilation by caching
 previous compilations and detecting when the same compilation is being done
 again.  Supported languages are C, C++, Objective-C and Objective-C++.")
-    (license gpl3+)))
+    (license license:gpl3+)))
