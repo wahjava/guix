@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages sawfish)
-  #:use-module ((guix licenses) #:select (gpl2+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -69,7 +69,7 @@ was originally written to be mostly-compatible with Emacs Lisp, but has
 subsequently diverged markedly.  Its aim is to combine the best features of
 Scheme and Common Lisp and provide an environment that is comfortable for
 implementing both small and large scale systems.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public rep-gtk
   (package
@@ -111,7 +111,7 @@ implementing both small and large scale systems.")
     (description
      "Rep-GTK is a GTK+ (and GLib, GDK) binding to the librep, and one of the
 backend of Sawfish.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public sawfish
   (package
@@ -187,4 +187,4 @@ language.  Its policy is very minimal compared to most window managers.  Its aim
 is simply to manage windows in the most flexible and attractive manner possible.
 All high-level WM functions are implemented in Lisp for future extensibility or
 redefinition.")
-    (license gpl2+)))
+    (license license:gpl2+)))
