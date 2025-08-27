@@ -41,8 +41,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages base)
-  #:use-module ((guix licenses)
-                #:select (gpl3+ lgpl2.0+ lgpl3+ public-domain))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages acl)
   #:use-module (gnu packages algebra)
@@ -114,7 +113,7 @@
 serves as an example of standard GNU coding practices.  As such, it supports
 command-line arguments, multiple languages, and so on.")
     (home-page "https://www.gnu.org/software/hello/")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public grep
   (package
@@ -187,7 +186,7 @@ strings.  By default, the matching text is simply printed to the screen,
 however the output can be greatly customized to include, for example, line
 numbers.  GNU grep offers many extensions over the standard utility,
 including, for example, recursive directory searching.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/grep/")))
 
 (define-public sed
@@ -226,7 +225,7 @@ input from a file or from standard input and it then applies a series of text
 editing commands to the stream and prints its output to standard output.  It
 is often used for substituting text patterns in a stream.  The GNU
 implementation offers several extensions over the standard utility.")
-    (license gpl3+)
+    (license license:gpl3+)
     (home-page "https://www.gnu.org/software/sed/")))
 
 (define-public tar
@@ -296,7 +295,7 @@ useful for combining many files into one larger file, while maintaining
 directory structure and file information such as permissions and
 creation/modification dates.  GNU tar offers many extensions over the
 standard utility.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/tar/")))
 
 ;;; TODO: Replace/merge with 'patch' on core-updates.
@@ -328,7 +327,7 @@ laid out as by the program \"diff\".  The changes may be applied to one or more
 files depending on the contents of the diff file.  It accepts several
 different diff formats.  It may also be used to revert previously applied
 differences.")
-     (license gpl3+)
+     (license license:gpl3+)
      (home-page "https://savannah.gnu.org/projects/patch/"))))
 
 (define-public patch
@@ -409,7 +408,7 @@ differences between files.  The \"diff\" command is used to show how two files
 differ, while \"cmp\" shows the offsets and line numbers where they differ.
 \"diff3\" allows you to compare three files.  Finally, \"sdiff\" offers an
 interactive means to merge two files.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/diffutils/")))
 
 (define-public findutils
@@ -458,7 +457,7 @@ recursively searches for files in a directory according to given criteria and
 \"locate\" lists files in a database that match a query.  Two auxiliary tools
 are included: \"updatedb\" updates the file name database and \"xargs\" may be
 used to apply commands with arbitrarily long arguments.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/findutils/")))
 
 (define-public coreutils
@@ -584,7 +583,7 @@ are expected in a POSIX system, excluding shell.  This package is the union of
 the GNU fileutils, sh-utils, and textutils packages.  Most of these tools
 offer extended functionality beyond that which is outlined in the POSIX
 standard.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/coreutils/")))
 
 (define-public coreutils-minimal
@@ -662,7 +661,7 @@ controlled from a Makefile, in which the developer specifies how each file is
 generated from its source.  It has powerful dependency resolution and the
 ability to determine when files have to be regenerated after their sources
 change.  GNU make offers many powerful extensions over the standard utility.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/make/")))
 
 (define-public gnu-make-4.2
@@ -745,7 +744,7 @@ Other tools include programs to display binary profiling information, list
 the strings in a binary file, and utilities for working with archives.  The
 \"bfd\" library for working with executable and object formats is also
 included.")
-   (license gpl3+)
+   (license license:gpl3+)
    (home-page "https://www.gnu.org/software/binutils/")))
 
 ;; FIXME: ath9k-firmware-htc-binutils.patch do not apply on 2.34 because of a
@@ -910,7 +909,7 @@ can be provided via the LINKER argument."
 missing @code{-rpath} flags, and to detect any misuse of libraries outside of
 the store.")
     (home-page "https://www.gnu.org/software/guix//")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define %glibc-patches
   (list "glibc-ldd-powerpc.patch"
@@ -1222,7 +1221,7 @@ printf, exit...
 
 The GNU C library is used as the C library in the GNU system and most systems
 with the Linux kernel.")
-   (license lgpl2.0+)
+   (license license:lgpl2.0+)
    (home-page "https://www.gnu.org/software/libc/")))
 
 ;; Define a variation of glibc which uses the default /etc/ld.so.cache, useful
@@ -1706,7 +1705,7 @@ test environments.")
      "The which program finds the location of executables in PATH, with a
 variety of options.  It is an alternative to the shell \"type\" built-in
 command.")
-    (license gpl3+))) ; some files are under GPLv2+
+    (license license:gpl3+))) ; some files are under GPLv2+
 
 (define-public glibc/hurd glibc)
 
@@ -1871,7 +1870,7 @@ contains code and data that represent the history of local time for many
 representative locations around the globe.  It is updated periodically to
 reflect changes made by political bodies to time zone boundaries, UTC offsets,
 and daylight-saving rules.")
-    (license public-domain)))
+    (license license:public-domain)))
 
 ;;; A "fixed" version of tzdata, which is used in the test suites of glib and R
 ;;; and a few other places. We can update this whenever we are able to rebuild
@@ -1922,7 +1921,7 @@ and daylight-saving rules.")
 that lack it.  iconv is used to convert between character encodings in a
 program.  It supports a wide variety of different encodings.")
     (home-page "https://www.gnu.org/software/libiconv/")
-    (license lgpl3+)))
+    (license license:lgpl3+)))
 
 (define* (libiconv-if-needed #:optional (target (%current-target-system)))
   "Return either a libiconv package specification to include in a dependency
