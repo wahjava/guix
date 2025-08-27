@@ -20,6 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages netpbm)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages flex)
@@ -31,7 +32,6 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (guix build-system gnu)
-  #:use-module ((guix licenses) #:select (gpl2))
   #:use-module (guix packages)
   #:use-module (guix svn-download)
   #:use-module (guix utils))
@@ -198,5 +198,5 @@
 the conversion of images between a variety of different formats.
 There are over 300 separate tools in the package including converters for
 about 100 graphics formats.")
-   (license gpl2)
+   (license license:gpl2)
    (home-page "https://netpbm.sourceforge.net/")))
