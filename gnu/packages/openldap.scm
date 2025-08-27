@@ -28,6 +28,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages openldap)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
@@ -58,7 +59,6 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
   #:use-module (gnu packages)
-  #:use-module ((guix licenses) #:select (openldap2.8 lgpl2.1+ gpl3+ psfl expat))
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix utils)
@@ -113,7 +113,7 @@
     (synopsis "Implementation of the Lightweight Directory Access Protocol")
     (description
      "OpenLDAP is a free implementation of the Lightweight Directory Access Protocol.")
-    (license openldap2.8)
+    (license license:openldap2.8)
     (home-page "https://www.openldap.org/")))
 
 ;; This is an incompatible fork of openldap that adds types needed for
@@ -183,7 +183,7 @@ alias, netgroup, and basically any other information that you would normally
 get from @file{/etc} flat files or NIS.  It also provides a @dfn{Pluggable
 Authentication Module} (PAM) to do identity and authentication management with
 an LDAP server.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public python-ldap
   (package
@@ -216,7 +216,7 @@ an LDAP server.")
     (description
      "This package provides an object-oriented API to access LDAP directory
 servers from Python programs.")
-    (license psfl)))
+    (license license:psfl)))
 
 (define-public 389-ds-base
   (package
@@ -398,7 +398,7 @@ Other features include:
 @item LDAPv3 compliant server.
 @end enumerate\n")
     ;; GPLv3+ with OpenSSL linking exception.
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public python-bonsai
   (package
@@ -422,4 +422,4 @@ Other features include:
      "This is a module for handling LDAP operations in Python.  LDAP entries
 are mapped to a special Python case-insensitive dictionary, tracking the
 changes of the dictionary to modify the entry on the server easily.")
-    (license expat)))
+    (license license:expat)))
