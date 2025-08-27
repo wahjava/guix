@@ -816,6 +816,21 @@ other applications that need to directly deal with input devices.")
                "-Ddebug-gui=false"    ;requires gtk+@3
                ,flags))))))
 
+;; TODO: Remove this package when libinput-minimal >= 1.28
+(define-public libinput-minimal-next
+  (package/inherit libinput-minimal
+    (name "libinput-minimal")
+    (version "1.28.903")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.freedesktop.org/libinput/libinput.git")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0i5yljdff4fjchpa8ifscbcssnmiim58ai1zy3v41vim2illprv5"))))))
+
 (define-public libei
   (package
     (name "libei")
@@ -1505,7 +1520,7 @@ Python.")
 (define-public hyprwayland-scanner
   (package
     (name "hyprwayland-scanner")
-    (version "0.4.4")
+    (version "0.4.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1514,11 +1529,11 @@ Python.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bnckwj7hh4k4knlyprybi1fmy9vda2h492hw6yska2shfzp6jvy"))))
+                "02p42pdbx3g8w7bdrndzf1swzkgkpfrvvqfljpcq9132vh842y0n"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;No tests.
     (inputs (list pugixml))
-    (native-inputs (list gcc-14 pkg-config))
+    (native-inputs (list gcc-15 pkg-config))
     (home-page "https://github.com/hyprwm/hyprwayland-scanner")
     (synopsis "Hyprland implementation of @code{wayland-scanner}")
     (description
@@ -3663,7 +3678,7 @@ supporting behavior like @samp{ssh -X}.")
               (base32
                "05rxchwzhnkm91kcr30mavizkp25wgjlhb6lcraa456pw7vgb04q"))))
     (build-system meson-build-system)
-    (native-inputs (list cmake pkg-config))
+    (native-inputs (list cmake-minimal pkg-config))
     (inputs (list cairo
                   dbus
                   egl-wayland

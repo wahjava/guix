@@ -25,6 +25,7 @@
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Jonas Freimuth <jonas.freimuth@posteo.de>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Rikard Nordgren <hrn@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -119,6 +120,96 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match))
 
+(define-public jags
+  (package
+    (name "jags")
+    (version "4.3.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/mcmc-jags/JAGS/"
+                                  (version-major version) ".x/Source/"
+                                  "JAGS-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0aa2w4g5057vn1qjp954s2kwxfmy1h7p5yn56fyi7sz9nmaq69gr"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--with-lapack=-lopenblas"
+              "--with-blas=-lopenblas")))
+    (home-page "https://mcmc-jags.sourceforge.net/")
+    (native-inputs
+     (list gfortran openblas))
+    (synopsis "Gibbs sampler")
+    (description "JAGS is Just Another Gibbs Sampler.  It is a program for
+analysis of Bayesian hierarchical models using Markov Chain Monte Carlo (MCMC)
+simulation not wholly unlike BUGS.  JAGS was written with three aims in mind:
+
+@enumerate
+@item To have a cross-platform engine for the BUGS language;
+@item To be extensible, allowing users to write their own functions,
+  distributions and samplers;
+@item To be a platform for experimentation with ideas in Bayesian modelling.
+@end enumerate\n")
+    (license license:gpl2)))
+
+(define-public java-jdistlib
+  (package
+    (name "java-jdistlib")
+    (version "0.4.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/jdistlib/jdistlib-"
+                                  version "-src.jar"))
+              (sha256
+               (base32
+                "1pkj8aahw9ydr1isbaqrkd05nvq98ik5jwwhf3yf3rky3z869v11"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "jdistlib.jar"
+       #:jdk ,icedtea-8
+       #:tests? #f ; no dedicated test directory
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-broken-encoding
+           (lambda _
+             (with-fluids ((%default-port-encoding "ISO-8859-1"))
+               (substitute* "src/jdistlib/Beta.java"
+                 (("Scheff.+-Tukey") "Scheffe-Tukey")))
+             #t)))))
+    (propagated-inputs
+     (list java-jtransforms))
+    (native-inputs
+     (list java-junit))
+    (home-page "https://jdistlib.sourceforge.net/")
+    (synopsis "Java library of statistical distributions")
+    (description "JDistlib is the Java Statistical Distribution Library, a
+Java package that provides routines for various statistical distributions.")
+    ;; The files that were translated from R code are under GPLv2+; some files
+    ;; are under the GPLv3, which is a mistake.  The author confirmed in an
+    ;; email that this whole project should be under GPLv2+.
+    (license license:gpl2+)))
+
+(define-public libxls
+  (package
+    (name "libxls")
+    (version "1.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/libxls/libxls/releases/download/"
+                           "v" version "/libxls-" version ".tar.gz"))
+       (sha256
+        (base32 "0b327zafbwnfxj75n722z6a6zw195rs5bjmm5wskl9dml1p87yxj"))))
+    (build-system gnu-build-system)
+    (home-page "https://github.com/libxls/libxls")
+    (synopsis "Read binary (.xls) Excel spreadsheet files")
+    (description
+     "libxls is a C library to read .xls spreadsheet files in the binary OLE
+BIFF8 format as created by Excel 97 and later versions.  It cannot write them.
+
+This package also provides @command{xls2csv} to export Excel files to CSV.")
+    (license license:bsd-2)))
 
 (define-public pspp
   (package
@@ -174,59 +265,107 @@ can be imported from spreadsheets, text files and database sources and it can
 be output in text, PostScript, PDF or HTML.")
     (license license:gpl3+)))
 
-(define-public jags
+(define-public python-altair
   (package
-    (name "jags")
-    (version "4.3.1")
+    (name "python-altair")
+    (version "5.3.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/mcmc-jags/JAGS/"
-                                  (version-major version) ".x/Source/"
-                                  "JAGS-" version ".tar.gz"))
+              (method git-fetch)        ; no tests in PyPI
+              (uri (git-reference
+                    (url "https://github.com/altair-viz/altair")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0aa2w4g5057vn1qjp954s2kwxfmy1h7p5yn56fyi7sz9nmaq69gr"))))
-    (build-system gnu-build-system)
+                "1lx3pkphi36pljns6jjxhyn9fbrana8f1y6gcg4yca48nvwlfssl"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:configure-flags
-           #~(list "--with-lapack=-lopenblas"
-              "--with-blas=-lopenblas")))
-    (home-page "https://mcmc-jags.sourceforge.net/")
-    (native-inputs
-     (list gfortran openblas))
-    (synopsis "Gibbs sampler")
-    (description "JAGS is Just Another Gibbs Sampler.  It is a program for
-analysis of Bayesian hierarchical models using Markov Chain Monte Carlo (MCMC)
-simulation not wholly unlike BUGS.  JAGS was written with three aims in mind:
-
-@enumerate
-@item To have a cross-platform engine for the BUGS language;
-@item To be extensible, allowing users to write their own functions,
-  distributions and samplers;
-@item To be a platform for experimentation with ideas in Bayesian modelling.
-@end enumerate\n")
-    (license license:gpl2)))
-
-(define-public libxls
-  (package
-    (name "libxls")
-    (version "1.6.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/libxls/libxls/releases/download/"
-                           "v" version "/libxls-" version ".tar.gz"))
-       (sha256
-        (base32 "0b327zafbwnfxj75n722z6a6zw195rs5bjmm5wskl9dml1p87yxj"))))
-    (build-system gnu-build-system)
-    (home-page "https://github.com/libxls/libxls")
-    (synopsis "Read binary (.xls) Excel spreadsheet files")
+     (list #:test-flags
+           ;; XXX: This test file requires hard to package python-anywidgets.
+           #~(list "--ignore=tests/test_jupyter_chart.py"
+                   "-k" (string-join
+                         (list
+                          ;; these tests open an external connection.
+                          "not test_from_and_to_json_roundtrip"
+                          "test_render_examples_to_chart"
+                          ;; introduces a circular dependency on altair-viewer.
+                          "not test_save_html"
+                          ;; these tests require the vl-convert vega compiler
+                          "test_vegalite_compiler"
+                          "test_to_dict_with_format_vega"
+                          "test_to_json_with_format_vega"
+                          "test_to_url"
+                          "test_renderer_with_none_embed_options"
+                          "test_jupyter_renderer_mimetype")
+                         " and not "))))
+    (propagated-inputs (list python-jinja2
+                             python-jsonschema
+                             python-numpy
+                             python-pandas
+                             python-setuptools
+                             python-toolz
+                             python-typing-extensions))
+    (native-inputs (list python-black
+                         python-hatchling
+                         python-ipython
+                         python-pytest
+                         python-vega-datasets))
+    (home-page "https://altair-viz.github.io/")
+    (synopsis "Declarative statistical visualization library for Python")
     (description
-     "libxls is a C library to read .xls spreadsheet files in the binary OLE
-BIFF8 format as created by Excel 97 and later versions.  It cannot write them.
+     "Vega-Altair is a declarative statistical visualization library for Python.")
+    (license license:expat)))
 
-This package also provides @command{xls2csv} to export Excel files to CSV.")
-    (license license:bsd-2)))
+(define-public python-arviz
+  (package
+    (name "python-arviz")
+    (version "0.21.0")
+    (source (origin
+              (method git-fetch)        ; PyPI misses some test files
+              (uri (git-reference
+                    (url "https://github.com/arviz-devs/arviz")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "02bqpl61gzn65vhwspi6gx9ln2wlwh8xm418i8vhmls44rvszcxf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; FIXME: matplotlib tests fail because of the "--save" test flag.
+     (list #:test-flags #~'("--ignore"
+                            "arviz/tests/base_tests/test_plots_matplotlib.py")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'remove-radon
+                 (lambda _
+                   (delete-file
+                    ;; This dataset is loaded remotely, it's not supposed to
+                    ;; be copied locally.
+                    "arviz/data/example_data/code/radon/radon.json")))
+               (add-before 'check 'write-permission
+                 (lambda _
+                   ;; 3 tests require write permission.
+                   (setenv "HOME" "/tmp"))))))
+    (native-inputs (list python-cloudpickle python-pytest))
+    (propagated-inputs (list python-dm-tree
+                             python-h5netcdf
+                             python-matplotlib
+                             python-numpy
+                             python-packaging
+                             python-pandas
+                             python-scipy
+                             python-typing-extensions
+                             python-xarray
+                             python-xarray-einstats
+                             python-setuptools
+                             python-wheel))
+    (home-page "https://github.com/arviz-devs/arviz")
+    (synopsis "Exploratory analysis of Bayesian models")
+    (description
+     "ArviZ is a Python package for exploratory analysis of Bayesian models.
+It includes functions for posterior analysis, data storage, model checking,
+comparison and diagnostics.")
+    (license license:asl2.0)))
 
 ;; Update this package together with the set of recommended packages: r-boot,
 ;; r-class, r-cluster, r-codetools, r-foreign, r-kernsmooth, r-lattice,
@@ -467,6 +606,99 @@ and clustering.  It also provides robust support for producing
 publication-quality data plots.  A large amount of 3rd-party packages are
 available, greatly increasing its breadth and scope.")
     (license license:gpl3+)))
+
+(define-public python-chaospy
+  (package
+    (name "python-chaospy")
+    (version "4.3.13")
+    (source (origin ;; PyPI misses Pytest fixtures.
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/jonathf/chaospy")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1bn4jmwygs5h0dskbniivj20qblgm75pyi9hcjf47r25kawd730m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The deprecation warnings break the tests.
+          (add-after 'unpack 'dont-treat-deprecation-warnings-as-error
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"error::DeprecationWarning\",") "")))))))
+    (propagated-inputs (list python-importlib-metadata python-numpoly
+                             python-numpy python-scipy))
+    (native-inputs (list python-pytest python-scikit-learn python-setuptools
+                         python-wheel))
+    (home-page "https://chaospy.readthedocs.io/en/master/")
+    (synopsis "Numerical tool for performing uncertainty quantification")
+    (description "Chaospy is a numerical toolbox for performing uncertainty
+quantification using polynomial chaos expansions, advanced Monte Carlo
+methods implemented in Python.  It also include a full suite of tools for
+doing low-discrepancy sampling, quadrature creation, polynomial manipulations,
+and a lot more.")
+    (license license:expat)))
+
+(define-public python-dcor
+  (package
+    (name "python-dcor")
+    (version "0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dcor" version))
+       (sha256
+        (base32 "0cc4an2p3ifm62d50w5h83myyhck6vcnrgp691rpid0x21v9glzm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; TODO: Report upstream, failing with NumPy deprecation
+                    ;; warning and errors:
+                    ;; AttributeError: 'numpy.ndarray' object has no attribute '_array'.
+                    ;; AttributeError: module 'numpy' has no attribute 'bool'.
+                    (list "not test_u_v_statistics"
+                          "test_same_distribution_different_means"
+                          "test_same_distribution_same_parameters"
+                          "test_independent_variables"
+                          "test_same_variable")
+                    " and not ")
+              "dcor/tests")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-joblib
+           python-numba
+           python-numpy
+           python-scipy))
+    (home-page "https://dcor.readthedocs.io/")
+    (synopsis "Distance correlation and related E-statistics in Python")
+    (description
+     "@code{dcor} is distance correlation and energy statistics in Python.
+
+E-statistics are functions of distances between statistical observations in
+metric spaces.  Distance covariance and distance correlation are dependency
+measures between random vectors introduced in
+@url{https://github.com/vnmabus/dcor#srb07,[SRB07]} with a simple E-statistic
+estimator.
+
+This package offers functions for calculating several E-statistics such as:
+
+@itemize
+@item estimator of the energy distance
+@url{https://github.com/vnmabus/dcor#sr13,[SR13]}
+@item biased and unbiased estimators of distance covariance and distance
+correlation @url{https://github.com/vnmabus/dcor#srb07,[SRB07]}
+@item estimators of the partial distance covariance and partial distance
+covariance @url{https://github.com/vnmabus/dcor#sr14,[SR14]}
+@end itemize")
+    (license license:expat)))
 
 (define-public python-dynesty
   (package
@@ -778,55 +1010,29 @@ Keizer et al. (2013) <doi:10.1038/psp.2013.24>, and Jonsson et al.
 and Vega-Lite examples.")
     (license license:expat)))
 
-(define-public python-altair
+(define-public python-emcee
   (package
-    (name "python-altair")
-    (version "5.3.0")
-    (source (origin
-              (method git-fetch)        ; no tests in PyPI
-              (uri (git-reference
-                    (url "https://github.com/altair-viz/altair")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1lx3pkphi36pljns6jjxhyn9fbrana8f1y6gcg4yca48nvwlfssl"))))
+    (name "python-emcee")
+    (version "3.1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "emcee" version))
+       (sha256
+        (base32 "0zb3ihja3hyj6zjbhkpxhyyppnv58q2jjg0yd1lwmydqdaplvbqi"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags
-           ;; XXX: This test file requires hard to package python-anywidgets.
-           #~(list "--ignore=tests/test_jupyter_chart.py"
-                   "-k" (string-join
-                         (list
-                          ;; these tests open an external connection.
-                          "not test_from_and_to_json_roundtrip"
-                          "test_render_examples_to_chart"
-                          ;; introduces a circular dependency on altair-viewer.
-                          "not test_save_html"
-                          ;; these tests require the vl-convert vega compiler
-                          "test_vegalite_compiler"
-                          "test_to_dict_with_format_vega"
-                          "test_to_json_with_format_vega"
-                          "test_to_url"
-                          "test_renderer_with_none_embed_options"
-                          "test_jupyter_renderer_mimetype")
-                         " and not "))))
-    (propagated-inputs (list python-jinja2
-                             python-jsonschema
-                             python-numpy
-                             python-pandas
-                             python-setuptools
-                             python-toolz
-                             python-typing-extensions))
-    (native-inputs (list python-black
-                         python-hatchling
-                         python-ipython
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-coverage
                          python-pytest
-                         python-vega-datasets))
-    (home-page "https://altair-viz.github.io/")
-    (synopsis "Declarative statistical visualization library for Python")
+                         python-pytest-cov
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (home-page "https://emcee.readthedocs.io/en/stable/")
+    (synopsis "Ensemble sampling toolkit for MCMC")
     (description
-     "Vega-Altair is a declarative statistical visualization library for Python.")
+     "@code{emcee} is a Python implementation of the affine-invariant ensemble
+sampler for Markov chain Monte Carlo (MCMC).")
     (license license:expat)))
 
 (define-public python-george
@@ -916,6 +1122,51 @@ point (up to 50% contamination) and have a number of nice applications in
 machine learning, computer vision, and high-dimensional statistics.")
     (license license:asl2.0)))
 
+(define-public python-nautilus-sampler
+  (package
+    (name "python-nautilus-sampler")
+    (version "1.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "nautilus_sampler" version))
+       (sha256
+        (base32 "1b73rxg7b5fzpw4ss4py98xdxddkl1dh2dszp2pxv3y179iyniqj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--durations=0"
+              ;; One Dask test hangs.
+              "-k" "not test_pool[dask]")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _ (setenv "OMP_NUM_THREADS" "1"))))))
+    (native-inputs
+     (list python-dask
+           python-distributed
+           python-flit-core
+           python-h5py
+           python-pytest
+           python-pytest-xdist))
+    (propagated-inputs
+     (list python-numpy
+           python-scikit-learn
+           python-scipy
+           python-threadpoolctl))
+    (home-page "https://github.com/johannesulf/nautilus")
+    (synopsis "Neural Network-Boosted Importance Sampling for Bayesian Statistics")
+    (description
+     "Nautilus is an pure-Python package for Bayesian posterior and evidence
+estimation.  It utilizes importance sampling and efficient space exploration
+using neural networks.  Compared to traditional @acronym{MCMC, Markov chain
+Monte Carlo} and Nested Sampling codes, it often needs fewer likelihood calls
+and produces much larger posterior samples.  Additionally, nautilus is highly
+accurate and produces Bayesian evidence estimates with percent precision.  It
+is widely used in many areas of astrophysical research.")
+    (license license:expat)))
+
 (define-public python-nestle
   (package
     (name "python-nestle")
@@ -941,57 +1192,6 @@ machine learning, computer vision, and high-dimensional statistics.")
 @url{https://en.wikipedia.org/wiki/Nested_sampling_algorithm, Nested Sampling}
 algorithms for evaluating Bayesian evidence.")
     (license license:expat)))
-
-(define-public python-arviz
-  (package
-    (name "python-arviz")
-    (version "0.21.0")
-    (source (origin
-              (method git-fetch)        ; PyPI misses some test files
-              (uri (git-reference
-                    (url "https://github.com/arviz-devs/arviz")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "02bqpl61gzn65vhwspi6gx9ln2wlwh8xm418i8vhmls44rvszcxf"))))
-    (build-system pyproject-build-system)
-    (arguments
-     ;; FIXME: matplotlib tests fail because of the "--save" test flag.
-     (list #:test-flags #~'("--ignore"
-                            "arviz/tests/base_tests/test_plots_matplotlib.py")
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'remove-radon
-                 (lambda _
-                   (delete-file
-                    ;; This dataset is loaded remotely, it's not supposed to
-                    ;; be copied locally.
-                    "arviz/data/example_data/code/radon/radon.json")))
-               (add-before 'check 'write-permission
-                 (lambda _
-                   ;; 3 tests require write permission.
-                   (setenv "HOME" "/tmp"))))))
-    (native-inputs (list python-cloudpickle python-pytest))
-    (propagated-inputs (list python-dm-tree
-                             python-h5netcdf
-                             python-matplotlib
-                             python-numpy
-                             python-packaging
-                             python-pandas
-                             python-scipy
-                             python-typing-extensions
-                             python-xarray
-                             python-xarray-einstats
-                             python-setuptools
-                             python-wheel))
-    (home-page "https://github.com/arviz-devs/arviz")
-    (synopsis "Exploratory analysis of Bayesian models")
-    (description
-     "ArviZ is a Python package for exploratory analysis of Bayesian models.
-It includes functions for posterior analysis, data storage, model checking,
-comparison and diagnostics.")
-    (license license:asl2.0)))
 
 (define-public python-pymc
   (package
@@ -1038,42 +1238,6 @@ comparison and diagnostics.")
 modeling focusing on advanced Markov chain Monte Carlo (MCMC) and variational
 inference (VI) algorithms.")
     (license license:asl2.0)))
-
-(define-public python-chaospy
-  (package
-    (name "python-chaospy")
-    (version "4.3.13")
-    (source (origin ;; PyPI misses Pytest fixtures.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/jonathf/chaospy")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1bn4jmwygs5h0dskbniivj20qblgm75pyi9hcjf47r25kawd730m"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; The deprecation warnings break the tests.
-          (add-after 'unpack 'dont-treat-deprecation-warnings-as-error
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("\"error::DeprecationWarning\",") "")))))))
-    (propagated-inputs (list python-importlib-metadata python-numpoly
-                             python-numpy python-scipy))
-    (native-inputs (list python-pytest python-scikit-learn python-setuptools
-                         python-wheel))
-    (home-page "https://chaospy.readthedocs.io/en/master/")
-    (synopsis "Numerical tool for performing uncertainty quantification")
-    (description "Chaospy is a numerical toolbox for performing uncertainty
-quantification using polynomial chaos expansions, advanced Monte Carlo
-methods implemented in Python.  It also include a full suite of tools for
-doing low-discrepancy sampling, quadrature creation, polynomial manipulations,
-and a lot more.")
-    (license license:expat)))
 
 (define-public python-patsy
   (package
@@ -1199,41 +1363,16 @@ uncertainties and are backed by strong theoretical guarantees thanks to
 conformal prediction methods intervals.")
     (license license:bsd-3)))
 
-(define-public python-emcee
-  (package
-    (name "python-emcee")
-    (version "3.1.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "emcee" version))
-       (sha256
-        (base32 "0zb3ihja3hyj6zjbhkpxhyyppnv58q2jjg0yd1lwmydqdaplvbqi"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-coverage
-                         python-pytest
-                         python-pytest-cov
-                         python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
-    (home-page "https://emcee.readthedocs.io/en/stable/")
-    (synopsis "Ensemble sampling toolkit for MCMC")
-    (description
-     "@code{emcee} is a Python implementation of the affine-invariant ensemble
-sampler for Markov chain Monte Carlo (MCMC).")
-    (license license:expat)))
-
 (define-public python-statsmodels
   (package
     (name "python-statsmodels")
-    (version "0.14.2")
+    (version "0.14.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "statsmodels" version))
        (sha256
-        (base32 "1bfnxkzdcz5fj7hh1gc021hc3b9181f1mfph4kd1ra6kg8a501c9"))
+        (base32 "0rwbi57ckg7hgrmdf0g1paqcvp5n6f06xfzrcz075p30j3ry0sax"))
        (modules '((guix build utils)))
        (snippet
         '(for-each delete-file (find-files "." "\\.c$")))))
@@ -1257,21 +1396,16 @@ sampler for Markov chain Monte Carlo (MCMC).")
                  (string-append "import matplotlib;matplotlib.use('Agg');"
                                 line))))))))
     (propagated-inputs
-     (list python-numpy python-packaging python-pandas python-patsy
+     (list python-numpy
+           python-packaging
+           python-pandas
+           python-patsy
            python-scipy))
     (native-inputs
-     (list python-colorama
-           python-cython
-           python-flake8
-           python-isort
-           python-joblib
+     (list python-cython-3
            python-matplotlib
-           python-pytest
-           python-pytest-randomly
-           python-pytest-xdist
-           python-setuptools-scm
-           python-setuptools
-           python-wheel))
+           python-setuptools-next
+           python-setuptools-scm))
     (home-page
      (string-append "https://www.statsmodels.org/v" version "/"))
     (synopsis "Statistical modeling and econometrics in Python")
@@ -2921,7 +3055,7 @@ functions.")
 (define-public python-rchitect
   (package
     (name "python-rchitect")
-    (version "0.4.7")
+    (version "0.4.8")
     (source
      (origin
        (method git-fetch)
@@ -2930,7 +3064,7 @@ functions.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ijbb0v77ir7j64r4r4kznv03wyc57rcqa9jnsc46476il79dcrk"))))
+        (base32 "0r41ad8mk7bmqsw96sizahzvz1z6cp4rpll166y0yhwdrv86nmj7"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-cffi python-packaging python-six))
     (native-inputs (list python-pytest
@@ -2951,7 +3085,7 @@ main use is as the driver for radian, the R console.")
 (define-public python-radian
   (package
     (name "python-radian")
-    (version "0.6.13")
+    (version "0.6.15")
     (source
      (origin
        (method git-fetch)
@@ -2960,7 +3094,7 @@ main use is as the driver for radian, the R console.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nnwgvifhsxdac7rr9d2zspc97xx0vyzxn1v9g4bnm9061rragc3"))))
+        (base32 "089ys59cnw5l5k0656arhn805j8pkw21q4qf7gq9p9hifi1lpnpm"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2997,43 +3131,6 @@ main use is as the driver for radian, the R console.")
 editing and rich syntax highlight.  One would consider Radian as a IPython
 clone for R, though its design is more aligned to Julia.")
     (license license:expat)))
-
-(define-public java-jdistlib
-  (package
-    (name "java-jdistlib")
-    (version "0.4.5")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/jdistlib/jdistlib-"
-                                  version "-src.jar"))
-              (sha256
-               (base32
-                "1pkj8aahw9ydr1isbaqrkd05nvq98ik5jwwhf3yf3rky3z869v11"))))
-    (build-system ant-build-system)
-    (arguments
-     `(#:jar-name "jdistlib.jar"
-       #:jdk ,icedtea-8
-       #:tests? #f ; no dedicated test directory
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-broken-encoding
-           (lambda _
-             (with-fluids ((%default-port-encoding "ISO-8859-1"))
-               (substitute* "src/jdistlib/Beta.java"
-                 (("Scheff.+-Tukey") "Scheffe-Tukey")))
-             #t)))))
-    (propagated-inputs
-     (list java-jtransforms))
-    (native-inputs
-     (list java-junit))
-    (home-page "https://jdistlib.sourceforge.net/")
-    (synopsis "Java library of statistical distributions")
-    (description "JDistlib is the Java Statistical Distribution Library, a
-Java package that provides routines for various statistical distributions.")
-    ;; The files that were translated from R code are under GPLv2+; some files
-    ;; are under the GPLv3, which is a mistake.  The author confirmed in an
-    ;; email that this whole project should be under GPLv2+.
-    (license license:gpl2+)))
 
 (define-public emacs-ess
   (package
@@ -3179,30 +3276,6 @@ statistical analysis programs such as R, Julia, and JAGS.")
 files, including Rmarkdown files.")
     (license license:gpl3+)))
 
-(define-public readstat
-  (package
-    (name "readstat")
-    (version "1.1.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/WizardMac/ReadStat")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0aqalr86d7h9sp9zjkydw3ap4s54qgq2ml6p8gd0gnn1jf0ljm72"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf automake gettext-minimal libtool))
-    (inputs
-     (list zlib))
-    (home-page "https://github.com/WizardMac/ReadStat")
-    (synopsis "Convert SAS, Stata, and SPSS files")
-    (description "Command-line tool and C library for reading files from
-popular stats packages like SAS, Stata and SPSS.")
-    (license license:expat)))
-
 (define-public python-pyreadstat
   (package
     (name "python-pyreadstat")
@@ -3246,59 +3319,6 @@ popular stats packages like SAS, Stata and SPSS.")
 files into/from Pandas DataFrames.  It is a wrapper around the C library
 @code{readstat}.")
     (license license:asl2.0)))
-
-(define-public xlispstat
-  (let ((commit "f1bea6053df658ee48612bf1f63c35de99e2c649")
-        (revision "0"))
-    (package
-      (name "xlispstat")
-      (version (git-version "3.52.23" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/jhbadger/xlispstat.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))))
-      (build-system gnu-build-system)
-      (arguments
-       `(#:parallel-build? #f   ; Parallel builds are not supported
-         #:configure-flags (list "--with-gcc")
-         #:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key tests? #:allow-other-keys)
-               (when tests?
-                 (with-output-to-file "exit.lsp"
-                   (lambda () (display "(exit)")))
-                 (invoke "./xlisp" "tests/test" "exit")))))))
-      (inputs (list tcsh
-                    libx11
-                    libxmu
-                    libxext
-                    libxpm
-                    libxaw
-                    ncurses
-                    gnuplot))
-      (native-inputs (list pkg-config))
-      (synopsis "Statistical analysis environment with interactive graphics")
-      (description "XLISP-STAT is a statistical environment based on a Lisp
-dialect called XLISP.  To facilitate statistical computations, standard
-functions for addition, logarithms, etc., have been modified to operate on
-lists and arrays of numbers, and a number of basic statistical functions have
-been added.  Many of these functions have been written in Lisp, and additional
-functions can be added easily by a user.  Several basic forms of plots,
-including histograms, scatterplots, rotatable plots and scatterplot matrices
-are provided.  These plots support various forms of interactive highlighting
-operations and can be linked so points highlighted in one plot will be
-highlighted in all linked plots.  Interactions with the plots are controlled
-by the mouse, menus and dialog boxes.  An object-oriented programming system
-is used to allow menus, dialogs, and the response to mouse actions to be
- customized.")
-      (home-page "https://homepage.divms.uiowa.edu/~luke/xls/xlsinfo/")
-      (license license:expat))))
 
 (define-public r-rlrsim
   (package
@@ -3438,6 +3458,67 @@ simple slopes, standardized coefficients, regions of significance (Johnson &
 Neyman, 1936; cf.  Spiller et al., 2012), etc.")
     (license license:gpl3)))
 
+(define-public r-vpc
+  (package
+    (name "r-vpc")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ronkeizer/vpc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bkp0zy1pswrqgcsdvxvc7gyfl544k89qrjqdcj4aqkif0bfqmx8"))))
+    (build-system r-build-system)
+    (native-inputs
+     (list r-testit))
+    (propagated-inputs
+     (list r-classint
+           r-dplyr
+           r-ggplot2
+           r-mass
+           r-readr
+           r-stringr
+           r-survival
+           r-tidyr))
+    (home-page "https://vpc.ronkeizer.com/")
+    (synopsis "Create visual predictive checks")
+    (description
+     "Visual predictive checks are a commonly used diagnostic plot in
+pharmacometrics, showing how certain statistics (percentiles) for observed
+data compare to those same statistics for data simulated from a model.  The
+package can generate VPCs for continuous, categorical, censored, and
+(repeated) time-to-event data.")
+    (license license:expat)))
+
+(define-public readstat
+  (let ((commit "718d49155e327471ed9bf4a8c157f849f285b46c")
+        (revision "0"))
+  (package
+    (name "readstat")
+    (version (git-version "1.1.9" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/WizardMac/ReadStat")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "121axcx4shd0fqlcr1mk7y841sd59r9mx473c4av8gs81xfhcg0h"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     (list autoconf automake gettext-minimal libtool))
+    (inputs
+     (list zlib))
+    (home-page "https://github.com/WizardMac/ReadStat")
+    (synopsis "Convert SAS, Stata, and SPSS files")
+    (description "Command-line tool and C library for reading files from
+popular stats packages like SAS, Stata and SPSS.")
+    (license license:expat))))
+
 (define-public ruby-enumerable-statistics
   (package
     (name "ruby-enumerable-statistics")
@@ -3535,3 +3616,56 @@ statistical summary in arrays and enumerables.")
 can be used for learning (Structure and Parameter), inference (Probabilistic
 and Causal), and simulations in Bayesian Networks.")
     (license license:expat)))
+
+(define-public xlispstat
+  (let ((commit "f1bea6053df658ee48612bf1f63c35de99e2c649")
+        (revision "0"))
+    (package
+      (name "xlispstat")
+      (version (git-version "3.52.23" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/jhbadger/xlispstat.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:parallel-build? #f   ; Parallel builds are not supported
+         #:configure-flags (list "--with-gcc")
+         #:phases
+         (modify-phases %standard-phases
+           (replace 'check
+             (lambda* (#:key tests? #:allow-other-keys)
+               (when tests?
+                 (with-output-to-file "exit.lsp"
+                   (lambda () (display "(exit)")))
+                 (invoke "./xlisp" "tests/test" "exit")))))))
+      (inputs (list tcsh
+                    libx11
+                    libxmu
+                    libxext
+                    libxpm
+                    libxaw
+                    ncurses
+                    gnuplot))
+      (native-inputs (list pkg-config))
+      (synopsis "Statistical analysis environment with interactive graphics")
+      (description "XLISP-STAT is a statistical environment based on a Lisp
+dialect called XLISP.  To facilitate statistical computations, standard
+functions for addition, logarithms, etc., have been modified to operate on
+lists and arrays of numbers, and a number of basic statistical functions have
+been added.  Many of these functions have been written in Lisp, and additional
+functions can be added easily by a user.  Several basic forms of plots,
+including histograms, scatterplots, rotatable plots and scatterplot matrices
+are provided.  These plots support various forms of interactive highlighting
+operations and can be linked so points highlighted in one plot will be
+highlighted in all linked plots.  Interactions with the plots are controlled
+by the mouse, menus and dialog boxes.  An object-oriented programming system
+is used to allow menus, dialogs, and the response to mouse actions to be
+ customized.")
+      (home-page "https://homepage.divms.uiowa.edu/~luke/xls/xlsinfo/")
+      (license license:expat))))

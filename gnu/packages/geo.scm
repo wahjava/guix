@@ -7,7 +7,7 @@
 ;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
 ;;; Copyright © 2018, 2019, 2020, 2021 Julien Lepiller <julien@lepiller.eu>
-;;; Copyright © 2019-2023 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2019-2023, 2025 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019-2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2021 Wiktor Żelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2019, 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -78,7 +78,7 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages busybox)
   #:use-module (gnu packages c)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -96,6 +96,7 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages fribidi)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -151,6 +152,7 @@
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages version-control)
   #:use-module (gnu packages video)
   #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
@@ -554,7 +556,7 @@ topology functions.")
            gtk
            libadwaita
            libgee
-           libgweather4
+           libgweather
            librsvg
            libsecret
            libshumate
@@ -888,79 +890,6 @@ lets developers use the functionality of Proj in their own software.")
                    ;; src/geodesic.*, src/tests/geodtest.cpp
                    license:x11))))
 
-; This is the last version of proj that provides the old proj.4 API.
-(define-public proj-7
-  (package (inherit proj)
-    (version "7.2.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://download.osgeo.org/proj/proj-"
-                           version ".tar.gz"))
-       (sha256
-        (base32
-         "050apzdn0isxpsblys1shrl9ccli5vd32kgswlgx1imrbwpg915k"))
-       (patches
-        (search-patches "proj-7-initialize-memory.patch"))))
-    (arguments
-     `(#:configure-flags '("-DUSE_EXTERNAL_GTEST=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-version
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("MAJOR 7 MINOR 2 PATCH 0") "MAJOR 7 MINOR 2 PATCH 1")))))))))
-
-(define-public proj.4
-  (package
-    (name "proj.4")
-    (version "4.9.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://download.osgeo.org/proj/proj-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1xw5f427xk9p2nbsj04j6m5zyjlyd66sbvl2bkg8hd1kx8pm9139"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-test-paths
-           (lambda _
-             (substitute* '("nad/test27"
-                            "nad/test83"
-                            "nad/testvarious"
-                            "nad/testdatumfile"
-                            "nad/testflaky"
-                            "nad/testIGNF")
-               (("/bin/rm") (which "rm")))
-             #t))
-         ;; Precision problems on i686 and other platforms. See:
-         ;; https://web.archive.org/web/20151006134301/http://trac.osgeo.org/proj/ticket/255
-         ;; Disable failing test.
-         (add-after 'patch-test-paths 'ignore-failing-tests
-           (lambda _
-             (substitute* '("nad/Makefile.in")
-               (("\tPROJ_LIB.*" all) (string-append  "#" all)))
-             #t)))))
-    (inputs
-     (list glib))
-    (home-page "https://proj.org/")
-    (synopsis "Cartographic Projections Library")
-    (description
-     "Proj.4 is a library for converting coordinates between cartographic
-projections.")
-    (license (list license:expat
-                   ;; src/PJ_patterson.c
-                   license:asl2.0
-                   ;; src/geodesic.c/h
-                   license:x11
-                   ;; Embedded EPSG database.
-                   (license:non-copyleft "http://www.epsg.org/TermsOfUse")
-                   ;; cmake/*
-                   license:boost1.0))))
-
 (define-public python-obspy
   (package
     (name "python-obspy")
@@ -1185,14 +1114,14 @@ readily with other Python GIS packages such as pyproj, Rtree, and Shapely.")
 (define-public python-geopandas
   (package
     (name "python-geopandas")
-    (version "1.0.1")
+    (version "1.1.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "geopandas" version))
         (sha256
           (base32
-            "1aq8rb1a97n9h0yinrcr6nhfj7gvh8h6wr2ng9dj1225afjp1gxq"))))
+            "0g993nzdxf6dp0fy1wi49cjph5i7plypb3p0f8zc95fhchzp2i8p"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1202,7 +1131,10 @@ readily with other Python GIS packages such as pyproj, Rtree, and Shapely.")
          "--ignore=geopandas/tests/test_overlay.py"
          "--ignore=geopandas/io/tests/test_file.py"
          ;; Number of open figures changed during test
-         "-k" "not test_pandas_kind"
+         "-k" (string-append "not test_pandas_kind"
+                           ;; OSError: Baseline image '<...>' does not exist.
+                           " and not test_plot_polygon_with_holes[png]"
+                           " and not test_multipolygons_with_interior[png]")
          ;; Disable tests that require internet access.
          "-m" "not web")))
     (propagated-inputs
@@ -1213,10 +1145,7 @@ readily with other Python GIS packages such as pyproj, Rtree, and Shapely.")
             python-pyproj
             python-shapely))
     (native-inputs
-      (list python-codecov
-            python-pytest
-            python-pytest-cov
-            python-pytest-xdist
+      (list python-pytest
             python-setuptools
             python-wheel))
     (home-page "https://geopandas.org")
@@ -1365,6 +1294,61 @@ just as easily download and work with other infrastructure types,
 amenities/points of interest, building footprints, elevation data,
 street bearings/orientations, and speed/travel time.")
     (license license:expat)))
+
+(define-public python-owslib
+  (package
+    (name "python-owslib")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/geopython/OWSLib")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14pb96h0nl4c6hs58i2z7mx0fpd4g886ajflbrs69hwiqj2x8a3f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: Those tests require network access.
+         "-k" (string-join
+               (list "not test_ows_interfaces_wcs"
+                     "test_system_readonly"
+                     "test_sampling_features_readonly"
+                     "test_datastreams_readonly"
+                     "test_observations_readonly"
+                     "test_system_history")
+               " and not ")
+         ;; XXX: Not collected properly.
+         "--ignore-glob=tests/doctests/*")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'cleanup-build-directory
+            (lambda _
+              (delete-file-recursively "build"))))))
+    (native-inputs
+     (list python-dateutil
+           python-pyproj
+           python-pyyaml
+           python-pytest
+           python-pytest-cov
+           python-pytest-httpserver
+           python-pytz
+           python-requests
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-lxml))
+    (synopsis "Interface for Open Geospatial Consortium web service")
+    (description
+     "OWSLib is a Python package for client programming with Open Geospatial
+Consortium (OGC) web service (hence OWS) interface standards, and their related
+content models.")
+    (home-page "https://geopython.github.io/OWSLib/")
+    (license license:bsd-3)))
 
 (define-public mapnik
   ;; There hasn't been a release since early 2021, and it fails to build with
@@ -1519,14 +1503,8 @@ development.")
     (arguments
      (list
       #:configure-flags #~(list "-DUSE_EXTERNAL_GTEST=ON")
-      #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "ctest" "-E"
-                             ;; This tests needs network .
-                             "pdal_io_(stac|copc)_reader_test")))))))
+      #:parallel-tests? #f
+      #:test-exclude "pdal_io_(stac|copc)_reader_test"))
     (native-inputs (list python googletest))
     (inputs (list gdal
                   h3
@@ -1808,14 +1786,14 @@ Shapely capabilities
 (define-public postgis
   (package
     (name "postgis")
-    (version "3.2.1")
+    (version "3.3.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.osgeo.org/postgis/source/postgis-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0gl9d6xy2an82ldb9sixz5blyngjryq8m3509fr38ffawvfniazv"))))
+                "1w1jkb98rf22qz0x4wajp0cjwzcb928247169xk84az3adb0y9vf"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f
@@ -2105,7 +2083,7 @@ visualizing and performing calculations with weather data.")
 (define-public libosmium
   (package
     (name "libosmium")
-    (version "2.19.0")
+    (version "2.22.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2114,7 +2092,7 @@ visualizing and performing calculations with weather data.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d69xzd29hk846g049y2g668mr8kaf05f6a26s3qn6az062hxfa7"))))
+                "05djv6j3cgl2mqznycgwjbsz39imgbfhxran7l5z09x53qzdv23g"))))
     (build-system cmake-build-system)
     (propagated-inputs (list boost
                              bzip2
@@ -2122,7 +2100,7 @@ visualizing and performing calculations with weather data.")
                              gdal
                              geos
                              lz4
-                             proj-7
+                             proj
                              protozero
                              zlib))
     (native-inputs (list doxygen graphviz-minimal))
@@ -2136,7 +2114,7 @@ OpenStreetMap data.")
 (define-public osmium-tool
   (package
     (name "osmium-tool")
-    (version "1.15.0")
+    (version "1.18.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2145,13 +2123,9 @@ OpenStreetMap data.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d90vz316xdl3c416nicgdw7ybw17l2125wgxglbzl7jaqngapy5"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Remove bundled libraries.
-               '(delete-file-recursively "include/rapidjson"))))
+                "13zqgniyl58m9gywfsi2wagrf0gh93d850krmx1ndd6r3jzgj978"))))
     (build-system cmake-build-system)
-    (inputs (list libosmium rapidjson))
+    (inputs (list libosmium nlohmann-json))
     (native-inputs (list pandoc))
     (home-page "https://osmcode.org/osmium-tool/")
     (synopsis "Osmium command-line tool")
@@ -2162,7 +2136,7 @@ based on the Osmium library.")
 (define-public osm2pgsql
   (package
     (name "osm2pgsql")
-    (version "1.11.0")
+    (version "2.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2171,7 +2145,7 @@ based on the Osmium library.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "135vqahlcrhwa3b9hfgbiqkzbbsjd4i79fp41cd0rp4zarcpi47p"))
+                "1plaayi3mfwpsz48abjqnw4ymvqrwzlwhb44dwfpaz02qqqhvcg6"))
               (modules '((guix build utils)))
               (snippet
                ;; Remove bundled libraries.
@@ -2188,7 +2162,7 @@ based on the Osmium library.")
                   bzip2
                   cli11
                   expat
-                  fmt-8
+                  fmt-11
                   libosmium
                   luajit
                   nlohmann-json
@@ -2375,6 +2349,7 @@ volunteers.")
        (sha256
         (base32
          "02n5vjcyk04w0djidyp21hfbxfpbbara8ifd9nml6158rwqr8lja"))))
+    (arguments (list #:tests? #f))
     (build-system cmake-build-system)
     (home-page "https://libspatialindex.org")
     (synopsis "Spatial indexing library")
@@ -2942,14 +2917,14 @@ The API also works with MaxMind’s free GeoLite2 databases.")
 (define-public routino
   (package
     (name "routino")
-    (version "3.4.1")
+    (version "3.4.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.routino.org/download/routino-"
                                   version ".tgz"))
               (sha256
                (base32
-                "0aw5idqz7nv458llgwp5wcgikf34xcblpq46mq7msxfib0m8vahb"))))
+                "0m0yq665sdsiikbl0win564d841wb87prsfni8wajz6969yhdfjf"))))
     (build-system gnu-build-system)
     (native-inputs (list perl))
     (inputs (list bzip2 xz zlib))
@@ -3007,7 +2982,7 @@ data.")
 (define-public qmapshack
   (package
     (name "qmapshack")
-    (version "1.17.1")
+    (version "1.18.0")
     (source
      (origin
        (method git-fetch)
@@ -3016,36 +2991,34 @@ data.")
              (commit (string-append "V_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ckadklk67dp1pvkacfkr8379g2pwk73q85jfzm8viclcqmfvb62"))))
+        (base32 "04r2m7qwzqwgnwhi15999n0w7fmddjcmdv8mxm8c0flrjw8zmkpq"))))
     (build-system qt-build-system)
     (native-inputs
-     (list pkg-config qttools-5))
+     (list pkg-config))
     (inputs
-     (list curl
-           gdal
+     (list gdal
            libjpeg-turbo
            proj
-           qtbase-5
-           qtdeclarative-5
-           qtlocation-5
-           qtwebchannel-5
-           qtwebengine-5
-           quazip-5
-           routino
-           sqlite ; See wrap phase
-           zlib))
+           qt5compat
+           qtpositioning
+           qttools
+           qtwebengine
+           quazip
+           routino))
     (arguments
-     `(#:tests? #f
+     (list
+       #:qtbase qtbase
+       #:tests? #f ;no tests
        #:phases
-       (modify-phases %standard-phases
+       #~(modify-phases %standard-phases
          (add-after 'unpack 'fix-cmake-modules
-           (lambda* (#:key inputs #:allow-other-keys)
+           (lambda _
              (substitute* "CMakeLists.txt"
-               (("find_package\\(Qt5PrintSupport        REQUIRED\\)" all)
-                (string-append all "\nfind_package(Qt5Positioning REQUIRED)")))
+               (("find_package\\(Qt6PrintSupport        REQUIRED\\)" all)
+                (string-append all "\nfind_package(Qt6Positioning REQUIRED)")))
              (substitute* "cmake/Modules/FindROUTINO.cmake"
                (("/usr/local")
-                (assoc-ref inputs "routino"))))))))
+                #$(this-package-input "routino"))))))))
     (synopsis "GPS mapping application")
     (description
      "QMapShack can be used to plan your next outdoor trip or to visualize and
@@ -3162,7 +3135,7 @@ exchanged form one Spatial DBMS and the other.")
 (define-public opencpn
   (package
     (name "opencpn")
-    (version "5.6.2")
+    (version "5.12.2")
     (source
      (origin
        (method git-fetch)
@@ -3171,16 +3144,17 @@ exchanged form one Spatial DBMS and the other.")
              (commit (string-append "Release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16hb0ycp0kbx2h8fx08rqkgrlz48kaym0d6wqvpjrcfa2r4myss8"))))
+        (base32 "0w57zcq1rpx3cfhcqjqw25wiz1pi6lx7xnif511vr4plvzqdx8yd"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list gettext-minimal pkg-config))
+     (list gettext-minimal git-minimal googletest pkg-config))
     (inputs
      (list alsa-utils
            bzip2
            cairo
            curl
            eudev
+           glew
            glu
            gtk+
            jasper
@@ -3192,12 +3166,15 @@ exchanged form one Spatial DBMS and the other.")
            libusb
            lz4
            mesa
+           openssl
            pango
            portaudio
+           rapidjson
+           shapelib
            sqlite
            tinyxml
            wxsvg
-           wxwidgets-3.0
+           wxwidgets
            xz
            zlib))
     (arguments
@@ -3517,6 +3494,7 @@ growing set of geoscientific methods.")
                                "ProcessingGrassAlgorithmsRasterTestPt2"
                                "ProcessingGrassAlgorithmsVectorTest"
                                "ProcessingGrassAlgsPostgreRasterProvider"
+                               "test_core_authcertutils"
                                "test_core_authconfig"
                                "test_core_authmanager"
                                "test_core_compositionconverter"
@@ -3991,107 +3969,114 @@ time.  Interactively visualize vector, raster and volume data.")
     (license license:gpl2+)))
 
 (define-public navit
-  (package
-    (name "navit")
-    (version "0.5.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/navit-gps/navit")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "1jhlif0sc5m8wqb5j985g1xba2ki7b7mm14pkvzdghjd0q0gf15s"))
-              (file-name (git-file-name name version))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      ;; There are no tests
-      #:tests? #f
-      ;; With -DSAMPLE_MAP=TRUE (the default), it tries to download a
-      ;; map during the build process.
-      #:configure-flags #~(list "-DSAMPLE_MAP=FALSE")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after
-              'unpack 'patch-navit-config
-            (lambda _
-              ;; For now this package only supports SDL, so if we keep
-              ;; the configuration as-is, Navit doesn't start.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (("<graphics type=\"gtk_drawing_area\"/>")
-                 "<graphics type=\"sdl\"/>"))
-              ;; Users are expected to be able to add XML files inside
-              ;; $NAVIT_SHAREDIR, however that directory is in the store.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (("<xi:include href=\"\\$NAVIT_SHAREDIR/maps/\\*\\.xml\"/>")
-                 "<xi:include href=\"$NAVIT_USER_DATADIR/maps/*.xml\"/>"))
-              ;; Navit also works without GPS but in that case there is
-              ;; no automatic zooming, so we need zoom buttons to be able
-              ;; to manually zoom in or out.
-              (substitute*
-                  "navit/navit_shipped.xml"
-                (((string-append
-                   "<osd enabled=\"no\" type=\"button\" x=\"-96\" y=\"-96\" "
-                   "command=\"zoom_in()"))
-                 (string-append
-                  "<osd enabled=\"yes\" type=\"button\" x=\"-96\" y=\"-96\" "
-                  "command=\"zoom_in()"))
-                (((string-append
-                   "<osd enabled=\"no\" type=\"button\" x=\"0\" y=\"-96\" "
-                   "command=\"zoom_out()"))
-                 (string-append
-                  "<osd enabled=\"yes\" type=\"button\" x=\"0\" y=\"-96\" "
-                  "command=\"zoom_out()\" src=\"zoom_out.png\"/>")))))
-          (add-before
-              'build 'set-cache
-            ;; During the build, svg icons are converted in different
-            ;; formats, and this needs XDG_CACHE_HOME to work.
-            (lambda _
-              (setenv "XDG_CACHE_HOME" "/tmp/xdg-cache"))))))
-    (inputs (list dbus-glib
-                  espeak
-                  freeglut
-                  freeimage
-                  freetype
-                  glib
-                  gettext-minimal
-                  gpsd
-                  gdk-pixbuf
-                  imlib2
-                  python
-                  sdl
-                  sdl-image))
-    (native-inputs (list fontconfig
-                         (librsvg-for-system)
-                         pkg-config))
-    (home-page "https://www.navit-project.org")
-    (synopsis "Car navigation system with routing engine that uses vector maps data")
-    (description "Navit is a car navigation system with a routing engine.
+  ;; XXX: The latest commit provides compatibility with GCC 14, switch to tag
+  ;; when a fresh release is available.
+  (let ((commit "2418e3f42af0641c734f93f3d6d20d3025ad2182")
+        (revision "0"))
+    (package
+      (name "navit")
+      (version (git-version "0.5.6" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/navit-gps/navit")
+                       (commit commit)))
+                (sha256
+                 (base32
+                  "0s7rhg1xyj56g19fh84znj6fzdiglgf010appjydivn5gkyzb9kq"))
+                (file-name (git-file-name name version))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; There are no tests
+        #:tests? #f
+        ;; With -DSAMPLE_MAP=TRUE (the default), it tries to download a
+        ;; map during the build process.
+        #:configure-flags #~(list "-DSAMPLE_MAP=FALSE")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after
+                'unpack 'patch-navit-config
+              (lambda _
+                ;; For now this package only supports SDL, so if we keep
+                ;; the configuration as-is, Navit doesn't start.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (("<graphics type=\"gtk_drawing_area\"/>")
+                   "<graphics type=\"sdl\"/>"))
+                ;; Users are expected to be able to add XML files inside
+                ;; $NAVIT_SHAREDIR, however that directory is in the store.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (("<xi:include href=\"\\$NAVIT_SHAREDIR/maps/\\*\\.xml\"/>")
+                   "<xi:include href=\"$NAVIT_USER_DATADIR/maps/*.xml\"/>"))
+                ;; Navit also works without GPS but in that case there is
+                ;; no automatic zooming, so we need zoom buttons to be able
+                ;; to manually zoom in or out.
+                (substitute*
+                    "navit/navit_shipped.xml"
+                  (((string-append
+                     "<osd enabled=\"no\" type=\"button\" x=\"-96\" y=\"-96\" "
+                     "command=\"zoom_in()"))
+                   (string-append
+                    "<osd enabled=\"yes\" type=\"button\" x=\"-96\" y=\"-96\" "
+                    "command=\"zoom_in()"))
+                  (((string-append
+                     "<osd enabled=\"no\" type=\"button\" x=\"0\" y=\"-96\" "
+                     "command=\"zoom_out()"))
+                   (string-append
+                    "<osd enabled=\"yes\" type=\"button\" x=\"0\" y=\"-96\" "
+                    "command=\"zoom_out()\" src=\"zoom_out.png\"/>")))))
+            (add-before
+                'build 'set-cache
+              ;; During the build, svg icons are converted in different
+              ;; formats, and this needs XDG_CACHE_HOME to work.
+              (lambda _
+                (setenv "XDG_CACHE_HOME" "/tmp/xdg-cache"))))))
+      (inputs (list dbus-glib
+                    espeak
+                    freeglut
+                    freeimage
+                    freetype
+                    fribidi
+                    glib
+                    gettext-minimal
+                    gpsd
+                    gdk-pixbuf
+                    imlib2
+                    python
+                    sdl
+                    sdl-image))
+      (native-inputs (list fontconfig
+                           (librsvg-for-system)
+                           libxslt
+                           pkg-config
+                           protobuf-c))
+      (home-page "https://www.navit-project.org")
+      (synopsis "Car navigation system with routing engine that uses vector maps data")
+      (description
+       "Navit is a car navigation system with a routing engine.
 
-It is meant to work with touchscreen devices, but it also works
-without a touchscreen.  It also supports text to speech.
+It is meant to work with touchscreen devices, but it also works without a
+touchscreen.  It also supports text to speech.
 
-It can be configured extensively through its own configuration file
-format.  For instance we can configure the graphical interface, and
-which map data is to be displayed at which zoom level.
+It can be configured extensively through its own configuration file format.
+For instance we can configure the graphical interface, and which map data is
+to be displayed at which zoom level.
 
 It supports different routing profiles: bike, car, car_avoid_toll,
 car_pedantic, car_shortest, horse, pedestrian, truck.
 
-It can use gpsd or NMEA GPS directly to get position data.  It also
-works without GPS: in this case users can also enter position data
-directly.
+It can use gpsd or NMEA GPS directly to get position data.  It also works
+without GPS: in this case users can also enter position data directly.
 
-It can also be used to log GPS data to files using the GPX or NMEA
-formats, or to replay NMEA data.
+It can also be used to log GPS data to files using the GPX or NMEA formats, or
+to replay NMEA data.
 
-For maps, it can uses its own \"binfile\" map format, or Garmin map
-file format, and data from OpenStreetMap, Garmin maps, Marco Polo
-Grosser Reiseplaner, Routeplaner Europa 2007, Map + Route.")
-    (license license:gpl2)))
+For maps, it can uses its own \"binfile\" map format, or Garmin map file
+format, and data from OpenStreetMap, Garmin maps, Marco Polo Grosser
+Reiseplaner, Routeplaner Europa 2007, Map + Route.")
+      (license license:gpl2))))
 
 (define-public laszip
   (package
@@ -4226,7 +4211,6 @@ and 2D images (photos taken using a 3D imaging system).")
       #:configure-flags #~(list
                            ;; Options
                            "-DOPTION_BUILD_CCVIEWER=NO"
-                           "-DBUILD_TESTING=ON"
                            "-DOPTION_USE_SHAPE_LIB=YES"
                            "-DOPTION_USE_DXF_LIB=YES"
                            "-DOPTION_USE_GDAL=YES"

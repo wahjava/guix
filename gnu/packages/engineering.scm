@@ -31,7 +31,6 @@
 ;;; Copyright © 2022 Olivier Dion <olivier.dion@polymtl.ca>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
-;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -67,6 +66,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system emacs)
+  #:use-module (guix build-system guile)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
@@ -164,6 +164,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages sagemath)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
@@ -180,6 +181,7 @@
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages webkit)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
@@ -296,7 +298,7 @@ their devices.")
 (define-public librecad
   (package
     (name "librecad")
-    (version "2.2.1.1")
+    (version "2.2.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -305,25 +307,29 @@ their devices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nal6xfh9qcvn96gapb1jn3nyz3n3wwidqdc864rv38lrigms66i"))))
+                "1km7n85arh818ka1bgdz0nx7ib48djipgwkml0rm4s5vv2p2kzbb"))))
     (build-system qt-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
             (lambda _
               (system* "qmake" (string-append "BOOST_DIR="
                                               #$(this-package-input "boost")))))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin   (string-append #$output "/bin"))
-                   (share (string-append #$output "/share/librecad")))
-               (mkdir-p bin)
-               (install-file "unix/librecad" bin)
-               (mkdir-p share)
-               (copy-recursively "unix/resources" share)))))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'check (assoc-ref gnu:%standard-phases 'check))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((bin   (string-append #$output "/bin"))
+                    (share (string-append #$output "/share/librecad")))
+                (mkdir-p bin)
+                (install-file "unix/librecad" bin)
+                (mkdir-p share)
+                (copy-recursively "unix/resources" share)))))))
     (inputs
      (list bash-minimal boost muparser freetype qtbase-5 qtsvg-5))
     (native-inputs
@@ -425,39 +431,42 @@ utilities.")
     (license license:gpl2+)))
 
 (define-public lepton-eda
-  ;; This is a fork of gEDA/gaf started in late 2016.  One of its goal is to
-  ;; keep and to extend Guile support.
   (package
-    (inherit geda-gaf)
     (name "lepton-eda")
     (version "1.9.18-20220529")
-    (home-page "https://github.com/lepton-eda/lepton-eda")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url home-page)
-                    (commit version)))
+                     (url "https://github.com/lepton-eda/lepton-eda/")
+                     (commit version)))
               (sha256
                (base32
                 "06plrcab3s2rpyf0qv2gzc1yp33627xi8105niasgixckk6glnc2"))
               (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(let ((pcb #$(this-package-input "pcb")))
-          ;; When running "make", the POT files are built with the build time as
-          ;; their "POT-Creation-Date".  Later on, "make" notices that .pot
-          ;; files were updated and goes on to run "msgmerge"; as a result, the
-          ;; non-deterministic POT-Creation-Date finds its way into .po files,
-          ;; and then in .gmo files.  To avoid that, simply make sure 'msgmerge'
-          ;; never runs.  See <https://bugs.debian.org/792687>.
-          (list "ac_cv_path_MSGMERGE=true" "--with-gtk3"
-                (string-append "--with-pcb-datadir=" pcb
-                               "/share")
-                (string-append "--with-pcb-lib-path=" pcb
-                               "/share/pcb/pcblib-newlib:"
-                               pcb "/share/pcb/newlib")
-                "CFLAGS=-fcommon"))
+      #~(list
+         ;; When running "make", the POT files are built with the build time as
+         ;; their "POT-Creation-Date".  Later on, "make" notices that .pot
+         ;; files were updated and goes on to run "msgmerge"; as a result, the
+         ;; non-deterministic POT-Creation-Date finds its way into .po files,
+         ;; and then in .gmo files.  To avoid that, simply make sure 'msgmerge'
+         ;; never runs.  See <https://bugs.debian.org/792687>.
+         "ac_cv_path_MSGMERGE=true"
+         (string-append "--with-pcb-datadir="
+                        #$(this-package-input "pcb")
+                        "/share")
+         (string-append "--with-pcb-lib-path="
+                        #$(this-package-input "pcb")
+                        "/share/pcb/pcblib-newlib:"
+                        #$(this-package-input "pcb")
+                        "/share/pcb/newlib")
+         "--with-gtk3"
+         "CFLAGS=-fcommon"
+         "--enable-guild"
+         "--enable-contrib")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-tests
@@ -538,24 +547,28 @@ utilities.")
               (unsetenv "LD_LIBRARY_PATH")
               (invoke "make" "precompile"))))))
     (native-inputs
-     (modify-inputs (package-native-inputs geda-gaf)
-       (prepend autoconf
-                automake
-                desktop-file-utils
-                libtool
-                gettext-minimal
-                texinfo
-                groff
-                which)))
+     (list autoconf
+           automake
+           desktop-file-utils
+           flex
+           gettext-minimal
+           groff
+           gawk
+           libtool
+           pkg-config
+           m4
+           perl
+           texinfo))
     (inputs
      (list glib
            gtk+
            gtksheet
            guile-3.0
            guile-readline
-           shared-mime-info
-           m4
-           pcb))
+           pcb
+           shared-mime-info))
+    (home-page "https://lepton-eda.github.io/")
+    (synopsis "GPL Electronic Design Automation")
     (description
      "Lepton EDA ia an @dfn{electronic design automation} (EDA) tool set
 forked from gEDA/gaf in late 2016.  EDA tools are used for electrical circuit
@@ -563,45 +576,7 @@ design, schematic capture, simulation, prototyping, and production.  Lepton
 EDA includes tools for schematic capture, attribute management, bill of
 materials (BOM) generation, netlisting into over 20 netlist formats, analog
 and digital simulation, and printed circuit board (PCB) layout, and many other
-features.")))
-
-(define-public librnd
-  (package
-    (name "librnd")
-    (version "4.0.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://www.repo.hu/projects/librnd/releases/"
-                                  "librnd-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "0z578x3sd8yjfbhivy1hz4hlgiy43qq6x7mnby872plpm08vgqxz"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:tests? #false                   ;no check target
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'cc-is-gcc
-            (lambda _ (setenv "CC" #$(cc-for-target))))
-          (replace 'configure
-            ;; The configure script doesn't tolerate most of our configure flags.
-            (lambda _
-              (invoke "sh" "configure"
-                      (string-append "--prefix=" #$output)))))))
-    (inputs
-     (list gd gtk glib glu))
-    (native-inputs
-     (list pkg-config))
-    (home-page "http://repo.hu/projects/librnd/")
-    (synopsis "Two-dimensional CAD engine")
-    (description "This is a flexible, modular two-dimensional CAD engine
-@itemize
-@item with transparent multiple GUI toolkit support;
-@item a flexible, dynamic menu system;
-@item a flexible, dynamic configuration system; and
-@item support for user scripting in a dozen languages.
-@end itemize")
+features.")
     (license license:gpl2+)))
 
 (define-public pcb
@@ -620,6 +595,13 @@ features.")))
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'convert-encoding
+            (lambda _
+              (for-each
+               (lambda (name)
+                 (invoke "iconv" "-f" "LATIN1" "-t" "UTF-8" name "-o" name))
+               '("src/pcb-menu.res.in"
+                 "src/pcb-menu.res.h"))))
           (add-before 'check 'pre-check
             (lambda _
               (system "Xvfb :1 &")
@@ -652,37 +634,6 @@ layouts.  It features a rats-nest implementation, schematic/netlist import,
 and design rule checking.  It also includes an autorouter and a trace
 optimizer; and it can produce photorealistic and design review images.")
     (license license:gpl2+)))
-
-(define-public pcb-rnd
-  (package (inherit pcb)
-    (name "pcb-rnd")
-    (version "3.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://repo.hu/projects/pcb-rnd/releases/"
-                                  "pcb-rnd-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0szcsp2049wh3wslv7743wbjqllrmphi07yz0933sz4vf6f1c8dg"))))
-    (arguments
-     (list
-      #:tests? #false                   ;no check target
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'cc-is-gcc
-            (lambda _ (setenv "CC" #$(cc-for-target))))
-          (replace 'configure
-            ;; The configure script doesn't tolerate most of our configure flags.
-            (lambda _
-              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
-              (invoke "sh" "configure"
-                      (string-append "--prefix=" #$output)))))))
-    (inputs
-     (modify-inputs (package-inputs pcb)
-       (append librnd)))
-    (home-page "http://repo.hu/projects/pcb-rnd/")
-    (description "PCB RND is a fork of the GNU PCB circuit board editing tool
-featuring various improvements and bug fixes.")))
 
 (define-public fastcap
   (package
@@ -947,16 +898,21 @@ required for Fritzing app.")
     (version "0.9.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://git.tuxfamily.org/qet/qet.git/"
-                           "snapshot/qet-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/qelectrotech/qelectrotech-source-mirror")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1qkgagx2bk2jfzs3d91kki01y5bs5p85f4c8xjxn45hmw4rl512b"))))
+        (base32 "17rrr9l11wc2ni3pxybq595dc4l1lklaba7rd562r8qc00f5r7zl"))))
     (build-system qt-build-system)
     (arguments
      ;; XXX: tests are built for the CMake build option but it seems to be
      ;; broken in 0.8.0.
      (list #:tests? #f
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'configure
@@ -964,7 +920,9 @@ required for Fritzing app.")
                    ;; Patch hardcoded path before running qmake.
                    (substitute* "qelectrotech.pro"
                      (("\\/usr\\/local") #$output))
-                   (invoke "qmake"))))))
+                   (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
@@ -978,10 +936,70 @@ such as those made in pneumatics, hydraulics, process industries, electronics,
 and others.")
     (license license:gpl2+)))
 
+(define-public qucsator-rf
+  (package
+    (name "qucsator-rf")
+    (version "1.0.7")                   ;required by qucs-s, keep in sync
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ra3xdh/qucsator_rf/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1qyih418r0jcrpk1ja4p7v9v5iqvri8iszg7s3vaf1d2agwblzb4"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'run-tests
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Qucs-test is a collection of python scripts and data test
+                ;; cases. Its purpose is to test Qucs (GUI) and Qucsator;
+                ;; tests are under `testsuite` directory.
+                (copy-recursively
+                 #$(origin
+                     (method git-fetch)
+                     (uri
+                      ;; Using latest revision; refer to
+                      ;; .github/workflows/cmake.yml to keep up to date.
+                      (git-reference
+                        (url "https://github.com/ra3xdh/qucs-test/")
+                        (commit "ce69e05ceecab910175e6ea36b6e021a6d279947")))
+                     (sha256
+                      (base32
+                       (string-append "1r3hx43wvd0s11mzsvj1chylzv"
+                                      "0lk9qhaw7205j9x316ly03bl08"))))
+                 "qucs-test")
+                (with-directory-excursion "qucs-test"
+                  (invoke "python3" "run.py" "--qucsator"
+                          (format #f "--prefix=~a/bin" #$output)
+                          "--exclude=skip.txt"))))))
+      #:configure-flags
+      #~(list (format #f "-DBISON_DIR=~a/bin"
+                      #$(this-package-native-input "bison"))
+              (format #f "-DADMSXML_DIR=~a/bin"
+                      #$(this-package-native-input "adms")))))
+    (native-inputs
+     (list adms bison dos2unix flex gperf python python-looseversion
+           python-numpy python-matplotlib))
+    (synopsis "RF and microwave circuits simulator")
+    (description
+     "@code{Qucsator-rf} is a command line driven circuit simulator targeted
+for RF and microwave circuits.  It takes a network list in a certain format as
+input and outputs an XML dataset.")
+    (home-page "https://ra3xdh.github.io//")
+    (license license:gpl2+)))
+
 (define-public qucs-s
   (package
     (name "qucs-s")
-    (version "24.4.1")
+    (version "25.1.2")                  ;update qucsator-rf accordingly
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -990,13 +1008,11 @@ and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0307046h3vf6pprbvv47r46mpm764w49ci2cg0i3l1w9rbqlypln"))
-              (patches (search-patches "qucs-s-qucsator-rf-search.patch"))))
+                "07wrpqgbj77rmh1yxy233lk1y4ys1x0721b3jsldp058dcgf24zv"))))
     (build-system qt-build-system)
     (arguments
      (list
       #:qtbase qtbase                   ;for Qt 6
-      #:configure-flags #~(list "-DWITH_QT6=ON")
       #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
@@ -1006,9 +1022,18 @@ and others.")
                 (("\"ngspice\"")
                  (format #f "~s" (search-input-file inputs "bin/ngspice")))
                 (("\"octave\"")
-                 (format #f "~s" (search-input-file inputs "bin/octave")))))))))
+                 (format #f "~s" (search-input-file inputs "bin/octave"))))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/qucs-s")
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "ngspice") "/bin")
+                   ,(string-append
+                     #$(this-package-input "qucsator-rf") "/bin")))))))))
     (native-inputs (list qttools))
-    (inputs (list ngspice octave qtbase qtcharts qtsvg qtwayland))
+    (inputs
+     ;; TODO Add xyce-serial to the list.
+     (list bash-minimal octave qtbase qtcharts qtsvg qtwayland qucsator-rf ngspice))
     (synopsis "GUI for different circuit simulation kernels")
     (description
      "@acronym{Qucs-S, Quite universal circuit simulator with SPICE} provides
@@ -1139,12 +1164,12 @@ fonts to gEDA.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:tests? #f ; Several tests fail due to floating point error.
         #:imported-modules `((guix build guile-build-system)
                              ,@%cmake-build-system-modules)
         #:modules '((guix build cmake-build-system)
                     ((guix build guile-build-system) #:prefix guile:)
                     (guix build utils))
-        #:test-target "libfive-test"
         #:configure-flags #~(list
                              (string-append
                               "-DPYTHON_SITE_PACKAGES_DIR="
@@ -1193,6 +1218,10 @@ fonts to gEDA.")
               (lambda args
                 (apply (assoc-ref guile:%standard-phases 'build)
                        #:source-directory "../source/libfive/bind/guile"
+                       #:compile-flags '()
+                       #:parallel-build? #f
+                       #:scheme-file-regexp #$default-scheme-file-regexp
+                       #:not-compiled-file-regexp #f
                        args)))
             (add-after 'install 'wrap-studio
               (lambda _
@@ -1279,7 +1308,7 @@ Emacs).")
 (define-public kicad
   (package
     (name "kicad")
-    (version "9.0.2")
+    (version "9.0.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1287,7 +1316,7 @@ Emacs).")
                     (commit version)))
               (sha256
                (base32
-                "1v3nvp5ifa36hx3iw3whlp3j7hiy91fzihc0jc1daw0hnps7qy24"))
+                "0736hhf8rs4g8cyhy3xyamyr4iszlvf18a1hwfpcv6qxy0hcbdcv"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -1396,14 +1425,11 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0jhn4hq78cz07hsbyfyzy93gck88j04im1pmsl3sx87g2s215qzd"))))
+                "00cnras41sp5kpvaqqymygis08q5kmsix18bi8hlhhw6yk525vnp"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_FORMATS=html")
-       #:tests? #f ;no test suite
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'build))))
+       #:tests? #f)) ;no test suite
     (native-inputs (list asciidoc
                          gettext-minimal
                          git-minimal
@@ -1430,7 +1456,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "134x4d5w89aahl4k9zai6vwcazibz17gsgzy04l9xn4zcf6v11qp"))))
+                "0qm1zq8bq6r7l1pssb9isnm5a03kixf5p3x7670ap4xwligdn3wg"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no tests exist
@@ -1459,7 +1485,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0w44b7dzx6d3xw2vbw37k34zxy25bq46rsnv21x10227313vr2wm"))))
+                "15kdg661pq79npwb4j28hllqrvwygsz5rblzbdishiikysrba8wl"))))
     (synopsis "Official KiCad footprint libraries")
     (description "This package contains the official KiCad footprint libraries.")))
 
@@ -1476,7 +1502,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18cxlp5grvv5m63c3sb6m9l9cmijqqcjmxrkdzg63d5jp7w73smn"))))
+                "0ngf0k5f0a073k5v4q78zk6gj6xjjxzbb6551qf9k9wy8bsmgr2k"))))
     (synopsis "Official KiCad 3D model libraries")
     (description "This package contains the official KiCad 3D model libraries.")))
 
@@ -2201,18 +2227,42 @@ multiple services and devices with hundreds of supported integrations.")
 (define-public python-esptool
   (package
     (name "python-esptool")
-    (version "3.0")
+    (version "5.0.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "esptool" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/espressif/esptool")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0d69rd9h8wrzjvfrc66vmz4qd5hly2fpdcwj2bdrlb7dbwikv5c7"))))
-    (build-system python-build-system)
+        (base32 "04asqw6g4lhkz6fqn22wwk2wjq5q8c00m2k8wylksrc0v2f582i9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: Requires python2 package pkcs11.
+         "--ignore=test/test_espsecure_hsm.py"
+         ;; XXX: Requires python-requests, most likely to use network.
+         "--ignore=test/test_uf2_ids.py"
+         ;; XXX: Various errors (device access, server not started...)
+         "--ignore=test/test_esptool.py"
+         ;; XXX: "not supported by this version of OpenSSL"
+         "-k" "not test_sign_v1_data and not test_sign_v1_data_pkcs8")))
     (propagated-inputs
-     (list python-ecdsa python-pyaes python-pyserial python-reedsolo
-           python-cryptography python-bitstring))
+     (list python-bitstring
+           python-click
+           python-cryptography
+           python-intelhex
+           python-pyserial
+           python-pyyaml
+           python-reedsolo
+           python-rich-click-next))
+    (native-inputs (list python-pyelftools
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
     (home-page "https://github.com/espressif/esptool")
     (synopsis "Bootloader utility for Espressif ESP8266 & ESP32 chips")
     (description
@@ -2235,22 +2285,20 @@ bootloader in Espressif ESP8266 & ESP32 series chips.")
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; tests require git and network access
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'mklibdir
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (mkdir-p (string-append (assoc-ref outputs "out") "/lib"))
-             #t)))
-       #:configure-flags
-       (list "--with-openssl"
-             "--with-rpath"
-             "--with-syscapstone"
-             "--with-sysmagic"
-             "--with-syszip"
-             "--with-sysxxhash")
-       #:make-flags
-       (list "CC=gcc")))
+     (list
+      #:tests? #f                      ; tests require git and network access
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'mklibdir
+            (lambda _ (mkdir-p (string-append #$output "/lib")))))
+      #:configure-flags
+      #~(list "--with-openssl"
+              "--with-rpath"
+              "--with-syscapstone"
+              "--with-sysmagic"
+              "--with-syszip"
+              "--with-sysxxhash")
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))))
     ;; TODO: Add gmp and libzip and make the build system actually find them.
     (inputs
      (list capstone libuv openssl zip))
@@ -2390,15 +2438,13 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
     (version "44.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (list (string-append
-                   "mirror://sourceforge/ngspice/ng-spice-rework/" version
-                   "/ngspice-" version ".tar.gz")
-                  (string-append
-                   "mirror://sourceforge/ngspice/ng-spice-rework/"
-                   "old-releases/" version "/ngspice-" version ".tar.gz")))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.code.sf.net/p/ngspice/ngspice")
+              (commit (string-append "ngspice-" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1zfpj09vqjamgkhnipwpwmvrzhfymikml7lw80igsx2lpnvxznp7"))))
+        (base32 "1vp27149kx8l7397bv5p708jqph1kma8rb9bl7ckgmbr9sw9cn3q"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2411,9 +2457,9 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
                                        "/share/ngspice/scripts")))))
       #:configure-flags #~(list "--enable-openmp" "--enable-cider"
                                 "--enable-xspice" "--with-ngshared")))
-    (native-inputs (list bison flex))
+    (native-inputs (list autoconf automake bison flex libtool))
     (inputs (list openmpi))
-    (home-page "https://ngspice.sourceforge.net/")
+    (home-page "https://ngspice.sourceforge.io/")
     (synopsis "Mixed-level/mixed-signal circuit simulator")
     (description
      "Ngspice is a mixed-level/mixed-signal circuit simulator.  It includes
@@ -2439,7 +2485,9 @@ an embedded event driven algorithm.")
        ((#:phases phases)
         #~(modify-phases #$phases
             (delete 'delete-scripts)))))
-    (native-inputs (list perl))
+    (native-inputs
+     (modify-inputs (package-native-inputs libngspice)
+       (append perl)))
     (inputs (list libngspice readline libxaw libx11))))
 
 (define trilinos-serial-xyce
@@ -2586,111 +2634,6 @@ parallel computing platforms.  It also supports serial execution.")
      `(("trilinos" ,trilinos-parallel-xyce)
        ,@(alist-delete "trilinos"
                        (package-inputs xyce-serial))))))
-
-(define-public freehdl
-  (package
-    (name "freehdl")
-    (version "0.0.8")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://downloads.sourceforge.net/qucs/freehdl-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "117dqs0d4pcgbzvr3jn5ppra7n7x2m6c161ywh6laa934pw7h2bz"))
-              (patches
-               (list (origin
-                       ;; Fix build with GCC 7.  Patch taken from Arch Linux:
-                       ;; https://github.com/archlinux/svntogit-community/tree/packages/freehdl/trunk
-                       (method url-fetch)
-                       (uri (string-append "https://raw.githubusercontent.com"
-                                           "/archlinux/svntogit-community"
-                                           "/3bb90d64dfe6883e26083cd1fa96226d0d59175a"
-                                           "/trunk/build-fix.patch"))
-                       (file-name "freehdl-c++-namespace.patch")
-                       (sha256
-                        (base32
-                         "09df3c70rx81rnhlhry1wpdhji274nx9jb74rfprk06l4739zm08")))))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'patch-pkg-config
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-config"
-               (("pkg-config")
-                (search-input-file inputs "/bin/pkg-config"))
-               (("cat")
-                (search-input-file inputs "/bin/cat")))))
-         (add-after 'patch-pkg-config 'setenv
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CXX" (search-input-file inputs "/bin/g++"))
-             (setenv "SYSTEM_LIBTOOL"
-                     (search-input-file inputs "/bin/libtool"))))
-         (add-after 'setenv 'patch-gvhdl
-           (lambda _
-             (substitute* "v2cc/gvhdl.in"
-               (("--mode=link") "--mode=link --tag=CXX")
-               (("-lm") "-lm FREEHDL/lib/freehdl/libieee.la"))))
-         (add-after 'patch-gvhdl 'patch-freehdl-gennodes
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-gennodes.in"
-               (("guile")
-                (search-input-file inputs "/bin/guile"))
-               (("\\(debug") ";(debug")
-               (("\\(@ ") "(apply-emit")
-               (("\\(@@ ") "(apply-mini-format"))))
-         (add-after 'configure 'patch-freehdl-pc
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl.pc"
-               (("=g\\+\\+")
-                (string-append "=" (assoc-ref inputs "gcc-toolchain")
-                               "/bin/g++"))
-               (("=libtool")
-                (string-append "=" (assoc-ref inputs "libtool")
-                               "/bin/libtool")))))
-         (add-after 'install 'make-wrapper
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               ;; 'gvhdl' invokes the C compiler directly, so hard-code its
-               ;; file name.
-               (wrap-program (string-append out "/bin/gvhdl")
-                 `("CPLUS_INCLUDE_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/include")))
-                 `("LIBRARY_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/lib")))
-                 `("PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/bin")
-                    ,(string-append (assoc-ref inputs "coreutils")
-                                    "/bin"))))
-               (wrap-program (string-append out "/bin/freehdl-config")
-                 `("PKG_CONFIG_PATH" ":" prefix
-                   (,(string-append out "/lib/pkgconfig"))))))))))
-    (inputs
-     (list bash-minimal
-           coreutils
-
-           ;; Lazily resolve the gcc-toolchain to avoid a circular dependency.
-           (module-ref (resolve-interface '(gnu packages commencement))
-                       'gcc-toolchain)
-
-           guile-2.2
-           perl
-           pkg-config
-           libtool))
-    (native-inputs
-     `(("pkg-config-native" ,pkg-config)
-       ("libtool-native" ,libtool)))
-    (home-page "http://www.freehdl.seul.org/")
-    (synopsis "VHDL simulator")
-    (description
-     "FreeHDL is a compiler/simulator suite for the hardware description language VHDL.
-  VHDL'93 as well as VHDL'87 standards are supported.")
-    (license (list license:gpl2+
-                   license:lgpl2.0+)))) ; freehdl's libraries
 
 (define-public librepcb
   (package
@@ -2983,35 +2926,33 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (license license:bsd-2)))
 
 (define-public manifold
-  (let ((commit "7c8fbe186aa1ac5eb73f12c28bdef093ee4d11c9")
-        (version "3.0.1")
-        (revision "0"))
-    (package
-      (name "manifold")
-      (version (git-version version revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/elalish/manifold")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "09s4r4hlarl5lzbbihfd1fpfd3987lma5m26wkkvi7zssdbis9zc"))))
-      (build-system cmake-build-system)
-      (inputs (list tbb clipper2 assimp python-nanobind googletest))
-      (arguments
-       ;; can be removed once emscripten is packaged
-       `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
-      (synopsis "Geometry library for topological robustness")
-      (description
-       "Manifold is a geometry library dedicated to creating and operating on
+  (package
+    (name "manifold")
+    (version "3.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/elalish/manifold")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vipfy68crvik3760jjmsqnyci6rabb26iiw22p2qpb3cj6r683l"))))
+    (build-system cmake-build-system)
+    (inputs (list tbb clipper2 assimp python-nanobind googletest))
+    (arguments
+     (list #:tests? #f
+           ;; can be removed once emscripten is packaged
+           #:configure-flags #~(list "-DMANIFOLD_JSBIND=OFF")))
+    (synopsis "Geometry library for topological robustness")
+    (description
+     "Manifold is a geometry library dedicated to creating and operating on
 manifold triangle meshes.  A manifold mesh is a mesh that represents a solid
 object, and so is very important in manufacturing, CAD, structural analysis,
 etc..  Manifold also supports arbitrary vertex properties and enables mapping
 of materials for rendering use-cases.")
-      (home-page "https://github.com/elalish/manifold")
-      (license license:asl2.0))))
+    (home-page "https://github.com/elalish/manifold")
+    (license license:asl2.0)))
 
 (define-public python-keithley2600
   (package
@@ -3180,7 +3121,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.7.0")
+    (version "1.8.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -3188,7 +3129,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "148bfdbh0y69f5xhxb49jqvc6gabk0n4i0fl1j5f3fnm9vaypyis"))
+                "0hzgqsj2jnbimb8klijak44bhm7f3lnxvppaddgq1zxr063sj0y1"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy
@@ -3248,8 +3189,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "7245089d3226de41ab55faee62ffe326f6efcb69")
-        (version "2025.06.01")
+  (let ((commit "6a8ab04bfd8bbe5cafab3efb74d2b46cb33fafe7")
+        (version "2025.07.25")
         (revision "0"))
     (package
       (name "openscad")
@@ -3265,13 +3206,13 @@ ontinuous-time and discret-time expressions.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "0lynjxa5y9wi443vxgaj2r8lr98dyfxinq7n4gcw9gz7cfc52a4a"))
-         (patches (search-patches
-                   "openscad-fix-path-in-expected-test-results-to-acommodate-diff.patch"))
+          (base32 "0qvvi4qjadk2p5v2ca95hkkw0zi9vmzyac8hcxr14ijnk0f1ybd0"))
          (file-name (git-file-name name version))))
-      (build-system qt-build-system)
+      (build-system cmake-build-system)
       (arguments
        (list
+        ;; OpenSCAD doesn't cope well with out-of-source builds.
+        #:out-of-source? #f
         #:configure-flags
         #~(list "-DCMAKE_BUILD_TYPE=Release"
                 "-DUSE_BUILTIN_CLIPPER2=OFF"
@@ -3286,7 +3227,8 @@ ontinuous-time and discret-time expressions.")
                 (string-append "-DOPENSCAD_COMMIT="
                                #$commit)
                 "-DENABLE_EGL=ON"
-                "-DENABLE_GLX=ON")
+                "-DENABLE_GLX=ON"
+                "-B./build")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-source
@@ -3314,20 +3256,15 @@ ontinuous-time and discret-time expressions.")
                   ;; Use the system sanitizers-cmake module.
                   (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
                    (string-append (assoc-ref inputs "sanitizers-cmake")
-                                  "/share/sanitizers-cmake/cmake")))
-                ;; Fix test-tool expecting build directory to be a direct
-                ;; subdirectory of the source directory (see
-                ;; https://github.com/openscad/openscad/issues/5937).
-                (substitute* "tests/test_cmdline_tool.py"
-                  (("build_to_test_sources = \"../../tests\"")
-                   "build_to_test_sources = \"../../source/tests\""))))
+                                  "/share/sanitizers-cmake/cmake")))))
+            ;; Tests will fail if the build doesn't happen in a
+            ;; subdirectory of the source directory.
+            (add-before 'build 'create-build-dir
+              (lambda _
+                (mkdir-p "./build")
+                (chdir "./build")))
             (add-before 'check 'patch-tests
               (lambda _
-                ;; Fix tests expecting build directory to be a direct descendant
-                ;; of the source dir (see
-                ;; https://github.com/openscad/openscad/issues/5938).
-                (copy-recursively "../source/color-schemes" "./color-schemes")
-                (copy-recursively "../source/shaders" "./shaders")
                 ;; Required for fontconfig
                 (setenv "HOME" "/tmp"))))))
       (inputs (list boost
@@ -3399,6 +3336,82 @@ addition to 2D paths for extrusion it is also possible to read design
 parameters from DXF files.  Besides DXF files OpenSCAD can read and create 3D
 models in the STL and OFF file formats.")
       (home-page "https://openscad.org/")
+      (license license:gpl2+))))
+
+(define-public pythonscad
+  (let ((commit "e1d49035b8dd4cac187a03f04dd9de9d61972cbf")
+        (version "0.0.0")
+        (revision "1"))
+    (package
+      (inherit openscad)
+      (name "pythonscad")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pythonscad/pythonscad")
+               (commit commit)
+               ;; Needed for libraries/MCAD, a library specific to OpenSCAD
+               ;; which is included as a submodule. All other libraries are
+               ;; deleted in the patch-source build phase.
+               (recursive? #t)))
+         (sha256
+          (base32 "1q0ib5iz4l2vpi8208fghgwcfb0n7a0ypm1ch860dl0zd1p4zljz"))
+         (modules '((guix build utils)))
+         (snippet #~(begin
+                      ;; Delete all unbundled libraries to replace them with
+                      ;; guix packages.
+                      (delete-file-recursively "submodules")
+                      (substitute* "CMakeLists.txt"
+                        ;; Remove bundled libraries from cmake.
+                        (("add_subdirectory\\(submodules\\)")
+                         ""))))
+         (file-name (git-file-name name version))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments openscad)
+         ((#:configure-flags flags)
+          #~(begin
+              (use-modules (srfi srfi-1))
+              (append 
+               (remove (lambda (flag)
+                         (or (string-prefix? "-DOPENSCAD_VERSION=" flag)
+                             (string-prefix? "-DOPENSCAD_COMMIT=" flag)))
+                       #$flags)
+               (list "-DENABLE_LIBFIVE=ON"
+                     "-DUSE_BUILTIN_LIBFIVE=OFF"
+                     (string-append "-DOPENSCAD_VERSION="
+                                    #$version)
+                     (string-append "-DOPENSCAD_COMMIT="
+                                    #$commit)
+                     (string-append "-DPYTHON_VERSION="
+                                    #$(version-major+minor
+                                       (package-version python)))))))
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (replace 'patch-source
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (substitute* "CMakeLists.txt"
+                    ;; Fix detection of EGL (see
+                    ;; https://github.com/openscad/openscad/issues/5880).
+                    (("target_link_libraries\\(OpenSCAD PRIVATE OpenGL::EGL\\)")
+                     "find_package(ECM REQUIRED NO_MODULE)
+        list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+        find_package(EGL REQUIRED)
+        target_link_libraries(OpenSCAD PRIVATE EGL::EGL)")
+                    ;; Use the system sanitizers-cmake module.
+                    (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
+                     (string-append (assoc-ref inputs "sanitizers-cmake")
+                                    "/share/sanitizers-cmake/cmake")))))))))
+      (inputs (modify-inputs (package-inputs openscad)
+                (append curl libfive)))
+      (synopsis "Script-based 3D modeling app whith Python support")
+      (description
+       "PythonSCAD is a programmatic 3D modeling application.  It allows you
+to turn simple code into 3D models suitable for 3D printing.  It is a fork of
+OpenSCAD which not only adds support for using Python as a native language,
+but also adds new features and improves existing ones.")
+      (home-page "https://pythonscad.org/")
       (license license:gpl2+))))
 
 (define-public emacs-scad-mode
@@ -3623,7 +3636,8 @@ extension and customization.")
     (build-system cmake-build-system)
     (inputs (list hdf5-1.10))
     (arguments
-     `(#:phases
+     `(#:parallel-tests? #f
+       #:phases
        (modify-phases %standard-phases
          (add-after 'install 'remove-test-output
            (lambda* (#:key outputs #:allow-other-keys)
@@ -4078,6 +4092,7 @@ calibration of the milling depth.")
       (arguments
        (list
         #:build-type "Release"
+        #:tests? #f
         #:phases #~(modify-phases %standard-phases
                      (add-after 'unpack 'unpack-libdxfrw
                        (lambda _
@@ -4546,10 +4561,10 @@ visualization, matrix manipulation.")
     (license (list license:gpl3 license:mpl2.0))))
 
 (define-public prusa-libbgcode
-  ;; Use the latest commit since there are no proper releases nor tags, see
+  ;; Use the same commit as in the PrusaSlicer repository.
   ;; <https://github.com/prusa3d/libbgcode/issues/31>.
-  (let ((commit "8ae75bd0eea622f0e34cae311b3bd065b55eae9b")
-        (revision "0"))
+  (let ((commit "5041c093b33e2748e76d6b326f2251310823f3df")
+        (revision "1"))
     (package
       (name "prusa-libbgcode")
       (version (git-version "0.0.0" revision commit))
@@ -4561,8 +4576,8 @@ visualization, matrix manipulation.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0fjx2ijz9zqpqs486lcrrrhqvmfzrpb8j6v57l0jiynavwv3kznw"))))
-      (native-inputs (list catch2))
+          (base32 "0ivc0zhpf0gz55jfj0gbkff6yw5gpwazk94asldzznn7x9jmbb0i"))))
+      (native-inputs (list catch2-3.8))
       (propagated-inputs (list zlib boost heatshrink))
       (build-system cmake-build-system)
       (home-page "https://github.com/prusa3d/libbgcode")
@@ -4595,7 +4610,7 @@ G-codes to binary and vice versa.")
 (define-public prusa-slicer
   (package
     (name "prusa-slicer")
-    (version "2.7.4")
+    (version "2.9.2")
     (source
      (origin
        (method git-fetch)
@@ -4604,8 +4619,8 @@ G-codes to binary and vice versa.")
          (url "https://github.com/prusa3d/PrusaSlicer")
          (commit (string-append "version_" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0s1cfvhfilyv0y98asr61c6rwlgyr1hf5v5hg8q9zwmzm2bkcql3"))
-       (patches (search-patches "prusa-slicer-fix-tests.patch"))
+       (sha256 (base32 "05zwwhqv3fjg9rx6a4ga55f4ic1136f6lwms0kb4kaq50w9dvxwg"))
+       (patches (search-patches "prusa-slicer-add-cmake-module.patch"))
        (modules '((guix build utils)))
        (snippet
         `(begin
@@ -4613,25 +4628,40 @@ G-codes to binary and vice versa.")
            ;; Most of them contain prusa-specific modifications (e.g. avrdude),
            ;; but others do not. Here we replace the latter with Guix packages.
            ;; Remove bundled libraries that were not modified by Prusa Slicer developers.
-           (delete-file-recursively "src/hidapi")
-           (delete-file-recursively "src/eigen")
-           (delete-file-recursively "src/libigl/igl")
+           (delete-file-recursively "bundled_deps/hidapi")
+           (delete-file-recursively "bundled_deps/libigl/igl")
            (substitute* "CMakeLists.txt"
+             (("target_link_libraries\\(libexpat INTERFACE EXPAT::EXPAT\\)")
+              "")
              (("add_library\\(libexpat INTERFACE\\)")
               ""))
-           (substitute* "src/libigl/CMakeLists.txt"
+           (substitute* "bundled_deps/CMakeLists.txt"
+             (("add_subdirectory\\(hidapi\\)")
+              ""))
+           (substitute* "bundled_deps/libigl/CMakeLists.txt"
              (("target_link_libraries\\(libigl INTERFACE igl::core\\)") ""))
            (substitute* "src/CMakeLists.txt"
              (("add_subdirectory\\(hidapi\\)")
               "pkg_check_modules(HIDAPI REQUIRED hidapi-hidraw)")
              (("include_directories\\(hidapi/include\\)")
-              "include_directories()"))
+              "include_directories()")
+            (("add_library\\(libexpat INTERFACE\\)")
+            "")
+            (("target_link_libraries\\(libexpat INTERFACE EXPAT::EXPAT\\)")
+            "")
+            (("list\\(APPEND wxWidgets_LIBRARIES libexpat\\)")
+            "list(APPEND wxWidgets_LIBRARIES expat)"))
+            (substitute* "src/libslic3r/CMakeLists.txt"
+            (("libexpat")
+            "expat"))
            (substitute* "src/slic3r/CMakeLists.txt"
              (("add_library\\(libslic3r_gui.*" all)
               (string-append
+               "find_package(HidAPI REQUIRED)\n"
                all
-               "\ntarget_include_directories(libslic3r_gui PUBLIC ${HIDAPI_INCLUDE_DIRS})\n"))
-             (("\\bhidapi\\b") "${HIDAPI_LIBRARIES}"))))))
+               "\ntarget_include_directories(libslic3r_gui PUBLIC ${HIDAPI_INCLUDE_DIR})\n"))
+             (("    hidapi")
+              "    ${HIDAPI_LIBRARY}"))))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -4653,7 +4683,7 @@ G-codes to binary and vice versa.")
                      (("#include <libigl/igl/qslim.h>")
                       "#include <igl/qslim.h>")))))))
     (native-inputs
-     (list pkg-config catch2))
+     (list pkg-config catch2-3.8))
     (inputs
      (list boost
            cereal
@@ -4677,7 +4707,8 @@ G-codes to binary and vice versa.")
            mpfr
            nanosvg
            nlopt
-           opencascade-occt
+           opencascade-occt-7.6.1
+           openssl
            openvdb
            pango
            prusa-libbgcode
@@ -4686,11 +4717,18 @@ G-codes to binary and vice versa.")
            prusa-wxwidgets
            qhull
            tbb
+           webkitgtk-for-gtk3
+           webkitgtk-with-libsoup2
+           z3
            zlib))
     (home-page "https://www.prusa3d.com/prusaslicer/")
     (synopsis "G-code generator for 3D printers (RepRap, Makerbot, Ultimaker etc.)")
-    (description "PrusaSlicer takes 3D models (STL, OBJ, AMF) and converts them into
-G-code instructions for FFF printers or PNG layers for mSLA 3D printers.")
+    (description "PrusaSlicer takes 3D models (STL, OBJ, AMF) and converts
+them into G-code instructions for FFF printers or PNG layers for mSLA 3D
+printers.  It is compatible with any modern printer based on the RepRap
+toolchain, including all those based on the Marlin, Prusa, Sprinter and
+Repetier firmware.  It also works with Mach3, LinuxCNC and Machinekit
+controllers.")
     (license license:agpl3)
 
     ;; Mark as tunable to take advantage of SIMD code in Eigen and in libigl.
@@ -5139,49 +5177,6 @@ python bindings.  It belongs to the Cura project from Ultimaker.")
 generates G-Code for 3D printers.")
     (license license:lgpl3+)))
 
-(define-public xschem
-  (let ((commit "f574539e21b297fa3bcebd52114555e162a5fc56")
-        (revision "1"))
-    (package
-      (name "xschem")
-      (version (git-version "3.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/StefanSchippers/xschem")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "129kj8m3wcf62plp74kml6pqwld4lnfmxy070a82lvj0rfiy77hb"))))
-      (native-inputs (list flex bison pkg-config))
-      (inputs (list gawk
-                    tcl
-                    tk
-                    libxpm
-                    cairo
-                    libxrender
-                    libxcb)) ; Last 3 are optional, but good to have.
-      (build-system gnu-build-system)
-      (arguments
-       `(#:tests? #f
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure)
-           (add-before 'build 'setenv
-             (lambda* (#:key outputs #:allow-other-keys)
-               (setenv "CC" ,(cc-for-target))
-               (invoke "./configure"
-                       (string-append "--prefix="
-                                      (assoc-ref outputs "out"))))))))
-      (synopsis "Hierarchical schematic editor")
-      (description
-       "Xschem is an X11 schematic editor written in C and focused on
-hierarchical and parametric design.  It can generate VHDL, Verilog or Spice
-netlists from the drawn schematic, allowing the simulation of the circuit.")
-      (home-page "https://xschem.sourceforge.io/stefan/index.html")
-      (license license:gpl2+))))
-
 (define-public bcnc
   (package
     (name "bcnc")
@@ -5572,13 +5567,7 @@ towards field theory.")
                (commit commit)))
          (sha256
           (base32 "1c7vimy065908qs5nwhnrk9pp0wh8pjgdvz2hwb12a9wcsj50kf0"))
-         (file-name (git-file-name name version))
-         (modules '((guix build utils)))
-         ;; make tests deterministic by seeding the random number generator
-         (snippet '(substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
-                                  "orocos_kdl/tests/solvertest.cpp")
-                     (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
-                      "srand(0u)")))))
+         (file-name (git-file-name name version))))
       (build-system cmake-build-system)
       (native-inputs (list cppunit))
       (propagated-inputs (list eigen))
@@ -5586,10 +5575,20 @@ towards field theory.")
        (list
         #:configure-flags
         #~(list "-DENABLE_TESTS=ON")
-        #:test-target "check"
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
+            (add-after 'unpack 'fix-tests
+              (lambda _
+                ;; Make tests deterministic by seeding the random number generator.
+                (substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
+                               "orocos_kdl/tests/solvertest.cpp")
+                  (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
+                   "srand(0u)"))
+                ;; CTest requires tests to be enabled in the top-level directory.
+                (substitute* "orocos_kdl/CMakeLists.txt"
+                  (("IF\\( ENABLE_TESTS \\)" _all)
+                   (string-append _all "\n" "enable_testing()")))))
+            (add-after 'fix-tests 'chdir
               (lambda _
                 (chdir "orocos_kdl"))))))
       (home-page "https://docs.orocos.org/kdl/overview.html")

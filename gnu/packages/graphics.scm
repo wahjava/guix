@@ -205,7 +205,8 @@ framebuffer graphics, audio output and input event.")
         (base32 "0bs3yzb7hy3mgydrj8ycg7pllrd2b6j0gxj596inyr7ihssr3i0y"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:parallel-build? #f
+       #:configure-flags
        '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
        #:phases
        (modify-phases %standard-phases
@@ -634,7 +635,8 @@ Please note that this version requires a processor with SSE2 support."))))
                 "0r6q7bl8513ggrvx3n73j1s3f7n5x1rxy5xi471qyrya95gy6c60"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
                             (assoc-ref %outputs "out") "/lib"))))
     (inputs
@@ -757,37 +759,46 @@ application can be customized via its API for Python scripting.")
     (license license:gpl2+)))
 
 (define-public goxel
-  (package
-    (name "goxel")
-    (version "0.10.8")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/guillaumechereau/goxel")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0qvz566awhp03yp696fn3c80hnky41fpbi4sqg4lx69ibx4zvl9k"))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases (delete 'configure))
-       #:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
-                          "release")))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     `(("gtk3" ,gtk+)
-       ("glfw" ,glfw)
-       ("scons" ,scons)))
-    (home-page "https://goxel.xyz/")
-    (synopsis "Voxel editor")
-    (description
-     "Goxel is a voxel editor that features unlimited scene size, unlimited
+  ;; The latest commit is used as it builds with GCC 14.
+  (let ((commit   "66d36e0c3511479ceaac8cbf9f5c7c3e619b30d3")
+        (revision "0"))
+    (package
+      (name "goxel")
+      (version (git-version "0.15.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/guillaumechereau/goxel")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "18xbfkn3xh5y88iahrykyqh5nykkx7y468f450l5gdiagwpgz7g2"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f
+        #:make-flags
+        #~(list (string-append "PREFIX=" #$output)
+                "release")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; No configure provided
+            (delete 'configure))))
+      (native-inputs
+       (list pkg-config
+             scons))
+      (inputs
+       (list gtk+
+             glfw
+             libpng))
+      (home-page "https://goxel.xyz/")
+      (synopsis "Voxel editor")
+      (description
+       "Goxel is a voxel editor that features unlimited scene size, unlimited
 history buffer, 24-bit RGB colors, layers, procedural rendering, ray tracing,
 and export to various formats including the format used by Magicavoxel.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public assimp
   (package
@@ -802,6 +813,18 @@ and export to various formats including the format used by Magicavoxel.")
               (sha256
                (base32
                 "097fxq0frb2nl6bp8wz7kjx6vq4i4117wwq9fnxzkiij9xwv3cq9"))))
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'enable-testing
+                 (lambda _
+                   (substitute* "CMakeLists.txt"
+                     (("IF \\( ASSIMP_BUILD_TESTS \\)" all)
+                      (string-append all "\n    enable_testing()")))
+                   (substitute* "test/CMakeLists.txt"
+                     ;; Leave the test binary where ctest will look for it.
+                     (("TARGET_USE_COMMON_OUTPUT_DIRECTORY\\(unit\\)")
+                      "")))))))
     (build-system cmake-build-system)
     (inputs
      (list zlib))
@@ -1645,7 +1668,7 @@ with strong support for multi-part, multi-channel use cases.")
 (define-public openimageio
   (package
     (name "openimageio")
-    (version "2.5.13.0")
+    (version "2.5.19.0")
     (source
      (origin
        (method git-fetch)
@@ -1655,7 +1678,7 @@ with strong support for multi-part, multi-channel use cases.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0bqalfcfjjk31a7zv2hyx0jz8jpdhpsmc3sqwmfl4zf431g45hpb"))))
+         "1s4275iik6gpbyzh703acm440csg9ff8w5l5drnz1gl6mx5946kz"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ; half the tests require online data or use redirection
@@ -1907,7 +1930,7 @@ in Julia).")
            libjpeg-turbo
            libpng
            libtiff
-           openexr-2
+           openexr
            sdl
            zlib))
     (arguments
@@ -1947,7 +1970,7 @@ realistic reflections, shading, perspective and other effects.")
 (define-public ctl
   (package
     (name "ctl")
-    (version "1.5.3")
+    (version "1.5.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1956,11 +1979,11 @@ realistic reflections, shading, perspective and other effects.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qhfp9b90czvxjkf66sbnqyw3wvmdvl1pkh6201fxhqg7grbfvwc"))))
+                "02fxvwm883wgzhf87harbvmfqvm2ry71cxr768jb8kxdnal5gyy4"))))
     (build-system cmake-build-system)
 
     ;; Headers include OpenEXR and IlmBase headers.
-    (propagated-inputs (list openexr-2))
+    (propagated-inputs (list openexr))
     (inputs (list libtiff))
 
     (home-page "https://ampasctl.sourceforge.net")
@@ -2787,11 +2810,15 @@ Some feature highlights:
              (url "https://github.com/KhronosGroup/OpenXR-SDK")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Delete bundled jsoncpp.
-           (delete-file-recursively "src/external/jsoncpp")))
+       ;; When compiling against jsoncpp 1.9.6 the build fails with
+       ;;   'Unknown CMake command "check_required_components"'
+       ;; (see https://github.com/open-source-parsers/jsoncpp/issues/1568).
+       ;; When fixed uncomment the snippet and re-add jsoncpp as an input.
+       ;(modules '((guix build utils)))
+       ;(snippet
+       ; '(begin
+       ;    ;; Delete bundled jsoncpp.
+       ;    (delete-file-recursively "src/external/jsoncpp")))
        (sha256
         (base32 "0s66xgwkdj5vn05l493hqydrxfpxxidd6mcb8l7l5awhn88cy16f"))))
     (build-system cmake-build-system)
@@ -2800,7 +2827,7 @@ Some feature highlights:
     (native-inputs
      (list pkg-config python shaderc vulkan-headers))
     (inputs
-     (list jsoncpp mesa vulkan-loader wayland))
+     (list mesa vulkan-loader wayland))
     (home-page "https://www.khronos.org/openxr/")
     (synopsis "Generated headers and sources for OpenXR loader")
     (description "This package contains OpenXR headers, as well as source code
@@ -2811,7 +2838,7 @@ and build scripts for the OpenXR loader.")
 (define-public tinygltf
   (package
     (name "tinygltf")
-    (version "2.9.5")
+    (version "2.9.6")
     (source
      (origin
        (method git-fetch)
@@ -2820,7 +2847,7 @@ and build scripts for the OpenXR loader.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gx4wa0kxhig3wjn8v14dbjxl15xn0srkfxb5szzhrl06dv0nszc"))
+        (base32 "0xh94bnxz5dffq9g2fdfhxfy0lkyb9qhbnh583gbqkfysmyp3l6x"))
        (modules '((guix build utils)))
        (snippet #~(begin
                     (for-each delete-file-recursively
@@ -3067,7 +3094,6 @@ generated discrete signed distance field using the cubic spline kernel.
                    (string-append "-DCMAKE_INSTALL_MANDIR=" #$output "/share/man")
                    "-DBUILD_SHARED_LIBS=ON"
                    "-DBUILD_DOC=ON"
-                   "-DBUILD_TESTING=ON"
                    ;; The longer tests are for continuous integration and
                    ;; depend on input data which must be downloaded.
                    "-DONLY_VERY_SHORT_TESTS=ON"
@@ -3293,7 +3319,6 @@ desired local properties.")
       #:configure-flags
       #~(list (string-append "-DCMAKE_INSTALL_DOCDIR=" #$output
                              "/share/doc/" #$name "-" #$version)
-              "-DBUILD_TESTING=OFF"
               "-DF3D_LINUX_GENERATE_MAN=ON"
               "-DF3D_USE_EXTERNAL_CXXOPTS=ON"
               "-DF3D_USE_EXTERNAL_NLOHMANN_JSON=ON"
@@ -3355,19 +3380,21 @@ options.")
 (define-public gpaint
   (package
     (name "gpaint")
-    (version "0.3.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://alpha.gnu.org/gnu/"
-                                  name "/"
-                                  name "-2-" version ".tar.gz"))
-              (sha256
-               (base32
-                "13jv0zqbnyxjw7fa9x0yl08rrkqq0mdvki0yzbj6vqifvs393v5h"))))
+    (version "0.3.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.savannah.gnu.org/git/gpaint.git")
+             (commit (string-append "v"
+                       (string-replace-substring version "." "_")))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0drsvrihyvkdf5g65w5784ap06d2x9zkas69amp1mb6jmnzp8rir"))))
     (build-system gnu-build-system)
     (inputs (list gtk+-2 libglade))
-    (native-inputs
-     (list gettext-minimal `(,glib "bin") pkg-config))
+    (native-inputs (list gettext-minimal
+                         `(,glib "bin") pkg-config))
     (synopsis "Simple paint program for GNOME")
     (description
      "GNU Paint is a simple, easy-to-use paint program for the GNOME

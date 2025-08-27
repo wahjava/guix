@@ -157,17 +157,29 @@ elegant API.")
 (define-public ruby-highline
   (package
     (name "ruby-highline")
-    (version "2.0.1")
+    (version "3.1.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (rubygems-uri "highline" version))
+       (method git-fetch) ;for tests
+       (uri (git-reference
+             (url "https://github.com/JEG2/highline")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0gr6pckj2jayxw1gdgh9193j5jag5zrrqqlrnl4jvcwpyd3sn2zc"))))
+         "09ysksjmlzhpr5d21qhhl7bq7b3f03qk7jc1k08iwrvx3fjid8gv"))))
     (build-system ruby-build-system)
     (arguments
-     `(#:tests? #f)) ;; TODO: NameError: uninitialized constant SPEC
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'remove-coverage-and-failing-test
+            (lambda _
+              (substitute* "test/test_helper.rb"
+                (("require \"simplecov\" if RUBY_ENGINE == \"ruby\"")
+                 ""))
+              ;; TODO: Package dry-types gem.
+              (delete-file "test/test_highline.rb"))))))
     (native-inputs
      (list bundler ruby-code-statistics))
     (synopsis
@@ -2598,14 +2610,20 @@ input and output.")
          "1s650nwnabx66w584m1cyw82icyym6hv5kzfsbp38cinkr5klh9j"))))
     (build-system ruby-build-system)
     (arguments
-     '(#:tests? #f ;; TODO: NameError: uninitialized constant Config
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'set-LIB
-           (lambda _
-             ;; This is used in the Rakefile, and setting it avoids an issue
-             ;; with running the tests.
-             (setenv "LIB" "options"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (substitute* "spec/options_spec.rb"
+                  (("require .* \"/spec_helper\"")
+                   "require \"spec_helper\"\n"))
+                (substitute* "spec/spec_helper.rb"
+                  (("require 'spec'")
+                   "require 'rspec'\n"))
+                (invoke "rspec" "spec")))))))
+    (native-inputs (list ruby-rspec))
     (synopsis "Ruby library to parse options from *args cleanly")
     (description
      "The @code{options} library helps with parsing keyword options in Ruby
@@ -4694,14 +4712,14 @@ another.")
 (define-public ruby-markaby
   (package
     (name "ruby-markaby")
-    (version "0.9.0")
+    (version "0.9.4")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "markaby" version))
        (sha256
         (base32
-         "1j4jc31ycydbkh5h3q6zwidzpavg3g5mbb5lqyaczd3jrq78rd7i"))))
+         "1vizqpa9pks5nlqj0jjx2d1q6f9vfmjjbb774v1kp591pq5nhmcm"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -7413,13 +7431,13 @@ when working with Ruby code.")
 (define-public ruby-jaro-winkler
   (package
     (name "ruby-jaro-winkler")
-    (version "1.5.4")
+    (version "1.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "jaro_winkler" version))
        (sha256
-        (base32 "1y8l6k34svmdyqxya3iahpwbpvmn3fswhwsvrz0nk1wyb8yfihsh"))))
+        (base32 "09645h5an19zc1i7wlmixszj8xxqb2zc8qlf8dmx39bxpas1l24b"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f))                    ; no included tests
@@ -7751,14 +7769,14 @@ decoding of JSON is implemented as a C extension to Ruby.")
 (define-public ruby-ox
   (package
     (name "ruby-ox")
-    (version "2.6.0")
+    (version "2.14.21")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "ox" version))
        (sha256
         (base32
-         "0fmk62b1h2i79dfzjj8wmf8qid1rv5nhwfc17l489ywnga91xl83"))))
+         "1fd0pjv8svyq8g49zaqfksq9zhxv1rwvsqslvxhimaywggwpmirc"))))
     (build-system ruby-build-system)
     (arguments
      '(#:tests? #f)) ; no tests
@@ -10339,6 +10357,10 @@ engine.")
     (arguments
      (substitute-keyword-arguments (package-arguments ruby-sqlite3)
        ((#:tests? #t #t) #f)
+       ((#:gem-flags _ #f)
+        ''("--"
+           "--enable-system-libraries"
+           "--with-cflags=-Wno-error=incompatible-pointer-types -Wno-error=int-conversion"))
        ((#:phases phases #~%standard-phases)
         #~(modify-phases #$phases
             (delete 'relax-requirements)
@@ -11644,7 +11666,7 @@ part of the Prawn PDF generator.")
 (define-public ruby-puma
   (package
     (name "ruby-puma")
-    (version "6.6.0")
+    (version "6.6.1")
     (source
      (origin
        (method git-fetch)               ;for tests
@@ -11654,7 +11676,7 @@ part of the Prawn PDF generator.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1pdd7s403pi4y75s1sb4jkghhmm2w9zcqifj7z7yx4z0qfs7lvzv"))))
+         "0wppz08pfwz1ypidjiz199i5jl2qvb9ppg0sdvf0kc7azpx5mphl"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -14049,37 +14071,30 @@ common interface over different adapters.")
 (define-public ruby-nio4r
   (package
    (name "ruby-nio4r")
-   (version "2.5.2")
+   (version "2.7.4")
    (source
     (origin
-     (method url-fetch)
-     (uri (rubygems-uri "nio4r" version))
+     (method git-fetch)
+     (uri (git-reference
+            (url "https://github.com/socketry/nio4r")
+            (commit (string-append "v" version))))
+     (file-name (git-file-name name version))
      (sha256
       (base32
-       "0gnmvbryr521r135yz5bv8354m7xn6miiapfgpg1bnwsvxz8xj6c"))))
+       "1planm0yrzgkjqvxbfrcp477k030f1cyplpf8g1p7dppgzk2iqqm"))))
    (build-system ruby-build-system)
    (arguments
-    '(#:phases
+    '(#:test-target "spec"
+      #:phases
       (modify-phases %standard-phases
-        (add-after 'unpack 'remove-unnecessary-dependencies
+        (add-after 'extract-gemspec 'delete-certificate
           (lambda _
-            (substitute* "spec/spec_helper.rb"
-              ;; Coveralls is for uploading test coverage information to an
-              ;; online service, and thus unnecessary for building the Guix
-              ;; package
-              (("require \"coveralls\"") "")
-              (("Coveralls\\.wear!") "")
-              ;; Remove rspec/retry as we are not retrying the tests
-              (("require \"rspec/retry\"") "")
-              (("config\\.display_try_failure_messages = true") "")
-              (("config\\.verbose_retry = true") ""))))
+            (substitute* "nio4r.gemspec"
+              (("spec.cert_chain  = .*") "")
+              (("spec.signing_key = .*") ""))))
         (add-before 'check 'compile
           (lambda _
-            (invoke "rake" "compile")))
-        (replace 'check
-          (lambda* (#:key tests? #:allow-other-keys)
-            (when tests?
-              (invoke "rspec")))))))
+            (invoke "rake" "compile"))))))
    (native-inputs
     (list bundler ruby-rake-compiler ruby-rspec ruby-rubocop))
    (synopsis "New I/O for Ruby")
@@ -14606,8 +14621,8 @@ long-running operation if it hasn't finished in a fixed amount of time.")
          "0nagbf9pwy1vg09k6j4xqhbjjzrg5dwzvkn4ffvlj76fsn6vv61f"))))
     (build-system ruby-build-system)
     (arguments
-     ;; No tests.
-     '(#:tests? #f))
+     '(#:tests? #f
+       #:gem-flags '("--" "--with-cflags=-Wno-error=implicit-function-declaration")))
     (propagated-inputs
      (list ruby-daemons ruby-eventmachine ruby-rack))
     (synopsis "Thin and fast web server for Ruby")
@@ -15560,13 +15575,13 @@ expressiveness of the language with the parsing expressions.")
 (define-public ruby-cbor
   (package
     (name "ruby-cbor")
-    (version "0.5.9.6")
+    (version "0.5.10.1")
     (source
       (origin
         (method url-fetch)
         (uri (rubygems-uri "cbor" version))
         (sha256
-          (base32 "0511idr8xps9625nh3kxr68sdy6l3xy2kcz7r57g47fxb1v18jj3"))))
+          (base32 "1w3d5dhx4vjd707ihkcmq7fy78p5fgawcjdqw2byxnfw32gzgkbr"))))
     (build-system ruby-build-system)
     (arguments
      `(#:test-target "spec"))
@@ -16348,16 +16363,17 @@ Resource Description Framework} vocabularies.")
 (define-public ruby-rdiscount
   (package
     (name "ruby-rdiscount")
-    (version "2.2.7")
-    (source (origin
-              (method git-fetch)        ;for the full test suite
-              (uri (git-reference
-                    (url "https://github.com/davidfstr/rdiscount")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1lpfxq3gv0dgmnki9jgfnc8n9k4x9vyq9miqdxv6g4kp90qyfifc"))))
+    (version "2.2.7.3")
+    (source
+     (origin
+       (method git-fetch)               ;for the full test suite
+       (uri (git-reference
+              (url "https://github.com/davidfstr/rdiscount")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1lnf598sngcy6b701h33h5l9rn2abl80x0jpynz7jxb4imhd5r80"))))
     (build-system ruby-build-system)
     (native-inputs (list perl))
     (synopsis "Discount Markdown Processor for Ruby")
@@ -16970,13 +16986,13 @@ generation functionality.")
 (define-public ruby-grpc
   (package
     (name "ruby-grpc")
-    (version "1.62.0")
+    (version "1.74.1")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "grpc" version))
               (sha256
                (base32
-                "03z8yq0z228g6xxxq6s2mmslpv6psrdmi30dpmhysr4px16d897n"))))
+                "12qy6yga90hs2pdzkxwm80d38dbmjdxmf2szqwb40ky1jr4klfp7"))))
     (build-system ruby-build-system)
     (arguments
      `(#:tests? #f))  ;; has no tests

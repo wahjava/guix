@@ -3,6 +3,7 @@
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023, 2024 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
+;;; Copyright © 2025 André Batista <nandre@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -94,8 +95,8 @@ supported content to the Kodi media center.")
   ;; Arbitrary commit of branch master,
   ;; Update when updating uBlockOrigin.
   (let* ((name "ublock-main-assets")
-         (commit "d59acb82a09c668be70872044f2a4fd11273f0a7")
-         (revision "3")
+         (commit "4696d6a593755d34b28c073b0150f4b4bb000387")
+         (revision "4")
          (version (git-version "0" revision commit)))
     (origin
       (method git-fetch)
@@ -104,14 +105,14 @@ supported content to the Kodi media center.")
             (commit commit)))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "0bn9470qcjwxmbcvpvgcc2ar3p9jfkd3gachvfd7lldlyrkgnvi7")))))
+       (base32 "02cixd497fhhxk2xg74ys20d3h0l2s5rpvvqxdbvlpjvliinsg50")))))
 
 (define ublock-prod-assets
   ;; Arbitrary commit of branch gh-pages,
   ;; Update when updating uBlockOrigin.
   (let* ((name "ublock-prod-assets")
-         (commit "70efa9f0dabb41782ae53430d8acf45032a2edb5")
-         (revision "3")
+         (commit "bfeb222d20279afcc997d4b804fc4862f1364f95")
+         (revision "4")
          (version (git-version "0" revision commit)))
     (origin
       (method git-fetch)
@@ -120,12 +121,12 @@ supported content to the Kodi media center.")
             (commit commit)))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "15z1ynsajqa2aqk4wlwqv165hmcf1mav92jas9sqs6r6a9d41qcx")))))
+       (base32 "161ilyilvpixgxx09qjcyiavjwc120hh012jfiq4r6lk4dvm8ij0")))))
 
 (define ublock-origin
   (package
     (name "ublock-origin")
-    (version "1.64.0")
+    (version "1.65.0")
     (home-page "https://github.com/gorhill/uBlock")
     (source (origin
               (method git-fetch)
@@ -135,7 +136,7 @@ supported content to the Kodi media center.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fsqb6zfbiyfd0lc3anb1f09sk0i5bxl1kmspbj31xyn6drzdz3b"))))
+                "1mmgacpp5g6ypfjp4niyyvhhc2linr752gr274ssqirzhbwdygpw"))))
     (build-system gnu-build-system)
     (outputs '("xpi" "firefox" "chromium"))
     (properties '((addon-id . "uBlock0@raymondhill.net")))
@@ -262,7 +263,7 @@ fill and submit login forms if a matching password entry is found.")
 (define keepassxc-browser
   (package
     (name "keepassxc-browser")
-    (version "1.8.10")
+    (version "1.9.9.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -272,7 +273,15 @@ fill and submit login forms if a matching password entry is found.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1059kcb95ig18izbchwlb7pz41l4l3vjwzlmhz3w8zw2qxm6hrvx"))))
+                "12m7j7gz5gdhlv3paj9mmv9nb94cf80lridipmbdvk9shr43d0ag"))
+	      ;;  Default 'manifest.json' targets chromium based browsers and
+	      ;;  depends on background.service_worker support.
+	      ;;  See: <https://bugzilla.mozilla.org/show_bug.cgi?id=1573659>
+	      (snippet
+	       #~(begin
+		   (delete-file "keepassxc-browser/manifest.json")
+		   (copy-file "dist/manifest_firefox.json"
+			      "keepassxc-browser/manifest.json")))))
     (build-system copy-build-system)
     (properties
      '((addon-id . "keepassxc-browser@keepassxc.org")))
@@ -319,7 +328,7 @@ with the @uref{https://keepassxc.org, KeePassXC} password manager.")
 (define noscript
   (package
     (name "noscript")
-    (version "13.0.8")
+    (version "13.0.9")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append
@@ -327,7 +336,7 @@ with the @uref{https://keepassxc.org, KeePassXC} password manager.")
                     ".xpi"))
               (sha256
                (base32
-                "1p6jrz22jjzcqlbza2v8nix2sx9xjgl43vmm43hwrf9w13z8r5wx"))))
+                "1xbisx3xqak9aj7nb2lh94an6yfldsl6a2g2qc87vxi1zwdbcnjj"))))
     (build-system copy-build-system)
     (properties '((addon-id . "{73a6fe31-595d-460b-a920-fcc0f8843232}")))
     (arguments

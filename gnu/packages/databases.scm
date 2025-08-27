@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012-2016, 2018, 2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2012, 2013, 2014, 2015, 2016 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013, 2017 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2014, 2016 David Thompson <davet@gnu.org>
 ;;; Copyright © 2014, 2015, 2016, 2018 Mark H Weaver <mhw@netris.org>
@@ -92,7 +92,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -115,6 +115,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
@@ -147,6 +148,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pretty-print)
+  #:use-module (gnu packages prometheus)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -217,6 +219,7 @@
         (base32 "1dg3g66az17z4snxxw7cslqdkrvbx2nnyry73yi77yp0vpri1lz8"))))
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DBUILD_EXTENSIONS=autocomplete;icu;json;parquet;tpch;"
               ;; There is no git checkout from which to read the version tag.
@@ -308,41 +311,37 @@ ElasticSearch server")
 (define-public firebird
   (package
     (name "firebird")
-    (version "3.0.12")
+    (version "3.0.13")
     (source
-     (let ((revision "33787-0"))
-       (origin
-         (method url-fetch)
-         (uri (string-append "https://github.com/FirebirdSQL/"
-                             "firebird/releases/download/v"
-                             version "/"
-                             "Firebird-" version "." revision ".tar.bz2"))
-         (sha256
-          (base32 "07w109k237slwyhgyxma9r5my0dkvksc7ykpw0a4h7gpv06vzcl5"))
-         (patches (search-patches "firebird-riscv64-support-pt1.patch"
-                                  "firebird-riscv64-support-pt2.patch"))
-         (modules '((guix build utils)))
-         (snippet
-          `(begin
-             (for-each
-              delete-file-recursively
-              (list "extern/btyacc/test" ; TODO: package and remove entirely
-                    "extern/editline"
-                    "extern/icu"
-                    "extern/libtommath"
-                    "extern/zlib"
-                    "src/include/firebird/impl/boost"
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/FirebirdSQL/firebird")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h697y53vk7yvlifr35vjl3vkv8m5ny7j05r70qnqcvjy0axqbdn"))
+       (patches (search-patches "firebird-riscv64-support-pt1.patch"
+                                "firebird-riscv64-support-pt2.patch"))
+       (modules '((guix build utils)))
+       (snippet
+        `(begin
+           (for-each
+            delete-file-recursively
+            (list "extern/btyacc/test" ; TODO: package and remove entirely
+                  "extern/editline"
+                  "extern/icu"
+                  "extern/libtommath"
+                  "extern/zlib"
+                  "src/include/firebird/impl/boost"
 
-                    ;; Missing licence.
-                    "builds/install/arch-specific/solaris"
-                    "extern/SfIO"
-                    "src/msgs/templates.sql"
+                  ;; Missing licence.
+                  "builds/install/arch-specific/solaris"
+                  "extern/SfIO"
+                  "src/msgs/templates.sql"
 
-                    ;; Generated files missing sources.
-                    "doc/Firebird-3-QuickStart.pdf"
-                    (string-append "doc/Firebird-" ,version
-                                   "-ReleaseNotes.pdf")
-                    "doc/README.SecureRemotePassword.html")))))))
+                  ;; Generated files missing sources.
+                  "doc/README.SecureRemotePassword.html"))))))
     (build-system gnu-build-system)
     (outputs (list "debug" "out"))
     (arguments
@@ -444,13 +443,11 @@ ElasticSearch server")
                            (list "include/firebird/impl"
                                  "lib/firebird/plugins/udr")))))))))
     (native-inputs
-     (if (target-riscv64?)
-       (list autoconf automake libtool)
-       '()))
+     (list autoconf automake libtool))
     (inputs
      (list boost
            editline
-           icu4c-71
+           icu4c-77
            libtommath
            ncurses
            zlib))
@@ -486,6 +483,113 @@ database later.")
            license:mpl1.1            ; examples/interfaces/0{6,8}*.cpp
            license:public-domain)))) ; including files without explicit licence
 
+(define-public go-github-com-cockroachdb-pebble
+  ;; TODO: As inherited package can't be placed in separate module, keeping
+  ;; this Golang source library here.
+  (package
+    (name "go-github-com-cockroachdb-pebble")
+    (version "1.1.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cockroachdb/pebble")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15px3m8fid7fwh0xfyia75aak6a5sx5q3r01n79fr6mnyiaix18a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:build-flags #~(list "-tags" "external_libzstd")
+      #:test-flags #~(list "-tags" "external_libzstd"
+                           ;; Skip tests requiring git in PATH.
+                           "-skip" "TestLint")
+      ;; XXX: Maybe run more tests if possible.
+      #:test-subdirs #~(list "internal/...")
+      #:import-path "github.com/cockroachdb/pebble"))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-golang-org-x-perf
+           pkg-config))
+    (inputs
+     (list (list zstd "lib")))
+    (propagated-inputs
+     (list go-github-com-cespare-xxhash-v2
+           go-github-com-cockroachdb-datadriven
+           go-github-com-cockroachdb-errors
+           go-github-com-cockroachdb-fifo
+           go-github-com-cockroachdb-redact
+           go-github-com-cockroachdb-tokenbucket
+           go-github-com-datadog-zstd
+           go-github-com-ghemawat-stream
+           go-github-com-golang-snappy
+           go-github-com-guptarohit-asciigraph
+           go-github-com-hdrhistogram-hdrhistogram-go
+           go-github-com-klauspost-compress
+           go-github-com-kr-pretty
+           go-github-com-pkg-errors
+           go-github-com-pmezard-go-difflib
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-client-model
+           go-github-com-spf13-cobra
+           go-golang-org-x-exp
+           go-golang-org-x-perf
+           go-golang-org-x-sync
+           go-golang-org-x-sys))
+    (home-page "https://github.com/cockroachdb/pebble")
+    (synopsis "RocksDB/LevelDB inspired key-value database in Golang")
+    (description
+     "Pebble is a LevelDB/RocksDB inspired key-value store focused on
+performance and internal usage by CockroachDB. Pebble inherits the RocksDB
+file formats and a few extensions such as range deletion tombstones,
+table-level bloom filters, and updates to the MANIFEST format.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-cockroachdb-pebble-v2
+  (package
+    (inherit go-github-com-cockroachdb-pebble)
+    (name "go-github-com-cockroachdb-pebble-v2")
+    (version "2.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cockroachdb/pebble")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jglnsabg7y0y5agazvvmsa0r0ddn0j3c204cdpv7qsvi90pnr0d"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-cockroachdb-pebble)
+       ((#:tests? _ #t) #f) ; TODO: Find out why some tests fails to build
+       ((#:import-path _) "github.com/cockroachdb/pebble/v2")))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-cockroachdb-pebble)
+       (append go-github-com-cockroachdb-crlib
+               go-github-com-cockroachdb-swiss)))))
+
+(define-public pebble
+  (package/inherit go-github-com-cockroachdb-pebble
+    (name "pebble")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-cockroachdb-pebble)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "github.com/cockroachdb/pebble/cmd/pebble")
+       ((#:unpack-path _ "") "github.com/cockroachdb/pebble")))
+    (native-inputs
+     (append (package-propagated-inputs go-github-com-cockroachdb-pebble)
+             (package-native-inputs go-github-com-cockroachdb-pebble)))
+    (propagated-inputs '())
+    (description
+     (string-append (package-description
+                     go-github-com-cockroachdb-pebble)
+                    "\nThis package provides command line interface (CLI)."))))
+
 (define-public dicedb
   (package
     (name "dicedb")
@@ -503,7 +607,6 @@ database later.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/dicedb/dice"
       #:build-flags
@@ -1137,14 +1240,6 @@ Language.")
        #:parallel-tests? ,(target-x86-64?)
        #:phases
        (modify-phases %standard-phases
-         ;; TODO: Move this patch to the source field.
-         ,@(if (target-riscv64?)
-             `((add-after 'unpack 'patch-source
-                 (lambda* (#:key inputs native-inputs #:allow-other-keys)
-                   (invoke "patch" "-p1" "--force" "--input"
-                           (assoc-ref (or native-inputs inputs)
-                                      "patch-file")))))
-             '())
          (add-after 'unpack 'adjust-output-references
            (lambda _
              ;; The build system invariably prepends $CMAKE_INSTALL_PREFIX
@@ -1285,12 +1380,8 @@ Language.")
                 (("-lssl -lcrypto" all)
                  (string-append "-L" openssl " " all)))))))))
     (native-inputs
-     `(,@(if (target-riscv64?)
-           `(("patch" ,patch)
-             ("patch-file" ,(search-patch "mariadb-rocksdb-atomic-linking.patch")))
-           `())
-        ("bison" ,bison)
-        ("perl" ,perl)))
+     `(("bison" ,bison)
+       ("perl" ,perl)))
     (inputs
      (list fmt
            jemalloc
@@ -1315,17 +1406,16 @@ as a drop-in replacement of MySQL.")
 (define-public mariadb-connector-c
   (package
     (name "mariadb-connector-c")
-    (version "3.1.13")
+    (version "3.4.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://downloads.mariadb.org/f/connector-c-" version
-             "/mariadb-connector-c-" version "-src.tar.gz"
-             "/from/https%3A//mirrors.ukfast.co.uk/sites/mariadb/?serve"))
+             "https://downloads.mariadb.org/rest-api/connector-c/"
+             version "/mariadb-connector-c-" version "-src.tar.gz"))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0xb8fiissblxb319y5ifqqp86zblwis789ipb753pcb4zpnsaw82"))))
+        (base32 "18y1x985pnvvirmwfka81ygsvl7isc52mj9c9hvc69fb2qw1jzmi"))))
     (inputs
      (list openssl))
     (build-system cmake-build-system)
@@ -1568,11 +1658,12 @@ pictures, sounds, or video.")
      (list #:imported-modules `((guix build union)
                                 ,@%cmake-build-system-modules)
            #:modules `(,@%cmake-build-system-modules
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils)
                        (guix build union)
                        (ice-9 match))
            #:configure-flags #~(list "-DAPACHE_ONLY=ON"
                                      "-DSEND_TELEMETRY_DEFAULT=OFF")
-           #:test-target "regresschecklocal"
            #:phases
            #~(modify-phases (@ (guix build cmake-build-system) %standard-phases)
                (add-after 'unpack 'patch-install-location
@@ -1641,7 +1732,9 @@ pictures, sounds, or video.")
                              (("histogram_test\\.sql\\.in")
                               "#histogram_test.sql.in")))))))
                (add-after 'prepare-tests 'check
-                 (assoc-ref %standard-phases 'check)))))
+                 (lambda* (#:rest args)
+                   (apply (assoc-ref gnu:%standard-phases 'check)
+                          #:test-target "regresschecklocal" args))))))
     (inputs (list openssl postgresql))
     (home-page "https://www.timescale.com/")
     (synopsis "Time-series extension for PostgreSQL")
@@ -1992,7 +2085,7 @@ including field and record folding.")
 (define-public rocksdb
   (package
     (name "rocksdb")
-    (version "6.26.1")
+    (version "10.4.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2001,7 +2094,7 @@ including field and record folding.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0mylma106w93kxhj89g9y1ccdq7m9m94wrmv5nyr17yc1zsk87sg"))
+                "1cgr33qv639fyx067sg8nsy8mnfac9xgmmw2qwi2bcmir777ma4q"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -3572,7 +3665,7 @@ semantics.")
 (define-public libpqxx
   (package
     (name "libpqxx")
-    (version "7.7.4")
+    (version "7.10.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3581,9 +3674,9 @@ semantics.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qwpfba8g55jjv0xnsk4hhf2cmhk7mdirxx115cvnjjw97ppy0z0"))))
+                "0x81igwfk7nwc8vvggsnlz806kfzvc7bz0yrqadki01rj348hn85"))))
     (build-system gnu-build-system)
-    (native-inputs (list gcc-11 python-wrapper))
+    (native-inputs (list python-wrapper))
     (inputs (list postgresql))
     (arguments '(#:tests? #f))      ;tests require a running PostgreSQL server
     (synopsis "C++ connector for PostgreSQL")
@@ -3626,16 +3719,19 @@ can autogenerate peewee models using @code{pwiz}, a model generator.")
 (define-public python-pypika-tortoise
   (package
     (name "python-pypika-tortoise")
-    (version "0.1.6")
+    (version "0.3.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pypika-tortoise" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tortoise/pypika-tortoise")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0dmzpsnlqjjz0vm0r9xjk69xfsm235bpnk3jccr8ww4s8y7qc0nq"))))
+        (base32 "1pz7i9vgjwzzvacjjkvr5xbcmphn52xv993zbks602is844k0pp0"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list poetry python-setuptools))
+     (list python-poetry-core python-pytest))
     (home-page "https://github.com/tortoise/pypika-tortoise")
     (synopsis "Pypika fork for tortoise-orm")
     (description "Pypika-tortoise is a fork of pypika which has been
@@ -3694,20 +3790,99 @@ with Python's asyncio framework.")
 (define-public python-asyncmy
   (package
     (name "python-asyncmy")
-    (version "0.2.5")
+    (version "0.2.10")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "asyncmy" version))
-        (sha256
-          (base32 "0i18zxy6xvzv6dk791xifn2sw2q4zvqwpzrzy8qx51d3mp8z6gng"))))
-    (build-system python-build-system)
-    (native-inputs (list python-cython))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/long2ice/asyncmy")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10sqihiwx7vsdaavgl418hhk7d5rl6d1i60y5bjr76mdfny18q55"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Most tests fail, probably because
+      ;; of pytest-asyncio version mismatch.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'cleanup
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (for-each delete-file
+                        (find-files (site-packages inputs outputs)
+                                    "\\.(c|pyx)$"))))
+
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys #:rest rest)
+              (when tests?
+                ;; XXX: Else pytest picks up the wrong __init__.py
+                (delete-file-recursively "asyncmy")
+                ;; The tests rely on a MySQL or MariaDB test server
+                ;; being available.
+                (let ((datadir "/tmp/mysql")
+                      (socket "/tmp/mysql/mysqld.sock")
+                      (username "root")
+                      (password "123456")) ;default in conftest.py
+                  (invoke "mysqld" "--initialize-insecure"
+                          (string-append "--datadir=" datadir))
+                  (spawn "mysqld"
+                         (list
+                          "mysqld"
+                          ;; Respect '--datadir'.
+                          "--no-defaults"
+                          (string-append "--datadir=" datadir)
+                          (string-append "--socket=" socket)))
+                  (sleep 1)
+                  (invoke "mysql"
+                          (string-append "--socket=" socket)
+                          "-u" "root"
+                          "-e" (string-append
+                                "ALTER USER 'root'@'localhost' IDENTIFIED BY '"
+                                password "';"))
+                  (apply (assoc-ref %standard-phases 'check)
+                         `(#:tests? ,tests? ,@rest)))))))))
+    (native-inputs
+     (list mysql
+           python-cython
+           python-poetry-core
+           python-pytest
+           python-pytest-asyncio
+           python-setuptools))
     (home-page "https://github.com/long2ice/asyncmy")
     (synopsis "Fast MySQL driver for Python")
     (description "@code{asyncmy} is a fast @code{asyncio} MySQL driver, which
 reuses most of @code{pymysql} and @code{aiomysql} but rewrites the core
 protocol with Cython for performance.")
+    (license license:asl2.0)))
+
+(define-public python-asyncodbc
+  (package
+    (name "python-asyncodbc")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tortoise/asyncodbc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fdcvx2r09vsxx3zw8zvj7ww6wyby8sk3r2a3174nfngiajbi6g1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;tests fail similarly to python-pyodbc
+    (native-inputs
+     (list python-poetry-core
+           unixodbc))
+    (propagated-inputs
+     (list python-pyodbc))
+    (home-page "https://github.com/tortoise/asyncodbc")
+    (synopsis "Access ODBC databases with asyncio")
+    (description "This package provides an improved fork of
+@code{python-aioodbc}, and makes it possible to Access ODBC databases with
+@code{python-asyncio}.")
     (license license:asl2.0)))
 
 (define-public python-aiomysql
@@ -3735,7 +3910,7 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
 (define-public python-tortoise-orm
   (package
     (name "python-tortoise-orm")
-    (version "0.20.0")
+    (version "0.22.2")
     (source
      (origin
        (method git-fetch)
@@ -3744,16 +3919,31 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19rgyvs2y9gn27x71y7djdz6rb6bszgvprv55q1hr4266wy6g999"))))
+        (base32 "1xzwywvb3898hm41vwkzn785ziqprxh6lcf0lpmrgfcsc9qnnhzk"))))
     (build-system pyproject-build-system)
-    ;; The test suite relies on asynctest, which is abandoned and doesn't
-    ;; support Python >= 3.8.
-    (arguments '(#:tests? #f))
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list "not test_enum"  ; Fixed in the next release.
+                          ;; tortoise.exceptions.OperationalError
+                          "test_delete"
+                          "test_delete_limit"
+                          "test_delete_limit_order_by"
+                          "test_update_with_limit_ordering")
+                    " and not "))))
     (native-inputs
-     (list poetry))
+     (list python-asyncodbc
+           python-fastapi
+           python-poetry-core
+           python-psycopg
+           python-psycopg-pool
+           python-pydantic-2
+           python-pyodbc
+           python-pytest))
     (propagated-inputs
      (list python-aiomysql
-           python-aiosqlite-0.17
+           python-aiosqlite
            python-asyncmy
            python-asyncpg
            python-ciso8601
@@ -3774,35 +3964,30 @@ with relational data.")
 (define-public aerich
   (package
     (name "aerich")
-    (version "0.7.2")
+    (version "0.8.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/tortoise/aerich")
-             (commit (string-append "v" version))))
+              (url "https://github.com/tortoise/aerich")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0pcy945bg890p12s7cyw0mg7hxwsxyy570j600sbf7kwj2d3lilg"))))
+        (base32 "1cln1ik7519n6k4lnh06w956lp8xjb0khkkpsmaj8wqlm0jbvdbi"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list poetry
-           python-bandit
-           python-cryptography
-           python-isort
-           python-pydantic
+     (list python-cryptography
            python-pytest
+           python-poetry-core
            python-pytest-asyncio
-           python-pytest-mock
-           python-pytest-xdist))
+           python-pytest-mock))
     (propagated-inputs
-     (list python-asyncmy
+     (list python-asyncclick
+           python-asyncmy
            python-asyncpg
-           python-click
-           python-ddlparse
            python-dictdiffer
-           python-tomlkit
+           python-pydantic
+           python-tomli-w
            python-tortoise-orm))
     (home-page "https://github.com/tortoise/aerich")
     (synopsis "Database migrations tool for Tortoise @acronym{ORM, Object Relational
@@ -3866,30 +4051,24 @@ development.")
 (define-public python-pyodbc
   (package
     (name "python-pyodbc")
-    (version "4.0.35")
+    (version "5.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyodbc" version))
        (sha256
-        (base32 "1j7577acd2f16zifw49ajg0aw7vm0pdg6jxrr1dlaa5rx14azfcj"))
+        (base32 "1xd88k6rngm9n8z3klb0g94csa9m8sk7df544vpfxpf816cf72yy"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete precompiled binaries.  The corresponding source is included.
         #~(for-each delete-file (find-files "." "\\.pyc$")))))
-    (build-system python-build-system)
-    (inputs
-     (list unixodbc))
+    (build-system pyproject-build-system)
+    (inputs (list unixodbc))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (arguments
-     ;; XXX Tests fail with ‘Can't open lib 'SQL Server Native Client 10.0' :
-     ;; file not found (0) (SQLDriverConnect)")’.
-     (list #:tests? #f
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "python3" "tests3/test.py")))))))
+     ;; XXX Tests fail with [unixODBC][Driver Manager]Data source name not
+     ;; found and no default driver specified (0) (SQLDriverConnect)
+     (list #:tests? #f))
     (home-page "https://github.com/mkleehammer/pyodbc")
     (synopsis "Python ODBC Library")
     (description "@code{python-pyodbc} provides a Python DB-API driver
@@ -3934,75 +4113,58 @@ etc., and an SQL engine for performing simple SQL queries.")
   (package
     (name "python-lmdb")
     (version "1.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "lmdb" version))
-              (sha256
-               (base32
-                "1di1gj2agbxwqqwrpk4w58dpfah0kl10ha20s63dlqdd1bgzydj1"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Delete bundled lmdb source files.
-               '(begin
-                  (for-each delete-file (list "lib/lmdb.h"
-                                              "lib/mdb.c"
-                                              "lib/midl.c"
-                                              "lib/midl.h"))
-                  #t))))
-    (build-system python-build-system)
-    (inputs
-     (list lmdb))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lmdb" version))
+       (sha256
+        (base32 "1di1gj2agbxwqqwrpk4w58dpfah0kl10ha20s63dlqdd1bgzydj1"))
+       (snippet
+        ;; Delete bundled lmdb source files.
+        #~(for-each delete-file
+                    '("lib/lmdb.h" "lib/mdb.c" "lib/midl.c" "lib/midl.h")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'use-system-lmdb
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((lmdb (assoc-ref inputs "lmdb")))
-               (setenv "LMDB_PURE" "set") ; don't apply env-copy-txn.patch
-               (setenv "LMDB_FORCE_SYSTEM" "set")
-               (setenv "LMDB_INCLUDEDIR" (string-append lmdb "/include"))
-               (setenv "LMDB_LIBDIR" (string-append lmdb "/lib"))
-               #t))))
-       ;; Tests fail with: ‘lmdb.tool: Please specify environment (--env)’.
-       #:tests? #f))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'use-system-lmdb
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((lmdb (assoc-ref inputs "lmdb")))
+                (setenv "LMDB_PURE" "set") ;don't apply env-copy-txn.patch
+                (setenv "LMDB_FORCE_SYSTEM" "set")
+                (setenv "LMDB_INCLUDEDIR"
+                        (string-append lmdb "/include"))
+                (setenv "LMDB_LIBDIR"
+                        (string-append lmdb "/lib"))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list lmdb))
     (home-page "https://github.com/dw/py-lmdb")
     (synopsis "Python binding for the ‘Lightning’ database (LMDB)")
     (description
      "python-lmdb or py-lmdb is a Python binding for the @dfn{Lightning
 Memory-Mapped Database} (LMDB), a high-performance key-value store.")
-    (license
-     (list license:openldap2.8
-           ;; ‘lib/win32/inttypes.h’ and ‘lib/win32-stdint/stdint.h’ are BSD-3,
-           ;; but not actually needed on platforms currently supported by Guix.
-           license:bsd-3))))
+    (license (list license:openldap2.8
+                   ;; ‘lib/win32/inttypes.h’ and ‘lib/win32-stdint/stdint.h’ are BSD-3,
+                   ;; but not actually needed on platforms currently supported by Guix.
+                   license:bsd-3))))
 
 (define-public virtuoso-ose
   (package
     (name "virtuoso-ose")
-    (version "7.2.11")
+    (version "7.2.15")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/virtuoso/virtuoso/" version "/"
                            "virtuoso-opensource-" version ".tar.gz"))
        (sha256
-        (base32 "0mk25gr1pafmps4nsydjprwswbzwch8b583nlwh7x2031sz7ald1"))
-       (patches (search-patches "virtuoso-ose-remove-pre-built-jar-files.patch"))
+        (base32 "1nz6kddwxz5k79g3skj7y45f0l20m8fh8haw42j313xm177xpdp0"))
        (modules '((guix build utils)))
        ;; This snippet removes pre-built Java archives.
        (snippet
         #~(for-each delete-file-recursively
-                    (list "binsrc/hibernate"
-                          "binsrc/jena"
-                          "binsrc/jena2"
-                          "binsrc/jena3"
-                          "binsrc/jena4"
-                          "binsrc/rdf4j"
-                          "binsrc/sesame"
-                          "binsrc/sesame2"
-                          "binsrc/sesame3"
-                          "binsrc/sesame4"
-                          "libsrc/JDBCDriverType4")))))
+                    (find-files "." "\\.jar$")))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4015,9 +4177,6 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
               "--enable-static=no")
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'bootstrap
-            (lambda _
-              (invoke "sh" "autogen.sh")))
           (add-after 'unpack 'avoid-embedding-kernel-and-timestamps
             ;; For a reproducible build, avoid embedding the kernel version and
             ;; timestamps.
@@ -4036,15 +4195,9 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
                         "appsrc/ODS-FeedManager/make_vad.sh"
                         "appsrc/ODS-Bookmark/make_vad.sh"
                         "appsrc/ODS-Addressbook/make_vad.sh"
-                        "binsrc/dbpedia/make_vad.sh"
                         "binsrc/samples/demo/make_vad.sh"
                         "binsrc/samples/demo/mkdoc.sh"
-                        "binsrc/samples/sparql_demo/make_vad.sh"
-                        "binsrc/bpel/make_vad.sh"
-                        "binsrc/fct/make_vad.sh"
-                        "binsrc/rdf_mappers/make_vad.sh"
-                        "binsrc/isparql/make_vad.sh"
-                        "binsrc/conductor/mkvad.sh")
+                        "binsrc/rdf_mappers/make_vad.sh")
                 (("^UNAME_SYSTEM=.*") "UNAME_SYSTEM=unknown\n")
                 (("^UNAME_RELEASE=.*") "UNAME_RELEASE=unknown\n")
                 (("^PACKDATE=.*") "PACKDATE=2012-04-18\n")
@@ -4059,7 +4212,7 @@ Memory-Mapped Database} (LMDB), a high-performance key-value store.")
                '("libvirtuoso-t.a"
                  "libvirtuoso-t.la")))))))
     (native-inputs
-     (list autoconf automake bison flex gperf libtool))
+     (list autoconf automake bison flex gperf libtool python))
     (inputs
      (list openssl net-tools readline which zlib))
     (home-page "https://vos.openlinksw.com/owiki/wiki/VOS/")
@@ -4235,34 +4388,28 @@ You might also want to install the following optional dependencies:
     (name "python-alchemy-mock")
     (version "0.4.3")
     (home-page "https://github.com/miki725/alchemy-mock")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "alchemy-mock" version))
-              (sha256
-               (base32
-                "0ylxygl3bcdapzz529n8wgk7vx9gjwb3ism564ypkpd7dbsw653r"))
-             (snippet
-              #~(begin (use-modules (guix build utils))
-                       (substitute* "alchemy_mock/comparison.py"
-                         (("collections\\.Mapping") "collections.abc.Mapping"))))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miki725/alchemy-mock")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "053gj8d8ca5kpp7v61wd7lcm9mqp9xqz3d8pp9spdbcjsaqz9nk9"))
+       (snippet #~(begin
+                    (use-modules (guix build utils))
+                    (substitute* "alchemy_mock/comparison.py"
+                      (("collections\\.Mapping")
+                       "collections.abc.Mapping"))))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      ;; Create pytest.ini that adds doctest options to
-                      ;; prevent test failure.  Taken from tox.ini.
-                      (call-with-output-file "pytest.ini"
-                        (lambda (port)
-                          (format port "[pytest]
-doctest_optionflags=IGNORE_EXCEPTION_DETAIL
-")))
-                      (invoke "pytest" "-vv" "--doctest-modules"
-                              "alchemy_mock/"))))))
-    (native-inputs
-     (list python-mock python-pytest))
-    (propagated-inputs
-     (list python-six python-sqlalchemy))
+     (list
+      #:test-flags
+      #~(list "--doctest-modules" "alchemy_mock")))
+    (native-inputs (list python-mock python-pytest python-setuptools
+                         python-wheel))
+    (propagated-inputs (list python-sqlalchemy))
     (synopsis "Mock helpers for SQLAlchemy")
     (description
      "This package provides mock helpers for SQLAlchemy that makes it easy
@@ -4487,33 +4634,6 @@ async versions of all the standard connection and cursor methods, and context
 managers for automatically closing connections.")
     (license license:expat)))
 
-(define-public python-aiosqlite-0.17
-  (package
-    (inherit python-aiosqlite)
-    (version "0.17.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/omnilib/aiosqlite")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name (package-name python-aiosqlite)
-                                        version))
-              (sha256
-               (base32
-                "1agh7b9g7rgryvb8flph85i8m80ai1rinpljxzlsrs0s0y616qgg"))))
-    (build-system pyproject-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "python" "-m" "unittest" "aiosqlite.tests")
-                          (format #t "test suite not run~%")))))))
-    (propagated-inputs
-     (list python-typing-extensions))
-    (native-inputs
-     (list python-flit-core python-aiounittest))))
-
 (define-public python-databases
   (package
     (name "python-databases")
@@ -4721,13 +4841,13 @@ files or Python scripts that define a list of migration steps.")
 (define-public python-mysqlclient
   (package
     (name "python-mysqlclient")
-    (version "2.2.4")
+    (version "2.2.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mysqlclient" version))
        (sha256
-        (base32 "0hdznfz9095d2qhl7awbp39s7wpqbxn37xzan487qzaf8srrzg1k"))))
+        (base32 "0i9q2vj6rb4w2iggk0mcp9jla2rm91sx7jcrgv7grm8njjsj5bi4"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -5154,7 +5274,7 @@ with integrated support for finding required rows quickly.")
 (define-public apache-arrow
   (package
     (name "apache-arrow")
-    (version "20.0.0")
+    (version "21.0.0")
     (source
      (origin
        (method git-fetch)
@@ -5164,11 +5284,10 @@ with integrated support for finding required rows quickly.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1n96m8fbpg8azbwm6hx3adbc2sa070k1zh0lj18yqlw2nqmdslr4"))))
+         "0lxywrjfwhiznsldpv5bd6g357za5ng64jvy943kp0ndckh5l4g9"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake ;needs 3.25+
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -5409,132 +5528,6 @@ language-bindings for structure manipulation.  It also provides IPC and common
 algorithm implementations.")
     (license license:asl2.0)))
 
-(define-public apache-arrow-0.16
-  (package
-    (name "apache-arrow")
-    (version "0.16.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/apache/arrow")
-             (commit (string-append "apache-arrow-" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "15bplqy5708bxy1mynzjkd3d2g8v2wd36z8l0ap8yyyq54l3gdvy"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'enter-source-directory
-           (lambda _
-             (chdir "cpp")
-             (substitute* "src/parquet/CMakeLists.txt"
-               (("    parquet_constants.cpp") "")
-               (("set\\(THRIFT_OUTPUT_FILES \\$\\{THRIFT_OUTPUT_FILES\\}.*") "")
-               ((".*\"\\$\\{THRIFT_OUTPUT_DIR\\}/parquet_constants.cpp\"\\).*") ""))))
-         (add-after 'unpack 'set-env
-           (lambda _
-             (setenv "BOOST_ROOT" (assoc-ref %build-inputs "boost"))
-             (setenv "BROTLI_HOME" (assoc-ref %build-inputs "brotli"))
-             (setenv "FLATBUFFERS_HOME" (assoc-ref %build-inputs "flatbuffers"))
-             (setenv "RAPIDJSON_HOME" (assoc-ref %build-inputs "rapidjson")))))
-       #:build-type "Release"
-       #:configure-flags
-       (list "-DARROW_PYTHON=ON"
-             "-DARROW_GLOG=ON"
-             "-DARROW_SSE42=OFF"
-             "-DARROW_BOOST_USE_SHARED=ON"
-             ;; Parquet options
-             "-DARROW_PARQUET=ON"
-
-             ;; The maintainers disallow using system versions of
-             ;; jemalloc:
-             ;; https://issues.apache.org/jira/browse/ARROW-3507. This
-             ;; is unfortunate because jemalloc increases performance:
-             ;; https://arrow.apache.org/blog/2018/07/20/jemalloc/.
-             "-DARROW_JEMALLOC=OFF"
-
-             ;; The CMake option ARROW_DEPENDENCY_SOURCE is a global
-             ;; option that instructs the build system how to resolve
-             ;; each dependency. SYSTEM = Finding the dependency in
-             ;; system paths using CMake's built-in find_package
-             ;; function, or using pkg-config for packages that do not
-             ;; have this feature
-             "-DARROW_DEPENDENCY_SOURCE=SYSTEM"
-
-             ;; Split output into its component packages.
-             (string-append "-DCMAKE_INSTALL_PREFIX="
-                            (assoc-ref %outputs "out"))
-             (string-append "-DCMAKE_INSTALL_RPATH="
-                            (assoc-ref %outputs "out")
-                            "/lib")
-             (string-append "-DCMAKE_INSTALL_BINDIR="
-                            (assoc-ref %outputs "out")
-                            "/bin")
-             (string-append "-DCMAKE_INSTALL_INCLUDEDIR="
-                            (assoc-ref %outputs "include")
-                            "/share/include")
-
-
-             "-DARROW_WITH_SNAPPY=ON"
-             "-DARROW_WITH_ZLIB=ON"
-             "-DARROW_WITH_ZSTD=ON"
-             "-DARROW_WITH_LZ4=ON"
-             "-DARROW_COMPUTE=ON"
-             "-DARROW_CSV=ON"
-             "-DARROW_DATASET=ON"
-             "-DARROW_FILESYSTEM=ON"
-             "-DARROW_HDFS=ON"
-             "-DARROW_JSON=ON"
-             ;; Arrow Python C++ integration library (required for
-             ;; building pyarrow). This library must be built against
-             ;; the same Python version for which you are building
-             ;; pyarrow. NumPy must also be installed. Enabling this
-             ;; option also enables ARROW_COMPUTE, ARROW_CSV,
-             ;; ARROW_DATASET, ARROW_FILESYSTEM, ARROW_HDFS, and
-             ;; ARROW_JSON.
-             "-DARROW_PYTHON=ON"
-
-             ;; Building the tests forces on all the
-             ;; optional features and the use of static
-             ;; libraries.
-             "-DARROW_BUILD_TESTS=OFF"
-             "-DBENCHMARK_ENABLE_GTEST_TESTS=OFF"
-             ;;"-DBENCHMARK_ENABLE_TESTING=OFF"
-             "-DARROW_BUILD_STATIC=OFF")))
-    (inputs
-     `(("boost" ,boost)
-       ("brotli" ,brotli)
-       ("double-conversion" ,double-conversion)
-       ("snappy" ,snappy)
-       ("gflags" ,gflags)
-       ("glog" ,glog)
-       ("apache-thrift" ,apache-thrift "lib")
-       ("protobuf" ,protobuf)
-       ("rapidjson" ,rapidjson)
-       ("zlib" ,zlib)
-       ("bzip2" ,bzip2)
-       ("lz4" ,lz4)
-       ("zstd" ,zstd "lib")
-       ("re2" ,re2)
-       ("grpc" ,grpc)
-       ("python-3" ,python)
-       ("python-numpy" ,python-numpy)))
-    (native-inputs
-     (list pkg-config apache-thrift))
-    (outputs '("out" "include"))
-    (home-page "https://arrow.apache.org/")
-    (synopsis "Columnar in-memory analytics")
-    (description "Apache Arrow is a columnar in-memory analytics layer
-designed to accelerate big data.  It houses a set of canonical in-memory
-representations of flat and hierarchical data along with multiple
-language-bindings for structure manipulation.  It also provides IPC and common
-algorithm implementations.")
-    (license license:asl2.0)))
-
 (define-public python-pyarrow
   (package
     (inherit apache-arrow)
@@ -5591,64 +5584,6 @@ __version_tuple__ = version_tuple = (~a)~%" version version-tuple))))))
      (list cmake ;needs 3.25
            pkg-config
            python-cython-3
-           python-pytest
-           python-pytest-runner
-           python-setuptools-scm))
-    (outputs '("out"))
-    (home-page "https://arrow.apache.org/docs/python/")
-    (synopsis "Python bindings for Apache Arrow")
-    (description
-     "This library provides a Pythonic API wrapper for the reference Arrow C++
-implementation, along with tools for interoperability with pandas, NumPy, and
-other traditional Python scientific computing packages.")
-    (license license:asl2.0)))
-
-(define-public python-pyarrow-0.16
-  (package
-    (inherit apache-arrow-0.16)
-    (name "python-pyarrow")
-    (build-system python-build-system)
-    (arguments
-     '(#:tests? #f          ; XXX There are no tests in the "python" directory
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'build) ; XXX the build is performed again during the install phase
-         (add-after 'unpack 'enter-source-directory
-           (lambda _ (chdir "python")))
-         (add-after 'unpack 'make-git-checkout-writable
-           (lambda _
-             (for-each make-file-writable (find-files "."))))
-         (add-before 'install 'patch-cmake-variables
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; Replace cmake locations with hardcoded guix links for the
-             ;; underlying C++ library and headers.  This is a pretty awful
-             ;; hack.
-             (substitute* "cmake_modules/FindParquet.cmake"
-               (("# Licensed to the Apache Software Foundation" m)
-                (string-append "set(PARQUET_INCLUDE_DIR \""
-                               (assoc-ref inputs "apache-arrow:include")
-                               "/share/include\")\n" m))
-               (("find_package_handle_standard_args" m)
-                (string-append "set(PARQUET_LIB_DIR \""
-                               (assoc-ref inputs "apache-arrow:lib")
-                               "/lib\")\n" m)))))
-         (add-before 'install 'patch-parquet-library
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("parquet_shared") "parquet"))))
-         (add-before 'install 'set-PYARROW_WITH_PARQUET
-           (lambda _
-             (setenv "PYARROW_WITH_PARQUET" "1"))))))
-    (propagated-inputs
-     `(("apache-arrow:lib" ,apache-arrow-0.16)
-       ("apache-arrow:include" ,apache-arrow-0.16 "include")
-       ("python-numpy" ,python-numpy)
-       ("python-pandas" ,python-pandas)
-       ("python-six" ,python-six)))
-    (native-inputs
-     (list cmake-minimal
-           pkg-config
-           python-cython
            python-pytest
            python-pytest-runner
            python-setuptools-scm))
@@ -5868,24 +5803,26 @@ The drivers officially supported by @code{libdbi} are:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "12aq7pama96l2c1kmfkclb4bvrsxs9a8ppgk5gmzw45w2lg35i0y"))))
+                "12aq7pama96l2c1kmfkclb4bvrsxs9a8ppgk5gmzw45w2lg35i0y"))
+              (patches (search-patches "soci-mysql-ddl-types.patch"))))
     (build-system cmake-build-system)
     (propagated-inputs
      ;; Headers of soci has include-references to headers of these inputs.
-     `(("firebird" ,firebird)
-       ("postgresql" ,postgresql)
-       ("sqlite" ,sqlite)
-       ("odbc" ,unixodbc)
-       ("boost" ,boost)
-       ("mariadb:dev" ,mariadb "dev")))
+     (list firebird
+           postgresql
+           sqlite
+           unixodbc
+           boost
+           `(,mariadb "dev")))
     (arguments
-     `(#:configure-flags
-       ;; C++11 (-DSOCI_CXX11) is OFF by default.  hyperledger-iroha needs it.
-       (list "-DCMAKE_CXX_STANDARD=17"
-             "-DSOCI_LIBDIR=lib"
-             ;; This is for relocation when linking statically
-             "-DCMAKE_CXX_FLAGS=-fPIE")
-       #:tests? #f))         ; may require running database management systems
+     (list #:configure-flags
+           ;; C++11 (-DSOCI_CXX11) is OFF by default.  hyperledger-iroha needs
+           ;; it.
+           #~(list "-DCMAKE_CXX_STANDARD=17"
+                   "-DSOCI_LIBDIR=lib"
+                   ;; This is for relocation when linking statically
+                   "-DCMAKE_CXX_FLAGS=-fPIE")
+           #:tests? #f))     ; may require running database management systems
     (synopsis "C++ Database Access Library")
     (description
      "SOCI is an abstraction layer for several database backends, including
@@ -6167,7 +6104,7 @@ relational databases are in general.")
            go-github-com-lib-pq
            go-github-com-mattn-go-runewidth
            go-github-com-mattn-go-sqlite3
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-pkg-errors
            go-github-com-sourcegraph-jsonrpc2
            go-golang-org-x-crypto

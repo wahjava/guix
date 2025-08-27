@@ -56,6 +56,7 @@
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -79,10 +80,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -263,47 +261,19 @@ like Jasmine or Mocha.")
 (define-public cargo-nextest
   (package
     (name "cargo-nextest")
-    (version "0.9.87")
+    (version "0.9.97")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "cargo-nextest" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "02aq4wmrnwlm2amjqpwv0k58mw5kbwkxgj2z1d6qydxfrrm50k1d"))))
+        (base32 "0j55sqr3fnhsk5b9n2jwy6g1h605qgrhwpxlsx789k8b3yhhnfyz"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
-       (("rust-camino" ,rust-camino-1)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-color-eyre" ,rust-color-eyre-0.6)
-        ("rust-dialoguer" ,rust-dialoguer-0.11)
-        ("rust-duct" ,rust-duct-0.13)
-        ("rust-enable-ansi-support" ,rust-enable-ansi-support-0.2)
-        ("rust-guppy" ,rust-guppy-0.17)
-        ("rust-itertools" ,rust-itertools-0.13)
-        ("rust-miette" ,rust-miette-7)
-        ("rust-nextest-filtering" ,rust-nextest-filtering-0.12)
-        ("rust-nextest-metadata" ,rust-nextest-metadata-0.12)
-        ("rust-nextest-runner" ,rust-nextest-runner-0.70)
-        ("rust-nextest-workspace-hack" ,rust-nextest-workspace-hack-0.1)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-owo-colors" ,rust-owo-colors-4)
-        ("rust-pathdiff" ,rust-pathdiff-0.2)
-        ("rust-quick-junit" ,rust-quick-junit-0.5)
-        ("rust-semver" ,rust-semver-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-shell-words" ,rust-shell-words-1)
-        ("rust-supports-color" ,rust-supports-color-3)
-        ("rust-supports-unicode" ,rust-supports-unicode-3)
-        ("rust-swrite" ,rust-swrite-0.1)
-        ("rust-thiserror" ,rust-thiserror-2)
-        ("rust-tracing" ,rust-tracing-0.1)
-        ("rust-tracing-subscriber" ,rust-tracing-subscriber-0.3))
-       #:cargo-development-inputs
-       (("rust-camino-tempfile" ,rust-camino-tempfile-1))))
-    (inputs (list pkg-config zlib (list zstd "lib")))
+     `(#:install-source? #f))
+    (inputs
+     (cons* pkg-config zlib `(,zstd "lib") (cargo-inputs 'cargo-nextest)))
     (home-page "https://github.com/nextest-rs/nextest")
     (synopsis "next-generation test runner for Rust")
     (description
@@ -414,7 +384,7 @@ source code editors and IDEs.")
     (native-inputs
      (list go-github-com-docopt-docopt-go
            go-github-com-go-ini-ini
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-stretchr-testify
            go-md2man))
     (home-page "https://github.com/mrtazz/checkmake")
@@ -424,49 +394,6 @@ source code editors and IDEs.")
 Makefiles.  It allows for a set of configurable rules being run
 against a @file{Makefile} or a set of @file{*.mk} files.")
     (license license:expat)))
-
-;;; XXX: This project is abandoned upstream, and included in modern catch2
-;;; releases.  It is still depended by the restinio test suite at this time,
-;;; so keep it (see: https://github.com/Stiffstream/restinio/issues/181).
-(define-public clara
-  (package
-    (name "clara")
-    (version "1.1.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/catchorg/Clara")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "08mlm9ax5d7wkmsihm1xnlgp7rfgff0bfl4ly4850xmrdaxmmkl3"))
-              (modules '((guix build utils)))
-              (snippet '(begin
-                          ;; Un-bundle catch2.
-                          (delete-file-recursively "third_party")
-                          (substitute* "CMakeLists.txt"
-                            (("include_directories\\( include third_party )")
-                             "include_directories( include )"))))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:configure-flags
-      #~(list (string-append "-DCMAKE_CXX_FLAGS=-I"
-                             (search-input-directory %build-inputs
-                                                     "include/catch2")))
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'install
-            (lambda _
-              (install-file (string-append #$source "/single_include/clara.hpp")
-                            (string-append #$output "/include")))))))
-    (native-inputs (list catch2))
-    (home-page "https://github.com/catchorg/Clara")
-    (synopsis "Simple command line parser for C++")
-    (description "Clara is a simple to use, composable, command line parser
-for C++ 11 and beyond implemented as a single-header library.")
-    (license license:boost1.0)))
 
 (define-public clitest
   (package
@@ -615,6 +542,34 @@ similar to @code{log4j}.  It is designed to work in a similar manner to JUnit,
 PyUnit and others.")
     (license license:asl2.0)))
 
+(define-public snitch
+  (package
+    (name "snitch")
+    (version "1.3.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/snitch-org/snitch")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0mf55yi8ahpczl9jz2is3dnghfi3g9qz5vch7mx7akqx4gfhhviz"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f
+                     #:configure-flags
+                     #~(list "-DBUILD_SHARED_LIBS=ON"
+                             "-DSNITCH_DO_TEST=ON"
+                             "-DSNITCH_USE_SYSTEM_DOCTEST=ON")))
+    (native-inputs (list doctest))
+    (home-page "https://github.com/snitch-org/snitch")
+    (synopsis "Lightweight C++20 testing framework")
+    (description "@code{snitch} aims to be a simple, cheap, non-invasive, and
+user-friendly testing framework.  The design philosophy is to keep the testing
+API lean, including only what is strictly necessary to present clear messages
+when a test fails.")
+    (license license:boost1.0)))
+
 ;; When dependent packages upgraded to use newer version of catch, this one should
 ;; be removed.
 (define-public catch-framework
@@ -707,6 +662,8 @@ a multi-paradigm automated test framework for C++ and Objective-C.")
     (license license:boost1.0)))
 
 (define-public cbehave
+  ;; XXX: The last time updated on <2013-07-12>, the only user is tinydir
+  ;; package.
   (let ((commit "5deaea0eaaf52f1c5ccdac0c68c003988f348fb4")
         (revision "1"))
     (package
@@ -733,7 +690,10 @@ a multi-paradigm automated test framework for C++ and Objective-C.")
       (build-system gnu-build-system)
       (arguments
        (list
-        #:configure-flags #~(list "--enable-shared" "--disable-static")
+        #:configure-flags
+        #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
+                "--enable-shared"
+                "--disable-static")
         #:phases
         #~(modify-phases %standard-phases
             (add-before 'bootstrap 'rename-configure.in
@@ -763,20 +723,19 @@ It allows the specification of behaviour scenarios using a given-when-then
 pattern.")
       (license license:apsl2))))
 
-(define-public catch2-3
+(define-public catch2-3.8
   (package
     (name "catch2")
-    (version "3.5.3")
-    (home-page "https://github.com/catchorg/Catch2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/catchorg/Catch2")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "11yla93vm2896fzhm3fz8lk3y3iz5iy7vd6wa7wnwvhsfd2dbfq3"))))
+    (version "3.8.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+         (url "https://github.com/catchorg/Catch2")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v1k14n02aiw4rv5sxhc5612cjhkdj59cjpm50qfxhapsdv54n3f"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -785,10 +744,27 @@ pattern.")
               "-DCATCH_ENABLE_WERROR=OFF"
               "-DBUILD_SHARED_LIBS=ON")))
     (inputs (list python-wrapper))
+    (home-page "https://github.com/catchorg/Catch2")
     (synopsis "Automated test framework for C++ and Objective-C")
     (description "Catch2 stands for C++ Automated Test Cases in Headers and is
 a multi-paradigm automated test framework for C++ and Objective-C.")
     (license license:boost1.0)))
+
+
+(define-public catch2-3
+  (package
+    (inherit catch2-3.8)
+    (name "catch2")
+    (version "3.5.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/catchorg/Catch2")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "11yla93vm2896fzhm3fz8lk3y3iz5iy7vd6wa7wnwvhsfd2dbfq3"))))))
 
 (define-public cmdtest
   (package
@@ -1139,7 +1115,8 @@ package.")
         (base32 "1cv55x3amwrvfan9pr8dfnicwr8r6ar3yf6cg9v6nykd6m2v3qsv"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
+     `(#:tests? #f
+       #:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
     (native-inputs
      `(("python" ,python-wrapper)))
     (home-page "https://github.com/google/googletest/")
@@ -1208,7 +1185,7 @@ similar to unit tests.")
 (define-public gotestsum
   (package
     (name "gotestsum")
-    (version "1.12.0")
+    (version "1.12.2")
     (source
      (origin
        (method git-fetch)
@@ -1217,7 +1194,7 @@ similar to unit tests.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fx92jh6ay4rk1ljbgp9b2m4fafqwy0a19q7lhdabgb1j8dvgxvs"))))
+        (base32 "02q251j5kf2874vnvmbfc0ncnwssq459s8mf9f50cymqkpqbx0lp"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1227,6 +1204,9 @@ similar to unit tests.")
               (string-join
                (list "TestE2E_IgnoresWarnings"
                      "TestE2E_MaxFails_EndTestRun"
+                     "TestE2E_RerunFails/first_run_has_errors,_abort_rerun"
+                     "TestE2E_RerunFails/reruns_continues_to_fail"
+                     "TestE2E_RerunFails/reruns_until_success"
                      "TestScanTestOutput_TestTimeoutPanicRace/panic-race-2")
                "|"))
       ;; Run just unit test, integration tests from "testjson" require: run
@@ -1349,7 +1329,9 @@ with the @code{klee} package.")
    (arguments
     (list
      #:strip-directories #~(list "bin") ;don't strip LLVM bitcode in /lib
-     #:test-target "check"
+     #:modules '((guix build cmake-build-system)
+                 ((guix build gnu-build-system) #:prefix gnu:)
+                 (guix build utils))
      #:phases
      #~(modify-phases %standard-phases
                       (add-after 'unpack 'patch
@@ -1365,6 +1347,7 @@ with the @code{klee} package.")
                           (substitute* "test/lit.cfg"
                             (("addEnv\\('PWD'\\)" env)
                              (string-append env "\n" "addEnv('GUIX_PYTHONPATH')")))))
+                      (replace 'check (assoc-ref gnu:%standard-phases 'check))
                       (add-after 'install 'wrap-programs
                         (lambda* (#:key inputs outputs #:allow-other-keys)
                           (let* ((out (assoc-ref outputs "out"))
@@ -1722,38 +1705,6 @@ and many external plugins.")
            python-tomli
            python-wheel))
     (arguments `(#:tests? #f))))
-
-(define-public python-pytest-assume
-  (package
-    (name "python-pytest-assume")
-    (version "2.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-assume" version))
-       (sha256
-        (base32 "0zilqsy9fcjr6l2f9qzfxpkp40h24csnjm5mifhpmzb0fr9r0glq"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "pytest")))))))
-    (propagated-inputs
-     (list python-pytest python-six))
-    (home-page "https://github.com/astraw38/pytest-assume")
-    (synopsis "Pytest plugin that allows multiple failures per test")
-
-    (description "This package provides a Pytest plugin that allows multiple
-failures per test.  This is a fork from pytest-expect which includes the
-following improvements:
-@itemize
-@item showlocals support (the Pytest option)
-@item global usage support (a fixture is not required)
-@item output refinements and tweaks.
-@end itemize")
-    (license license:expat)))
 
 (define-public python-pytest-cov
   (package
@@ -2255,26 +2206,24 @@ side-effects (such as setting environment variables).")
 (define-public python-scripttest
   (package
     (name "python-scripttest")
-    (version "1.3")
+    (version "2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "scripttest" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pypa/scripttest")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0f4w84k8ck82syys7yg9maz93mqzc8p5ymis941x034v44jzq74m"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest))
-    (arguments
-     ;; Tests not shipped with PyPI archive, and require TLS CA cert.
-     (list #:tests? #f))
-    (home-page (string-append "https://web.archive.org/web/20161029233413/"
-                              "http://pythonpaste.org/scripttest/"))
+        (base32 "07cyrh4yp8497radz8cx7la2p8yr78r77xm62hh77hcs1migznaf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/pypa/scripttest")
     (synopsis "Python library to test command-line scripts")
-    (description "Scripttest is a Python helper library for testing
-interactive command-line applications.  With it you can run a script in a
-subprocess and see the output as well as any file modifications.")
+    (description
+     "Scripttest is a Python helper library for testing interactive
+command-line applications.  With it you can run a script in a subprocess and
+see the output as well as any file modifications.")
     (license license:expat)))
 
 (define-public python-testtools-bootstrap
@@ -2664,28 +2613,6 @@ to make testing async code easier.")
            python-setuptools
            python-wheel))))
 
-(define-public python-cov-core
-  (package
-    (name "python-cov-core")
-    (version "1.15.0")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "cov-core" version))
-        (sha256
-         (base32
-          "0k3np9ymh06yv1ib96sb6wfsxjkqhmik8qfsn119vnhga9ywc52a"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-coverage))
-    (home-page "https://github.com/schlamar/cov-core")
-    (synopsis "Coverage plugin core for pytest-cov, nose-cov and nose2-cov")
-    (description
-     "This is a library package for use by @code{pytest-cov}, @code{nose-cov}
-and @code{nose2-cov}.  It is useful for developing coverage plugins for these
-testing frameworks.")
-    (license license:expat)))
-
 (define-public python-codecov
   (package
     (name "python-codecov")
@@ -2733,24 +2660,6 @@ C/C++, R, and more, and uploads it to the @code{codecov.io} service.")
      "Testpath is a collection of utilities for Python code working with files
 and commands.  It contains functions to check things on the file system, and
 tools for mocking system commands and recording calls to those.")
-    (license license:expat)))
-
-(define-public python-testlib
-  (package
-    (name "python-testlib")
-    (version "0.6.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "testlib" version ".zip"))
-       (sha256
-        (base32 "1mz26cxn4x8bbgv0rn0mvj2z05y31rkc8009nvdlb3lam5b4mj3y"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list unzip))  ; for unpacking the source
-    (synopsis "Python micro test suite harness")
-    (description "A micro unittest suite harness for Python.")
-    (home-page "https://github.com/trentm/testlib")
     (license license:expat)))
 
 ;;; The software provided by this package was integrated into pytest 2.8.
@@ -2833,41 +2742,21 @@ enables you to test server connections locally.")
 across test runs.")
     (license license:expat)))
 
-(define-public python-pytest-subtesthack
-  (package
-    (name "python-pytest-subtesthack")
-    (version "0.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-subtesthack" version))
-              (sha256
-               (base32
-                "15kzcr5pchf3id4ikdvlv752rc0j4d912n589l4rifp8qsj19l1x"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (synopsis "Set-up and tear-down fixtures for unit tests")
-    (description "This plugin allows you to set up and tear down fixtures
-within unit test functions that use @code{py.test}.  This is useful for using
-@command{hypothesis} inside py.test, as @command{hypothesis} will call the
-test function multiple times, without setting up or tearing down fixture state
-as is normally the case.")
-    (home-page "https://github.com/untitaker/pytest-subtesthack/")
-    (license license:unlicense)))
-
 (define-public python-pytest-sugar
   (package
     (name "python-pytest-sugar")
-    (version "0.9.3")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-sugar" version))
        (sha256
-        (base32 "1i0hv3h49zvl62jbiyjag84carbrp3zprqzxffdr291nxavvac0n"))))
-    (build-system python-build-system)
+        (base32 "02kc4y0ry4y9lp63kjq9p7yvbjijfxn1fcn6wx6c1c7mb0rfh8k4"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-packaging python-pytest python-termcolor))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://pivotfinland.com/pytest-sugar/")
     (synopsis "Plugin for pytest that changes the default look and feel")
     (description
@@ -2985,32 +2874,23 @@ failures.")
   (package
     (name "python-pytest-freezegun")
     (version "0.4.2")
-    (source (origin
-              ;; The test suite is not included in the PyPI archive.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/ktosiek/pytest-freezegun")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ktosiek/pytest-freezegun")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-freezegun python-pytest))
-    (native-inputs (list unzip))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/ktosiek/pytest-freezegun")
     (synopsis "Pytest plugin to freeze time in test fixtures")
-    (description "The @code{pytest-freezegun} plugin wraps tests and fixtures
-with @code{freeze_time}, which controls (i.e., freeze) the time seen
-by the test.")
+    (description
+     "The @code{pytest-freezegun} plugin wraps tests and fixtures with
+@code{freeze_time}, which controls (i.e., freeze) the time seen by the test.")
     (license license:expat)))
 
 (define-public python-pytest-mypy
@@ -3293,89 +3173,6 @@ pragmas to control it from within your code.  Additionally, it is
 possible to write plugins to add your own checks.")
     (license license:gpl2+)))
 
-(define-public python-setuptools-lint
-  (package
-    (name "python-setuptools-lint")
-    (version "0.6.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "setuptools-lint" version))
-              (sha256
-               (base32
-                "16a1ac5n7k7sx15cnk03gw3fmslab3a7m74dc45rgpldgiff3577"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-tomli python-pylint))
-    (home-page "https://github.com/johnnoone/setuptools-pylint")
-    (synopsis "Run pylint with @command{python setup.py lint}")
-    (description "This package expose pylint as a lint command into
-setup.py.")
-    (license license:bsd-3)))
-
-(define-public python-paramunittest
-  (package
-    (name "python-paramunittest")
-    (version "0.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ParamUnittest" version))
-       (sha256
-        (base32
-         "0kp793hws5xv1wvycxq7jw2pwy36f35k39jg8hx5qikij5a0jid1"))))
-    (build-system python-build-system)
-    (home-page
-     "https://github.com/rik0/ParamUnittest")
-    (synopsis
-     "Simple extension to have parametrized unit tests")
-    (description
-     "This package creates parameterized unit-tests that work with the standard
-unittest package.  A parameterized test case is automatically converted to multiple test
-cases.  Since they are TestCase subclasses, they work with other test suites that
-recognize TestCases.")
-    (license license:bsd-2)))
-
-(define-public python-pytest-warnings
-  (package
-    (name "python-pytest-warnings")
-    (version "0.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-warnings" version))
-       (sha256
-        (base32
-         "0gf2dpahpl5igb7jh1sr9acj3z3gp7zahqdqb69nk6wx01c8kc1g"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://github.com/fschulze/pytest-warnings")
-    (synopsis "Pytest plugin to list Python warnings in pytest report")
-    (description
-     "Python-pytest-warnings is a pytest plugin to list Python warnings in
-pytest report.")
-    (license license:expat)
-    (properties `((superseded unquote python-pytest)))))
-
-(define-public python-pytest-capturelog
-  (package
-    (name "python-pytest-capturelog")
-    (version "0.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-capturelog" version ".tar.gz"))
-       (sha256
-        (base32
-         "038049nyjl7di59ycnxvc9nydivc5m8np3hqq84j2iirkccdbs5n"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://bitbucket.org/memedough/pytest-capturelog/overview")
-    (synopsis "Pytest plugin to catch log messages")
-    (description
-     "Python-pytest-catchlog is a pytest plugin to catch log messages.")
-    (license license:expat)))
-
 (define-public python-nosexcover
   (package
     (name "python-nosexcover")
@@ -3525,32 +3322,6 @@ JSON APIs with Behave.")
      "@code{nose-exclude} is a Nose plugin that allows you to easily specify
 directories to be excluded from testing.")
     (license license:lgpl2.1+)))
-
-(define-public python-nose-random
-  (package
-    (name "python-nose-random")
-    (version "1.0.0")
-    (source
-     (origin
-      (method git-fetch)
-      (uri (git-reference
-            (url "https://github.com/fzumstein/nose-random")
-            (commit version)))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32
-        "1dvip61r2frjv35mv6mmfjc07402z73pjbndfp3mhxyjn2zhksw2"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-nose))
-    (home-page "https://github.com/fzumstein/nose-random")
-    (synopsis "Nose plugin to facilitate randomized unit testing with
-Python")
-    (description "Python nose-random is designed to facilitate
-Monte-Carlo style unit testing.  The idea is to improve testing by
-running your code against a large number of randomly generated input
-scenarios.")
-    (license license:expat)))
 
 (define-public python-nose-timer
   (package
@@ -3733,7 +3504,7 @@ allowing you to declaratively define \"match\" rules.")
     ;; Upstream is informed to provide man/info for the project, see
     ;; <https://github.com/toml-lang/toml-test/issues/163>.
     (name "toml-test")
-    (version "1.5.0")
+    (version "1.6.0")
     (source
      (origin
        (method git-fetch)
@@ -3742,7 +3513,7 @@ allowing you to declaratively define \"match\" rules.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "188xcsxgn20pjnddfn3mvx7wak030xdgkhxkhjiijfap37gbv6df"))))
+        (base32 "1b6lfamh673a4x509cacr6qr1xvf82562cpqn9ygrgnd81469qcc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -3784,12 +3555,11 @@ tests.  The output format is JSON.")
           (list)
           (list #:configure-flags #~(list "-DTROMPELOEIL_BUILD_TESTS=yes")))
       (list
-       #:test-target "test/self_test"
        #:phases #~(modify-phases %standard-phases
                     (replace 'check
-                      (lambda* (#:key tests? test-target #:allow-other-keys)
+                      (lambda* (#:key tests? #:allow-other-keys)
                         (when tests?
-                          (invoke test-target))))))))
+                          (invoke "test/self_test"))))))))
     (native-inputs (list catch2-3))
     (home-page "https://github.com/rollbear/trompeloeil")
     (synopsis "Header only C++14 mocking framework")
@@ -4125,8 +3895,12 @@ loaded.")
                         ;; to find it in "virtest/vir/" instead of "vir/vir/".
                         (substitute* "CMakeLists.txt"
                           (("DESTINATION include/vir")
-                           "DESTINATION include/virtest"))
-                        #t)))))
+                           "DESTINATION include/virtest"))))
+                    (add-after 'unpack 'gcc14
+                      (lambda _
+                        (substitute* "vir/test.h"
+                          (("#include <cmath>" all)
+                            (string-append all "\n#include <cstdint>"))))))))
       (synopsis "Header-only test framework")
       (description
        "@code{virtest} is a small header-only test framework for C++.  It
@@ -4232,41 +4006,6 @@ asynchronous code in Python (asyncio).")
 to mark some tests as dependent from other tests.  These tests will then be
 skipped if any of the dependencies did fail or has been skipped.")
     (license license:asl2.0)))
-
-(define-public python-pytest-pudb
-  ;; PyPi does not include tests
-  (let ((commit "a6b3d2f4d35e558d72bccff472ecde9c9d9c69e5"))
-    (package
-      (name "python-pytest-pudb")
-      ;; Version mentioned in setup.py version field.
-      (version "0.7.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/wronglink/pytest-pudb")
-                      (commit commit)))
-                (file-name (git-file-name name commit))
-                (sha256
-                 (base32
-                  "1c0pypxx3y8w7s5bz9iy3w3aablnhn81rnhmb0is8hf2qpm6k3w0"))))
-      (build-system python-build-system)
-      (propagated-inputs (list pudb))
-      (native-inputs (list python-pytest))
-      (arguments
-       `(#:phases (modify-phases %standard-phases
-                    (replace 'check
-                      (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-                        (when tests?
-                          (add-installed-pythonpath inputs outputs)
-                          (invoke "pytest" "-v")))))))
-      (home-page "https://github.com/wronglink/pytest-pudb")
-      (synopsis "Pytest PuDB debugger integration")
-      (description
-       "@code{python-pytest-pudb} provides PuDB debugger integration based
-on pytest PDB integration.  For example, the software developer can
-call pudb by running @code{py.test --pudb} from the command line or by
-including @code{pudb.set_trace} in their test file(s).")
-      (license license:expat))))
 
 (define-public python-pytest-datadir
   (package

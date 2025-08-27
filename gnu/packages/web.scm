@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Aljosha Papsch <misc@rpapsch.de>
-;;; Copyright © 2014-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2018 Raoul Jean Pierre Bonnal <ilpuccio.febo@gmail.com>
@@ -15,7 +15,7 @@
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2016, 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
-;;; Copyright © 2016–2024 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016–2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016 Bake Timmons <b3timmons@speedymail.org>
 ;;; Copyright © 2017 Thomas Danckaert <post@thomasdanckaert.be>
@@ -76,6 +76,7 @@
 ;;; Copyright © 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Philippe Swartvagher <phil.swart@gmx.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -129,15 +130,10 @@
   #:use-module (gnu packages bittorrent)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-gtk)
-  #:use-module (gnu packages crates-tls)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -402,7 +398,6 @@ one.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.22
       #:install-source? #f
       #:import-path "miniflux.app/v2"
       #:build-flags
@@ -521,37 +516,18 @@ replacing them with data URIs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "082xh0zmmy9abz7y3zjybbwffq7d0j1jl78ggzbwwanvam65v0dp"))))
+        (base32 "082xh0zmmy9abz7y3zjybbwffq7d0j1jl78ggzbwwanvam65v0dp"))
+       (modules '((guix build utils)))
+       ;; Don't default to vendored openssl.
+       (snippet '(substitute* "Cargo.toml"
+                   ((".*\"vendored-openssl\".*") "")))))
     (build-system cargo-build-system)
     (arguments
-     `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-atty" ,rust-atty-0.2)
-        ("rust-base64" ,rust-base64-0.22)
-        ("rust-chrono" ,rust-chrono-0.4)
-        ("rust-clap" ,rust-clap-3)
-        ("rust-cssparser" ,rust-cssparser-0.34)
-        ("rust-encoding-rs" ,rust-encoding-rs-0.8)
-        ("rust-html5ever" ,rust-html5ever-0.27)
-        ("rust-markup5ever-rcdom" ,rust-markup5ever-rcdom-0.3)
-        ("rust-openssl" ,rust-openssl-0.10)
-        ("rust-percent-encoding" ,rust-percent-encoding-2)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-reqwest" ,rust-reqwest-0.12)
-        ("rust-sha2" ,rust-sha2-0.10)
-        ("rust-url" ,rust-url-2))
-       #:cargo-development-inputs
-       (("rust-assert-cmd" ,rust-assert-cmd-2))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'dont-default-to-vendored-openssl
-           (lambda _
-             (substitute* "Cargo.toml"
-               ((".*\"vendored-openssl\".*") "")))))))
+     `(#:install-source? #f))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list openssl))
+     (cons openssl (cargo-inputs 'monolith)))
     (home-page "https://github.com/Y2Z/monolith")
     (synopsis "Command line tool for saving web pages as a single HTML file")
     (description
@@ -1141,7 +1117,7 @@ similar to live activity monitoring provided with NGINX plus.")
 (define-public lighttpd
   (package
     (name "lighttpd")
-    (version "1.4.79")
+    (version "1.4.81")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.lighttpd.net/lighttpd/"
@@ -1149,7 +1125,7 @@ similar to live activity monitoring provided with NGINX plus.")
                                   "lighttpd-" version ".tar.xz"))
               (sha256
                (base32
-                "1gc4c352jlqqgxyrgz2f5s7li1vxpd15ykza3wnp125dncjsca9v"))))
+                "0h2q5a251kw1ky83x8yvgn9wbjm39n7x39ssj4ybd57xs8zjrm6p"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -1342,6 +1318,42 @@ libraries for working with JNLP applets.")
     ;; or dual licenses.
     (license license:gpl2+)))
 
+(define-public iocaine
+  (package
+    (name "iocaine")
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "iocaine" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1pd42hn5lqm3xw6id652w7sswix3l6bslcld7svqyq47gscsm3vn"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'override-jemalloc
+            (lambda* (#:key inputs #:allow-other-keys) ;Copied from uv
+              (let ((jemalloc (assoc-ref inputs "jemalloc")))
+                ;; This flag is needed when not using the bundled jemalloc.
+                ;; https://github.com/tikv/jemallocator/issues/19
+                (setenv
+                 "CARGO_FEATURE_UNPREFIXED_MALLOC_ON_SUPPORTED_PLATFORMS" "1")
+                (setenv "JEMALLOC_OVERRIDE"
+                        (string-append jemalloc "/lib/libjemalloc.so"))))))))
+    (inputs (cons* jemalloc (cargo-inputs 'iocaine)))
+    (home-page "https://iocaine.madhouse-project.org/")
+    (synopsis "Serves poisonous data to large language model scrapers")
+    (description
+     "Iocaine is an HTTP server that generates a stable endless maze of
+Markov-babble-filled web pages.  Placed behind a heavily rate-limited reverse
+proxy, it becomes a ``tar pit'' for trapping aggressive web scrapers commonly
+used to train large language models, and poisoning the collected data.")
+    (license license:expat)))
+
 (define-public jansson
   (package
     (name "jansson")
@@ -1482,6 +1494,68 @@ project)
 @item Very simple API with operator sugar for C++
 @end itemize")
     (license license:bsd-2)))
+
+(define-public webhook
+  (package
+    (name "webhook")
+    (version "2.8.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/adnanh/webhook")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "15cihbf49kbhgwavjsvl4qfcf3lyqa39vyqdxglmnkn603c3nk6w"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   ;; Remove bundled dependencies.
+                   (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list #:go go-1.23
+           #:import-path "github.com/adnanh/webhook"
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'configure
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/github.com/adnanh/webhook/webhook_test.go"
+                     (("/bin/echo")
+                      (search-input-file inputs "bin/echo"))
+                     (("/bin/sh")
+                      (search-input-file inputs "bin/sh"))))))))
+    (native-inputs
+     (list go-github-com-clbanning-mxj-v2
+           go-github-com-coreos-go-systemd-v22
+           go-github-com-dustin-go-humanize
+           go-github-com-fsnotify-fsnotify
+           go-github-com-ghodss-yaml
+           go-github-com-go-chi-chi-v5
+           go-github-com-gofrs-uuid-v5
+           go-github-com-gorilla-mux
+           go-golang-org-x-sys))
+    (home-page "https://github.com/adnanh/webhook")
+    (synopsis "Lightweight incoming webhook server")
+    (description "webhook is a lightweight configurable tool to create HTTP
+endpoints (hooks) which can execute configured commands.  Data from the HTTP
+request (such as headers, payload or query variables) can be passed on to the
+configured commands.  Hooks may also be configured to trigger only when
+certain rules are satisfied.
+
+webhook aims to be minimal and do nothing more than it should do.  And, that
+is:
+
+@itemize
+@item receive the request
+@item parse the headers, payload and query variables
+@item check if the specified rules for the hook are satisfied
+@item and finally, pass the specified arguments to the specified command via
+command line arguments or via environment variables.
+@end itemize")
+    (license (list license:expat       ;; main license
+                   license:asl2.0))))  ;; internal/pidfile
 
 (define-public qjson
   (package
@@ -1711,12 +1785,43 @@ current version of any major web browser.")
                     (delete-file-recursively "bin/jsonchecker")))))
       (build-system cmake-build-system)
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-march=native
-             (lambda _
-               (substitute* "CMakeLists.txt"
-                 (("-m[^-]*=native") "")))))))
+       (list
+        #:configure-flags
+        (if (target-x86-32?)
+            #~(list (string-append "-DCMAKE_CXX_FLAGS=-Wno-free-nonheap-object"
+                                   " -Wno-error=array-bounds"
+                                   " -Wno-error=stringop-overflow"))
+            #~(list "-DCMAKE_CXX_FLAGS=-Wno-free-nonheap-object"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-march=native
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  (("-m[^-]*=native") ""))))
+            #$@(if (target-x86-32?)
+                   #~((add-after 'unpack 'skip-failing-tests
+                        (lambda _
+                          (substitute* "test/unittest/schematest.cpp"
+                            (("\"multipleOf\\.json\"," all)
+                             (string-append "/*" all "*/")))
+                          ;; XXX: Re-enable once valgrind/pinned >= 3.25.
+                          (substitute* "test/unittest/CMakeLists.txt"
+                            (("COMMAND valgrind") "COMMAND true valgrind")))))
+                  #~())
+            (add-after 'fix-march=native 'skip-deleted-tests
+              (lambda _
+                (substitute* "test/unittest/CMakeLists.txt"
+                  (("jsoncheckertest.cpp") ""))))
+            (add-after 'fix-march=native 'fix-dependencies
+              (lambda _
+                (substitute* "test/CMakeLists.txt"
+                  (("^find_package\\(GTestSrc\\)")
+                   "find_package(GTest REQUIRED)")
+                  ((".*GTEST_SOURCE_DIR.*") "")
+                  (("GTESTSRC_FOUND)")
+                   "GTest_FOUND)")))))))
+      (native-inputs (list valgrind/pinned))
+      (inputs (list googletest))
       (home-page "https://github.com/Tencent/rapidjson")
       (synopsis "JSON parser/generator for C++ with both SAX/DOM style API")
       (description
@@ -1765,7 +1870,8 @@ C.")
                (search-patches "yajl-CVE-2023-33460.patch"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:phases
+     '(#:tests? #f
+       #:phases
        (modify-phases %standard-phases
          (add-after 'patch-source-shebangs 'patch-tests
            (lambda _
@@ -1852,8 +1958,10 @@ for efficient socket-like bidirectional reliable communication channels.")
      (list
       ;; Tests on non-x86_64 architectures are not well supported upstream.
       #:tests? (target-x86-64?)
-      #:test-target "run-tests"
       #:configure-flags '(list "-DUSE_SYSTEM_GTEST=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'use-gcc
@@ -1861,7 +1969,11 @@ for efficient socket-like bidirectional reliable communication channels.")
          ;; XXX This is the only test that fails.
          (add-after 'unpack 'delete-broken-test
            (lambda _
-             (delete-file "test/wasm2c/spec/memory_init.txt"))))))
+             (delete-file "test/wasm2c/spec/memory_init.txt")))
+         (replace 'check
+           (lambda* (#:rest args)
+             (apply (assoc-ref gnu:%standard-phases 'check)
+                    #:test-target "run-tests" args))))))
     (native-inputs (list python googletest))
     (home-page "https://github.com/WebAssembly/wabt")
     (synopsis "WebAssembly Binary Toolkit")
@@ -1989,7 +2101,8 @@ features.")
        (patches (search-patches "websocketpp-fix-for-cmake-3.15.patch"))))
     (build-system cmake-build-system)
     (inputs (list boost openssl))
-    (arguments '(#:configure-flags '("-DBUILD_TESTS=ON")
+    (arguments '(#:parallel-tests? #f
+                 #:configure-flags '("-DBUILD_TESTS=ON")
                  #:phases
                  (modify-phases %standard-phases
                    (add-after 'install 'remove-tests
@@ -5471,11 +5584,9 @@ Cloud.")
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (let* ((out (assoc-ref outputs "out"))
                        (bin (string-append out "/bin"))
-                       (guile (assoc-ref inputs "guile"))
                        (guile-effective-version
                         (read-line
-                         (open-pipe* OPEN_READ
-                                     (string-append guile "/bin/guile")
+                         (open-pipe* OPEN_READ (which "guile")
                                      "-c" "(display (effective-version))")))
                        (scm (string-append out "/share/guile/site/"
                                            guile-effective-version))
@@ -5491,13 +5602,11 @@ Cloud.")
                        `("PATH" ":" prefix
                          ,(cons*
                            bin
-                           (map (lambda (input)
-                                  (string-append
-                                   (assoc-ref inputs input)
-                                   "/bin"))
-                                '("ephemeralpg"
-                                  "util-linux"
-                                  "postgresql"))))
+                           (map (lambda (file)
+                                  (search-input-file inputs file))
+                                '("/bin/pg_tmp"   ;ephemeralpg
+                                  "/bin/ionice"   ;util-linux
+                                  "/bin/psql")))) ;postgresql
                        `("GUILE_LOAD_PATH" ":" prefix
                          (,scm ,(getenv "GUILE_LOAD_PATH")))
                        `("GUILE_LOAD_COMPILED_PATH" ":" prefix
@@ -5524,7 +5633,9 @@ Cloud.")
              guile-squee
              guile-lzlib))
       (native-inputs
-       (list (lookup-package-native-input guix "guile")
+       ;; Use the highest Guile version found among dependencies to ensure .go
+       ;; files can be loaded.
+       (list (lookup-package-native-input guile-fibers-next "guile")
              autoconf
              automake
              emacs-minimal
@@ -5688,7 +5799,7 @@ you'd expect.")
 (define-public go-github-com-mikefarah-yq-v4
   (package
     (name "go-github-com-mikefarah-yq-v4")
-    (version "4.44.3")
+    (version "4.45.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5697,7 +5808,7 @@ you'd expect.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0s7c8r6y5jv6wda2v3k47hawfdr9j3rwk717l6byvh5qsbbml0vd"))))
+                "1adrbxqsmpsvz2jfjkvarvnvblj5zdznr3sxpakv85vvs3njdjx9"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -5811,7 +5922,6 @@ processor.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.22
       #:embed-files #~(list ".*.xml")
       #:install-source? #f
       #:import-path "github.com/noahgorstein/jqp"))
@@ -6048,7 +6158,7 @@ NetSurf project.")
 (define-public iter-vitae
   (package
     (name "iter-vitae")
-    (version "0.3.32")
+    (version "0.3.35")
     (source
      (origin
        (method git-fetch)
@@ -6057,7 +6167,7 @@ NetSurf project.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r7zvavjflyl8wzysadgh7zmyamvdkicac7652qckgi1aaqh33nw"))))
+        (base32 "0sxdidz1j6bd5s5b3d0p91kd69i6hf9mg4iqppsf5gg31gf2y4d7"))))
     (arguments
      `(#:source-directory "src"
        #:phases (modify-phases %standard-phases
@@ -6321,7 +6431,7 @@ developed as part of the NetSurf project.")
          "0750q884ax8wygl64wq03zdjj8h838ch3f8jdfkv4gz809zj4my3"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list netsurf-buildsystem pkg-config gperf-3.0))
+     (list netsurf-buildsystem pkg-config gperf))
     (inputs
      (list libwapcaplet))
     (propagated-inputs
@@ -7580,27 +7690,17 @@ file links.")
               (invoke "make" (string-append "PREFIX=" #$output)
                       "copy-data"))))
       #:parallel-tests? #f  ; As per the Makefile
-      #:install-source? #f
-      #:cargo-inputs
-      `(("rust-ansi-parser" ,rust-ansi-parser-0.6)
-        ("rust-dirs" ,rust-dirs-3)
-        ("rust-gdk" ,rust-gdk-0.13)
-        ("rust-gtk" ,rust-gtk-0.8)
-        ("rust-linkify" ,rust-linkify-0.7)
-        ("rust-native-tls" ,rust-native-tls-0.2)
-        ("rust-open" ,rust-open-2)
-        ("rust-percent-encoding" ,rust-percent-encoding-2)
-        ("rust-textwrap" ,rust-textwrap-0.14)
-        ("rust-url" ,rust-url-2))))
+      #:install-source? #f))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list at-spi2-core
-           cairo
-           gdk-pixbuf
-           gtk+
-           openssl-3.0
-           pango))
+     (cons* at-spi2-core
+            cairo
+            gdk-pixbuf
+            gtk+
+            openssl-3.0
+            pango
+            (cargo-inputs 'castor)))
     (home-page "https://git.sr.ht/~julienxx/castor")
     (synopsis "Graphical client for plain-text protocols")
     (description
@@ -7625,6 +7725,7 @@ protocols.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DBUILD_SHARED_LIBS=ON"
               "-DCIVETWEB_ENABLE_CXX=ON"
@@ -8849,7 +8950,7 @@ compressed JSON header blocks.
 (define-public nghttp3
   (package
     (name "nghttp3")
-    (version "1.10.1")
+    (version "1.11.0")
     (source
      (origin
        (method url-fetch)
@@ -8858,7 +8959,7 @@ compressed JSON header blocks.
                            "nghttp3-" version ".tar.gz"))
        (sha256
         (base32
-         "18lik57yb3zc5g17s18ymd268p037wly0hgvw6n9h48l09jqqv68"))))
+         "04ds0h2ppajx9brafd9rx4k9jsqm6cb0qjkj2lvpps1d5bd0pliw"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -9030,6 +9131,7 @@ HTTrack is fully configurable, and has an integrated help system.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'use-system-googletest
@@ -9538,10 +9640,45 @@ HTTP.  It can proxy to any domain in order to facilitate linking to the rest
 of Geminispace, but it defaults to a specific domain.")
     (license license:gpl3+)))
 
+(define-public maildir-rank-addr
+  (package
+    (name "maildir-rank-addr")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ferdinandyb/maildir-rank-addr")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19dhlfb5d8sqayfyv3pj3rnrw3gbkq9vzj7gwcj2g3whx1ayy86y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/ferdinandyb/maildir-rank-addr"))
+    (native-inputs
+     (list go-github-com-emersion-go-message
+           go-github-com-emersion-go-mbox
+           go-github-com-mitchellh-go-homedir
+           go-github-com-spf13-pflag
+           go-github-com-spf13-viper
+           go-github-com-stretchr-testify
+           go-golang-org-x-text))
+    (home-page "https://github.com/ferdinandyb/maildir-rank-addr")
+    (synopsis "Generate an addressbook from locally available email")
+    (description
+     "This package implements a functionality to generate a ranked addressbook
+from your locally available email.  It can be used in MUA's like
+@url{http://aerc-mail.org, aerc} or @url{http://www.mutt.org/,mutt} by
+grepping the list.")
+    (license license:expat)))
+
 (define-public libzim
   (package
     (name "libzim")
-    (version "8.2.1")
+    (version "9.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9549,7 +9686,7 @@ of Geminispace, but it defaults to a specific domain.")
                     (commit version)))
               (sha256
                (base32
-                "1g735aqw0vlxqgyjv02lvq24dr5shydp4y8mqianf8720s5fs73f"))
+                "1il1vc1hs954s3vnwhr337165dxbykvrldrvbilp5jxbkmwqb60d"))
               (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -9575,7 +9712,7 @@ for ZIM files.")
 (define-public kiwix-lib
   (package
     (name "kiwix-lib")
-    (version "13.0.0")
+    (version "14.0.0")
     (home-page "https://github.com/kiwix/kiwix-lib/")
     (source (origin
               (method git-fetch)
@@ -9584,7 +9721,7 @@ for ZIM files.")
                     (commit version)))
               (sha256
                (base32
-                "0mvlppbj0mqn4ka3cfaaj1pvn062cxbgz01c0nq04x0mzq1xwh5w"))
+                "099arjsx1wgz5jhvzn49859wh0v8n3ya33kmnqaw69h55mjvgza0"))
               (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -9617,10 +9754,25 @@ for ZIM files.")
 It contains the code shared by all Kiwix ports.")
     (license license:gpl3)))
 
+(define-public kiwix-lib-13
+  (package
+    (inherit kiwix-lib)
+    (name "kiwix-lib")
+    (version "13.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kiwix/kiwix-lib/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0mgzmqar70rj83x27a4zh7qr6yl5pi95g6i3fvvxysdjy76v18qc"))))))
+
 (define-public kiwix-desktop
   (package
     (name "kiwix-desktop")
-    (version "2.3.1")
+    (version "2.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -9629,18 +9781,24 @@ It contains the code shared by all Kiwix ports.")
                     ".tar.gz"))
               (sha256
                (base32
-                "0hlk05gcb3fmnxhwj6gan51v98rdq3iv2lklwbpmm1bazmz8i7br"))
-              (patches (search-patches "kiwix-desktop-newer-libkiwix.patch"))))
+                "1vkmk9j2jii7ri4lcayr0dr5b2w3dc24lyqmm3g4234834b1f4wl"))))
     (build-system qt-build-system)
     (arguments
-     `(#:test-target "check"
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX="
-                                    (assoc-ref outputs "out"))))))))
+     (list
+      #:qtbase qtbase
+      #:tests? #f ; no tests
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX="
+                                     (assoc-ref outputs "out")))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list bash-minimal
            curl
@@ -9649,17 +9807,17 @@ It contains the code shared by all Kiwix ports.")
            libmicrohttpd
            libzim
            pugixml
-           qtbase-5
-           qtdeclarative-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtwayland-5
+           qtbase
+           qtdeclarative
+           qtwebchannel
+           qtwebengine
+           qtwayland
            xapian
            zlib
            `(,zstd "lib")))
     (native-inputs
      (list pkg-config
-           qtbase-5))
+           qtbase))
     (home-page "https://wiki.kiwix.org/wiki/Software")
     (synopsis "Viewer and manager of ZIM files")
     (description "Kiwix Desktop allows you to enjoy a lot of different content
@@ -9669,19 +9827,19 @@ offline (such as Wikipedia), without any access to Internet.")
 (define-public kiwix-tools
   (package
     (name "kiwix-tools")
-    (version "3.5.0")
+    (version "3.7.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.kiwix.org/release/"
                                   "kiwix-tools/kiwix-tools-" version ".tar.xz"))
               (sha256
                (base32
-                "0q6b7viy1jr212q0glqid2hqxnsd2mxsx5gzcalkc4gb0bzgj32d"))))
+                "032lzzgn3hicai4lx701cs6h731cs29x1h59j9gggcgrp1n4wxks"))))
     (build-system meson-build-system)
     (inputs
      (list curl
            icu4c
-           kiwix-lib
+           kiwix-lib-13
            libmicrohttpd
            libzim
            pugixml
@@ -9791,43 +9949,6 @@ provided by a TLS reverse proxy (e.g. tlstunnel, hitch or stunnel).")
 "@code{go--webring} provides a simple webring implementation as used by
 the Fediring.")
       (license (list license:cc0 license:bsd-2)))))
-
-(define-public archivebox
-  (package
-    (name "archivebox")
-    (version "0.6.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri name version))
-              (sha256
-               (base32
-                "1mnq82ynq01l7vx957bbx4bvgwdh59qsnx6pdydaqszbakp74yyc"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list curl
-           node-lts))
-    (inputs
-     (list python
-           youtube-dl
-           wget
-           git
-           python-w3lib
-           python-ipython
-           python-croniter
-           python-crontab
-           python-dateparser
-           python-django-extensions
-           python-django-3.1.14
-           python-mypy-extensions))
-    (native-inputs
-     (list python-wheel))
-    (synopsis "Self-hosted Web archiving")
-    (description "ArchiveBox is a powerful, self-hosted Web archiving
-solution to collect, save, and view sites you want to preserve offline.
-You can feed it URLs one at a time, or schedule regular imports.  It saves
-snapshots of the URLs you feed it in several formats.")
-    (home-page "https://archivebox.io/")
-    (license license:expat)))
 
 (define-public awslogs
   (package

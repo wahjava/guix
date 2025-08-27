@@ -66,6 +66,7 @@
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Liam Hupfer <liam@hpfr.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -111,6 +112,47 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages xorg))
+
+(define-public font-0xpropo
+  (package
+    (name "font-0xpropo")
+    (version "1.100")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/0xType/0xPropo")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q4w04gh5q5imcvars0l8wczf2mh6ldnk705bbms1vnmnv8b291w"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/0xType/0xPropo")
+    (synopsis "Proportional variant of font-0xproto")
+    (description
+     "This package provides a proportional variant of @code{font-0xproto}.")
+    (license license:silofl1.1)))
+
+(define-public font-0xproto
+  (package
+    (name "font-0xproto")
+    (version "2.500")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/0xType/0xProto")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kmxgdvh7j91dy5s4l8q3fil0289mxg2f3ixcl06ywrrs2zw8fy8"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/0xType/0xProto")
+    (synopsis "Programming font")
+    (description
+     "This package provides a programming font focused on
+source code legibility.")
+    (license license:silofl1.1)))
 
 (define-public font-adwaita
   (package
@@ -256,16 +298,15 @@ mediums.")
 (define-public font-lilex
   (package
     (name "font-lilex")
-    (version "2.600")
+    (version "2.601")
     (source (origin
               (method url-fetch)
               (uri (string-append
                     "https://github.com/mishamyrt/Lilex/releases/download/"
-                    version
-                    "/Lilex.zip"))
+                    version "/Lilex.zip"))
               (sha256
                (base32
-                "0k0zh5d1nlknkjig16bxfx5g071h1cn3s7h63bkpm2cjjvgydk0v"))))
+                "0n4fwnbrx1fy1140hw0nn7vn3fnpas10jhzv5jmif4sqvha1ln5a"))))
     (build-system font-build-system)
     (home-page "https://github.com/mishamyrt/Lilex")
     (synopsis "IBM Plex typeface with extended character sets and ligatures")
@@ -1138,6 +1179,29 @@ additional characters (mostly accented ones).  This package provides the
 OpenType variant of these fonts.")
     (license license:gfl1.0)))
 
+(define-public font-new-computer-modern
+  (package
+    (name "font-new-computer-modern")
+    (version "7.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://download.gnu.org.ua/release/newcm/"
+                           "newcm-" version ".txz"))
+       (file-name (string-append name "-" version ".tar.xz"))
+       (sha256
+        (base32 "0j7d5brjpaakhs826wpjpmbn5kijf0k4pklafi6ijp922092jivx"))))
+    (build-system font-build-system)
+    (home-page "https://ctan.org/pkg/newcomputermodern")
+    (synopsis "OpenType fonts based on Computer Modern including non-Latin")
+    (description
+     "NewComputerModern is a new assembly of Computer Modern fonts including
+extensions in many directions for both Latin based languages, non-Latin based
+languages and Mathematics, all compatible in style to CM fonts.  In addition
+to the Regular weight of Computer Modern, it provides a Book weight for
+heavier printing.")
+    (license license:gfl1.0)))
+
 (define-public font-amiri
   (package
     (name "font-amiri")
@@ -1301,6 +1365,31 @@ utilities to ease adding new glyphs to the font.")
     (home-page "http://unifoundry.com/unifont/index.html")
     (properties '((upstream-name . "unifont")))
     (license license:gpl2+)))
+
+(define-public font-last-resort
+  (package
+    (name "font-last-resort")
+    (version "16.000")
+    (source
+     (origin
+       (method url-fetch)
+       ;; PGTK Emacs does not seem to render the high-efficiency TTF.  Prefer
+       ;; the larger but more compatible standard TTF.
+       (uri (string-append "https://github.com/unicode-org/last-resort-font"
+                           "/releases/download/" version
+                           "/LastResort-Regular.ttf"))
+       (sha256
+        (base32 "0rlisa9hzm7kfy3b8w2460mkiwrh2hlyp223bafkqzpkxkfsbcpp"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/unicode-org/last-resort-font")
+    (synopsis "Fallback font for Unicode code points")
+    (description
+     "Last Resort is a special-purpose font intended as a user-friendly
+alternative to tofu symbols.  It includes glyphs designed to allow users to
+recognize which Unicode block a character belongs to so they can identify what
+type of font to install to properly display text.  Undefined code points and
+noncharacters are also represented.")
+    (license license:silofl1.1)))
 
 (define-public font-google-noto
   (package
@@ -1473,24 +1562,57 @@ fonts.")
 (define-public font-google-roboto
   (package
     (name "font-google-roboto")
-    (version "2.136")
+    (version "3.011")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://github.com/google/roboto/releases/download/"
-                           "v" version "/roboto-hinted.zip"))
+       (uri (string-append
+             "https://github.com/googlefonts/roboto-3-classic/releases/download/v"
+             version "/Roboto_v" version ".zip"))
        (file-name (string-append name "-" version ".zip"))
        (sha256
-        (base32
-         "0spscx08fad7i8qs7icns96iwcapniq8lwwqqvbf7bamvs8qfln4"))))
+        (base32 "03km9r4cgbbjparmzvlkr59a3r6j5cwmnf4s17qr7wkdf0qyx7wq"))))
     (build-system font-build-system)
-    (home-page "https://github.com/google/roboto")
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Install only needed fonts.
+          (add-before 'install 'chdir
+            (lambda _
+              (chdir "../hinted/static"))))))
+    (home-page "https://github.com/googlefonts/roboto-3-classic")
     (synopsis "The Roboto family of fonts")
     (description
      "Roboto is Google’s signature family of fonts, the default font on Android
-and Chrome OS, and the recommended font for the
-visual language \"Material Design\".")
-    (license license:asl2.0)))
+and Chrome OS, and the recommended font for the visual language \"Material
+Design\".")
+    (license license:silofl1.1)))
+
+(define-public font-google-roboto-mono
+  (package
+    (name "font-google-roboto-mono")
+    (version "3.001")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/googlefonts/RobotoMono")
+             (commit "8f651634e746da6df6c2c0be73255721d24f2372")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00ddmr7yvb9isakfvgv6g74m80fmg81dmh1hrrdyswapaa7858a5"))))
+    (build-system font-build-system)
+    (home-page "https://github.com/googlefonts/RobotoMono")
+    (synopsis "Monospaced Roboto font")
+    (description
+     "Roboto Mono is a monospaced addition to the Roboto type family.
+Like the other members of the Roboto family, the fonts are optimized for
+readability on screens across a wide variety of devices and reading
+environments.  While the monospaced version is related to its variable width
+cousin, it doesn't hesitate to change forms to better fit the constraints of a
+monospaced environment.")
+    (license license:silofl1.1)))
 
 (define-public font-borg-sans-mono
   (package
@@ -1700,6 +1822,7 @@ Powerline support.")
        (sha256
         (base32 "0mir6yi5i0h1kk6fr8dsqmv4m8cwrbldadpy7rnlyvkd26wdqpiy"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/adobe-fonts/source-code-pro")
     (synopsis
      "Monospaced font family for user interface and coding environments")
@@ -2519,6 +2642,86 @@ programming.  Iosevka is completely generated from its source code.")
        (sha256
         (base32 "08ijx9rbcx95yiaiwv6k25xmsi24rdy50mkmmaw94mmwv22mxdra"))))))
 
+(define-public font-apl2741-unicode
+  (let ((commit "1e11efae38e5095bfe49a786b111d563e83dad03"))
+    (package
+      (name "font-apl2741-unicode")
+      (version "1668049300")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/abrudz/APL2741.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0i1yk1x99lr2swlbq9r7dny5w70zwiwi8lpfcw4n7k7pfbw0xh7y"))))
+      (build-system trivial-build-system)
+      (native-inputs (list fontforge))
+      (arguments
+       `(#:modules ((guix build utils))
+         #:builder
+         (begin
+           (use-modules (guix build utils))
+           (let* ((source (assoc-ref %build-inputs "source"))
+                  (out (assoc-ref %outputs "out"))
+                  (dest (string-append out "/share/fonts/truetype"))
+                  (fontforge (string-append
+                              (assoc-ref %build-inputs "fontforge")
+                              "/bin/fontforge")))
+             (mkdir-p dest)
+             (invoke fontforge "-lang=ff" "-c" "Open($1); Generate($2)"
+                     (string-append source "/APL2741.sfd")
+                     (string-append dest "/APL2741.ttf"))))))
+      (synopsis "APL2741 Unicode font")
+      (home-page "https://abrudz.github.io/APL2741/")
+      (description "APL font based on Adrian Smith's IBM Selectric APL2741
+golf-ball font.  It supports most special characters used by popular APL
+implementations, some additional mathematical and typographical symbols,
+single line drawing characters, as well as the full Unicode APL range,
+including both uppercase and lowercase underscored alphabets, as-of-yet unused
+symbols, and almost all Latin-1 accented letters.")
+      (license license:unlicense))))
+
+(define-public font-apl333
+  (package
+    (name "font-apl333")
+    ;; Version number as for apl-385, last modified 2013-04-20.
+    (version "20130420")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://apl385.com/fonts/" "apl333.zip"))
+       (sha256
+        (base32 "0yn0ha7d14vp4ma3lxbc9kpyrn20m7brjisr6w55c9mi24w9v3a5"))))
+    (build-system font-build-system)
+    (home-page "https://apl385.com/fonts/index.htm")
+    (synopsis "Variable-width APL font inspired by Comic Sans Serif")
+    (description
+     "Variable-width version of Adrian Smith's APL385 font developed with APL
+software vendors in the late 1980s.")
+    (license license:public-domain)))
+
+(define-public font-apl385
+  (package
+    (name "font-apl385")
+    ;; No version number or release, unzipping source and checking file times
+    ;; shows the font file was last modified on 2016-08-21.
+    (version "20160821")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://apl385.com/fonts/" "apl385.zip"))
+       (sha256
+        (base32 "132qfsnx0v6qf8x8iy3flivv449nz42nnpkwjysmz65w6wqxpk1g"))))
+    (build-system font-build-system)
+    (home-page "https://apl385.com/fonts/index.htm")
+    (synopsis "Monospaced APL font inspired by Comic Sans Serif")
+    (description
+     "Adrian Smith's monospaced APL font developed with APL software vendors
+in the late 1980s.")
+    (license license:public-domain)))
+
 (define-public font-aporetic
   (package
     (name "font-aporetic")
@@ -2531,7 +2734,7 @@ programming.  Iosevka is completely generated from its source code.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bb7js8lxa4f5kcjjvn587m4hd92qkydr5dbcjmimq2r8mimn75j"))))
+        (base32 "05rafzzj6am41wn0mlgkw9s6s4wj5vxsds9hqz4wa4cnz45yw5nl"))))
     (build-system font-build-system)
     (home-page "https://github.com/protesilaos/aporetic")
     (synopsis "Customised build of the Iosevka typeface")
@@ -4293,6 +4496,7 @@ Spleen also has support for Powerline symbols out of the box.")
        (sha256
         (base32 "02wy9n49nzyvhc55jjmpxrv7hh6ncxv31liniqjgjn7vp68fj40n"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://www.stixfonts.org/")
     (synopsis
      "OpenType Unicode fonts for scientific, technical, and mathematical texts")
@@ -4571,6 +4775,26 @@ enough to remain readable even at high resolutions.")
 Bonnie Scranton, and Edward Tufte.")
       (license license:expat))))
 
+(define-public font-commit-mono
+  (package
+    (name "font-commit-mono")
+    (version "1.143")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/eigilnikolajsen/commit-mono/"
+                           "releases/download/"
+                           "v" version
+                           "/CommitMono-" version ".zip"))
+       (sha256
+        (base32 "1l4yqjif6ijdpjsncana6swlh1mz0vbzaxkgk4580m3mgimg5lgp"))))
+    (build-system font-build-system)
+    (home-page "https://commitmono.com/")
+    (synopsis "Commit Mono programming font")
+    (description
+     "Commit Mono is an anonymous and neutral programming typeface.")
+    (license license:silofl1.1)))
+
 (define-public font-cica
   (package
     (name "font-cica")
@@ -4590,4 +4814,26 @@ Bonnie Scranton, and Edward Tufte.")
 Hack + DejaVu Sans Mono is used for ASCII, and Rounded Mgen+ for the other.
 In addition, Nerd Fonts, Noto Emoji, Icons for Devs, and some adjustment forked
 from the Ricty generator are converted and adjusted.")
+    (license license:silofl1.1)))
+
+(define-public font-undefined-medium
+  (package
+    (name "font-undefined-medium")
+    (version "1.3")
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/andirueckel/undefined-medium"
+                           "/archive/v" version ".zip"))
+       (sha256
+        (base32 "1y11y78807nhfwvvx4ac36q6m5y20jarlrazrp029wks2wwdgrx8"))))
+    (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
+    (home-page "https://undefined-medium.com")
+    (synopsis "Pixel grid-based monospace typeface")
+    (description
+     "This package provides undefined medium, a pixel grid-based monospace
+typeface.  It is inspired by many 5×7 pixel grid typefaces, especially Gilles
+Boccon-Gibod’s MonteCarlo.  Unlike traditional bitmap fonts, it is distributed
+in typical scalable font formats.")
     (license license:silofl1.1)))

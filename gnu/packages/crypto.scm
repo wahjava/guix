@@ -23,12 +23,13 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021, 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Allan Adair <allan@adair.no>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2024-2025 Maxim Cournoyer <maxim@guixoic.coop>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -57,8 +58,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)
@@ -138,55 +137,59 @@ fast, secure, parallelizable, capable of incremental updates.")
     (license (list license:asl2.0 license:cc0)))) ; dual licensed
 
 (define-public libdecaf
-  (package
-    (name "libdecaf")
-    (version "1.0.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://git.code.sf.net/p/ed448goldilocks/code")
-                    (commit
-                     (string-append "v" version))))
-              (file-name
-               (git-file-name name version))
-              (sha256
-               (base32 "1ajgmyvc6a4m1h2hg1g4wz7ibx10x1xys9m6ancnmmf1f2srlfly"))))
-    (build-system cmake-build-system)
-    (outputs '("out" "python" "doc"))
-    (arguments
-     `(#:configure-flags '("-DENABLE_STATIC=OFF")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-python-binding
-           (lambda _
-             (substitute* "python/setup.py"
-               (("gmake")
-                "make")
-               (("'\\.\\.', 'build', 'lib', 'libdecaf\\.so'")
-                "'..', '..', 'build', 'src', 'libdecaf.so'"))))
-         (add-after 'install 'install-python-binding
-           (lambda* (#:key outputs #:allow-other-keys)
-             (with-directory-excursion "../source/python"
-               (invoke "python" "setup.py" "install"
-                       (string-append "--prefix=" (assoc-ref outputs "python"))
-                       "--root=/"))))
-         (add-after 'install-python-binding 'install-documentation
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "make" "doc")
-             (let* ((doc (assoc-ref outputs "doc"))
-                    (dest (string-append doc "/share/doc")))
-               (copy-recursively "doc" dest)))))))
-    (native-inputs
-     `(("dot" ,graphviz)
-       ("doxygen" ,doxygen)
-       ("python" ,python-wrapper)))
-    (synopsis "Decaf Elliptic Curve Library")
-    (description "The libdecaf library is an implementation of elliptic curve
+  ;; The 1.0.2 release fails due to some compiler warning treated as an error
+  ;; (see: https://sourceforge.net/p/ed448goldilocks/tickets/16/). Use the
+  ;; latest commit available.
+  (let ((commit "e5cc6240690d3ffdfcbdb1e4e851954b789cd5d9")
+        (revision "0"))
+    (package
+      (name "libdecaf")
+      (version (git-version "1.0.2" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "git://git.code.sf.net/p/ed448goldilocks/code")
+                       (commit commit)))
+                (file-name
+                 (git-file-name name version))
+                (sha256
+                 (base32
+                  "1gxf503cnmgsv7s0dm82rrizjhifdhdh42sfvbfsdj55syjnv1p2"))))
+      (build-system cmake-build-system)
+      (outputs '("out" "python" "doc"))
+      (arguments
+       (list #:imported-modules (append %cmake-build-system-modules
+                                        %python-build-system-modules)
+             #:modules '((guix build cmake-build-system)
+                         ((guix build python-build-system) #:prefix python:)
+                         (guix build utils))
+             #:configure-flags #~(list "-DENABLE_STATIC=OFF")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'patch-python-binding
+                   (lambda _
+                     (substitute* "python/setup.py"
+                       (("gmake")
+                        "make")
+                       (("'\\.\\.', 'build', 'lib', 'libdecaf\\.so'")
+                        "'..', '..', 'build', 'src', 'libdecaf.so'"))))
+                 (add-after 'unpack 'ensure-no-mtimes-pre-1980
+                   (assoc-ref python:%standard-phases 'ensure-no-mtimes-pre-1980))
+                 (add-after 'install 'install-python-binding
+                   (lambda* (#:key inputs outputs #:allow-other-keys)
+                     (with-directory-excursion "../source/python"
+                       (invoke "python" "setup.py" "install"
+                               (string-append
+                                "--prefix="
+                                (python:site-packages inputs outputs)))))))))
+      (native-inputs (list python-minimal-wrapper))
+      (synopsis "Decaf Elliptic Curve Library")
+      (description "The libdecaf library is an implementation of elliptic curve
 cryptography using the Montgomery and Edwards curves Curve25519, Ed25519,
 Ed448-Goldilocks and Curve448, using the Decaf encoding.")
-    (home-page "https://ed448goldilocks.sourceforge.net/")
-    (license (list license:expat        ;library
-                   license:bsd-2))))    ;python bindings
+      (home-page "https://ed448goldilocks.sourceforge.net/")
+      (license (list license:expat      ;library
+                     license:bsd-2)))))    ;python bindings
 
 (define-public libsodium
   (package
@@ -291,20 +294,18 @@ OpenBSD tool of the same name.")
 (define-public rust-minisign
   (package
     (name "rust-minisign")
-    (version "0.7.5")
+    (version "0.7.9")
     (source
       (origin
         (method url-fetch)
         (uri (crate-uri "minisign" version))
         (file-name (string-append name "-" version ".tar.gz"))
         (sha256
-         (base32 "1lmp83bxdg53c4n35fbwr3rkh6178y75fwsn25hf1kn62f2gbdnj"))))
+         (base32 "1rqdmnzzak7svsgcjnrb7rrbq4gv378alcnmynfq47js863i6m16"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
-       (("rust-getrandom" ,rust-getrandom-0.2)
-        ("rust-rpassword" ,rust-rpassword-7)
-        ("rust-scrypt" ,rust-scrypt-0.11))))
+     `(#:install-source? #f))
+    (inputs (cargo-inputs 'rust-minisign))
     (home-page "https://github.com/jedisct1/rust-minisign")
     (synopsis "Crate to sign files and verify signatures")
     (description
@@ -1540,121 +1541,27 @@ additional security and privacy measures such as hiding file sizes and directory
 structure.  However CryFS is not considered stable yet by the developers.")
     (license license:lgpl3+)))
 
-(define-public rust-blake3-0.3
-  (package
-    (name "rust-blake3")
-    (version "0.3.8")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (crate-uri "blake3" version))
-        (file-name (string-append name "-" version ".tar.gz"))
-        (sha256
-          (base32 "1cr5l5szgxm632px41kavl6cgils8h6yhdfkm6jsc5jgiivqai5n"))))
-    (build-system cargo-build-system)
-    (arguments
-      `(#:skip-build? #t
-        #:cargo-inputs
-        (("rust-arrayref" ,rust-arrayref-0.3)
-         ("rust-arrayvec" ,rust-arrayvec-0.5)
-         ("rust-cc" ,rust-cc-1)
-         ("rust-cfg-if" ,rust-cfg-if-0.1)
-         ("rust-constant-time-eq" ,rust-constant-time-eq-0.1)
-         ("rust-crypto-mac" ,rust-crypto-mac-0.8)
-         ("rust-digest" ,rust-digest-0.9)
-         ("rust-rayon" ,rust-rayon-1))))
-    (home-page "https://github.com/BLAKE3-team/BLAKE3")
-    (synopsis "BLAKE3 hash function Rust implementation")
-    (description "This crate provides the official Rust implementation of the
-BLAKE3 cryptographic hash function.  BLAKE3 is faster than MD5, SHA-1, SHA-2,
-SHA-3, and BLAKE2.")
-    ;; Users may choose between these two licenses when redistributing the
-    ;; program provided by this package.
-    (license (list license:cc0 license:asl2.0))))
-
-(define-public rust-blake3-1
-  (package
-    (name "rust-blake3")
-    (version "1.5.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "blake3" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "07k07q7f2m0hr6z944gf0wn1s15f3gwsydhpz2ssbpn44hc0rvmq"))))
-    (build-system cargo-build-system)
-    (arguments
-     (list
-      #:tests? #f       ; use of undeclared crate or module `reference_impl`
-      #:cargo-inputs
-      `(("rust-arrayref" ,rust-arrayref-0.3)
-        ("rust-arrayvec" ,rust-arrayvec-0.7)
-        ("rust-cc" ,rust-cc-1)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-constant-time-eq" ,rust-constant-time-eq-0.3)
-        ("rust-digest" ,rust-digest-0.10)
-        ("rust-memmap2" ,rust-memmap2-0.9)
-        ("rust-rayon-core" ,rust-rayon-core-1)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-zeroize" ,rust-zeroize-1))
-      #:cargo-development-inputs
-      `(("rust-ciborium" ,rust-ciborium-0.2)
-        ("rust-hex" ,rust-hex-0.4)
-        ("rust-hmac" ,rust-hmac-0.12)
-        ("rust-page-size" ,rust-page-size-0.6)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rand-chacha" ,rust-rand-chacha-0.3)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-tempfile" ,rust-tempfile-3))))
-    (home-page "https://github.com/BLAKE3-team/BLAKE3")
-    (synopsis "BLAKE3 hash function Rust implementation")
-    (description "This crate provides the official Rust implementation of the
-BLAKE3 cryptographic hash function.  BLAKE3 is faster than MD5, SHA-1, SHA-2,
-SHA-3, and BLAKE2.")
-    ;; Users may choose between these two licenses when redistributing the
-    ;; program provided by this package.
-    (license (list license:cc0 license:asl2.0))))
-
 (define-public b3sum
   (package
     (name "b3sum")
-    (version "1.5.0")
+    (version "1.8.1")
     (source
       (origin
         (method url-fetch)
         (uri (crate-uri "b3sum" version))
         (file-name (string-append name "-" version ".tar.gz"))
         (sha256
-         (base32 "05k0vn7gpbvjr925vjc5yzvhiyrmkw9pqmch5fr4ir7s8wiaq2fm"))))
+         (base32 "1zfyj3a8s1mg6w6l4j5hchrs8n5mfij92mg9m24pzxfi4da4543a"))))
     (build-system cargo-build-system)
     (arguments
-      `(;; Install the source so that Cargo.toml is installed, because that is
-        ;; the only reference to the license information.
-        #:install-source? #t
+      `(#:install-source? #f
         #:phases
         (modify-phases %standard-phases
           (add-before 'check 'patch-tests
             (lambda _
               (substitute* "tests/cli_tests.rs"
-                (("/bin/sh") (which "sh")))))
-          (add-after 'install 'install-doc
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (doc (string-append out "/share/doc/" ,name "-"
-                                         ,(package-version this-package))))
-                (install-file "README.md" doc)))))
-        #:cargo-inputs
-        (("rust-anyhow" ,rust-anyhow-1)
-         ("rust-blake3" ,rust-blake3-1)
-         ("rust-clap" ,rust-clap-4)
-         ("rust-hex" ,rust-hex-0.4)
-         ("rust-memmap2" ,rust-memmap2-0.7)
-         ("rust-rayon" ,rust-rayon-1)
-         ("rust-wild" ,rust-wild-2))
-        #:cargo-development-inputs
-        (("rust-duct" ,rust-duct-0.13)
-         ("rust-tempfile" ,rust-tempfile-3))))
+                (("/bin/sh") (which "sh"))))))))
+    (inputs (cargo-inputs 'b3sum))
     (home-page "https://github.com/BLAKE3-team/BLAKE3")
     (synopsis "Command line BLAKE3 checksum tool")
     (description "This package provides @code{b3sum}, a command line
@@ -1739,3 +1646,36 @@ default Keychain will only start ssh-agent, but it can also be
 configured to start gpg-agent.")
     (home-page "https://www.funtoo.org/Keychain")
     (license license:gpl2)))
+
+(define-public libdigidocpp
+  (package
+    (name "libdigidocpp")
+    (version "4.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/open-eid/libdigidocpp")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lz8zahdmzav6csnx9r40dhzvaj7zjwvlgdjlx1s0idfrlbs3zd3"))
+       (modules '((guix build utils)))
+       (snippet '(delete-file-recursively "src/minizip"))))
+    (build-system cmake-build-system)
+    (arguments (list #:test-exclude "runtest"))
+    (native-inputs (list boost pkg-config))
+    (inputs
+     (list libltdl
+           libxml2
+           libxslt
+           minizip-ng-compat
+           openssl
+           xmlsec-openssl
+           zlib))
+    (home-page "https://github.com/open-eid/libdigidocpp")
+    (synopsis "DigiDoc digital signature library")
+    (description "DigiDoc is an XML file format for documents with digital
+signatures used by the Estonian ID card infrastructure.  This library allows
+for creation and reading of DigiDoc files.")
+    (license license:lgpl2.1+)))

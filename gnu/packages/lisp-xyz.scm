@@ -8110,8 +8110,10 @@ of http://code.google.com/p/mimeparse/, with a Common Lisp flavor.")
   (sbcl-package->clasp-package sbcl-cl-mimeparse))
 
 (define-public sbcl-cl-mixed
-  (let ((commit "4aaff134d3902d93a2a8605c10de4bcfc62d7afa")
-        (revision "0"))
+  ;; There are no releases, but this commit is entitled
+  ;; "Bump to libmixed-2.4.0".
+  (let ((commit "3da661ae199be94f822e3f9ef6bf03bc6456652b")
+        (revision "1"))
     (package
       (name "sbcl-cl-mixed")
       (version (git-version "2.1.0" revision commit))
@@ -8123,7 +8125,7 @@ of http://code.google.com/p/mimeparse/, with a Common Lisp flavor.")
                (commit commit)))
          (file-name (git-file-name "cl-mixed" version))
          (sha256
-          (base32 "1mrj95lxb1gbxxm89x8gy1ifw2ic1p5wwpapkxcd2jr8abw7zny0"))
+          (base32 "0i7bb2b3a9i4kgp7dzzs5211xj56zzcpwkjlfxpslfp7iz0685y0"))
          (modules '((guix build utils)))
          (snippet
           ;; Delete bundled libraries.
@@ -13610,6 +13612,42 @@ on UNIX like platforms.")
 
 (define-public ecl-daemon
   (sbcl-package->ecl-package sbcl-daemon))
+
+(define-public sbcl-damn-fast-priority-queue
+  (let ((commit "f4c03741d05c757aed245b41a5c3f8c7096cc1d2")
+        (revision "0"))
+    (package
+     (name "sbcl-damn-fast-priority-queue")
+     (version (git-version "0.0.2" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/phoe/damn-fast-priority-queue")
+             (commit commit)))
+       (file-name (git-file-name "damn-fast-priority-queue" version))
+       (sha256
+        (base32 "0ch4yma51r2lnsjpr45mxga7sf03l3c76l6ijffm1rq2g9ywaksa"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria))
+     (arguments
+      `(#:asd-systems '("damn-fast-priority-queue"
+                        "damn-fast-stable-priority-queue")))
+     (synopsis "Fast priority queue")
+     (description
+      "A heap-based priority queue whose first and foremost priority is speed.")
+     (home-page "https://github.com/phoe/damn-fast-priority-queue")
+     (license license:expat))))
+
+(define-public cl-damn-fast-priority-queue
+  (sbcl-package->cl-source-package sbcl-damn-fast-priority-queue))
+
+(define-public ecl-damn-fast-priority-queue
+  (sbcl-package->ecl-package sbcl-damn-fast-priority-queue))
+
+(define-public clasp-damn-fast-priority-queue
+  (sbcl-package->clasp-package sbcl-damn-fast-priority-queue))
 
 (define-public sbcl-data-format-validation
   (let ((commit "95d44766e829582598f9dcdc5c23719c462d5bfb")
@@ -19485,8 +19523,8 @@ building block for higher level libraries.")
   (sbcl-package->clasp-package sbcl-json-streams))
 
 (define-public sbcl-jsonrpc
-  (let ((commit "a43dd933838bb9596a2bf40e821af0bafd3d5356")
-        (revision "1"))
+  (let ((commit "2af1e0fad429ee8c706b86c4a853248cdd1be933")
+        (revision "2"))
     (package
       (name "sbcl-jsonrpc")
       (version (git-version "0.3.2" revision commit))
@@ -19498,7 +19536,7 @@ building block for higher level libraries.")
                (commit commit)))
          (file-name (git-file-name "jsonrpc" version))
          (sha256
-          (base32 "1wsc6bv8xpzad0lgrlldzrpb9r4aksnw7ss2ifwa7ykbzfxcr8gi"))))
+          (base32 "0kd550fsklsc4h0fj8jl6g4z5ldb8ba9dn68s7ykv3myaiwgsy1p"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-rove))
       (inputs (list sbcl-clack
@@ -20108,6 +20146,39 @@ needed.  The low-level command API is fully mapped however.")
 
 (define-public ecl-legit
   (sbcl-package->ecl-package sbcl-legit))
+
+(define-public sbcl-lem-extension-manager
+  (let ((commit "cb19321345d6fd13dc3ca59d4d5b9a6b14cc00b1")
+        (revision "0"))
+    (package
+      (name "sbcl-lem-extension-manager")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/lem-project/lem-extension-manager")
+                (commit commit)))
+         (sha256
+          (base32 "1g210cfrbjbdb395wnzb5hax2isq0d5990jhzcxj7kp171dydynf"))
+         (file-name (git-file-name "cl-lem-extension-manager" version))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-alexandria))
+      (synopsis "Configuration library for the Lem editor")
+      (description
+       "This package provides a configuration library that adds the ability for
+Lem to manage packages within the user configuration directory.")
+      (home-page "https://lem-project.github.io/")
+      (license license:expat))))
+
+(define-public cl-lem-extension-manager
+  (sbcl-package->cl-source-package sbcl-lem-extension-manager))
+
+(define-public ecl-lem-extension-manager
+  (sbcl-package->ecl-package sbcl-lem-extension-manager))
+
+(define-public clasp-lem-extension-manager
+  (sbcl-package->clasp-package sbcl-lem-extension-manager))
 
 (define-public sbcl-lem-mailbox
   (let ((commit "12d629541da440fadf771b0225a051ae65fa342a")
@@ -21167,6 +21238,39 @@ LispWorks library that are used in software such as ContextL.")
 
 (define-public clasp-lw-compat
   (sbcl-package->clasp-package sbcl-lw-compat))
+
+(define-public sbcl-lwcells
+  (let ((commit "e7446ac146a31b630e74c9bce7dab34b50cc333d")
+        (revision "0"))
+    (package
+     (name "sbcl-lwcells")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/lwcells")
+             (commit commit)))
+       (file-name (git-file-name "lwcells" version))
+       (sha256
+        (base32 "1p8a5j52isp14w6pxy6c6fsrwwvnyb9r6yvd8bxh7sjh6mnvp3nc"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-named-closure
+            sbcl-damn-fast-priority-queue))
+     (synopsis "Light-weight cells for dataflow programming")
+     (description
+      "A dataflow extension to Common Lisp that maintains a consistent state of
+cells according to functions specifying their relation.")
+     (home-page "https://github.com/kchanqvq/lwcells")
+     (license license:gpl3+))))
+
+(define-public cl-lwcells
+  (sbcl-package->cl-source-package sbcl-lwcells))
+
+(define-public ecl-lwcells
+  (sbcl-package->ecl-package sbcl-lwcells))
 
 (define-public sbcl-lzlib
   (let ((commit "22767ca12d1c1bd59a7ae1f9c5ef7d2e937206bb")
@@ -22979,6 +23083,40 @@ JSON handling.  Load the parser backend you prefer!
 
 (define-public ecl-nactivitypub
   (sbcl-package->ecl-package sbcl-nactivitypub))
+
+(define-public sbcl-named-closure
+  (let ((commit "d57305582137a24d6c8f8375fba496c653bb5699")
+        (revision "0"))
+    (package
+     (name "sbcl-named-closure")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/named-closure")
+             (commit commit)))
+       (file-name (git-file-name "named-closure" version))
+       (sha256
+        (base32 "17lpslk7amh9pghjpjdnd1aj50r1kdc4iyai2h2xas7wampg5xf5"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-serapeum
+            sbcl-iterate
+            sbcl-trivial-cltl2))
+     (synopsis "Introspectable, readably-printable and redefinable closures")
+     (description
+      "A CLOS class that defines callable objects whose behavior is similar to
+closures but adds conveniences such as introspectability.")
+     (home-page "https://github.com/kchanqvq/named-closure")
+     (license license:expat))))
+
+(define-public cl-named-closure
+  (sbcl-package->cl-source-package sbcl-named-closure))
+
+(define-public ecl-named-closure
+  (sbcl-package->ecl-package sbcl-named-closure))
 
 (define-public sbcl-named-readtables
   (let ((commit "d5ff162ce02035ec7de1acc9721385f325e928c0")
@@ -32937,7 +33075,7 @@ has a small codebase that's easy to understand and use.")
 (define-public sbcl-wayflan
   (package
     (name "sbcl-wayflan")
-    (version "0.0.4")
+    (version "0.1.0")
     (source
      (origin
        (method git-fetch)
@@ -32946,7 +33084,7 @@ has a small codebase that's easy to understand and use.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-wayflan" version))
        (sha256
-        (base32 "0y6hzskp1vgaigzj5b3i695sc6dn5mk7nlxs21nh5ybzmf4chhyy"))))
+        (base32 "11n8w4fh996gspgcsfhbrcmz7az4yrx9a15jh6n72kswgjzq0s5j"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-parachute))
@@ -33845,6 +33983,9 @@ This library aims to provide developers with more options.")
 
 (define-public ecl-zsort
   (sbcl-package->ecl-package sbcl-zsort))
+
+(define-public clasp-zsort
+  (sbcl-package->clasp-package sbcl-zsort))
 
 (define-public sbcl-zstd
   (let ((commit "134f058eee11512cf772a8d5b64364acf56a10b8")

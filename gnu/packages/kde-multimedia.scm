@@ -5,7 +5,7 @@
 ;;; Copyright © 2022 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
-;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -87,7 +87,9 @@
            libkcompactdisc
            libvorbis
            phonon))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://apps.kde.org/kio_audiocd/")
     (synopsis "Transparent audio CD integration for applications using the KDE
 Platform")
@@ -134,7 +136,9 @@ This package is part of the KDE multimedia module.")
            phonon
            phonon-backend-vlc
            solid))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://apps.kde.org/dragonplayer/")
     (synopsis "Simple video player")
     (description "Dragon Player is a multimedia player where the focus is on
@@ -160,6 +164,7 @@ This package is part of the KDE multimedia module.")
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
+           #:tests? #f
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'fix-yt-dlp-path
@@ -249,10 +254,10 @@ This package is part of the KDE multimedia module.")
                    (system "Xvfb :1 -screen 0 640x480x24 &")
                    (setenv "DISPLAY" ":1")))
                (replace 'check
-                 (lambda* (#:key tests? test-target #:allow-other-keys)
+                 (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
                      (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
-                     (invoke "dbus-launch" "make" test-target)))))))
+                     (invoke "dbus-launch" "make" "test")))))))
     (home-page "https://apps.kde.org/elisa/")
     (synopsis "Powerful music player for Plasma 5")
     (description "Elisa is a simple music player aiming to provide a nice
@@ -280,6 +285,7 @@ its own database.  You can build and play your own playlist.")
     (inputs
      (list ffmpeg kconfig ki18n kio taglib))
     (arguments (list #:qtbase qtbase
+                     #:tests? #f
                      #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")))
     (home-page "https://apps.kde.org/ffmpegthumbs/")
     (synopsis "Video thumbnail generator for KDE using ffmpeg")
@@ -511,54 +517,58 @@ the available CD drives.")
      (list license:gpl2+ license:fdl1.2+))))
 
 (define-public kaffeine
-  (package
-    (name "kaffeine")
-    (version "2.0.18")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/kaffeine"
-                           "/kaffeine-" version ".tar.xz"))
-       (sha256
-        (base32 "10dnhr9v2jlki44i3gmjagky66ybixmv6f29z5imk9clgddrlyfr"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules pkg-config kdoctools-5))
-    (inputs
-     (list eudev
-           kcoreaddons-5
-           kdbusaddons-5
-           ki18n-5
-           kio-5
-           kwidgetsaddons-5
-           kwindowsystem-5
-           kxmlgui-5
-           libxscrnsaver
-           breeze-icons ; default icon set
-           qtbase-5
-           qtx11extras
-           solid-5
-           v4l-utils ; libdvbv5
-           vlc))
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'fix-code
-                 (lambda _
-                   (substitute* "src/dvb/dvbdevice_linux.cpp"
-                     (("\\s*qPrintable\\(transponder\\.getTransmissionType\\(\\)\\)\\);")
-                      "transponder.getTransmissionType());")))))))
-    (home-page "https://apps.kde.org/kaffeine/")
-    (synopsis "Versatile media player for KDE")
-    (description "Kaffeine is a media player for KDE.  While it supports
+  (let* ((commit "0a363690f5b320ec55f190a4d32d09d73a8c86f1")
+         (revision "0"))
+    (package
+      (name "kaffeine")
+      (version (git-version "2.0.19" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://invent.kde.org/multimedia/kaffeine.git/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0959sw7xdkv3blv6k1p7k91ki0s30ki54jh516n52lp6h48q6z1p"))))
+      (build-system qt-build-system)
+      (native-inputs
+       (list extra-cmake-modules pkg-config kdoctools))
+      (inputs
+       (list eudev
+             kcoreaddons
+             kdbusaddons
+             ki18n
+             kio
+             kwidgetsaddons
+             kwindowsystem
+             kxmlgui
+             libxscrnsaver
+             breeze-icons ; default icon set
+             solid
+             v4l-utils ; libdvbv5
+             vlc))
+      (arguments
+       (list #:qtbase qtbase
+             #:tests? #f
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-code
+                   (lambda _
+                     (substitute* "src/dvb/dvbdevice_linux.cpp"
+                       (("\\s*qPrintable\\(transponder\\.getTransmissionType\\(\\)\\)\\);")
+                        "transponder.getTransmissionType());")))))))
+      (home-page "https://apps.kde.org/kaffeine/")
+      (synopsis "Versatile media player for KDE")
+      (description "Kaffeine is a media player for KDE.  While it supports
 multiple Phonon backends, its default backend is Xine, giving Kaffeine a wide
 variety of supported media types and letting Kaffeine access CDs, DVDs, and
 network streams easily.
 
 Kaffeine can keep track of multiple playlists simultaneously, and supports
 autoloading of subtitle files for use while playing video.")
-    (license ;; GPL for programs, FDL for documentation
-     (list license:gpl2+ license:fdl1.2+))))
+      (license ;; GPL for programs, FDL for documentation
+       (list license:gpl2+ license:fdl1.2+)))))
 
 (define-public kamoso
   (package
@@ -647,7 +657,8 @@ camera.  Use it to take pictures and make videos to share.")
                   vulkan-loader))
     (arguments
      (list
-      #:qtbase qtbase))
+      #:qtbase qtbase
+      #:tests? #f))
     (home-page "https://apps.kde.org/kasts/")
     (synopsis "Convergent podcast client")
     (description
@@ -847,6 +858,7 @@ Its features include:
            solid))
     (arguments (list
                 #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
+                #:tests? #f
                 #:qtbase qtbase))
     (home-page "https://invent.kde.org/multimedia/libkcompactdisc")
     (synopsis "KDE library for playing & ripping CDs")

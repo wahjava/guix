@@ -25,6 +25,7 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (gnu packages)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build))
 
 ;;; Commentary:
@@ -36,6 +37,33 @@
 ;;;
 ;;; Libraries:
 ;;;
+
+(define-public go-github-com-aclements-go-gg
+  (package
+    (name "go-github-com-aclements-go-gg")
+    (version "0.0.0-20170323211221-abd1f791f5ee")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aclements/go-gg")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06vda3fvhyavwdcbch591v64ds8jdb1v56c8rjv8qbd6g65ky383"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/aclements/go-gg"))
+    (propagated-inputs
+     (list go-github-com-aclements-go-moremath))
+    (home-page "https://github.com/aclements/go-gg")
+    (synopsis "Plotting package for Golang")
+    (description
+     "gg is a plotting package for Go inspired by the Grammar of Graphics.")
+    (license license:bsd-3)))
 
 (define-public go-codeberg-org-astronexus-brahe
   (package
@@ -114,7 +142,8 @@ and APIs for non-parametric methods.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/cockroachdb/apd"))
+      #:import-path "github.com/cockroachdb/apd"
+      #:test-flags #~(list "-skip" "TestFormatFlags/.*010G")))
     (propagated-inputs
      (list go-github-com-pkg-errors))
     (home-page "https://github.com/cockroachdb/apd")
@@ -142,8 +171,9 @@ and GCC’s decimal extension.")
        (sha256
         (base32 "1jrb43l80mr8q1hx8q4p54rld6kya886ackv5yzqyhhhl271rnm6"))))
     (arguments
-     (list
-      #:import-path "github.com/cockroachdb/apd/v3"))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-cockroachdb-apd)
+       ((#:import-path _) "github.com/cockroachdb/apd/v3")))))
 
 (define-public go-github-com-johncgriffin-overflow
   (package
@@ -202,6 +232,7 @@ flow into higher precision types from the @code{math.big} library.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/montanaflynn/stats"
       #:phases
       #~(modify-phases %standard-phases
@@ -300,7 +331,7 @@ format as binary16.")
 (define-public go-gonum-org-v1-gonum
   (package
     (name "go-gonum-org-v1-gonum")
-    (version "0.15.1")
+    (version "0.16.0")
     (source
      (origin
        (method git-fetch)
@@ -309,10 +340,11 @@ format as binary16.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "002qsavnylj8l4ki56narpn3zm0r9p7p8ccgd20q1xp751wg2kvp"))))
+        (base32 "01mj449mlvp863d6k9zaz3y2z3vc0l5vcn046f17s83f49r0sh58"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "gonum.org/v1/gonum"
       #:test-subdirs
       #~(list "."

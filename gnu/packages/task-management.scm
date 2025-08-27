@@ -177,14 +177,23 @@ backed by Git Annex.")
          (file-name (string-append name "-" version "-checkout"))
          (sha256
           (base32 "0c8zn7l0xq65wp07h7mxnb5ww56d1443l2vkjvx5sj6wpcchfn0s"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (if tests?
+                    (invoke "cram" "tests")
+                    (format #t "test suite not run.~%")))))))
       (native-inputs
-       (list python-cram))
+       (list python-cram python-setuptools python-wheel))
+      (home-page "https://github.com/sjl/t")
       (synopsis "Command-line todo list manager")
       (description
        "@command{t} is a command-line todo list manager for people that want
 to finish tasks, not organize them.")
-      (home-page "https://stevelosh.com/projects/t/")
       (license license:expat))))
 
 (define-public taskwarrior
@@ -258,6 +267,9 @@ execution, and libreadline support.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'patch-source-shebangs 'patch-cmake-shell
@@ -273,6 +285,10 @@ execution, and libreadline support.")
               (substitute* "doc/man7/CMakeLists.txt"
                 (("\\$\\{CMAKE_CURRENT_BINARY_DIR\\}")
                  "${CMAKE_CURRENT_SOURCE_DIR}"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "test" args)))
           (add-after 'install 'install-completions
             (lambda _
               (let ((bash-completion-install-dir
@@ -398,34 +414,34 @@ a task.")
 (define-public blanket
   (package
     (name "blanket")
-    (version "0.5.0")
+    (version "0.8.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/rafaelmardojai/blanket/")
-             (commit version)))
+              (url "https://github.com/rafaelmardojai/blanket/")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00i821zqfbigxmc709322r16z75qsw4rg23yhv35gza9sl65bzkg"))))
+        (base32 "1inqb8z2vbmfybcrqbla76sny7cg2qz932agynqj4pn9a3zwnw9f"))))
     (build-system meson-build-system)
     (arguments
-     `(#:glib-or-gtk? #t
-       #:tests? #f                   ;the "Validate appstream file" test fails
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'wrap 'wrap-libs
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out               (assoc-ref outputs "out"))
-                    (gi-typelib-path   (getenv "GI_TYPELIB_PATH"))
+     (list
+      #:glib-or-gtk? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'glib-or-gtk-wrap 'wrap-libs
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((gi-typelib-path   (getenv "GI_TYPELIB_PATH"))
                     (gst-plugin-path   (getenv "GST_PLUGIN_SYSTEM_PATH"))
                     (python-path       (getenv "GUIX_PYTHONPATH")))
-               (wrap-program (string-append out "/bin/blanket")
-                 `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))
-                 `("GST_PLUGIN_SYSTEM_PATH" ":" prefix (,gst-plugin-path))
-                 `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
+                (wrap-program (search-input-file outputs "/bin/blanket")
+                  `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))
+                  `("GST_PLUGIN_SYSTEM_PATH" ":" prefix (,gst-plugin-path))
+                  `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
     (native-inputs
-     (list desktop-file-utils
+     (list blueprint-compiler
+           desktop-file-utils
            gettext-minimal
            `(,glib "bin")
            gobject-introspection
@@ -437,8 +453,9 @@ a task.")
            gsettings-desktop-schemas
            gst-plugins-bad
            gst-plugins-good             ;for ScaleTempo plugin
-           gtk+
+           gtk
            libhandy
+           libadwaita
            python
            python-gst
            python-pygobject))

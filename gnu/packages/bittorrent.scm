@@ -22,6 +22,7 @@
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,6 +46,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system glib-or-gtk)
@@ -57,7 +59,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -79,6 +81,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -88,7 +91,8 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
-  #:use-module (gnu packages xml))
+  #:use-module (gnu packages xml)
+  #:use-module (gnu packages xorg))
 
 (define-public transmission
   (package
@@ -506,7 +510,7 @@ desktops.")
 (define-public qbittorrent
   (package
     (name "qbittorrent")
-    (version "5.0.4")
+    (version "5.1.2")
     (source
      (origin
        (method git-fetch)
@@ -515,12 +519,18 @@ desktops.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0myab81g3qvldfxl1ijbc5qz9nk74xcr173ndy929l1i0r99417j"))))
+        (base32 "087l8fnr83bvvinsp1m27rsskc9wx9si3hh8alqrr8rhngd0c5ys"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
            #:configure-flags #~(list "-DTESTING=ON")
-           #:test-target "check"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:rest args)
+                   ;; Fix for "enable_testing" not in the top-level directory.
+                   (with-directory-excursion "test"
+                     (apply (assoc-ref %standard-phases 'check) args)))))))
     (native-inputs
      (list qttools))
     (inputs
@@ -561,7 +571,7 @@ features.")
   (package
     (inherit qbittorrent)
     (name "qbittorrent-enhanced")
-    (version "5.0.4.10")
+    (version "5.1.2.10")
     (source
      (origin
        (method git-fetch)
@@ -571,7 +581,7 @@ features.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1y5pm4ljzdl06sacz63dl2cjfwfvx5c808f73rh9c19q90y870d9"))))
+         "17yvx8k1fnawfkyhhzhl458l1bjg2dhnc6a456hkh2qr32jj4y23"))))
     (home-page "https://github.com/c0re100/qBittorrent-Enhanced-Edition")
     (description
      "qBittorrent Enhanced is a bittorrent client based on qBittorrent with
@@ -608,7 +618,7 @@ the following features:
        (sha256
         (base32
          "1kbac1qjbddcib0bldqaf0dcq5mqi9i2jv2fd4fayam4bcmjgfmr"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (inputs (list bash-minimal))
     (propagated-inputs
      (list gtk+
@@ -625,48 +635,54 @@ the following features:
            python-rencode
            python-service-identity
            python-setproctitle
-           python-six
            python-twisted
            python-zope-interface))
     (native-inputs
-     (list intltool python-wheel
-           (librsvg-for-system)))
+     (list intltool
+           python-pytest
+           python-pytest-twisted
+           python-setuptools
+           python-wheel
+           xorg-server-for-tests))
     (native-search-paths
      (list $SSL_CERT_DIR
            $SSL_CERT_FILE))
-    ;; TODO: Enable tests.
-    ;; After "pytest-twisted" is packaged, HOME is set, and an X server is
-    ;; started, some of the tests still fail.  There are likely some tests
-    ;; that require a network connection.
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap
-           (lambda* (#:key native-inputs inputs outputs #:allow-other-keys)
-             (let ((out               (assoc-ref outputs "out"))
-                   ;; "librsvg" input is only needed at build time and it
-                   ;; conflit with the "librsvg" propageted by "gtk+", so we
-                   ;; make sure there is no reference to it in the wrapper.
-                   (gi-typelib-path
-                    (string-join (filter
-                                  (lambda (x) (not (string-prefix?
-                                                    (assoc-ref
-                                                     (or native-inputs inputs)
-                                                     "librsvg")
-                                                    x)))
-                                  (string-split
-                                   (getenv "GI_TYPELIB_PATH")
-                                   #\:))
-                                 ":")))
-               (for-each
-                (lambda (program)
-                  (wrap-program program
-                    `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))
-                (map (lambda (name)
-                       (string-append out "/bin/" name))
-                     '("deluge" "deluge-gtk"))))
-             #t)))))
+     (list
+      #:test-flags
+      #~(list "-m" "not internet and not slow" ;; Ignore these markers.
+              "-k" (string-append "not "
+                                  (string-join
+                                   ;; Tests below require a running daemon.
+                                   (list "TestClient"
+                                         "TestJSON"
+                                         "TestJSONCustomUserCase"
+                                         "TestRPCRaiseDelugeErrorJSON"
+                                         "TestConsoleScriptEntryWithDaemon"
+                                         ;; These need a connection.
+                                         "TestWebAPI"
+                                         "TestWebServer"
+                                         ;; These failed with AssertionError.
+                                         "test_is_interface_name"
+                                         "test_is_interface")
+                                   " and not ")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Setup X server for tests and a writable HOME.
+              (system "Xvfb &")
+              (setenv "DISPLAY" ":0")
+              (setenv "HOME" "/tmp")))
+          (add-before 'wrap 'wrap-deluge
+            (lambda _
+              (for-each
+               (lambda (program)
+                 (wrap-program program
+                   `("GI_TYPELIB_PATH" ":" prefix (,(getenv "GI_TYPELIB_PATH")))))
+               (map (lambda (name)
+                      (string-append #$output "/bin/" name))
+                    (list "deluge" "deluge-gtk"))))))))
     (home-page "https://www.deluge-torrent.org/")
     (synopsis  "Fully-featured cross-platform ​BitTorrent client")
     (description

@@ -58,7 +58,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages compression)
@@ -1964,14 +1964,14 @@ OpenJDK.")
 (define-public ant/java8
   (package
     (name "ant")
-    (version "1.10.13")
+    (version "1.10.15")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://apache/ant/source/apache-ant-"
                                   version "-src.tar.gz"))
               (sha256
                (base32
-                "01l4g9b1xnnq450ljvhrlvcf8wzzmr45wmhkybrx0hcdi166y06s"))
+                "1ccr852dxg5affdqafg04gi3l89q5c6l9lqrz50jhj05kidljax2"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -3090,6 +3090,7 @@ libraries from the SIS division at ETH Zurich like jHDF5.")
                    (apply invoke `("gcc" "-shared" "-O3"
                                    "-fPIC"
                                    "-Wl,--exclude-libs,ALL"
+                                   "-Wno-error=implicit-function-declaration"
                                    ,@(find-files "jhdf5" "\\.c$")
                                    ,@(find-files "hdf-java" "\\.c$")
                                    ,(string-append "-I" hdf5 "/include")

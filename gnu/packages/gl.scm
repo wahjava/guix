@@ -58,6 +58,7 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages tls)
@@ -74,6 +75,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
@@ -238,7 +240,7 @@ generate a GL/GLES/EGL/GLX/WGL loader tailored for specific requirements.")
   (package
     (inherit glad-0.1)
     (name "glad")
-    (version "2.0.4")
+    (version "2.0.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -247,8 +249,8 @@ generate a GL/GLES/EGL/GLX/WGL loader tailored for specific requirements.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pam6imhcmcyqrqi6wzzxprb23y8x6zdbvsjavnz26k72i9dbbja"))))
-    (build-system python-build-system)
+                "0c9cygiq35aiq6bpdvbwqs0wxc2dvxsh4jnx50466savscxalsk9"))))
+    (build-system pyproject-build-system)
     (arguments
      (substitute-keyword-arguments (package-arguments glad-0.1)
        ((#:phases phases '%standard-phases)
@@ -257,7 +259,12 @@ generate a GL/GLES/EGL/GLX/WGL loader tailored for specific requirements.")
               (lambda _
                 (let ((share (string-append #$output "/share/"
                                             #$(package-name this-package))))
-                  (install-file "cmake/CMakeLists.txt" share))))))))
+                  (install-file "cmake/CMakeLists.txt" share))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "xvfb-run" "utility/test.sh"))))))))
+    (native-inputs (list python-setuptools python-wheel xvfb-run))
     (propagated-inputs (list python-jinja2))))
 
 (define-public s2tc
@@ -513,7 +520,9 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
                                                    "subprojects/" name))
                                  (overlay-dir (string-append
                                                "subprojects/packagefiles/" name)))
-                             (copy-recursively source subproject-dest)
+                             (mkdir-p subproject-dest)
+                             (invoke "tar" "xf" source "-C" subproject-dest
+                                     "--strip-components=1")
                              ;; Normally when the patch_directory wrap file property
                              ;; is specified, meson automatically copies from
                              ;; packagefiles, but this is not the case here (only
@@ -527,23 +536,9 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
 directory = ~a
 "
                                          name))))))
-                        '#+(map (lambda (pkg)
-                                  (let ((name (package-upstream-name* pkg))
-                                        (version (package-version pkg)))
-                                    (list (package-upstream-name* pkg)
-                                          (file-append pkg
-                                                       "/share/cargo/src/"
-                                                       name "-" version))))
-                                (let ((from-crates-io
-                                       (cut module-ref
-                                            (resolve-interface
-                                             '(gnu packages crates-io))
-                                            <>)))
-                                  (list (from-crates-io 'rust-syn-2)
-                                        (from-crates-io 'rust-unicode-ident-1)
-                                        (from-crates-io 'rust-quote-1)
-                                        (from-crates-io 'rust-proc-macro2-1)
-                                        (from-crates-io 'rust-paste-1))))))))
+                        '#+(module-ref (resolve-interface
+                                        '(gnu packages rust-crates))
+                                       'mesa-cargo-inputs)))))
                 #~())
          (add-after 'unpack 'set-home-directory
            ;; Build tries to use a shader cache (non-fatal error).

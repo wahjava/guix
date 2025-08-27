@@ -158,7 +158,7 @@ bind processes, and much more.")
 (define-public hwloc-2
   (package
     (inherit hwloc-1)
-    (version "2.12.1")
+    (version "2.12.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.open-mpi.org/release/hwloc/v"
@@ -166,7 +166,7 @@ bind processes, and much more.")
                                   "/hwloc-" version ".tar.bz2"))
               (sha256
                (base32
-                "0sy63p99bz9xyaz1501mwv8i3qa1v1zwa7gynadry9c6pcl07a9q"))))
+                "182v0n2mpnbvdsw0gjnbmaj027k2jxmw7yphi89i9dgb1zbn2gjn"))))
 
     (native-inputs (modify-inputs (package-native-inputs hwloc-1)
                      (append bash)))              ;for completion tests
@@ -342,7 +342,7 @@ software vendors, application developers and computer science researchers.")
 (define-public openmpi-5
   (package
     (inherit openmpi)
-    (version "5.0.7")
+    (version "5.0.8")
     (source
      (origin
        (method url-fetch)
@@ -356,18 +356,11 @@ software vendors, application developers and computer science researchers.")
         '(begin
            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
            (define (delete-all-but directory . preserve)
-             (define (directory? x)
-               (and=> (stat x #f)
-                      (compose (cut eq? 'directory <>) stat:type)))
              (with-directory-excursion directory
-               (let* ((pred
-                       (negate (cut member <> (append '("." "..") preserve))))
+               (let* ((pred (negate (cut member <>
+                                         (cons* "." ".." preserve))))
                       (items (scandir "." pred)))
-                 (for-each (lambda (item)
-                             (if (directory? item)
-                                 (delete-file-recursively item)
-                                 (delete-file item)))
-                           items))))
+                 (for-each (cut delete-file-recursively <>) items))))
            ;; Delete as many bundled libraries as permitted by the build
            ;; system.
            (delete-all-but "3rd-party" "treematch" "Makefile.in" "Makefile.am")
@@ -375,21 +368,24 @@ software vendors, application developers and computer science researchers.")
            ;; documentation.
            (delete-file-recursively "docs/html")))
        (sha256
-        (base32 "1pf25zp9y0ch3vab3ycpjkck4njrsms0sg6zs0s36h3ajc4j17qi"))))
+        (base32 "0jg423bv0gpdmgx6hgxcnpslhq55bfvb1y07axj0y9z7awd1w4sk"))))
 
     (inputs (modify-inputs (package-inputs openmpi)
               ;; As of Open MPI 5.0.X, PMIx is used to communicate
               ;; with SLURM, so SLURM'S PMI is no longer needed.
               (delete "slurm")
-              (append openpmix)         ;for PMI support (launching via "srun")
-              (append prrte)))          ;for PMI support (launching via "srun")
+              (append openpmix)        ;for PMI support (launching via "srun")
+              (append prrte)))         ;for PMI support (launching via "srun")
     (native-inputs (modify-inputs (package-native-inputs openmpi)
                      (append python)))
 
     (outputs '("out" "debug"))
     (arguments
      (list #:configure-flags
-           #~(list "--enable-mpi-ext=affinity"         ;cr doesn't work
+           #~(list #$(string-append
+                      "CFLAGS=-g -O2"
+                      " -Wno-error=incompatible-pointer-types")
+                   "--enable-mpi-ext=affinity" ;cr doesn't work
                    "--with-sge"
                    "--disable-static"
 

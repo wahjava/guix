@@ -207,42 +207,6 @@ such as compact binary encodings, XML, or JSON.")
                    (license:non-copyleft
                     "file://include/cereal/external/LICENSE")))))
 
-;; Some packages fail with the latest version.  Remove this variable
-;; when unused.
-(define-public cereal-1.3.0
-  (package
-    (inherit cereal)
-    (version "1.3.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/USCiLab/cereal")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "cereal" version))
-       (sha256
-        (base32
-         "0hc8wh9dwpc1w1zf5lfss4vg5hmgpblqxbrpp1rggicpx9ar831p"))
-       (snippet
-        '(delete-file "unittests/doctest.h"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments cereal)
-       ((#:configure-flags flags #~'())
-        #~'("-DSKIP_PORTABILITY_TEST=ON" "-DWITH_WERROR=OFF"))
-       ((#:phases phases #~%standard-phases)
-        #~(modify-phases #$phases
-            (add-after 'unpack 'update-doctest
-              (lambda* (#:key inputs #:allow-other-keys)
-                (install-file (search-input-file inputs "unittests/doctest.h")
-                              "unittests/")))
-            (add-before 'configure 'skip-sandbox
-              (lambda _
-                (substitute* "CMakeLists.txt"
-                  (("add_subdirectory\\(sandbox\\)") ""))))))))
-    (native-inputs
-     (list doxygen gcc-10
-           (package-source cereal)))))
-
 (define-public msgpack-c
   (package
     (name "msgpack-c")
@@ -473,8 +437,17 @@ that implements both the msgpack and msgpack-rpc specifications.")
                 "1c9i93kr7wvpr01i4wixi9mf991nd3k2adg5fy0vxwwlvvc7dgdw"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase
-           #:test-target "tests"))
+     (list #:modules '((guix build cmake-build-system)
+                       (guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
+           #:qtbase qtbase
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:rest args)
+                   (apply (assoc-ref gnu:%standard-phases 'check)
+                          #:test-target "tests" args))))))
     (home-page "https://github.com/iamantony/qtcsv")
     (synopsis "Library for reading and writing CSV files in Qt")
     (description
@@ -597,32 +570,39 @@ character limit for implicit keys.")
     (license license:expat)))
 
 (define-public yaml-cpp
-  (package
-    (name "yaml-cpp")
-    (version "0.8.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jbeder/yaml-cpp")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0whdn6pqa56532ml20h89p6rchcrrazdrvi5fz6zpmrkl15yiki7"))))
-    (build-system cmake-build-system)
-    (arguments
-     '(#:configure-flags '("-DYAML_BUILD_SHARED_LIBS=ON")))
-    (native-inputs
-     (list python))
-    (home-page "https://github.com/jbeder/yaml-cpp")
-    (synopsis "YAML parser and emitter in C++")
-    (description "YAML parser and emitter in C++ matching the YAML 1.2 spec.")
-    (license license:bsd-3)))
+  (let ((commit "2f86d13775d119edbb69af52e5f566fd65c6953b")
+        (revision "0"))
+    (package
+      (name "yaml-cpp")
+      (version (git-version "0.8.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jbeder/yaml-cpp")
+               (commit commit)))
+         (modules '((guix build utils)))
+         (snippet #~(delete-file-recursively "test/googletest-1.13.0"))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12ncx2hlsl5vp9yfja6myxalg85j0kgxwbargn37yiwi8rn17m8s"))))
+      (build-system cmake-build-system)
+      (arguments
+       '(#:configure-flags '("-DYAML_BUILD_SHARED_LIBS=ON"
+                             "-DYAML_CPP_BUILD_TESTS=ON"
+                             "-DYAML_USE_SYSTEM_GTEST=ON")))
+      (native-inputs
+       (list python))
+      (inputs (list googletest))
+      (home-page "https://github.com/jbeder/yaml-cpp")
+      (synopsis "YAML parser and emitter in C++")
+      (description "YAML parser and emitter in C++ matching the YAML 1.2 spec.")
+      (license license:bsd-3))))
 
 (define-public jsoncpp
   (package
     (name "jsoncpp")
-    (version "1.9.5")
+    (version "1.9.6")
     (home-page "https://github.com/open-source-parsers/jsoncpp")
     (source (origin
               (method git-fetch)
@@ -630,7 +610,7 @@ character limit for implicit keys.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "06zss7z56ykzwcsfdxarmini63hkf8i8gx70q3yw9wb0bw7wj9rv"))))
+                "070xg4i52z3yv5b9bw5k95qskw0daivh0njka87mzj0d3zf1qsyy"))))
     (build-system meson-build-system)
     (synopsis "C++ library for interacting with JSON")
     (description "JsonCpp is a C++ library that allows manipulating JSON values,
@@ -638,6 +618,20 @@ including serialization and deserialization to and from strings.  It can also
 preserve existing comment in unserialization/serialization steps, making
 it a convenient format to store user input files.")
     (license license:expat)))
+
+(define-public jsoncpp/pinned
+  (hidden-package
+   ;; Version that rarely changes, depended on by CMake.
+   (package/inherit jsoncpp
+     (version "1.9.6")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference (url (package-home-page jsoncpp)) (commit version)))
+        (file-name (git-file-name (package-name jsoncpp) version))
+        (sha256
+         (base32
+          "070xg4i52z3yv5b9bw5k95qskw0daivh0njka87mzj0d3zf1qsyy")))))))
 
 ;; Tensorflow does not build with jsoncpp 1.8.x.  It is built with commit
 ;; 4356d9bba191e1e16ce7a92073cbf3e63564e973, which lies between version 1.7.2
@@ -657,7 +651,8 @@ it a convenient format to store user input files.")
                 "1180ln8blrb0mwzpcf78k49hlki6di65q77rsvglf83kfcyh4d7z"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:tests? #f
+           #:configure-flags
            #~'("-DBUILD_SHARED_LIBS:BOOL=YES"
                #$@(if (%current-target-system)
                       #~("-DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF")
@@ -845,9 +840,6 @@ includes the following features:
      (list python-pytest))
     (propagated-inputs
      (list python-ruamel.yaml.clib))
-    (arguments
-     `(;; TODO: Tests require packaging "ruamel.std.pathlib".
-       #:tests? #f))
     (home-page "https://sourceforge.net/projects/ruamel-yaml/")
     (synopsis "YAML 1.2 parser/emitter")
     (description
@@ -868,12 +860,15 @@ style and key ordering are kept, so you can diff the source.")
        (uri (pypi-uri "ruamel.yaml" version))
        (sha256
         (base32
-         "0hm9yg785f46bkrgqknd6fdvmkby9dpzjnm0b63qf0i748acaj5v"))))))
+         "0hm9yg785f46bkrgqknd6fdvmkby9dpzjnm0b63qf0i748acaj5v"))))
+    (arguments
+     `(;; TODO: Tests require packaging "ruamel.std.pathlib".
+       #:tests? #f))))
 
 (define-public python-ruamel.yaml.clib
   (package
     (name "python-ruamel.yaml.clib")
-    (version "0.2.9")
+    (version "0.2.12")
     (source
       (origin
         ;; pypi release code has cythonized code without corresponding source.
@@ -884,7 +879,7 @@ style and key ordering are kept, so you can diff the source.")
         (file-name (hg-file-name name version))
         (sha256
          (base32
-          "100nyixfikwivsxiwkq2frgbfkqvvl112wkn0sgc57xq0p1s0dv8"))
+          "12ixp46706pl911f6i4wmik8x0j9vnxy2cqx65ixbdl9cnvqva2l"))
         (modules '((guix build utils)))
         (snippet
          '(begin
@@ -896,7 +891,7 @@ style and key ordering are kept, so you can diff the source.")
        #:phases
        (modify-phases %standard-phases
          (delete 'sanity-check) ; Depends on python-ruamel.yaml
-         (add-after 'unpack 'cythonize-code
+         (add-after 'ensure-no-cythonized-files 'cythonize-code
            (lambda _
              (invoke "cython" "_ruamel_yaml.pyx"))))))
     (native-inputs
@@ -1001,6 +996,26 @@ game development and other performance-critical applications.")
      (substitute-keyword-arguments (package-arguments flatbuffers)
        ((#:configure-flags flags #~'())
         #~(append #$flags '("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")))))))
+
+(define-public flatbuffers-23.5
+  (hidden-package
+   (package
+     (inherit flatbuffers)
+     ;; needed explicitly by onnxruntime
+     (version "23.5.26")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/google/flatbuffers")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name "flatbuffers" version))
+        (sha256
+         (base32 "0cd12dvkzqdafz46q4302mzgpzbz589zmmiga7bq07f2sqy4vrvv"))))
+     (arguments
+      (substitute-keyword-arguments (package-arguments flatbuffers)
+        ((#:configure-flags flags #~'())
+         #~(append #$flags '("-DCMAKE_POSITION_INDEPENDENT_CODE=ON"))))))))
 
 (define-public go-github-com-google-flatbuffers
   (package/inherit flatbuffers

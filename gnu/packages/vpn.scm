@@ -22,7 +22,7 @@
 ;;; Copyright © 2022 Lu hui <luhux76@gmail.com>
 ;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Jean-Pierre De Jesus DIAZ <me@jeandudey.tech>
-;;; Copyright © 2022 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2022, 2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024 Allan Adair <allan@adair.no>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
@@ -798,6 +798,12 @@ others.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+          (add-after 'unpack 'use-poetry-core
+            (lambda _
+              ;; Patch to use the core poetry API.
+              (substitute* "pyproject.toml"
+                (("poetry.masonry.api")
+                 "poetry.core.masonry.api"))))
          (add-after 'unpack 'patch-openconnect
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "openconnect_sso/app.py"
@@ -807,11 +813,10 @@ others.")
                                "\""))))))))
     (inputs
      (list openconnect
-           poetry
            python-attrs
            python-colorama
            python-keyring
-           python-lxml
+           python-lxml-4.9
            python-prompt-toolkit
            python-requests
            python-pyqt
@@ -822,7 +827,8 @@ others.")
            python-toml
            qtwebengine-5))
     (native-inputs
-     (list python-pytest
+     (list python-poetry-core
+           python-pytest
            python-pytest-asyncio
            python-pytest-httpserver))
     (home-page "https://github.com/vlaci/openconnect-sso")
@@ -835,7 +841,7 @@ others.")
 (define-public openfortivpn
   (package
     (name "openfortivpn")
-    (version "1.17.3")
+    (version "1.23.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -844,14 +850,10 @@ others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0an58f0qcyxdx3d5zb5m8vi45a0251b950b5lh16572n8z2g6s2l"))))
+                "1p1vwfhrygf4sap2gifvi1lbw58pacxh8pd9h8mk4gbixvnnzzry"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf automake pkg-config))
-    (inputs
-     ;; ppp < 2.5.0 is required due to
-     ;; <https://github.com/adrienverge/openfortivpn/pull/1148>.
-     (list openssl ppp-2.4.9))
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list openssl ppp))
     (home-page "https://github.com/adrienverge/openfortivpn")
     (synopsis "Client for PPP+SSL VPN tunnel services")
     (description "Openfortivpn is a client for PPP+SSL VPN tunnel services.  It
@@ -1054,35 +1056,31 @@ DNS domain name queries.")
     (version "1.5.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri name version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/albertodonato/sshoot")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "05i54nga4vy660yy9yf6dl376yj0jc51303yr295qk3k9w0k96yd"))))
-    (build-system python-build-system)
+        (base32 "0725p0l2gx881hsjw3nj44n4gm1kv9hirv5cd4d9yr1ba87whp3q"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda _
-             (substitute* "sshoot/tests/test_manager.py"
-               (("/bin/sh") (which "sh")))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv" "--pyargs" "sshoot")))))))
-    (inputs
-     (list python-argcomplete
-           python-prettytable
-           python-pyyaml
-           python-pyxdg
-           python-toolrack))
-    ;; For tests only.
-    (native-inputs
-     (list python-pytest python-pytest-mock))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "sshoot/tests/test_manager.py"
+                (("/bin/sh")
+                 (search-input-file inputs "bin/sh"))))))))
+    (inputs (list python-argcomplete python-prettytable python-pyyaml
+                  python-pyxdg python-toolrack))
+    (native-inputs (list python-pytest python-pytest-mock python-setuptools
+                         python-wheel))
     (home-page "https://github.com/albertodonato/sshoot")
     (synopsis "VPN session manager (sshuttle)")
-    (description "sshoot provides a command-line interface to manage multiple
+    (description
+     "sshoot provides a command-line interface to manage multiple
 @command{sshuttle} virtual private networks.  It supports flexible profiles
 with configuration options for most of @command{sshuttle}’s features.")
     (license license:gpl3+)))
@@ -1301,22 +1299,27 @@ L2TP allows you to tunnel PPP over UDP.")
     (version "0.16.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "vpn-slice" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dlenski/vpn-slice")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1anfx4hn2ggm6sbwqmqx68s3l2rjcy4z4l038xqb440jnk8jvl18"))))
-    (build-system python-build-system)
+        (base32 "16shhgypw78d9982r7v293h8fbmpl4wvjb6076w66baincn599ag"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f ; No tests.
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'patch-FHS-file-names
-           (lambda _
-             (substitute* "vpn_slice/linux.py"
-               (("/sbin/iptables")
-                (which "iptables"))
-               (("/sbin/ip")
-                (which "ip"))))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-FHS-file-names
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "vpn_slice/linux.py"
+                (("/sbin/iptables")
+                 (search-input-file inputs "/sbin/iptables"))
+                (("/sbin/ip")
+                 (search-input-file inputs "/sbin/ip"))))))))
+    (native-inputs (list python-setuptools python-wheel))
     (inputs (list python-dnspython python-setproctitle iproute iptables))
     (home-page "https://github.com/dlenski/vpn-slice")
     (synopsis "Split tunneling replacement for vpnc-script")

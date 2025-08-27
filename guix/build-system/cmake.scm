@@ -31,7 +31,9 @@
   #:use-module (guix packages)
   #:export (%cmake-build-system-modules
             cmake-build
-            cmake-build-system))
+            cmake-build-system
+            default-cmake
+            default-ninja))
 
 ;; Commentary:
 ;;
@@ -64,10 +66,17 @@
                     'cmake-minimal-cross
                     'cmake-minimal))))
 
+(define (default-ninja)
+  "Return the default ninja package."
+  ;; Lazily resolve the binding to avoid a circular dependency.
+  (let ((module (resolve-interface '(gnu packages ninja))))
+    (module-ref module 'ninja/pinned)))
+
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
                 (implicit-inputs? #t) (implicit-cross-inputs? #t)
                 (cmake (default-cmake target))
+                (ninja (default-ninja))
                 #:allow-other-keys
                 #:rest arguments)
   "Return a bag for NAME."
@@ -84,6 +93,7 @@
                           `(("source" ,source))
                           '())
                     ,@`(("cmake" ,cmake))
+                    ,@`(("ninja" ,ninja))
                     ,@native-inputs
                     ,@(if target '() inputs)
                     ,@(if (and target implicit-cross-inputs?)
@@ -115,9 +125,12 @@
                       (search-paths '())
                       (make-flags ''())
                       (out-of-source? #t)
+                      (generator "Unix Makefiles")
                       (build-type "RelWithDebInfo")
                       (tests? #t)
-                      (test-target "test")
+                      (test-exclude "")
+                      (test-repeat-until-pass? #t)
+                      (test-repeat-until-pass-count 5)
                       (parallel-build? #t) (parallel-tests? #t)
                       (validate-runpath? #t)
                       (patch-shebangs? #t)
@@ -155,9 +168,12 @@ provides a 'CMakeLists.txt' file as its build system."
                                                      configure-flags)
                              #:make-flags #$make-flags
                              #:out-of-source? #$out-of-source?
+                             #:generator #$generator
                              #:build-type #$build-type
                              #:tests? #$tests?
-                             #:test-target #$test-target
+                             #:test-exclude #$test-exclude
+                             #:test-repeat-until-pass? #$test-repeat-until-pass?
+                             #:test-repeat-until-pass-count #$test-repeat-until-pass-count
                              #:parallel-build? #$parallel-build?
                              #:parallel-tests? #$parallel-tests?
                              #:validate-runpath? #$validate-runpath?
@@ -193,9 +209,12 @@ provides a 'CMakeLists.txt' file as its build system."
                             (native-search-paths '())
                             (make-flags ''())
                             (out-of-source? #t)
+                            (generator "Unix Makefiles")
                             (build-type "RelWithDebInfo")
                             (tests? #f) ; nothing can be done
-                            (test-target "test")
+                            (test-exclude "")
+                            (test-repeat-until-pass? #t)
+                            (test-repeat-until-pass-count 5)
                             (parallel-build? #t) (parallel-tests? #t)
                             (validate-runpath? #t)
                             (patch-shebangs? #t)
@@ -256,9 +275,12 @@ build system."
                                                    configure-flags))
                        #:make-flags #$make-flags
                        #:out-of-source? #$out-of-source?
+                       #:generator #$generator
                        #:build-type #$build-type
                        #:tests? #$tests?
-                       #:test-target #$test-target
+                       #:test-exclude #$test-exclude
+                       #:test-repeat-until-pass? #$test-repeat-until-pass?
+                       #:test-repeat-until-pass-count #$test-repeat-until-pass-count
                        #:parallel-build? #$parallel-build?
                        #:parallel-tests? #$parallel-tests?
                        #:validate-runpath? #$validate-runpath?

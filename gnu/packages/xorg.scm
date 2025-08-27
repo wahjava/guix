@@ -14,17 +14,18 @@
 ;;; Copyright © 2017-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2017, 2018, 2019 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2017, 2020 Arun Isaac <arunisaac@systemreboot.net>
-;;; Copyright © 2018–2022 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018–2022, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2018, 2020, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 Benjamin Slade <slade@jnanam.net>
 ;;; Copyright © 2019 nee <nee@cock.li>
 ;;; Copyright © 2019 Yoshinori Arai <kumagusu08@gmail.com>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
+;;; Copyright © 2019 Todor Kondić <tk.code@protonmail.com>
 ;;; Copyright © 2020 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2020 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2020, 2021 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2021 Nicolò Balzarotti <nicolo@nixo.xyz>
@@ -65,6 +66,8 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix build-system cargo)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system haskell)
@@ -81,11 +84,13 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages digest)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages fltk)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
@@ -95,6 +100,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages guile)
   #:use-module (gnu packages haskell)
   #:use-module (gnu packages haskell-apps)
   #:use-module (gnu packages haskell-check)
@@ -108,6 +114,7 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages nettle)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
@@ -121,7 +128,9 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages spice)
+  #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages vnc)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xdisorg))
@@ -2741,6 +2750,9 @@ as USB mice.")
        (sha256
         (base32 "0qf0kjh6pww5abxmqa4c9sfa2qq1hq4p8qcgqpfd1kpkcvmg012g"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
@@ -2765,6 +2777,9 @@ X server.")
           (base32
            "0p88blr3zgy47jc4aqivc6ypj4zq9pad1cl70wwz9xig29w9xk2s"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
@@ -2832,6 +2847,9 @@ X server.")
                (base32
                 "14sx6dm0nmbf1fs8cazmak0aqjpjpv9wv7v09w86ff04m7f4gal6"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
     (synopsis "ASpeed Technologies video driver for X server")
@@ -2857,6 +2875,9 @@ X server.")
          (sha256
           (base32 "1n49wx0v13jh8vv17sxgrmmpi1mk3n2wph07jfmxmzqahpcn4lkn"))))
       (build-system gnu-build-system)
+      (arguments
+       (list #:configure-flags
+             #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
       (inputs (list mesa xorgproto xorg-server))
       (native-inputs
        (list pkg-config autoconf automake libtool))
@@ -2882,6 +2903,9 @@ X server.")
           (base32
             "00b468w01hqjczfqz42v2vqhb14db4wazcqi1w29lgfyhc0gmwqf"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
@@ -2905,6 +2929,9 @@ X server.")
     (build-system gnu-build-system)
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "Dummy video driver for X server")
     (description
@@ -2928,6 +2955,9 @@ X server.")
             "11zk8whari4m99ad3w30xwcjkgya4xbcpmg8710q14phkbxw0aww"))))
     (build-system gnu-build-system)
     (inputs (list xorg-server))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
     (synopsis "Framebuffer device video driver for X server")
@@ -2968,7 +2998,8 @@ framebuffer device.")
        `(#:configure-flags
          (list (string-append "--with-xorg-conf-dir="
                               (assoc-ref %outputs "out")
-                              "/share/X11/xorg.conf.d"))
+                              "/share/X11/xorg.conf.d")
+               "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")
          #:phases
          (modify-phases %standard-phases
            (replace 'bootstrap
@@ -3052,6 +3083,9 @@ compositing.  Both support Xv overlay and dynamic rotation with XRandR.")
     (build-system gnu-build-system)
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "I128 video driver for X server")
     (description
@@ -3089,8 +3123,6 @@ X server.")
        (filter (lambda (system) (or (string-prefix? "i686-" system)
                                     (string-prefix? "x86_64-" system)))
                %supported-systems))
-      (arguments
-       '(#:configure-flags '("--with-default-accel=uxa")))
       (home-page "https://www.x.org/wiki/")
       (synopsis "Intel video driver for X server")
       (description
@@ -3114,6 +3146,9 @@ It supports a variety of Intel graphics chipsets.")
            "0917498pgm629v84h7ddsmhqa6nc3z2msbv1x9nxrlkwl93npffn"))))
     (build-system gnu-build-system)
     (inputs (list mesa xorgproto xorg-server))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (native-inputs
       (list pkg-config))
     (home-page "https://www.x.org/wiki/")
@@ -3144,6 +3179,9 @@ the same level of support for generic VGA or 8514/A adapters.")
     (inputs (list mesa xorgproto xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (synopsis "Matrox video driver for X server")
     (description
      "xf86-video-mga is a Matrox video driver for the Xorg X server.")
@@ -3167,6 +3205,9 @@ the same level of support for generic VGA or 8514/A adapters.")
     (inputs (list xorgproto xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (synopsis "NeoMagic video driver for X server")
     (description
      "xf86-video-neomagic is a NeoMagic video driver for the Xorg X server.")
@@ -3213,6 +3254,9 @@ the same level of support for generic VGA or 8514/A adapters.")
           (base32
            "1jlap6xjn4pfwg9ab8fxm5mwf4dqfywp70bgc0071m7k66jbv3f6"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
     (home-page "https://www.x.org/wiki/")
@@ -3265,7 +3309,10 @@ graphics cards.")
     (inputs
       (list libxfont2 spice-protocol xorg-server xorgproto))
     (native-inputs
-      (list pkg-config))
+     (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (synopsis "Qxl video driver for X server")
     (description "xf86-video-qxl is a video driver for the Xorg X server.
 This driver is intended for the spice qxl virtio device.")
@@ -3287,6 +3334,9 @@ This driver is intended for the spice qxl virtio device.")
     (inputs (list mesa xorgproto xorg-server))
     (native-inputs
      (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "ATI Rage 128 video driver for X server")
     (description
@@ -3311,6 +3361,9 @@ This driver is intended for ATI Rage 128 based cards.")
     (build-system gnu-build-system)
     (inputs (list mesa xorgproto xorg-server))
     (native-inputs (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "Savage video driver for X server")
     (description
@@ -3334,7 +3387,9 @@ This driver is intended for ATI Rage 128 based cards.")
         (patches (search-patches "xf86-video-siliconmotion-fix-ftbfs.patch"))))
     (build-system gnu-build-system)
     (inputs (list xorg-server))
-    (native-inputs (list pkg-config))
+    (native-inputs (list pkg-config))(arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "Silicon Motion video driver for X server")
     (description
@@ -3357,6 +3412,10 @@ Xorg X server.")
          (base32
           "0nrs6cjldlhakx5987fiiggjrlzilsbdc7l9pz22x1iwslbkz78i"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (inputs (list mesa xorgproto xorg-server))
     (native-inputs
      (list pkg-config))
@@ -3384,6 +3443,10 @@ This driver supports SiS chipsets of 300/315/330/340 series.")
     (build-system gnu-build-system)
     (inputs (list mesa xorgproto xorg-server))
     (native-inputs (list pkg-config))
+
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "3Dfx video driver for X server")
     (description
@@ -3410,6 +3473,9 @@ This driver supports SiS chipsets of 300/315/330/340 series.")
     (build-system gnu-build-system)
     (inputs (list xorg-server))
     (native-inputs (list pkg-config))
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (home-page "https://www.x.org/wiki/")
     (synopsis "VESA video driver for X server")
     (description
@@ -5306,6 +5372,250 @@ draggable titlebars and borders.")
    (package
      (inherit xorg-server))))
 
+;;; XXX: Not really at home, but unless we break the inheritance between
+;;; tigervnc-server and xorg-server, it must live here to avoid cyclic module
+;;; dependencies.
+(define-public tigervnc-client
+  ;; The latest version doesn't build with GCC 14 when enabling ffmpeg
+  ;; support; pick the latest commit from the master branch.
+  (let ((commit "83e9c55d4c6a4a989d056a6ed9613bde74bcc50b")
+        (revision "0"))
+    (package
+      (name "tigervnc-client")
+      (version (git-version "1.15.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/TigerVNC/tigervnc")
+                (commit commit)))
+         (sha256
+          (base32 "1gqa5lbin4qb2k6iapd4hjxk85byaj6zs8vx0az30i7v18jib1c6"))
+         (file-name (git-file-name name version))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key parallel-tests? tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "ctest" "-j" (if parallel-tests?
+                                           (number->string (parallel-job-count))
+                                           "1")
+                          "--test-dir" "tests/unit/"))))
+            (replace 'install
+              (lambda _
+                (with-directory-excursion "vncviewer"
+                  (invoke "make" "install")))))))
+      (native-inputs (list appstream gettext-minimal googletest))
+      (inputs
+       (list ffmpeg
+             fltk-1.3
+             gnutls
+             libjpeg-turbo
+             libx11
+             libxdamage
+             libxext
+             libxrandr
+             libxtst
+             linux-pam
+             nettle
+             pixman
+             zlib))
+      (home-page "https://tigervnc.org/")
+      (synopsis "High-performance VNC remote desktop client")
+      (description "TigerVNC implements a @acronym{VNC, Virtual Network Computing}
+client and server.  @dfn{VNC} is a remote display system that lets you view and
+interact with a virtual desktop environment running on another computer on the
+network.  Client and server may be running on different operating systems and
+architectures.
+
+TigerVNC uses a variant of Tight encoding that is greatly accelerated by the use
+of the libjpeg-turbo JPEG codec and performs fast enough to run even 3D or video
+applications.  It also provides extensions for advanced authentication methods
+and @acronym{TLS, Transport-Level Security} encryption.
+
+This package installs only the VNC client (@command{vncviewer}), the application
+used to connect to VNC servers such as the tigervnc-server package.")
+      (license license:gpl2+))))
+
+(define %tigervnc-client-source (package-source tigervnc-client))
+
+;; A VNC server is, in fact, an X server so it seems like a good idea to build
+;; on the work already done for xorg-server package.  This is not entirely
+;; compatible with the recommendation in BUILDING.txt where the client is
+;; built first, then the source code of the X server is copied into a subdir
+;; of the build directory, patched with VNC additions and then build and
+;; installed as Xvnc.  The procedure was turned around, where TigerVNC code is
+;; downloaded and built inside the Guix X server build dir.  Also, the VNC
+;; patching process for the X server is automated in a straightforward manner.
+(define-public tigervnc-server
+  (package
+    (inherit xorg-server)
+    (name "tigervnc-server")
+    (version (package-version tigervnc-client))
+    (source
+     (origin
+       (inherit (package-source xorg-server))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Copy the VNC extension into the xorg-server sources.
+            (copy-recursively #$(file-append %tigervnc-client-source
+                                             "/unix/xserver")
+                              ".")
+            ;; Include a full copy of tigervnc-client sources, so that the
+            ;; complete sources involved are available and can be edited during
+            ;; the build.
+            (copy-recursively #$%tigervnc-client-source "tigervnc-client")
+            ;; Adjust the VNC extension build system files so that it refers
+            ;; to it.
+            (substitute* "hw/vnc/Makefile.am"
+              (("(TIGERVNC_SRCDIR=).*" _ head)
+               (string-append head "$(CURDIR)/../../tigervnc-client\n"))
+              (("(TIGERVNC_BUILDDIR=).*" _ head)
+               (string-append head
+                              "$(CURDIR)/../../tigervnc-client/build\n")))
+            ;; Ensure the Autotools build system gets re-bootstrapped.
+            (delete-file "configure")))
+       ;; Patch the xorg-server build system so that it builds the VNC
+       ;; extension.
+       (patches (cons (file-append %tigervnc-client-source
+                                   "/unix/xserver21.patch")
+                      (origin-patches (package-source xorg-server))))
+       (file-name (string-append name "-" version ".tar.xz"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments xorg-server)
+       ((#:tests? #f #f)
+        #f)
+       ((#:configure-flags flags)
+        #~(cons* "--with-pic"           ; taken from BUILDING.txt
+                 "--without-dtrace"
+                 "--disable-static"
+                 "--disable-dri2"
+                 "--disable-xinerama"
+                 "--disable-xvfb"
+                 "--disable-xnest"
+                 "--disable-xorg"
+                 "--disable-dmx"
+                 "--disable-xwin"
+                 "--disable-xephyr"
+                 "--disable-kdrive"
+                 "--disable-config-hal"
+                 "--disable-config-udev"
+                 "--disable-dri2"
+                 "--enable-glx"
+                 (delete "--enable-xephyr" #$flags)))
+       ((#:modules modules)
+        `(append '((ice-9 ftw)
+                   (ice-9 match)
+                   (guix build utils)
+                   (guix build gnu-build-system))
+                 modules))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'unpack 'adjust-pam-config
+              (lambda _
+                (substitute* "tigervnc-client/unix/vncserver/tigervnc.pam"
+                  (("pam_systemd.so")
+                   "pam_elogind.so"))))
+            (add-after 'unpack 'patch-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "tigervnc-client/unix/vncserver/vncserver.in"
+                  (("`mcookie`")
+                   (format #f "`~a`" (search-input-file inputs "bin/mcookie")))
+                  ;; Adjust the places where the vncserver script looks for
+                  ;; X11 fonts.
+                  (("'/usr/share/X11/fonts'" all)
+                   (format #f "'~a', '~a', ~a"
+                           "/run/current-system/profile/share/fonts/X11"
+                           (string-append #$(this-package-input "font-alias")
+                                          "share/fonts/X11")
+                           all))
+                  ;; Adjust the location where .desktop files will be saved.
+                  (("/usr/share/xsessions")
+                   "/run/current-system/profile/share/xsessions")
+                  ;; Do not require a system-provided Xsession shell script.
+                  ;; Guix System has none, causing the for loop to iterate
+                  ;; over an empty list.
+                  (("\"/etc/X11/xinit/Xsession\", \"/etc/X11/Xsession\"")
+                   "()")
+                  (("if \\(not defined \\$Xsession)")
+                   "if (0)")
+                  (("@cmd, \\$Xsession,")
+                   "@cmd,"))))
+            (add-before 'build 'build-tigervnc
+              (lambda* (#:key parallel-build? #:allow-other-keys)
+                (mkdir-p "tigervnc-client/build")
+                (with-directory-excursion "tigervnc-client/build"
+                  (invoke "cmake" "-G" "Unix Makefiles"
+                          (string-append "-DCMAKE_INSTALL_PREFIX=" #$output)
+                          "..")
+                  (invoke "make" "-j" (number->string (if parallel-build?
+                                                          (parallel-job-count)
+                                                          1))))))
+            (replace 'build
+              (lambda* (#:key parallel-build? #:allow-other-keys)
+                (invoke "make" "-j" (number->string (if parallel-build?
+                                                        (parallel-job-count)
+                                                        1)))))
+            (add-before 'install 'install-tigervnc-aux
+              (lambda _
+                (invoke "make" "-C" "tigervnc-client/build/unix" "install")))
+            (replace 'install
+              (lambda _
+                (invoke "make" "install")))
+            (add-after 'install 'wrap-vncserver
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (wrap-script (search-input-file outputs "libexec/vncserver")
+                  (list "PATH" 'prefix
+                        (map (lambda (p)
+                               (dirname (search-input-file inputs p)))
+                             '("bin/uname"
+                               "bin/xauth"
+                               "bin/xinit"))))))))))
+    (native-inputs
+     (modify-inputs (append (package-native-inputs xorg-server)
+                            (package-native-inputs tigervnc-client))
+       (append (package-source tigervnc-client)
+               autoconf
+               automake
+               libtool
+               gettext-minimal
+               font-util
+               cmake
+               perl)))
+    (inputs
+     (modify-inputs (append (package-inputs xorg-server)
+                            (package-inputs tigervnc-client))
+       (prepend coreutils
+                font-alias
+                guile-3.0
+                perl
+                util-linux
+                xauth
+                xinit)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs xorg-server)
+       (prepend xauth)))
+    (synopsis "High-performance VNC remote desktop server based on Xorg")
+    (description "TigerVNC implements a @acronym{VNC, Virtual Network Computing}
+client and server.  @dfn{VNC} is a remote display system that lets you view and
+interact with a virtual desktop environment running on another computer on the
+network.  Client and server may be running on different operating systems and
+architectures.
+
+TigerVNC uses a variant of Tight encoding that is greatly accelerated by the use
+of the libjpeg-turbo JPEG codec and performs fast enough to run even 3D or video
+applications.  It also provides extensions for advanced authentication methods
+and @acronym{TLS, Transport-Level Security} encryption.
+
+This package installs the VNC server.  Permitted users can log into a graphical
+session on the machine where the server is running, using a VNC client such as
+the tigervnc-client package.")))
+
 (define-public eglexternalplatform
   (package
     (name "eglexternalplatform")
@@ -6243,7 +6553,7 @@ basic eye-candy effects.")
 (define-public xpra
   (package
     (name "xpra")
-    (version "6.3.1")
+    (version "6.3.2")
     (source
      (origin
        (method git-fetch)
@@ -6252,7 +6562,7 @@ basic eye-candy effects.")
            (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ilb6sii5xjqnjj2c84vhixw8cnsxb3nr63miv31x1pimy6wn0hw"))
+        (base32 "1ffh106rld54pb9n4aq1jh4lk8c9h54w0h5pjj2h3jzyvpsnpfqs"))
        (patches (search-patches "xpra-6.0-systemd-run.patch"
                                 "xpra-6.1-install_libs.patch"))))
     (build-system python-build-system)
@@ -6885,6 +7195,46 @@ Wayland headless compositors.
 direct replacement for @command{xvfb-run} specifically.
 @end itemize")
     (license license:gpl2+)))
+
+(define-public xwayland-satellite
+  (package
+    (name "xwayland-satellite")
+    (version "0.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Supreeeme/xwayland-satellite")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "04n9lsalzyj1pq0x0wvmnpldw1kdb8ws91niwqr54a3km7ayn8i2"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list #:install-source? #f
+           #:tests? #f                  ;Requires running display server.
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-paths
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/lib.rs"
+                     (("\"Xwayland\"")
+                      (format #f "~s"
+                              (search-input-file inputs "bin/Xwayland")))))))))
+    (native-inputs (list pkg-config))
+    (inputs
+     (cons* clang
+            xcb-util-cursor
+            xorg-server-xwayland
+            (cargo-inputs 'xwayland-satellite)))
+    (home-page "https://github.com/Supreeeme/xwayland-satellite")
+    (synopsis "Xwayland outside your Wayland")
+    (description
+     "@command{xwayland-satellite} grants rootless Xwayland integration to any
+Wayland compositor implementing the @code{xdg_wm_base} interface.  This is
+particularly useful for compositors that (understandably) do not want to go
+through implementing support for rootless Xwayland themselves.")
+    (license license:mpl2.0)))
 
 (define-public setroot
   (package

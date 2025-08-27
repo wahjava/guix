@@ -49,6 +49,9 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages linux)
@@ -70,7 +73,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.22")
+    (version "1.23.1")
     (source
      (origin
        (method url-fetch)
@@ -80,7 +83,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "1cggwb5libxjx4x96hd2v1pd4rm7m7bll37j888khsc5s486q32z"))))
+         "1y23fz82d7zaa2svyzjhfhahl6l0a3yrasfbcfacplhkwk7bflnp"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -232,10 +235,57 @@ runtime (like runc or crun) for a single container.")
 containers highly integrated with the hosts.")
     (license license:gpl3)))
 
+(define-public dive
+  (package
+    (name "dive")
+    (version "0.12.0") ;newer version needs docker/docker@28+
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/wagoodman/dive")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p60bq0lc820p7x3nq8kxc8cx646c0z7zxqc7vav77zc4qbm3r8a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:install-source? #f
+      #:build-flags
+      #~(list (string-append "-ldflags=-X main.version=" #$version))
+      #:import-path "github.com/wagoodman/dive"))
+    (native-inputs
+     (list go-github-com-awesome-gocui-gocui
+           go-github-com-awesome-gocui-keybinding
+           go-github-com-cespare-xxhash
+           go-github-com-docker-cli
+           go-github-com-docker-docker
+           go-github-com-dustin-go-humanize
+           go-github-com-fatih-color
+           go-github-com-google-uuid
+           go-github-com-logrusorgru-aurora
+           go-github-com-lunixbochs-vtclean
+           go-github-com-mitchellh-go-homedir
+           go-github-com-phayes-permbits
+           go-github-com-sergi-go-diff
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-afero
+           go-github-com-spf13-cobra
+           go-github-com-spf13-viper
+           go-golang-org-x-net))
+    (home-page "https://github.com/wagoodman/dive")
+    (synopsis "Tool for exploring each layer in a docker image")
+    (description
+     "This package provides a tool for exploring a Docker image, layer
+contents, and discovering ways to shrink the size of Docker/OCI image.")
+    (license license:expat)))
+
 (define-public libslirp
   (package
     (name "libslirp")
-    (version "4.7.0")
+    (version "4.9.1")
     (source
      (origin
        (method git-fetch)
@@ -243,7 +293,7 @@ containers highly integrated with the hosts.")
              (url "https://gitlab.freedesktop.org/slirp/libslirp")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0dny8187a8qh6akaa37aa9b5pjxx88f02wh6achp4mygff0ipxba"))
+        (base32 "1jlqda5k5wm0ql0fymkr3dbf1d71gxcj7896r8mz8s1i264gg8rh"))
        (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (propagated-inputs
@@ -261,7 +311,7 @@ containers or various tools.")
 (define-public slirp4netns
   (package
     (name "slirp4netns")
-    (version "1.3.2")
+    (version "1.3.3")
     (source
      (origin
        (method git-fetch)
@@ -269,7 +319,7 @@ containers or various tools.")
              (url "https://github.com/rootless-containers/slirp4netns")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "13lw48b89583smblp2d4kxb1j23k2qx3i2j5zi91sxwnnn4ndks2"))
+        (base32 "165z1ccsb8w901965rlzcrbln17l1jdg9k7vsiamlx0q06v24b96"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -356,7 +406,6 @@ Layer-4 sockets.")
     (arguments
      `(#:unpack-path "github.com/containernetworking/plugins"
        #:tests? #f ; XXX: see stat /var/run below
-       #:go ,go-1.24
        #:phases (modify-phases %standard-phases
                   (replace 'build
                     (lambda _
@@ -634,7 +683,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.40.1")
+    (version "1.41.1")
     (source
      (origin
        (method git-fetch)
@@ -642,7 +691,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "109xvnx65gbajxipq2h0669bzzxyc6hfmdcijgngijxj5kwx5cgq"))
+        (base32 "12mi2084dmk8hg35chfbfbdl1s9ibsq000hhi1n9f0ibk177y6qw"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

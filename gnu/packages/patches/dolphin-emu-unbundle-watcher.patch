@@ -1,0 +1,30 @@
+Upstream-status: https://github.com/dolphin-emu/dolphin/pull/13823
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c277e2a10a..9b9ec00f91 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -786,7 +786,9 @@ if (USE_RETRO_ACHIEVEMENTS)
+ 	add_subdirectory(Externals/rcheevos)
+ endif()
+ 
+-add_subdirectory(Externals/watcher)
++dolphin_find_optional_system_library_pkgconfig(
++  WATCHER watcher watcher::watcher Externals/watcher
++)
+ 
+ ########################################
+ # Pre-build events: Define configuration variables and write SCM info header
+diff --git a/Source/Core/Common/CMakeLists.txt b/Source/Core/Common/CMakeLists.txt
+index ee738ba4e3..629c739c8d 100644
+--- a/Source/Core/Common/CMakeLists.txt
++++ b/Source/Core/Common/CMakeLists.txt
+@@ -186,7 +186,7 @@ PRIVATE
+   FatFs
+   Iconv::Iconv
+   spng::spng
+-  watcher
++  watcher::watcher
+   ${VTUNE_LIBRARIES}
+ )
+ 

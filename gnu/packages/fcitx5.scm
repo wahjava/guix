@@ -5,6 +5,7 @@
 ;;; Copyright © 2022 dan <i@dan.games>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Charles <charles@charje.net>
+;;; Copyright © 2025 VnPower <vnpower@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -28,6 +29,7 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
+  #:use-module (guix build-system qt)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages anthy)
   #:use-module (gnu packages boost)
@@ -92,7 +94,7 @@ client.")
 (define-public fcitx5
   (package
     (name "fcitx5")
-    (version "5.1.12")
+    (version "5.1.14")
     (source
      (origin
        (method url-fetch)
@@ -100,36 +102,36 @@ client.")
              "https://download.fcitx-im.org/fcitx5/fcitx5/fcitx5-"
              version "_dict.tar.zst"))
        (sha256
-        (base32 "1zsmqicp4x2kpbrrh1r87ji3gsfxvl9ipgdni81b3mv6dv999nhr"))))
+        (base32 "1893994lrffzclblvw1jpcccqrqbpch8p5nd9jhc06ahajbz2nkk"))))
     (arguments
      (list #:configure-flags #~(list "-DUSE_SYSTEMD=OFF")))
     (build-system cmake-build-system)
     (inputs
-     `(("cairo" ,cairo)
-       ("cairo-xcb" ,cairo-xcb)
-       ("dbus" ,dbus)
-       ("enchant" ,enchant)
-       ("expat" ,expat)
-       ("fmt" ,fmt)
-       ("gdk-pixbuf" ,gdk-pixbuf)
-       ("gettext" ,gettext-minimal)
-       ("glib" ,glib)
-       ("iso-codes" ,iso-codes/pinned)
-       ("json-c" ,json-c)
-       ("libevent" ,libevent)
-       ("libuuid" ,util-linux "lib")
-       ("libuv" ,libuv)
-       ("libxcb" ,libxcb)
-       ("libxkbcommon" ,libxkbcommon)
-       ("libxkbfile" ,libxkbfile)
-       ("pango" ,pango)
-       ("wayland" ,wayland)
-       ("wayland-protocols" ,wayland-protocols)
-       ("xcb-imdkit" ,xcb-imdkit)
-       ("xcb-util" ,xcb-util)
-       ("xcb-util-keysyms" ,xcb-util-keysyms)
-       ("xcb-util-wm" ,xcb-util-wm)
-       ("xkeyboard-config" ,xkeyboard-config)))
+     (list cairo
+           cairo-xcb
+           dbus
+           enchant
+           expat
+           fmt
+           gdk-pixbuf
+           gettext-minimal
+           glib
+           iso-codes/pinned
+           json-c
+           libevent
+           libuv
+           libxcb
+           libxkbcommon
+           libxkbfile
+           pango
+           `(,util-linux "lib")         ;For libuuid.
+           wayland
+           wayland-protocols
+           xcb-imdkit
+           xcb-util
+           xcb-util-keysyms
+           xcb-util-wm
+           xkeyboard-config))
     (native-inputs
      (list extra-cmake-modules
            zstd
@@ -151,7 +153,7 @@ client.")
 (define-public fcitx5-lua
   (package
     (name "fcitx5-lua")
-    (version "5.0.14")
+    (version "5.0.15")
     (source
      (origin
        (method url-fetch)
@@ -159,7 +161,7 @@ client.")
              "https://download.fcitx-im.org/fcitx5/fcitx5-lua/fcitx5-lua-"
              version ".tar.zst"))
        (sha256
-        (base32 "0lmw62pd8x5ys8ci0dz43pw8q8401zjcfs24gjslbljhc4aqnp9r"))))
+        (base32 "1yp5z97m8n7fwvxps1gn8pflg69j3yawgabz36bpd4wl43zkgchg"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -177,14 +179,14 @@ client.")
 (define-public libime
   (package
     (name "libime")
-    (version "1.1.10")
+    (version "1.1.11")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://download.fcitx-im.org/fcitx5/libime/libime-"
                            version "_dict.tar.zst"))
        (sha256
-        (base32 "17mdxbj8bb6vmjwfghy0hm0vvzcank835ayz9h8nhsaiap46nx54"))))
+        (base32 "1ms8vmv9fdr2czf7511jxiw7wyclvbkd82xkk16hahcvrszbrjqb"))))
     (build-system cmake-build-system)
     (inputs
      (list fcitx5 boost (list zstd "lib")))
@@ -199,7 +201,7 @@ editors.")
 (define-public fcitx5-gtk
   (package
     (name "fcitx5-gtk")
-    (version "5.1.3")
+    (version "5.1.4")
     (source
      (origin
        (method url-fetch)
@@ -207,7 +209,7 @@ editors.")
                            "/fcitx5-gtk/fcitx5-gtk-"
                            version ".tar.zst"))
        (sha256
-        (base32 "1j2cmqmcdzfv8cxnjd75mfkfpd7r1a1iqdqc8zdx8dc88vz4dmis"))))
+        (base32 "0lwl17mbfm3pxpd3y7h4sxf77npr16hyzygrc7a6v26bx6ycbkqx"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -317,7 +319,7 @@ IM module for GTK+3 applications.
 (define-public fcitx5-qt
   (package
     (name "fcitx5-qt")
-    (version "5.1.9")
+    (version "5.1.10")
     (source
      (origin
        (method url-fetch)
@@ -325,7 +327,7 @@ IM module for GTK+3 applications.
                            "/fcitx5-qt/fcitx5-qt-"
                            version ".tar.zst"))
        (sha256
-        (base32 "1s45iyyyl0js5p15zb3hxwsjspj0p3p4m81c7x9bz00a60b58m1i"))))
+        (base32 "0v07g2nsdjcijl81i7zrv3krr9w4nh88lkri0xq9l9cbri91h0mf"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -356,7 +358,7 @@ for Qt based application.")
 (define-public fcitx5-anthy
   (package
     (name "fcitx5-anthy")
-    (version "5.1.6")
+    (version "5.1.7")
     (source
      (origin
        (method url-fetch)
@@ -364,7 +366,7 @@ for Qt based application.")
                            "/fcitx5-anthy/fcitx5-anthy-"
                            version ".tar.zst"))
        (sha256
-        (base32 "08lw5d9kpjmgdss76rqf0qzs39jw371fnbb56k3z64wjg1h3722w"))))
+        (base32 "1vfv0i62z9dclm5zcxk2v57x46z85m36w2yvskpfwyc8nwald3lm"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f)) ;; no tests
@@ -380,7 +382,7 @@ the Anthy input method.")
 (define-public fcitx5-skk
   (package
     (name "fcitx5-skk")
-    (version "5.1.6")
+    (version "5.1.7")
     (source
      (origin
        (method git-fetch)
@@ -389,7 +391,7 @@ the Anthy input method.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "109fx80iaa896652lwhfdr8x9h4vmw6pc9fwns3cwp610p9x21yn"))))
+        (base32 "0xvsbsc9ybq6j0xnvq3wiidw9f6kh5n8jr3z69b7hshw59jirjaq"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f      ; no tests
@@ -413,17 +415,44 @@ the Anthy input method.")
 backend.")
     (license license:gpl3+)))
 
+(define-public fcitx5-unikey
+  (package
+    (name "fcitx5-unikey")
+    (version "5.1.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/fcitx/fcitx5-unikey")
+                    (commit version)))
+              (sha256
+               (base32 "0j82r63vn1rmjz2m92x6xksn548mmkiwcjkziqh6dp6aysxszvxx"))
+              (file-name (git-file-name name version))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (inputs
+     (list gettext-minimal
+           fcitx5
+           fcitx5-qt))
+    (native-inputs
+     (list extra-cmake-modules
+           pkg-config))
+    (home-page "https://github.com/fcitx/fcitx5-unikey")
+    (synopsis "Unikey (Vietnamese Input Method) engine support for Fcitx5")
+    (description "This provides Unikey input method support for Fcitx5.")
+    (license license:gpl2+)))
+
 (define-public fcitx5-chewing
   (package
     (name "fcitx5-chewing")
-    (version "5.1.7")
+    (version "5.1.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/fcitx/fcitx5-chewing")
                     (commit version)))
               (sha256
-               (base32 "1hr5ylyzm5r02la5lh6alrp6g19y0dm9ccydd9ygy30srd26pga0"))
+               (base32 "1l9hps0w1da3rjmkipzgb13fyh1nhalapgynywvjd1zvj9njazrs"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -445,7 +474,7 @@ backend.")
 (define-public fcitx5-chinese-addons
   (package
     (name "fcitx5-chinese-addons")
-    (version "5.1.8")
+    (version "5.1.9")
     (source
      (origin
        (method url-fetch)
@@ -453,32 +482,32 @@ backend.")
                            "/fcitx5-chinese-addons/fcitx5-chinese-addons-"
                            version "_dict.tar.zst"))
        (sha256
-        (base32 "06ls6ww60y7l39bjk1h1xvjq9c3va5cib6hs4y0xk9p69f2s41l3"))))
+        (base32 "0j0xx4kil93ixa81j08y4mm5qfpl32qf3fdlcw2sbjn92v238hbv"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
-       '("-DUSE_WEBKIT=off")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'split-outputs
-           ;; Build with GUI supports requires Qt and increase package closure
-           ;; by 800M on x86_64, so place it under another output.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "gui/pinyindictmanager/CMakeLists.txt"
-               (("\\$\\{CMAKE_INSTALL_LIBDIR\\}" _)
-                (string-append (assoc-ref outputs "gui") "/lib"))))))))
+     (list #:configure-flags
+           #~(list "-DUSE_WEBKIT=off")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'split-outputs
+                 ;; Build with GUI supports requires Qt and increase package
+                 ;; closure by 800M on x86_64, so place it under another output.
+                 (lambda _
+                   (substitute* "gui/pinyindictmanager/CMakeLists.txt"
+                     (("\\$\\{CMAKE_INSTALL_LIBDIR\\}" _)
+                      (string-append #$output:gui "/lib"))))))))
     (inputs
-     `(("fcitx5" ,fcitx5)
-       ("fcitx5-lua" ,fcitx5-lua)
-       ("boost" ,boost)
-       ("libime",libime)
-       ("curl" ,curl)
-       ("gettext" ,gettext-minimal)
-       ("fmt" ,fmt)
-       ("opencc" ,opencc)
-       ("qtbase" ,qtbase)
-       ("fcitx5-qt" ,fcitx5-qt)
-       ("qtwebengine" ,qtwebengine)))
+     (list boost
+           curl
+           fcitx5
+           fcitx5-lua
+           fcitx5-qt
+           fmt
+           gettext-minimal
+           libime
+           opencc
+           qtbase
+           qtwebengine))
     (native-inputs
      (list extra-cmake-modules pkg-config))
     (outputs '("out" "gui"))
@@ -506,7 +535,7 @@ including input methods previous bundled inside Fcitx 4:
 (define-public fcitx5-configtool
   (package
     (name "fcitx5-configtool")
-    (version "5.1.8")
+    (version "5.1.10")
     (source
      (origin
        (method url-fetch)
@@ -514,9 +543,11 @@ including input methods previous bundled inside Fcitx 4:
              "https://download.fcitx-im.org/fcitx5"
              "/fcitx5-configtool/fcitx5-configtool-" version ".tar.zst"))
        (sha256
-        (base32 "1kg0hddds7raqf5y4qw2x02hb4i5impv4hjfm2qvcn3g775rzrq6"))))
+        (base32 "1fb21mbc0k33cadslq0rjwi5y7fxm5jzgdk9yna3h2r62sdmdb60"))))
     (build-system cmake-build-system)
-    (arguments (list #:configure-flags #~(list "-DUSE_QT6=ON")))
+    (arguments
+     (list #:tests? #f
+           #:configure-flags #~(list "-DUSE_QT6=ON")))
     (inputs
      (list fcitx5
            fcitx5-qt
@@ -624,7 +655,7 @@ for Fcitx 5 with following color variants:
 (define-public fcitx5-rime
   (package
     (name "fcitx5-rime")
-    (version "5.1.10")
+    (version "5.1.11")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.fcitx-im.org/fcitx5"
@@ -632,7 +663,7 @@ for Fcitx 5 with following color variants:
                                   ".tar.zst"))
               (sha256
                (base32
-                "12c5cjpqkz37b6s106p7r4k56mssz1m8q2f6py82zbg0ybsvn980"))))
+                "1xk5a0nfnxy1xaml6pdibpqf92wl2237ayyrpnkmamaxvgvw3kvi"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f ;no tests

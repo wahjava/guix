@@ -34,7 +34,7 @@
 ;;; Copyright © 2018 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;; Copyright © 2019 mikadoZero <mikadozero@yandex.com>
-;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Stefan Stefanović <stefanx2ovic@gmail.com>
 ;;; Copyright © 2019-2022 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2019 Kei Kebreau <kkebreau@posteo.net>
@@ -82,6 +82,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,7 +118,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages compression)
@@ -163,7 +163,6 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages netpbm)
   #:use-module (gnu packages networking)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages perl)
@@ -182,6 +181,7 @@
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages rrdtool)
   #:use-module (gnu packages rsync)
+  #:use-module (gnu packages rust-sources)
   #:use-module (gnu packages samba)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
@@ -514,86 +514,71 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.15-version "6.15.5")
+(define-public linux-libre-6.15-version "6.15.11")
 (define-public linux-libre-6.15-gnu-revision "gnu")
 (define deblob-scripts-6.15
   (linux-libre-deblob-scripts
    linux-libre-6.15-version
    linux-libre-6.15-gnu-revision
-   (base32 "0v0fsw3av42xbayy3g11cxyin3hda8s3b103sin05yc80r16584b")
-   (base32 "05153ci3sk9gsq8vgk6phvzszldaj2psmyp10cjivm3gl6qvkbhk")))
+   (base32 "05fr8s00ljj7v26z3gb1yrfna42i7zy36x6wrg74ai5hwwc7jfnd")
+   (base32 "0301x3n5qbg8xm48pxq1dhrq0vkr61bqdcyaz0mbckrg20kw6m67")))
 (define-public linux-libre-6.15-pristine-source
   (let ((version linux-libre-6.15-version)
-        (hash (base32 "1dc8qrwvvy34s5lgm43j295ipwaqm8wd8x4qchr14hqlkj9hg9rc")))
+        (hash (base32 "14sxwrvw9p4ybizb8ky1rgahc62q0aw5qkmzqp3cpnavqfgldaw9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.15)))
-
-(define-public linux-libre-6.14-version "6.14.11")
-(define-public linux-libre-6.14-gnu-revision "gnu")
-(define deblob-scripts-6.14
-  (linux-libre-deblob-scripts
-   linux-libre-6.14-version
-   linux-libre-6.14-gnu-revision
-   (base32 "1c27l734pwxgdwhq0gzibaznh0695pqvl17vbddw6q5znm84a0s3")
-   (base32 "14vabccax7mq5gisshlnx2ljx3hr4jj106aw3s9qx5dxbjvr7qcw")))
-(define-public linux-libre-6.14-pristine-source
-  (let ((version linux-libre-6.14-version)
-        (hash (base32 "06rvydmc2yfspidnsay5hin3i8p4fxy3bvzwnry7gjf9dl5cs71z")))
-   (make-linux-libre-source version
-                            (%upstream-linux-source version hash)
-                            deblob-scripts-6.14)))
 
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.36")
+(define-public linux-libre-6.12-version "6.12.43")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
    (base32 "0y6i9ifax1a8bxih3rr9xzy3mj61ssgx9yfsy6fh94mni6wl51gp")
-   (base32 "0g08l17f57wkh2jfj4n2k7f7ikm87aj55npljvwd1lns7v5p90xr")))
+   (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "135s057ya63zw4v1jr9lzjdxk60ahr9v38hbv6nima755pnql5ja")))
+        (hash (base32 "1vmxywg11z946i806sg7rk7jr9px87spmwwbzjxpps2nsjybpjqg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.96")
+(define-public linux-libre-6.6-version "6.6.102")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
    linux-libre-6.6-version
    linux-libre-6.6-gnu-revision
    (base32 "1fph0cf5vwkxcyz2cay4d70sqw1y02dx3shfclhp9y4nmkk169pq")
-   (base32 "1zzpk2hpv76lylip4j7jkn0jqcjj15h3jff22x22i73mwz2kiqgk")))
+   (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1p8v49w7z8w3wc68mbw46cz9xqrllc8cpa7nqlm2xnrssi1mir4y")))
+        (hash (base32 "0p6yjifwyrqlppn40isgxb0b5vqmljggmnp7w75vlc2c6fvzxll0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.143")
+(define-public linux-libre-6.1-version "6.1.148")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
    (base32 "00yh14z7sr9pkakkkpdyp8fj41d56a306xsf5yb2lzm0sgl6lvza")
-   (base32 "1hzjr44hy8px4n3x5my2syhd60chkfy79ajgzvlz04pc5yf6ihpi")))
+   (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "02ivq22hv42bcnssfpkkbqlhz1by9jrfrqlrz1wi0svysz2dlnz2")))
+        (hash (base32 "18c024bqqc3srzv2gva55p95yghjc6x3p3f54v3hziki4wx3v86r")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.186")
+(define-public linux-libre-5.15-version "5.15.189")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -603,27 +588,27 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0anbf7v0m26da0c6d0z925im4x2kf8kswpbv056543amxvbzsklw")))
+        (hash (base32 "1hshd26ahn6dbw6jnqi0v5afpk672w7p09mk7iri93i7hxdh5l73")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.239")
+(define-public linux-libre-5.10-version "5.10.240")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
    linux-libre-5.10-version
    linux-libre-5.10-gnu-revision
-   (base32 "1lg0sxfjn0hpcdfyqy2r5kchnjfyyx2xraxhmjhwwkpiwl9ph501")
-   (base32 "11liynz5vayms646gj0rjj8fmrqhv203mwsqs3sx9p8y84v50d4p")))
+   (base32 "1wn9k4lbxcc9rzl1rqidlnb472wyayillrh57gyxnghi7j9ghqna")
+   (base32 "0r1whrfhhhjyvppiidhihcvyzcab6dva6g9a4div8jkxm62s2cq3")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "1nzhl1y6avfl77fyqwjwy3qc6679gp92k0d3aarscrdydcml5yid")))
+        (hash (base32 "04sdcf4aqsqchii38anzmk9f9x65wv8q1x3m9dandmi6fabw724d")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.295")
+(define-public linux-libre-5.4-version "5.4.296")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -633,7 +618,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0l7pwhgw9laxfypcpqlz411x3hybcw2269abh3lpcw96bgv5m1k2")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "1adn0pbk8y1zp1yrz83ch6h4wypm2qvbnx4xig3sls2nfgvmi0f4")))
+        (hash (base32 "0fm73yqzbzclh2achcj8arpg428d412k2wgmlfmyy6xzb1762qrx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -668,11 +653,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 (define-public linux-libre-6.15-source
   (source-with-patches linux-libre-6.15-pristine-source
-                       (list %boot-logo-patch
-                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
-
-(define-public linux-libre-6.14-source
-  (source-with-patches linux-libre-6.14-pristine-source
                        (list %boot-logo-patch
                              %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
@@ -801,11 +781,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
   (make-linux-libre-headers* linux-libre-6.15-version
                              linux-libre-6.15-gnu-revision
                              linux-libre-6.15-source))
-
-(define-public linux-libre-headers-6.14
-  (make-linux-libre-headers* linux-libre-6.14-version
-                             linux-libre-6.14-gnu-revision
-                             linux-libre-6.14-source))
 
 (define-public linux-libre-headers-6.12
   (make-linux-libre-headers* linux-libre-6.12-version
@@ -1182,14 +1157,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-6.14
-  (make-linux-libre* linux-libre-6.14-version
-                     linux-libre-6.14-gnu-revision
-                     linux-libre-6.14-source
-                     '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
-                     #:configuration-file kernel-config))
-
 (define-public linux-libre-version         linux-libre-6.15-version)
 (define-public linux-libre-gnu-revision    linux-libre-6.15-gnu-revision)
 (define-public linux-libre-pristine-source linux-libre-6.15-pristine-source)
@@ -1519,6 +1486,48 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public reform-debian-packages
   (package
     (name "reform-debian-packages")
+    (version "2023-07-10-425-g9187116") ;from git describe
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://source.mnt.re/reform/reform-debian-packages.git")
+             (commit "918711653f0607612214e5a39efccc9273685dcf")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sj4za5rirn00v2qzz440m30h3p40g2s7l50g8npk2x3a16fs8ln"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("linux/patches6.15/" "/patches6.15")
+          ("linux/" "/dts/amlogic"
+           #:include-regexp ("meson.*\\.dts$"))
+          ("linux/" "/dts/freescale"
+           #:include-regexp ("imx8.*\\.dts$"))
+          ("linux/" "/dts/freescale"
+           #:include-regexp ("fsl.*\\.dts$"))
+          ("linux/" "/dts/rockchip"
+           #:include-regexp ("rk3588.*\\.dts$"))
+          ("linux/config" "config"))))
+    (home-page "https://source.mnt.re/reform/reform-debian-packages")
+    (synopsis
+     "Linux kernel patches and device-trees used for MNT Reform systems")
+    (description
+     "Linux kernel patches and device-trees used for the MNT Reform systems")
+    (license (list
+              (license:fsf-free "file://filter-output"
+                                "https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html")
+              license:bsd-2
+              license:expat
+              license:gpl2
+              license:gpl2+
+              license:gpl3
+              license:x11))))
+
+(define-public reform-debian-packages-for-6.12
+  (package
+    (name "reform-debian-packages")
     (version "2023-07-10-320-gaf0a461") ;from git describe
     (source
      (origin
@@ -1533,7 +1542,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
     (arguments
      (list
       #:install-plan
-      #~'(("linux/patches6.12/" "/patches")
+      #~'(("linux/patches6.12/" "/patches6.12")
           ("linux/" "/dts/amlogic"
            #:include-regexp ("meson.*\\.dts$"))
           ("linux/" "/dts/freescale"
@@ -1559,6 +1568,278 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
               license:x11))))
 
 (define-public linux-libre-arm64-mnt-reform
+  ;; Kernel for use on the MNT/Reform systems
+  ;; https://mntre.com/reform.html
+  (let ((base (make-linux-libre* linux-libre-6.15-version
+                                 linux-libre-6.15-gnu-revision
+                                 linux-libre-6.15-source
+                                 '("aarch64-linux")
+                                 #:extra-version "arm64-mnt-reform"
+                                 #:extra-options
+                                 ;; https://source.mnt.re/reform/reform-debian-packages/-/blob/main/linux/config
+                                 (append `(("CONFIG_DRM_LVDS_CODEC" . m)
+                                           ("CONFIG_DRM_CDNS_MHDP8546" . m)
+                                           ("CONFIG_DRM_CDNS_HDMI_CEC" . m)
+                                           ("CONFIG_DRM_IMX_CDNS_MHDP" . m)
+                                           ("CONFIG_DRM_IMX_DCSS" . m)
+                                           ("CONFIG_PHY_FSL_IMX8MQ_HDPTX" . m)
+                                           ("CONFIG_DRM_PANEL_LVDS" . m)
+                                           ("CONFIG_I2C_IMX_LPI2C" . m)
+                                           ("CONFIG_I2C_MUX_REG" . m)
+                                           ("CONFIG_INTERCONNECT_IMX" . #true)
+                                           ("CONFIG_INTERCONNECT_IMX8MQ" . #true)
+                                           ("CONFIG_MFD_WM8994" . m)
+                                           ("CONFIG_MUX_GPIO" . m)
+                                           ("CONFIG_MUX_MMIO" . m)
+                                           ("CONFIG_RTC_DRV_PCF8523" . m)
+                                           ("CONFIG_USB_EHCI_FSL" . m)
+                                           ("CONFIG_NO_HZ_IDLE" . #true)
+                                           ("CONFIG_SND_SOC_FSL_MICFIL" . m)
+                                           ("CONFIG_SND_IMX_SOC" . m)
+                                           ("CONFIG_SND_SOC_FSL_ASOC_CARD" . m)
+                                           ("CONFIG_SND_SOC_IMX_AUDMIX" . m)
+                                           ("CONFIG_SND_SOC_IMX_HDMI" . m)
+                                           ("CONFIG_INPUT_JOYSTICK" . #true)
+                                           ("CONFIG_JOYSTICK_XPAD" . m)
+                                           ("CONFIG_JOYSTICK_XPAD_FF" . #true)
+                                           ("CONFIG_JOYSTICK_XPAD_LEDS" . #true)
+                                           ("CONFIG_INTERCONNECT_IMX8MP" . #true)
+                                           ("CONFIG_SND_SOC_FSL_ASRC" . #true)
+                                           ("CONFIG_DRM_IMX_LCDIF" . #true)
+                                           ("CONFIG_DRM_IMX8MP_DW_HDMI_BRIDGE" . #true)
+                                           ("CONFIG_DRM_IMX8MP_HDMI_PVI" . #true)
+                                           ("CONFIG_IMX8MM_THERMAL" . #true)
+                                           ("CONFIG_IMX2_WDT" . #true)
+                                           ("CONFIG_DRM_SAMSUNG_DSIM" . #true)
+                                           ("CONFIG_PHY_FSL_SAMSUNG_HDMI_PHY" . #true)
+                                           ("CONFIG_DRM" . #true)
+                                           ("CONFIG_DRM_PANEL_MNT_POCKET_REFORM" . #true)
+                                           ("CONFIG_IMX8M_BLK_CTRL" . #true)
+                                           ("CONFIG_IMX_GPCV2_PM_DOMAINS" . #true)
+                                           ("CONFIG_DRM_DISPLAY_CONNECTOR" . #true)
+                                           ("CONFIG_DRM_FSL_LDB" . #true)
+                                           ("CONFIG_BACKLIGHT_CLASS_DEVICE" . #true)
+                                           ("CONFIG_BACKLIGHT_PWM" . #true)
+                                           ("CONFIG_BACKLIGHT_GPIO" . #true)
+                                           ("CONFIG_BACKLIGHT_LED" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_PERFORMANCE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_POWERSAVE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_USERSPACE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_ONDEMAND" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_CONSERVATIVE" . #true)
+                                           ("CONFIG_CPU_FREQ_GOV_SCHEDUTIL" . #true)
+                                           ("CONFIG_ARM_IMX_CPUFREQ_DT" . #true)
+                                           ("CONFIG_ARM_IMX_BUS_DEVFREQ" . #true)
+                                           ("CONFIG_IMX_IRQSTEER" . #true)
+                                           ("CONFIG_PCI_MESON" . #true)
+                                           ("CONFIG_DWMAC_MESON" . #true)
+                                           ("CONFIG_MDIO_BUS_MUX_MESON_G12A" . #true)
+                                           ("CONFIG_GPIO_ROCKCHIP" . #true)
+                                           ("CONFIG_PL330_DMA" . #true)
+                                           ("CONFIG_I2C_MESON" . #true)
+                                           ("CONFIG_PWM_MESON" . #true)
+                                           ("CONFIG_USB_DWC3_MESON_G12A" . #true)
+                                           ("CONFIG_MMC_MESON_GX" . #true)
+                                           ("CONFIG_MMC_MESON_MX_SDIO" . #true)
+                                           ("CONFIG_MESON_DDR_PMU" . #true)
+                                           ("CONFIG_RTW88_8822CS" . m)
+                                           ("CONFIG_PWM_FSL_FTM" . #true)
+                                           ("CONFIG_FSL_RCPM" . #true)
+                                           ("CONFIG_ARM_ROCKCHIP_CPUFREQ" . m)
+                                           ("CONFIG_DRM_PANTHOR" . m)
+                                           ("CONFIG_NVMEM_ROCKCHIP_OTP" . #true)
+                                           ("CONFIG_PHY_ROCKCHIP_SAMSUNG_HDPTX" . m)
+                                           ("CONFIG_PHY_ROCKCHIP_USBDP" . m)
+                                           ("CONFIG_ROCKCHIP_REGULATOR_COUPLER" . #true)
+                                           ("CONFIG_SPI_ROCKCHIP" . #true)
+                                           ("CONFIG_SPI_ROCKCHIP_SFC" . m)
+                                           ("CONFIG_ARM_SCMI_CPUFREQ" . m)
+                                           ("CONFIG_PHY_ROCKCHIP_SAMSUNG_DCPHY" . #true)
+                                           ("CONFIG_VIDEO_ROCKCHIP_VDEC2" . m)
+                                           ("CONFIG_ROCKCHIP_DW_HDMI_QP" . #true)
+                                           ("CONFIG_ROCKCHIP_DW_MIPI_DSI2" . #true)
+                                           ;; Fixes https://codeberg.org/guix/guix/issues/101
+                                           ("CONFIG_CRYPTO_USER_API_HASH" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_SKCIPHER" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_RNG" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
+                                           ("CONFIG_KEY_DH_OPERATIONS" . #true)
+                                           ;; Provide support for ath9k wireless
+                                           ("CONFIG_ATH9K" . m)
+                                           ("CONFIG_ATH9K_HTC" . m))
+                                         (default-extra-linux-options
+                                          linux-libre-6.15-version)))))
+    (package
+      (inherit base)
+      (inputs (list reform-debian-packages))
+      (synopsis (string-append (package-synopsis base)
+                               " for MNT/Reform systems"))
+      (description (string-append (package-description base)
+                    "  Configuration options and patches have been applied for use with MNT/Reform systems."))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'unpack 'apply-reform-patches
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (for-each (lambda (patch)
+                              (invoke "patch" "-p1" "-i"
+                                      (search-input-file inputs
+                                                         (string-append
+                                                          "patches6.15/" patch))))
+                            (list
+                             "imx8mp-mnt-pocket-reform/2ghz/0001-imx8mp-2ghz-clk.patch"
+                             "imx8mp-mnt-pocket-reform/2ghz/0002-imx8mp-2ghz-opp.patch"
+                             "imx8mp-mnt-pocket-reform/audio/0000-revert-crashy-audiomix-pm-support.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0001-sdhci-add-no-sd-uhs-sdr104-devicetree-property.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0002-During-the-card-init-the-host-side-sometimes-may-nee.patch"
+                             "imx8mp-mnt-pocket-reform/mmc-sdio/0003-USDHC-IP-has-one-limitation-the-tuning-circuit-can-t.patch"
+                             "imx8mp-mnt-pocket-reform/pocket-panel/0001-v5-add-multi-display-panel-driver.patch"
+                             "imx8mp-mnt-pocket-reform/pocket-panel/0002-pocket-panel-fix-sleep-add-orientation.patch"
+                             "imx8mp-mnt-reform2/0001-sn65dsi86-use-hs-clock-of-samsung-dsim-host-directly.patch"
+                             "imx8mp-mnt-reform2/0002-lcdif-dont-exceed-desired-pixel-clock.patch"
+                             "imx8mq-mnt-reform2/0001-imx8mq-mnt-reform2.dts-multiple-fixes-for-display-wi.patch"
+                             "imx8mq-mnt-reform2/0001-nwl-dsi-fixup-mode-only-for-LCDIF-input-not-DCSS.patch"
+                             "imx8mq-mnt-reform2/0002-Revert-drm-bridge-nwl-dsi-Use-vsync-hsync-polarity-f.patch"
+                             "imx8mq-mnt-reform2/0003-lcdif-fix-pcie-interference.patch"
+                             "imx8mq-mnt-reform2/0004-mnt4002-imx-gpcv2-wake-smccc.patch.patch"
+                             "imx8mq-mnt-reform2/0005-pci-imx6-add-support-for-internal-refclk-imx8mq.patch"
+                             "imx8mq-mnt-reform2/Initial-support-Cadence-MHDP8501-HDMI-DP-for-i.MX8MQ.patch"
+                             "ls1028a-mnt-reform2/0000-dtsi-add-hdptx.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0001-a311d-viu-fifo-lines-config.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0002-a311d-viu-fifo-lines-config-header.patch"
+                             "meson-g12b-bananapi-cm4-mnt-pocket-reform/0003-tlv320aic31xx-add-1228800hz-support.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0001-meson-g12b-bananapi-cm4-mnt-reform2.dts-fix-audio-an.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0001-Revert-drm-bridge-synopsys-dw-mipi-dsi-enable-EoTp-b.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0011-dw-mipi-dsi-phy-stop-wait-time.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0012-innolux-n125hce-gn1-timing-tweaks.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0013-meson-viu-hold-fifo-lines.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0014-meson-venc-sync.patch.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0015-meson-dw-mipi-dsi-sync-invert.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0016-sn65dsi86-burst-mode-support.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0018-sn65dsi86-never-turn-off.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0020-LOCAL-ALSA-Assign-internal-PCM-chmap-ELD-IEC958-kctl.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0021-HACK-of-partial-revert-of-fdt.c-changes.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0022-add-bt-and-eth-resets.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0023-sdio-pullups.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0024-sdio-improve-wifi-speed.patch"
+                             "meson-g12b-bananapi-cm4-mnt-reform2/0030-WORKAROUND-meson-plane-disable-afbc-32x8.patch"
+                             "rk3588-mnt-reform2/0001-MERGED-phy-Add-HDMI-configuration-options.patch"
+                             "rk3588-mnt-reform2/0002-MERGED-phy-hdmi-Add-color-depth-configuration.patch"
+                             "rk3588-mnt-reform2/0005-MERGED-phy-rockchip-samsung-hdptx-Drop-unused-struct.patch"
+                             "rk3588-mnt-reform2/0006-MERGED-phy-rockchip-samsung-hdptx-Drop-unused-phy_cf.patch"
+                             "rk3588-mnt-reform2/0007-MERGED-phy-rockchip-samsung-hdptx-Drop-superfluous-c.patch"
+                             "rk3588-mnt-reform2/0008-MERGED-phy-rockchip-samsung-hdptx-Avoid-Hz-hHz-unit-.patch"
+                             "rk3588-mnt-reform2/0009-MERGED-phy-rockchip-samsung-hdptx-Setup-TMDS-char-ra.patch"
+                             "rk3588-mnt-reform2/0010-MERGED-phy-rockchip-samsung-hdptx-Provide-config-par.patch"
+                             "rk3588-mnt-reform2/0011-MERGED-phy-rockchip-samsung-hdptx-Restrict-altering-.patch"
+                             "rk3588-mnt-reform2/0012-MERGED-phy-rockchip-samsung-hdptx-Rename-ambiguous-r.patch"
+                             "rk3588-mnt-reform2/0013-MERGED-phy-rockchip-samsung-hdptx-Optimize-internal-.patch"
+                             "rk3588-mnt-reform2/0014-MERGED-phy-rockchip-samsung-hdptx-Add-high-color-dep.patch"
+                             "rk3588-mnt-reform2/0015-MERGED-dt-bindings-PCI-dw-rockchip-Add-rk3576-suppor.patch"
+                             "rk3588-mnt-reform2/0016-MERGED-arm64-dts-rockchip-Add-rk3576-pcie-nodes.patch"
+                             "rk3588-mnt-reform2/0017-MERGED-dt-bindings-arm-rockchip-Add-Radxa-ROCK-5B.patch"
+                             "rk3588-mnt-reform2/0018-MERGED-arm64-dts-rockchip-add-mipi-dcphy-nodes-to-rk.patch"
+                             "rk3588-mnt-reform2/0019-MERGED-arm64-dts-rockchip-add-dsi-controller-nodes-o.patch"
+                             "rk3588-mnt-reform2/0020-MERGED-arm64-dts-rockchip-move-rock-5b-to-include-fi.patch"
+                             "rk3588-mnt-reform2/0021-MERGED-arm64-dts-rockchip-add-Rock-5B.patch"
+                             "rk3588-mnt-reform2/0024-DEBUG-usb-typec-tcpm-also-log-to-dmesg.patch"
+                             "rk3588-mnt-reform2/0025-math.h-add-DIV_ROUND_UP_NO_OVERFLOW.patch"
+                             "rk3588-mnt-reform2/0026-clk-divider-Fix-divisor-masking-on-64-bit-platforms.patch"
+                             "rk3588-mnt-reform2/0027-clk-composite-replace-open-coded-abs_diff.patch"
+                             "rk3588-mnt-reform2/0028-arm64-dts-rockchip-rk3588-evb1-add-bluetooth-rfkill.patch"
+                             "rk3588-mnt-reform2/0029-arm64-dts-rockchip-rk3588-evb1-improve-PCIe-ethernet.patch"
+                             "rk3588-mnt-reform2/0030-arm64-dts-rockchip-Slow-down-EMMC-a-bit-to-keep-IO-s.patch"
+                             "rk3588-mnt-reform2/0031-media-v4l2-ctrls-core-Set-frame_mbs_only_flag-by-def.patch"
+                             "rk3588-mnt-reform2/0032-media-rockchip-Move-H264-CABAC-table-to-header-file.patch"
+                             "rk3588-mnt-reform2/0033-media-rockchip-Introduce-the-rkvdec2-driver.patch"
+                             "rk3588-mnt-reform2/0034-media-dt-bindings-rockchip-Document-RK3588-Video-Dec.patch"
+                             "rk3588-mnt-reform2/0035-arm64-dts-rockchip-Add-rkvdec2-Video-Decoder-on-rk35.patch"
+                             "rk3588-mnt-reform2/0036-arm64-defconfig-enable-Rockchip-RK3588-video-decoder.patch"
+                             "rk3588-mnt-reform2/0037-mfd-rk8xx-Fix-shutdown-handler.patch"
+                             "rk3588-mnt-reform2/0038-dt-bindings-display-vop2-Add-VP-clock-resets.patch"
+                             "rk3588-mnt-reform2/0039-drm-rockchip-vop2-Add-clock-resets-support.patch"
+                             "rk3588-mnt-reform2/0040-arm64-dts-rockchip-Add-VOP-clock-resets-for-rk3588s.patch"
+                             "rk3588-mnt-reform2/0041-arm64-dts-rockchip-rk3588-evb1-add-DSI-panel.patch"
+                             "rk3588-mnt-reform2/0042-drm-rockchip-vop2-Add-core-reset-support.patch"
+                             "rk3588-mnt-reform2/0043-WIP-drm-rockchip-dw_hdmi_qp-Make-use-of-phy_configur.patch"
+                             "rk3588-mnt-reform2/0044-WIP-drm-bridge-Add-detect_ctx-hook.patch"
+                             "rk3588-mnt-reform2/0045-WIP-drm-bridge-connector-Switch-from-detect-to-detec.patch"
+                             "rk3588-mnt-reform2/0046-WIP-drm-bridge-dw-hdmi-qp-Add-high-TMDS-clock-ratio-.patch"
+                             "rk3588-mnt-reform2/0047-drm-dp-Pull-drm_dp_link_power_up-down-from-Tegra-to-.patch"
+                             "rk3588-mnt-reform2/0048-drm-bridge-cdns-mhdp8546-Switch-to-common-helpers-to.patch"
+                             "rk3588-mnt-reform2/0049-drm-bridge-anx6345-Switch-to-common-helpers-to-power.patch"
+                             "rk3588-mnt-reform2/0050-drm-bridge-anx78xx-Switch-to-common-helpers-to-power.patch"
+                             "rk3588-mnt-reform2/0051-drm-bridge-it6505-Switch-to-common-helpers-to-power-.patch"
+                             "rk3588-mnt-reform2/0052-dt-bindings-display-rockchip-Add-schema-for-RK3588-D.patch"
+                             "rk3588-mnt-reform2/0053-drm-bridge-synopsys-Add-DW-DPTX-Controller-support-l.patch"
+                             "rk3588-mnt-reform2/0054-drm-rockchip-Add-RK3588-DPTX-output-support.patch"
+                             "rk3588-mnt-reform2/0055-dt-bindings-display-simple-bridge-Add-ra620-compatib.patch"
+                             "rk3588-mnt-reform2/0056-drm-birdge-simple-bridge-Add-support-for-radxa-ra620.patch"
+                             "rk3588-mnt-reform2/0057-arm64-dts-rockchip-Add-DP0-for-rk3588.patch"
+                             "rk3588-mnt-reform2/0058-arm64-dts-rockchip-Add-DP1-for-rk3588.patch"
+                             "rk3588-mnt-reform2/0059-arm64-dts-rockchip-Enable-DisplayPort-for-rk3588s-Co.patch"
+                             "rk3588-mnt-reform2/0060-arm64-dts-rockchip-Enable-DP2HDMI-for-ROCK-5-ITX.patch"
+                             "rk3588-mnt-reform2/0061-arm64-defconfig-Enable-Rockchip-RK3588-DisplayPort-C.patch"
+                             "rk3588-mnt-reform2/0062-arm64-dts-rockchip-add-USB-C-support-for-ROCK-5B.patch"
+                             "rk3588-mnt-reform2/0063-arm64-dts-rockchip-enable-camera-I2C-interfaces-for-.patch"
+                             "rk3588-mnt-reform2/0064-accel-rocket-Add-registers-header.patch"
+                             "rk3588-mnt-reform2/0065-accel-rocket-Add-a-new-driver-for-Rockchip-s-NPU.patch"
+                             "rk3588-mnt-reform2/0066-accel-rocket-Add-IOCTL-for-BO-creation.patch"
+                             "rk3588-mnt-reform2/0067-accel-rocket-Add-job-submission-IOCTL.patch"
+                             "rk3588-mnt-reform2/0068-accel-rocket-Add-IOCTLs-for-synchronizing-memory-acc.patch"
+                             "rk3588-mnt-reform2/0069-dt-bindings-npu-rockchip-rknn-Add-bindings.patch"
+                             "rk3588-mnt-reform2/0070-arm64-dts-rockchip-add-pd_npu-label-for-RK3588-power.patch"
+                             "rk3588-mnt-reform2/0071-arm64-dts-rockchip-Add-nodes-for-NPU-and-its-MMU-to-.patch"
+                             "rk3588-mnt-reform2/0072-arm64-dts-rockchip-Enable-the-NPU-on-quartzpro64.patch"
+                             "rk3588-mnt-reform2/0073-arm64-dts-rockchip-enable-NPU-on-ROCK-5B.patch"
+                             "rk3588-mnt-reform2/1000-v3-pci_dw_rockchip_add_system_pm_support.patch"
+                             "rk3588-mnt-reform2/1001-pci_dw_rockchip_enable_l0s_capability.patch"
+                             "rk3588-mnt-reform2/1002-v2-media_verisilicon_fix_av1_decoder_clock_frequency.patch"
+                             "rk3588-mnt-reform2/5200-drm-rockchip-Set-dma-mask-to-64-bit.patch"))))
+              (add-after 'apply-reform-patches 'copy-reform-dts-files
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (for-each (lambda (dts)
+                              (copy-file (search-input-file inputs
+                                                            (string-append
+                                                             "/dts/" dts))
+                                         (string-append "arch/arm64/boot/dts/"
+                                          dts)))
+                            (list
+                             "amlogic/meson-g12b-bananapi-cm4-mnt-pocket-reform.dts"
+                             "freescale/fsl-ls1028a-mnt-reform2.dts"
+                             "freescale/imx8mp-mnt-pocket-reform.dts"
+                             "freescale/imx8mp-mnt-reform2.dts"
+                             "freescale/imx8mq-mnt-reform2-hdmi.dts"
+                             "rockchip/rk3588-mnt-pocket-reform.dts"
+                             "rockchip/rk3588-mnt-reform-next.dts"
+                             "rockchip/rk3588-mnt-reform2.dts"
+                             "rockchip/rk3588-mnt-reform2-dsi.dts"
+                             ))))
+              (add-after 'apply-reform-patches 'adjust-makefiles-with-new-dtb
+                (lambda _
+                  (substitute* "arch/arm64/boot/dts/amlogic/Makefile"
+                    (("meson-g12b-bananapi-cm4-mnt-reform2.dtb")
+                     "meson-g12b-bananapi-cm4-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MESON) += meson-g12b-bananapi-cm4-mnt-pocket-reform.dtb"))
+                  (substitute* "arch/arm64/boot/dts/freescale/Makefile"
+                    (("fsl-ls1028a-rdb.dtb")
+                     "fsl-ls1028a-rdb.dtb
+dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-mnt-reform2.dtb"))
+                  (substitute* "arch/arm64/boot/dts/freescale/Makefile"
+                    (("imx8mq-mnt-reform2.dtb")
+                     "imx8mq-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-mnt-pocket-reform.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mq-mnt-reform2-hdmi.dtb"))
+                  (substitute* "arch/arm64/boot/dts/rockchip/Makefile"
+                    (("rk3588-mnt-reform2.dtb")
+                     "rk3588-mnt-reform2.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform2-dsi.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-reform-next.dtb
+dtb-$(CONFIG_ARCH_ROCKCHIP) += rk3588-mnt-pocket-reform.dtb")))))))))))
+
+(define-public linux-libre-arm64-mnt-reform-6.12
   ;; Kernel for use on the MNT/Reform systems
   ;; https://mntre.com/reform.html
   (let ((base (make-linux-libre* linux-libre-6.12-version
@@ -1669,7 +1950,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                                           linux-libre-6.12-version)))))
     (package
       (inherit base)
-      (inputs (list reform-debian-packages))
+      (inputs (list reform-debian-packages-for-6.12))
       (synopsis (string-append (package-synopsis base)
                                " for MNT/Reform systems"))
       (description (string-append (package-description base)
@@ -1684,7 +1965,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                               (invoke "patch" "-p1" "-i"
                                       (search-input-file inputs
                                                          (string-append
-                                                          "patches/" patch))))
+                                                          "patches6.12/" patch))))
                             (list
                              "imx8mp-mnt-pocket-reform/2ghz/0001-imx8mp-2ghz-clk.patch"
                              "imx8mp-mnt-pocket-reform/2ghz/0002-imx8mp-2ghz-opp.patch"
@@ -2266,38 +2547,35 @@ graphics card on Optimus laptops.")
       (license license:gpl2))))
 
 (define-public bin-graph
-  ;; XXX: The upstream does not have tags yet.
-  (let ((commit "1dd42e3e8e123e993d6c287967502c8d4b36f9ba")
-        (revision "0"))
-    (package
-      (name "bin-graph")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/8dcc/bin-graph")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1wjkl789r7iys3nnyk813gsdxwwy2ryxgxirx5xw02lzk790dywl"))))
-      (arguments
-       (list #:tests? #f                ; no tests
-             #:make-flags
-             #~(list (string-append "CC=" #$(cc-for-target))
-                     (string-append "PREFIX=" #$output)
-                     (string-append "INSTALL_DIR=" #$output "/bin"))
-             #:phases
-             #~(modify-phases %standard-phases
-                 (delete 'configure))))    ; no configure script
-      (build-system gnu-build-system)
-      (inputs (list libpng))
-      (home-page "https://github.com/8dcc/bin-graph")
-      (synopsis "Visualize binary files")
-      (description
-       "@code{bin-graph} provides a simple way of visualizing the different regions
+  (package
+    (name "bin-graph")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/8dcc/bin-graph")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18m71kn7f4mn7k8hxx8mr1zl35a9ri06a3p1y2mncbgr8nn3pgb0"))))
+    (arguments
+     (list #:tests? #f                ; no tests
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output)
+                   (string-append "INSTALL_DIR=" #$output "/bin"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))    ; no configure script
+    (build-system gnu-build-system)
+    (inputs (list libpng))
+    (home-page "https://github.com/8dcc/bin-graph")
+    (synopsis "Visualize binary files")
+    (description
+     "@code{bin-graph} provides a simple way of visualizing the different regions
 of a binary file.")
-      (license license:gpl3))))
+    (license license:gpl3)))
 
 (define-public ddcci-driver-linux
   (let ((revision "0")
@@ -2347,7 +2625,7 @@ supported under @file{/sys/class/backlight/}.")
 (define-public v4l2loopback-linux-module
   (package
     (name "v4l2loopback-linux-module")
-    (version "0.15.0")
+    (version "0.15.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2356,7 +2634,7 @@ supported under @file{/sys/class/backlight/}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vp7f3ssvlbsxrwx6ix890yk589na6zhi0z3p1yl00fa813wcidh"))))
+                "00vkn4c1wlfmf8kqklklxj5kalwgiwwnxwbh4pw7dj9l1ivycm4f"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite
@@ -3944,7 +4222,10 @@ that the Ethernet protocol is much simpler than the IP protocol.")
                 (string-append "HDRDIR=" out "/include")
                 (string-append "SBINDIR=" out "/sbin")
                 (string-append "CONFDIR=" out "/etc")
-                (string-append "MANDIR=" out "/share/man")))
+                (string-append "MANDIR=" out "/share/man")
+                #$@(if (target-ppc64le?)
+                       '("CCOPTS=-O2 -pipe -Wno-incompatible-pointer-types")
+                       '())))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -4998,7 +5279,7 @@ from the module-init-tools project.")
         (list
           ;; For the test suite.
           cppcheck
-          go)))
+          go-1.23)))
     (home-page "https://github.com/rfjakob/earlyoom")
     (synopsis "Simple out of memory (OOM) daemon for the Linux kernel")
     (description "Early OOM is a minimalist out of memory (OOM) daemon that
@@ -7585,9 +7866,8 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
 
        ;; Upstream uses the "ninja" build system and encourage distros
        ;; to do the same for consistency.
-       #:configure-flags (list "-GNinja"
-
-                               ,@(if (%current-target-system)
+       #:generator "Ninja"
+       #:configure-flags (list ,@(if (%current-target-system)
                                      `((string-append
                                         "-DPKG_CONFIG_EXECUTABLE="
                                         (search-input-file
@@ -7597,18 +7877,9 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
                                      '())
                                (string-append "-DRST2MAN_EXECUTABLE="
                                               (search-input-file
-                                               %build-inputs "/bin/rst2man.py")))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'build
-           (lambda _
-             (invoke "ninja"
-                     "-j" (number->string (parallel-job-count)))))
-         (replace 'install
-           (lambda _
-             (invoke "ninja" "install"))))))
+                                               %build-inputs "/bin/rst2man.py")))))
     (native-inputs
-     (list ninja pkg-config python-wrapper python-docutils)) ;for 'rst2man'
+     (list pkg-config python-wrapper python-docutils)) ;for 'rst2man'
     (inputs
      (list libnl eudev))
     (home-page "https://github.com/linux-rdma/rdma-core")
@@ -7676,7 +7947,7 @@ The collection contains a set of bandwidth and latency benchmark such as:
   (package
     (name "rng-tools")
     (home-page "https://github.com/nhorman/rng-tools")
-    (version "6.16")
+    (version "6.17")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page)
@@ -7684,7 +7955,7 @@ The collection contains a set of bandwidth and latency benchmark such as:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rsk8nxs0j32b9hr88qk8hv029fb1q0hcrw0mfdywvm7dn2d15gn"))
+                "0vvqi9ha4jbk4086x2q98p4ip3z56sfdpyckdyknsd36zhp6z8n2"))
               (patches
                (search-patches "rng-tools-revert-build-randstat.patch"))
               (patch-flags '("-p0"))))
@@ -7832,127 +8103,128 @@ not as a replacement for it.")
                    license:gpl3+))))            ; everything else
 
 (define-public hotspot
-  (package
-    (name "hotspot")
-    (version "1.5.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/KDAB/hotspot")
-                    (commit (string-append "v" version))
-                    ;; Include the bundled perfparser and PrefixTickLabels
-                    ;; libraries, which are to be used in source form.
-                    (recursive? #t)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "04k2rvf2lgi8hp7dzqzn65fcd2lsiylwr04d44q75j0wvgbjjv1v"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      ;; As mentioned in the option help text, the KAuth helper cannot be
-      ;; installed to a custom prefix and the build fails with "file cannot
-      ;; create directory: /polkit-1/actions.  Maybe need administrative"
-      ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
-      #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
-                                "-DQT6_BUILD=ON")
-      #:qtbase qtbase
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-perfparser
-            ;; XXX: This phase is copied from qt-creator: keep them in sync!
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; perfparser attempts to dynamically load the demangle
-              ;; libraries; use their absolute file name to avoid having to
-              ;; set LD_LIBRARY_PATH.
-              (let ((librustc_demangle.so
-                     (with-exception-handler (lambda (ex)
-                                               (if (search-error? ex)
-                                                   #f
-                                                   (raise-exception ex)))
-                       (lambda ()
-                         (search-input-file inputs "lib/librustc_demangle.so"))
-                       #:unwind? #t)))
-                (substitute* "3rdparty/perfparser/app/demangler.cpp"
-                  (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
-                    all)
-                   (if librustc_demangle.so
-                       (format #f "loadDemangleLib(QStringLiteral(~s)"
-                               librustc_demangle.so)
-                       all))            ;no rustc_demangle; leave unchanged
-                  (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
-                   (format #f "loadDemangleLib(QStringLiteral(~s)"
-                           (search-input-file inputs
-                                              "lib/libd_demangle.so")))))))
-          (add-after 'unpack 'path-paths
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "src/perfoutputwidgetkonsole.cpp"
-                (("\"tail\"")
-                 (format #f "~s" (search-input-file inputs "bin/tail"))))
-              (substitute* "src/perfrecord.cpp"
-                (("\"perf( )?\"" _ space)
-                 (string-append "\"" (search-input-file inputs "bin/perf")
-                                (or space "") "\"")))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
-                ;; the later seemingly requiring sudo or access to the kernel
-                ;; trace points.
-                (invoke "ctest" "-E"
-                        (string-append
-                         "("
-                         (string-join
-                          ;; The 'tst_models' expected output doesn't exactly
-                          ;; match.
-                          '("tst_models"
-                            ;; The 'tst_callgraphgenerator' perf invocation
-                            ;; fails when run in the build container.
-                            "tst_callgraphgenerator"
-                            ;; The 'tst_perfparser' test requires sudo/access
-                            ;; to the kernel scheduler trace points.
-                            "tst_perfparser")
-                          "|")
-                         ")"))))))))
-    (native-inputs
-     (list extra-cmake-modules
-           vulkan-headers))
-    (inputs
-     (append
-      (list coreutils-minimal
-            d-demangler
-            elfutils
-            karchive
-            kconfig
-            kcoreaddons
-            kddockwidgets
-            kgraphviewer
-            ki18n
-            kio
-            kiconthemes
-            kitemmodels
-            kitemviews
-            knotifications
-            kparts
-            ksyntaxhighlighting
-            kwindowsystem
-            libxkbcommon
-            perf
-            qtdeclarative
-            qtsvg
-            solid
-            threadweaver
-            `(,zstd "lib"))
-      (if (supported-package? rust-rustc-demangle-capi-0.1)
-          (list rust-rustc-demangle-capi-0.1)
-          '())))
-    (home-page "https://github.com/KDAB/hotspot")
-    (synopsis "Performance analysis GUI for Linux perf")
-    (description "Hotspot is a standalone GUI for performance data analysis.
+  ;; Use the latest git commit as it includes unreleased fixes for the test
+  ;; suite.
+  (let ((commit "5cec69301a3f34ada86ce9fe01a9538b04b3cf7c")
+        (revision "0"))
+    (package
+      (name "hotspot")
+      (version (git-version "1.5.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/KDAB/hotspot")
+                       (commit commit)
+                       ;; Include the bundled perfparser and PrefixTickLabels
+                       ;; libraries, which are to be used in source form.
+                       (recursive? #t)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "115gskjdcb1q3mgrnv1qcdrhxabjzl1hhkpk1klk67ayicsk1ym6"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        ;; As mentioned in the option help text, the KAuth helper cannot be
+        ;; installed to a custom prefix and the build fails with "file cannot
+        ;; create directory: /polkit-1/actions.  Maybe need administrative"
+        ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
+        #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
+                                  "-DQT6_BUILD=ON")
+        #:qtbase qtbase
+        ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
+        ;; the later seemingly requiring sudo or access to the kernel
+        ;; trace points.
+        #:test-exclude
+        (string-append
+         "("
+         (string-join
+          ;; The 'tst_models' expected output doesn't exactly
+          ;; match.
+          '("tst_models"
+            ;; The 'tst_callgraphgenerator' perf invocation
+            ;; fails when run in the build container.
+            "tst_callgraphgenerator"
+            ;; The 'tst_perfparser' test requires sudo/access
+            ;; to the kernel scheduler trace points.
+            "tst_perfparser")
+          "|")
+         ")")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-perfparser
+              ;; XXX: This phase is copied from qt-creator: keep them in sync!
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; perfparser attempts to dynamically load the demangle
+                ;; libraries; use their absolute file name to avoid having to
+                ;; set LD_LIBRARY_PATH.
+                (let ((librustc_demangle.so
+                       (with-exception-handler (lambda (ex)
+                                                 (if (search-error? ex)
+                                                     #f
+                                                     (raise-exception ex)))
+                         (lambda ()
+                           (search-input-file inputs "lib/librustc_demangle.so"))
+                         #:unwind? #t)))
+                  (substitute* "3rdparty/perfparser/app/demangler.cpp"
+                    (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
+                      all)
+                     (if librustc_demangle.so
+                         (format #f "loadDemangleLib(QStringLiteral(~s)"
+                                 librustc_demangle.so)
+                         all))            ;no rustc_demangle; leave unchanged
+                    (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
+                     (format #f "loadDemangleLib(QStringLiteral(~s)"
+                             (search-input-file inputs
+                                                "lib/libd_demangle.so")))))))
+            (add-after 'unpack 'path-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "src/perfoutputwidgetkonsole.cpp"
+                  (("\"tail\"")
+                   (format #f "~s" (search-input-file inputs "bin/tail"))))
+                (substitute* "src/perfrecord.cpp"
+                  (("\"perf( )?\"" _ space)
+                   (string-append "\"" (search-input-file inputs "bin/perf")
+                                  (or space "") "\""))))))))
+      (native-inputs
+       (list extra-cmake-modules
+             vulkan-headers))
+      (inputs
+       (append
+        (list coreutils-minimal
+              d-demangler
+              elfutils
+              karchive
+              kconfig
+              kcoreaddons
+              kddockwidgets
+              kgraphviewer
+              ki18n
+              kio
+              kiconthemes
+              kitemmodels
+              kitemviews
+              knotifications
+              kparts
+              ksyntaxhighlighting
+              kwindowsystem
+              libxkbcommon
+              perf
+              qtdeclarative
+              qtsvg
+              solid
+              threadweaver
+              `(,zstd "lib"))
+        (if (supported-package? rust-rustc-demangle-capi-0.1)
+            (list rust-rustc-demangle-capi-0.1)
+            '())))
+      (home-page "https://github.com/KDAB/hotspot")
+      (synopsis "Performance analysis GUI for Linux perf")
+      (description "Hotspot is a standalone GUI for performance data analysis.
 It aims to be similar to KCachegrind, but for data collected with
 @command{perf}, a profiler for use with the kernel Linux.  Its main feature is
 graphically visualizing a @file{perf.data} file.")
-    (license (list license:gpl2+ license:gpl3+)))) ;dual licensed
+      (license (list license:gpl2+ license:gpl3+))))) ;dual licensed
 
 (define-public ecryptfs-utils
   (package
@@ -9962,6 +10234,9 @@ privileges.")
               (sha256
                (base32
                 "04nar65ac11qqx41vkfs7iip8kfiah0zms7l4rmsxncpiz2iqfik"))
+              (patches
+               (search-patches
+                "psm2-compile-ctor-without-avx.patch"))
               (modules '((guix build utils)))
               (snippet
                ;; That file declares its own 'strlcat' as static.  To avoid a
@@ -10453,7 +10728,9 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
               #$(string-append "-DFALCOSECURITY_LIBS_VERSION=" version))
       ;; Only the libsinsp test suite is run, as the one for libscap requires
       ;; elevated privileges.
-      #:test-target "run-unit-test-libsinsp"
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'disable-problematic-tests
@@ -10463,6 +10740,10 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
                 ;; exists in the build environment.
                 (("TEST_F\\(usergroup_manager_test, system_lookup)")
                  "TEST_F(usergroup_manager_test, DISABLED_system_lookup)"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "run-unit-test-libsinsp" args)))
           (add-after 'install 'delete-src
             (lambda _
               (delete-file-recursively
@@ -10827,7 +11108,7 @@ persistent over reboots.")
                                                  ;; user API (uAPI) headers.
                                                  "install_uapi_headers")
                                            make-flags)))))))))
-    (native-inputs (list linux-libre-headers-latest pkg-config))
+    (native-inputs (list pkg-config))
     (propagated-inputs (list elfutils zlib)) ;in Requires.private of libbpf.pc
     (home-page "https://github.com/libbpf/libbpf")
     (synopsis "BPF CO-RE (Compile Once – Run Everywhere)")
@@ -10992,11 +11273,7 @@ modification of BPF objects on the system.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DBUILD_TESTING=ON")
-      ;; Only run the unit tests suite, as the other ones
-      ;; (runtime_tests, tools-parsing-test) require to run as
-      ;; 'root'.
-      #:test-target "bpftrace_test"
+      #:test-exclude "(runtime_tests|tools-parsing-test)"
       #:phases
       #~(modify-phases %standard-phases
           ;; This patch also fixes broken compilation due to improper detection
@@ -11018,8 +11295,28 @@ modification of BPF objects on the system.")
                                "runtime/call"
                                "procmon.cpp")
                   (("/bin/ls")
-                   (which "ls")))))))))
-    (native-inputs (list bison dwarves flex googletest xxd))
+                   (which "ls"))))))
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* '("tests/child.cpp")
+                (("/bin/sleep")
+                 (search-input-file inputs "bin/sleep")))))
+          (add-before 'check 'set-test-filter
+            (lambda _
+              (setenv "GTEST_FILTER"
+                      (string-join
+                       (list ; "-" disables all following tests
+                             "-ast.probe_name_uprobe"
+                             "bpftrace.add_probes_uprobe_wildcard_file"
+                             "bpftrace.add_probes_uprobe_wildcard_file_uprobe_multi"
+                             "bpftrace.add_probes_usdt_wildcard"
+                             "Parser.multiple_attach_points_kprobe"
+                             "Parser.uretprobe_offset"
+                             "semantic_analyser.builtin_functions"
+                             "semantic_analyser.call_func"
+                             "semantic_analyser.call_uaddr")
+                       ":")))))))
+    (native-inputs (list bison coreutils dwarves flex googletest xxd))
     (inputs (list bcc clang-15 elfutils libbpf libiberty cereal))
     (home-page "https://github.com/bpftrace/bpftrace")
     (synopsis "High-level tracing language for Linux eBPF")

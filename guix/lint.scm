@@ -8,7 +8,7 @@
 ;;; Copyright © 2017 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2017, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017, 2018, 2020, 2024, 2025 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2018, 2019, 2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2020 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2020 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
@@ -117,6 +117,7 @@
             check-vulnerabilities
             check-for-updates
             check-formatting
+            check-misplaced-flags
             check-archival
             check-profile-collisions
             check-haskell-stackage
@@ -639,7 +640,7 @@ of a package, and INPUT-NAMES, a list of package specifications such as
     (map (lambda (input)
            (make-warning
             package
-            (G_ "'~a' should probably switched for its minimal variant")
+            (G_ "'~a' should probably be switched for its minimal variant")
             (list input)
             #:field 'inputs))
          (package-input-intersection (package-direct-inputs package)
@@ -692,7 +693,7 @@ or \"bash-minimal\" is not in its inputs. 'wrap-script' is not supported."
                                        input-names)))
   (define (check-procedure-body body)
     (match body
-      ;; Explicitely setting an interpreter is acceptable.
+      ;; Explicitly setting an interpreter is acceptable.
       (('wrap-program _ '#:sh . _) '())
       (('wrap-program _ . _)
        (list (report-wrap-program-error package 'wrap-program)))
@@ -1519,7 +1520,7 @@ password, provided REF's URI is HTTP or HTTPS."
     (filter lint-warning?
             (map (cut try store <>) (package-supported-systems package))))
 
-  ;; For backwards compatability, don't rely on store being set
+  ;; For backwards compatibility, don't rely on store being set
   (or (and=> store check-with-store)
       (with-store store
         (check-with-store store))))
@@ -1634,6 +1635,63 @@ vulnerability records for PACKAGE by calling PACKAGE-VULNERABILITIES."
                (G_ "probably vulnerable to ~a")
                (list (string-join (map vulnerability-id unpatched)
                                   ", "))))))))))
+
+(define (check-misplaced-flags package)
+  "Check if there are flags set (for example, in #:configure-flags) which
+can be set as part of the build system."
+  (define (make-misplaced-flag-warning flag)
+    (define (flag-pair flag)
+      (cond ((string-prefix? "-DCMAKE_BUILD_TYPE" flag)
+             '("CMAKE_BUILD_TYPE" "build-type"))
+            ((string-prefix? "--buildtype" flag)
+             '("buildtype" "build-type"))
+            ((or (string-prefix? "-Drelease-" flag)
+                 (string-prefix? "--release" flag))
+             '("release" "release-type"))
+            ((string-prefix? "--features" flag)
+             '("features" "features"))))
+    (list (make-warning package
+                  (G_ "'~a' should be set with the '~a' flag")
+                  (flag-pair flag)
+                  #:field 'arguments)))
+  (define (find-incorrect-flags flag)
+    (match flag
+      ((and (? (cut string? <>))
+            (or (? (cut string-prefix? "-DCMAKE_BUILD_TYPE=" <>))
+                (? (cut string-prefix? "--buildtype=" <>))
+                (? (cut string-prefix? "-Drelease-" <>))
+                (? (cut string-prefix? "--release=" <>))
+                (? (cut string-prefix? "--features" <>))))
+       (make-misplaced-flag-warning flag))
+      ((x . y)
+       (append (find-incorrect-flags x)
+               (find-incorrect-flags y)))
+      (_ '())))
+  (apply (lambda* (#:key (make-flags '()) (configure-flags '())
+                   (cargo-build-flags '())
+                   (cargo-test-flags '())
+                   #:allow-other-keys)
+           (define make-flags/sexp
+             (if (gexp? make-flags)
+                 (gexp->approximate-sexp make-flags)
+                 make-flags))
+           (define configure-flags/sexp
+             (if (gexp? configure-flags)
+                 (gexp->approximate-sexp configure-flags)
+                 configure-flags))
+           (define cargo-build-flags/sexp
+             (if (gexp? cargo-build-flags)
+                 (gexp->approximate-sexp cargo-build-flags)
+                 cargo-build-flags))
+           (define cargo-test-flags/sexp
+             (if (gexp? cargo-test-flags)
+                 (gexp->approximate-sexp cargo-test-flags)
+                 cargo-test-flags))
+           (find-incorrect-flags (append make-flags/sexp
+                                         configure-flags/sexp
+                                         cargo-build-flags/sexp
+                                         cargo-test-flags/sexp)))
+         (package-arguments package)))
 
 (define (check-for-updates package)
   "Check if there is an update available for PACKAGE."
@@ -2054,7 +2112,7 @@ them for PACKAGE."
      (check       check-input-labels))
    (lint-checker
      (name        'wrapper-inputs)
-     (description "Make sure 'wrap-program' can finds its interpreter.")
+     (description "Make sure 'wrap-program' can find its interpreter.")
      (check       check-wrapper-inputs))
    (lint-checker
      (name        'license)
@@ -2079,6 +2137,10 @@ or a list thereof")
      (name        'source-unstable-tarball)
      (description "Check for autogenerated tarballs")
      (check       check-source-unstable-tarball))
+   (lint-checker
+     (name        'misplaced-flags)
+     (description "Check for misplaced flags")
+     (check       check-misplaced-flags))
    (lint-checker
      (name            'derivation)
      (description     "Report failure to compile a package to a derivation")

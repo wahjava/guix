@@ -36,7 +36,7 @@
 (define-public mold
   (package
     (name "mold")
-    (version "2.40.2")
+    (version "2.40.4")
     (source
      (origin
        (method git-fetch)
@@ -45,7 +45,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pz88wkm0mmj2vfg9wzy6vimajlbrvlqnkllfj4vwnchf328ig8d"))
+        (base32 "05prkdr3v8wb8l99qrri9r27yar5yl8aiv1ns41b556ckdjdw8q6"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -61,8 +61,7 @@
       #:configure-flags #~(list #$@(if (target-64bit?)
                                        '("-DMOLD_USE_SYSTEM_MIMALLOC=ON")
                                        '("-DMOLD_USE_MIMALLOC=OFF"))
-                                "-DMOLD_USE_SYSTEM_TBB=ON"
-                                "-DBUILD_TESTING=ON")
+                                "-DMOLD_USE_SYSTEM_TBB=ON")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'configure 'force-system-xxhash

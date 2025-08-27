@@ -1890,4 +1890,186 @@ toolchain.  Among other features it provides
     (properties `((max-silent-time . 9600)
                   ,@(clang-compiler-cpu-architectures "19")))))
 
+
+;;;
+;;; Bootstrap path for Zig 0.15.
+;;;
+
+(define zig-0.14.0-687
+  (let ((commit "cc047fdd959edb260f7a6e305ccad53f185ece66")
+        (revision "687")
+        (base zig-0.14))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "0wjswx1cvql8pxpdrglr3h24v5rffnq3llr0f08hj8g959f6ffvs"))
+      ;; zig2
+      (arguments (package-arguments zig-0.10.0-851))
+      (inputs
+       (modify-inputs (package-inputs base)
+         (replace "clang" clang-20)
+         (replace "lld" lld-20)))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "llvm" llvm-20)
+         (replace "zig" `(,base "zig1"))))
+      (properties `((max-silent-time . 9600)
+                    ,@(clang-compiler-cpu-architectures "20"))))))
+
+(define zig-0.14.0-877
+  (let ((commit "0adcfd60f4fcfd01c74a6477cbcef187ce06f533")
+        (revision "877")
+        (base zig-0.14.0-687))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "1yyar3cms02kzf4z20sbw09awqvz0kbm9fx8g0kgb8hp1f4blf3d"))
+      ;; zig1
+      (arguments (package-arguments zig-0.10.0-747))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" `(,base "out")))))))
+
+(define zig-0.14.0-930
+  (let ((commit "40d11cc25a469dc6bb0f9fbba4d05e7210a23b3f")
+        (revision "930")
+        (base zig-0.14.0-877))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "06x6zi8hcl04gmql96vyms0zch94xi1all5s1kjsnbifixd99bgy"))
+      ;; zig2
+      (arguments (package-arguments zig-0.10.0-851))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" `(,base "zig1")))))))
+
+(define zig-0.14.0-934
+  (let ((commit "4ba0e7d424a7c0af55c8085c659e9205560d3095")
+        (revision "934")
+        (base zig-0.14.0-930))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "17zaw7bk6wli6wpsr5zlpn1b39818h034l5bpnsxfslqqg09rsd8"))
+      ;; zig1
+      (arguments (package-arguments zig-0.10.0-747))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" `(,base "out")))))))
+
+(define zig-0.14.0-1091
+  (let ((commit "87ce83d5a5854b63b7cef5c6209742ee1a524107")
+        (revision "1091")
+        (base zig-0.14.0-934))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "18irwcr63l1hf2g7vv9qajgllsp7qwzsv5ijm9x8l51agm6harf4"))
+      ;; zig2
+      (arguments (package-arguments zig-0.10.0-851))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" `(,base "zig1")))))))
+
+(define zig-0.14.0-1197
+  (let ((commit "a023b9b22b6593ebd5a86736a4a9955840d1bfa1")
+        (revision "1197")
+        (base zig-0.14.0-1091))
+    (package
+      (inherit base)
+      (name "zig")
+      (version (git-version "0.14.0" revision commit))
+      (source (zig-source
+               version commit
+               "08c1m6kwq7cqg5s6j0ypp8ygvxj21da5is0w7y17sw27fjqrlhgr"))
+      ;; zig1
+      (arguments (package-arguments zig-0.10.0-747))
+      (native-inputs
+       (modify-inputs (package-native-inputs base)
+         (replace "zig" `(,base "out")))))))
+
+(define zig-0.15-libc-abi-tools
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://github.com/ziglang/libc-abi-tools")
+          (commit "21993a6036cc165485b20229589340dff9d4fc3c")))
+    (file-name "libc-abi-tools")
+    (sha256
+     (base32 "0miwb0zfgfmm4bh2bs7982wpk0wp5vj2mz10x9c3m8fw7zzcyvbh"))
+    (modules '((guix build utils)))
+    (snippet
+     #~(substitute* "netbsd/consolidate.zig"
+         ((".write_buffer = buffer") ".write_buffer = &buffer")))))
+
+(define-public zig-0.15
+  (package
+    (inherit zig-0.14)
+    (name "zig")
+    (version "0.15.1")
+    (source
+     (origin
+       (inherit (zig-source
+                 version version
+                 "1cp18plf0x5wip4rnxiqavaqnqxnqzhipb34in6zd3y7wihwjmj4"))
+       (patches
+        (search-patches
+         "zig-0.14-use-baseline-cpu-by-default.patch"
+         "zig-0.14-use-system-paths.patch"
+         "zig-0.15-fix-runpath.patch"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments zig-0.14)
+       ((#:phases phases '%standard-phases)
+        #~(modify-phases #$phases
+            (delete 'install-glibc-abilists)
+            ;; TODO: Remove newly-added abilists files in zig-source.
+            (add-before 'check 'install-abilists
+              (lambda* (#:key inputs native-inputs #:allow-other-keys)
+                (mkdir-p "/tmp/libc-abi-tools")
+                (with-directory-excursion "/tmp/libc-abi-tools"
+                  (copy-recursively
+                   (dirname (search-input-file
+                             (or native-inputs inputs) "list.zig"))
+                   ".")
+                  (for-each make-file-writable (find-files "."))
+                  (for-each
+                   (lambda (libc)
+                     (with-directory-excursion libc
+                       (invoke (string-append #$output "/bin/zig")
+                               "run" "consolidate.zig")
+                       (install-file
+                        "abilists"
+                        (string-append #$output "/lib/zig/libc/" libc))))
+                   '("freebsd"
+                     "glibc"
+                     "netbsd")))))))))
+    (inputs
+     (modify-inputs (package-inputs zig-0.14)
+       (replace "clang" clang-20)
+       (replace "lld" lld-20)))
+    (native-inputs
+     (modify-inputs (package-native-inputs zig-0.14)
+       (delete "glibc-abi-tool")
+       (prepend zig-0.15-libc-abi-tools)
+       (replace "llvm" llvm-20)
+       (replace "zig" `(,zig-0.14.0-1197 "zig1"))))
+    (properties `((max-silent-time . 9600)
+                  ,@(clang-compiler-cpu-architectures "20")))))
+
 (define-public zig zig-0.13)

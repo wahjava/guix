@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2017, 2019 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2021, 2024, 2025 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2021, 2024, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;;
@@ -135,33 +135,33 @@ well as CD-ROM images.")
     (license license:gpl2+)))
 
 (define-public atelier
-  (let ((commit "93d7d440c42f1e49a4933cbbce9f68d5e4ca725a") ; no releases
-        (revision "1"))
+  (let ((commit "8c7f18d3a88b3213546439775a60030b93e1f5b1") ; no releases
+        (revision "2"))
     (package
       (name "atelier")
       (version (git-version "0.1-pre" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://invent.kde.org/utilities/atelier")
-                      (commit commit)))
+                       (url "https://invent.kde.org/utilities/atelier")
+                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "00jccpwvksyp2vr3fjxajs8d9d30rspg4zj6rnj8dai96alp303k"))))
+                  "0vf2j4yjyz21s6bfkzz0jci0h32rnmsm32k1gf6p3i7rlcqx3vyg"))))
       (build-system qt-build-system)
-      (native-inputs (list extra-cmake-modules pkg-config))
-      (inputs (list ki18n-5
-                    kxmlgui-5
-                    kconfigwidgets-5
-                    ktexteditor-5
+      (arguments (list #:qtbase qtbase #:tests? #f))
+      (native-inputs (list extra-cmake-modules qttools pkg-config))
+      (inputs (list ki18n
+                    kxmlgui
+                    kconfigwidgets
+                    ktexteditor
                     libatcore
-                    qt3d-5
-                    qtbase-5
-                    qtcharts-5
-                    qtdeclarative-5
-                    qtmultimedia-5
-                    qtserialport-5))
+                    qt3d
+                    qtcharts
+                    qtdeclarative
+                    qtmultimedia
+                    qtserialport))
       (home-page "https://atelier.kde.org")
       (synopsis "Desktop interface to control 3D printers powered by AtCore")
       (description "Atelier provides interface to control and manage your printer.
@@ -254,7 +254,8 @@ well as CD-ROM images.")
                     ksyntaxhighlighting
                     qtdeclarative
                     qtsvg))
-      (arguments (list #:qtbase qtbase))
+      (arguments (list #:qtbase qtbase
+                       #:tests? #f))
       (home-page "https://invent.kde.org/utilities/fielding")
       (synopsis "REST API testing tool")
       (description
@@ -344,7 +345,8 @@ your computer.")
                   kcrash
                   solid
                   kwidgetsaddons))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))
     (home-page "https://invent.kde.org/utilities/isoimagewriter")
     (synopsis "Write hybrid ISO files onto USB disks")
     (description
@@ -364,7 +366,8 @@ your computer.")
                 "1448kiykab4lm2xkimapj11m7iqj6x7y2ly5mrw3c1092p56kvs2"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase))
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -512,7 +515,8 @@ Kate's features include:
                   libarchive
                   shared-mime-info
                   qt5compat))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))
     (home-page "https://apps.kde.org/kbackup/")
     (synopsis "Backup program with an easy-to-use interface")
     (description
@@ -570,7 +574,9 @@ drive, USB stick, etc
                (base32
                 "195lr8ik6w03kc6ma9zfz7ksg296rn48d1vryin087i9k783rrad"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs (list extra-cmake-modules))
     (inputs (list kbookmarks kcoreaddons kcrash ki18n kwidgetsaddons kxmlgui))
     (home-page "https://apps.kde.org/kcharselect/")
@@ -594,7 +600,8 @@ characters.")
                (base32
                 "0ffnw3hc2xngxryiyanaid7nh51fymahg4jbqf3w684wrn1v6gan"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))
     (native-inputs (list extra-cmake-modules kdoctools))
     (inputs (list ktextwidgets
                   knotifications
@@ -633,7 +640,8 @@ shell scripts.")
                     kio
                     kwidgetsaddons
                     kxmlgui))
-      (arguments (list #:qtbase qtbase))
+      (arguments (list #:qtbase qtbase
+                       #:tests? #f))
       (home-page "https://invent.kde.org/utilities/keurocalc")
       (synopsis "Currency conversion tool")
       (description "This package provides a utility to handle currency
@@ -682,7 +690,8 @@ with support for QR scanning.")
                (base32
                 "01dxajpx2959m3gk23cvjra1w7i70f49lvys3h034205dyi3qgnm"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))
     (native-inputs (list extra-cmake-modules kdoctools))
     (inputs (list karchive
                   kcoreaddons
@@ -716,7 +725,8 @@ with support for QR scanning.")
                   "1gncfnwadh11ipynfcrsh1vnk2g02c7scd5wanphi8i95jzak9jd"))))
       (build-system qt-build-system)
       (arguments
-       (list #:phases #~(modify-phases %standard-phases
+       (list #:tests? #f
+             #:phases #~(modify-phases %standard-phases
                           (add-after 'unpack 'fix-gstreamer
                             (lambda* _
                               (substitute* "CMakeLists.txt"
@@ -763,7 +773,8 @@ with support for QR scanning.")
                (base32
                 "031jsvk060y9w0mh1ylq7cz9nzmikz7vm098nrb10m9bx2x4h13d"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))
     (native-inputs (list extra-cmake-modules kdoctools python-minimal))
     (inputs (list kcrash
                   kirigami
@@ -782,7 +793,7 @@ combinations are distinct enough to be readable and accessible.")
     (license license:gpl3+)))
 
 (define-public libatcore
-  (let ((commit "0de6393ed3e721537dec50b0ad174d83f1207eb6")
+  (let ((commit "c32a13a90d39e44dc5a8dcb601e2b4aa9c996428")
         (revision "1"))
     (package
       (name "libatcore")
@@ -790,15 +801,17 @@ combinations are distinct enough to be readable and accessible.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://invent.kde.org/libraries/atcore")
-                      (commit commit)))
+                       (url "https://invent.kde.org/libraries/atcore")
+                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1830r6ylpn3l7y2frl8cih5cpjgbkfrib9jq7jklf8aszhlsihf2"))))
+                  "1avcrnxml0iczy0n4xa3ryklbvawbk015wm7l82088qjz2zparcw"))))
       (build-system qt-build-system)
-      (native-inputs (list extra-cmake-modules))
-      (inputs (list qtcharts-5 qtdeclarative-5 qtserialport-5))
+      (native-inputs (list extra-cmake-modules qttools))
+      (inputs (list qtcharts qtdeclarative qtserialport))
+      (arguments (list #:qtbase qtbase
+                       #:tests? #f))
       (home-page "https://invent.kde.org/libraries/atcore")
       (synopsis "Library for connection and management of 3D printers")
       (description
@@ -818,7 +831,9 @@ the computer and 3D Printers.")
        (sha256
         (base32 "0565x812jbq0j56750q03hmfai4fgdqjrxzw6k94c37ck0nvlfl5"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -867,7 +882,9 @@ artists to web-designers to people with low vision.")
            libxt
            phonon
            qtmultimedia))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://apps.kde.org/kmousetool/")
     (synopsis "Automatic mouse click and mouse manipulation tool for the
 disabled")
@@ -903,7 +920,9 @@ whom pressing buttons hurts.")
            kxmlgui
            breeze-icons ;; default icon set
            qtspeech))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://apps.kde.org/kmouth/")
     (synopsis "Type-and-say frontend for speech synthesizers")
     (description "KMouth is a program which enables persons that cannot speak
@@ -982,37 +1001,41 @@ Its features include:
       (license license:gpl3+))))
 
 (define-public kronometer
-  (package
-    (name "kronometer")
-    (version "2.3.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/kronometer/" version
-                           "/src/kronometer-" version ".tar.xz"))
-       (sha256
-        (base32 "0xn4z9y2yl57a5skwp4cjsn1456kiwnwvhrddc0qsihgdyif3fbm"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools-5))
-    (inputs
-     (list kauth-5
-           kconfig-5
-           kconfigwidgets-5
-           kcoreaddons-5
-           kcrash-5
-           ki18n-5
-           kwidgetsaddons-5
-           kxmlgui-5
-           breeze-icons ;; default icon set
-           qtbase-5))
-    (home-page "https://apps.kde.org/kronometer/")
-    (synopsis "Simple stopwatch application")
-    (description "Kronometer is a stopwatch application.  It features the
+  (let ((commit "8cfa062655e89b4b0cad911af3acab6609b13ecd")
+        (revision "0"))
+    (package
+      (name "kronometer")
+      (version (git-version "2.3.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://invent.kde.org/utilities/kronometer.git/")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1vzdi9zyrx6s3l74yaxvd1y6729n51m23k0bxydwi36my3zml2kk"))))
+      (build-system qt-build-system)
+      (native-inputs
+       (list extra-cmake-modules kdoctools))
+      (inputs
+       (list breeze-icons ;; default icon set
+             kauth
+             kconfig
+             kconfigwidgets
+             kcoreaddons
+             kcrash
+             ki18n
+             kwidgetsaddons
+             kxmlgui))
+      (arguments (list #:qtbase qtbase))
+      (home-page "https://apps.kde.org/kronometer/")
+      (synopsis "Simple stopwatch application")
+      (description "Kronometer is a stopwatch application.  It features the
 basic stopwatch actions (pause, resume, reset, laps), as well as the ability
 to save the times and resume them later.")
-    (license ;; GPL for programs, LGPL for libraries, FDL for documentation
-     license:gpl2+)))
+      (license ;; GPL for programs, LGPL for libraries, FDL for documentation
+       license:gpl2+))))
 
 (define-public krusader
   (package
@@ -1027,7 +1050,8 @@ to save the times and resume them later.")
         (base32 "012f75afp7vjpp7wps4lzvcszj6a5y9yzv21wgh9zikcvvx9pdy9"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase))
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1074,27 +1098,42 @@ great on your desktop.")
     (license license:gpl2+)))
 
 (define-public kxstitch
-  (package
-    (name "kxstitch")
-    (version "2.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/kxstitch/" version
-                           "/kxstitch-" version ".tar.xz"))
-       (sha256
-        (base32 "1q6blvcqz6hxdfrkdi0fplmz7rmk3im56kpp68r0yrivhx3hn8sc"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools-5 pkg-config))
-    (inputs
-     (list ktexteditor-5 imagemagick qtbase-5 qtx11extras))
-    (home-page "https://apps.kde.org/kxstitch/")
-    (synopsis "Create and print cross stitch patterns")
-    (description
-     "KXStitch allows creating and printing cross stitch patterns, which can
+  (let ((commit "bfe934ffc2c2dfa1cc554bc4483a3285b027b00c")
+        (revision "0"))
+    (package
+      (name "kxstitch")
+      (version (git-version "2.2.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://invent.kde.org/graphics/kxstitch.git/")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1vhan3pmbm80bh0kdrsmzda2pir3921m8flm1haw8nf5i706gk87"))))
+      (build-system qt-build-system)
+      (native-inputs
+       (list extra-cmake-modules kdoctools pkg-config))
+      (inputs
+       (list kcompletion
+             kconfigwidgets
+             kguiaddons
+             ki18n
+             kio
+             ktextwidgets
+             kwidgetsaddons
+             kxmlgui
+             kconfig
+             imagemagick))
+      (arguments (list #:qtbase qtbase
+                       #:tests? #f))
+      (home-page "https://apps.kde.org/kxstitch/")
+      (synopsis "Create and print cross stitch patterns")
+      (description
+       "KXStitch allows creating and printing cross stitch patterns, which can
 either be created or generated from a image.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
 
 (define-public okteta
   (package
@@ -1156,44 +1195,48 @@ redone.")
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
 
 (define-public rsibreak
-  (package
-    (name "rsibreak")
-    (version "0.12.15")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde//stable/rsibreak/0.12/"
-                           "rsibreak-" version ".tar.xz"))
-       (sha256
-        (base32 "0kfbbhyzilvar3vns68pd8vkd17f07g8q9g83xxwl06zl3k6672j"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list extra-cmake-modules kdoctools-5))
-    (inputs
-     (list kauth-5
-           kconfig-5
-           kconfigwidgets-5
-           kcoreaddons-5
-           kcrash-5
-           kdbusaddons-5
-           ki18n-5
-           kiconthemes-5
-           kidletime-5
-           knotifications-5
-           knotifyconfig-5
-           ktextwidgets-5
-           kwindowsystem-5
-           kxmlgui-5
-           breeze-icons ;; default icon set
-           qtbase-5))
-    (home-page "https://apps.kde.org/rsibreak/")
-    (synopsis "Assists in the Recovery and Prevention of Repetitive Strain
+  (let ((commit "6795af6339e5e7c0fdf469290eafdb0f9365a96b")
+        (revision "0"))
+    (package
+      (name "rsibreak")
+      (version (git-version "0.12.15" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://invent.kde.org/utilities/rsibreak.git/")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0p3xxbiwdmbp1cxagl1bnqicr8wv2mlzb5d5f4x6l7m7qzkicga4"))))
+      (build-system qt-build-system)
+      (native-inputs
+       (list extra-cmake-modules kdoctools))
+      (inputs
+       (list breeze-icons ;; default icon set
+             kcolorscheme
+             kconfig
+             kconfigwidgets
+             kcoreaddons
+             kcrash
+             kdbusaddons
+             ki18n
+             kidletime
+             knotifications
+             knotifyconfig
+             kstatusnotifieritem
+             ktextwidgets
+             kwindowsystem
+             kxmlgui))
+      (arguments (list #:qtbase qtbase))
+      (home-page "https://apps.kde.org/rsibreak/")
+      (synopsis "Assists in the Recovery and Prevention of Repetitive Strain
 Injury")
-    (description "Repetitive Strain Injury is an illness which can occur as a
+      (description "Repetitive Strain Injury is an illness which can occur as a
 result of working with a mouse and keyboard.  This utility can be used to
 remind you to take a break now and then.")
-    (license ;; GPL for programs, FDL for documentation
-     (list license:gpl2+ license:fdl1.2+))))
+      (license ;; GPL for programs, FDL for documentation
+       (list license:gpl2+ license:fdl1.2+)))))
 
 (define-public smb4k
   (package
@@ -1210,6 +1253,7 @@ remind you to take a break now and then.")
     (build-system qt-build-system)
     (arguments (list
                 #:qtbase qtbase
+                #:tests? #f
                 #:configure-flags #~(list "-DSMB4K_WITH_WS_DISCOVERY=ON")))
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1287,7 +1331,9 @@ Features:
        (sha256
         (base32 "0v7hwz6xnp52fysbmqwrhjjcsr96bmw0a70n2kr2bq1hhh0zvf3h"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs

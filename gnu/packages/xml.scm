@@ -1210,14 +1210,14 @@ XSL-T processor.  It also performs any necessary post-processing.")
 (define-public xmlsec
   (package
     (name "xmlsec")
-    (version "1.2.37")
+    (version "1.3.7")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.aleksey.com/xmlsec/download/"
                                   "xmlsec1-" version ".tar.gz"))
               (sha256
                (base32
-                "0747w8mnnyawvvzlvhjpkwm3998c7l5f1hjy1gfvsmhydp5zp3az"))))
+                "1shk40mpaqaf05skgyxa7qxgcarjd6i1fadn2sk0b8lakfv96bnq"))))
     (build-system gnu-build-system)
     (propagated-inputs                  ; according to xmlsec1.pc
      (list libxml2 libxslt))
@@ -1592,17 +1592,9 @@ SAX2 APIs.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "140ap2l3qy27z1fhqpkq3a44aikhr3v5zlnm9m8vag42qiagiznx"))))
-    (native-inputs
-     (list expat gnu-make minizip which))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:make-flags
-      #~(list (string-append "PREFIX=" #$output))
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'configure)
-          (delete 'check))))
+    (native-inputs (list expat minizip pkg-config))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))      ;no test suite
     (synopsis "C library for reading and writing .xlsx files")
     (description "XLSX I/O aims to provide a C library for reading and writing
 .xlsx files.  The .xlsx file format is the native format used by Microsoft(R)
@@ -1944,6 +1936,39 @@ libxml2 and libxslt.")
 
 (define-deprecated python-lxml-4.7 python-lxml)
 (export python-lxml-4.7)
+
+(define-public python-lxml-html-clean
+  (package
+    (name "python-lxml-html-clean")
+    (version "0.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lxml_html_clean" version))
+       (sha256
+        (base32 "1cxwrrv4kdkxwkwm12a6rh38xmb415257g31yjmk0m5rbmxiwaci"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest" "-v" "tests.test_clean")
+                (invoke "python" "-m" "doctest"
+                        "tests/test_clean_embed.txt"
+                        "tests/test_clean.txt"
+                        "tests/test_autolink.txt")))))))
+    (propagated-inputs (list python-lxml))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/fedora-python/lxml_html_clean/")
+    (synopsis "Remove superfluous content from HTML files")
+    (description "This package provides a Cleaner for cleaning up HTML pages.
+It supports removing embedded or script content, special tags and CSS style
+annotations among other features.  Its main purpose is removing superfluous
+content, it is not appropriate for security sensitive environments.")
+    (license license:bsd-3)))
 
 (define-public python-untangle
   ;; The latest tagged release is from 2014; use the latest commit.

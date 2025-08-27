@@ -578,34 +578,46 @@ usual algorithms you expect from a modern molecular dynamics implementation.")
   (package
     (name "openbabel")
     (version "3.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/openbabel/openbabel/"
-                                  "releases/download/openbabel-"
-                                  (string-replace-substring version "." "-")
-                                  "/openbabel-" version "-source.tar.bz2"))
-              (sha256
-               (base32
-                "0s0f4zib8vshfaywsr5bjjz55jwsg6yiz2qw4i5jm8wysn0q7v56"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/openbabel/openbabel")
+              (commit (string-append
+                       "openbabel-"
+                       (string-replace-substring version "." "-")))))
+       (sha256
+        (base32 "1ijl4px8nw9824znrsw9nsv4qf9xy0zgd8wrw8hhl15jy1sn02n1"))
+       (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(;; FIXME: Disable tests on i686 to work around
-       ;; https://github.com/openbabel/openbabel/issues/2041.
-       #:tests? ,(or (%current-target-system)
-                     (not (string=? "i686-linux" (%current-system))))
-       #:configure-flags
-       (list "-DOPENBABEL_USE_SYSTEM_INCHI=ON"
-             (string-append "-DINCHI_LIBRARY="
-                            (assoc-ref %build-inputs "inchi")
-                            "/lib/inchi/libinchi.so.1")
-             (string-append "-DINCHI_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "inchi") "/include/inchi"))
-       #:test-target "test"))
+     (list
+      ;; FIXME: Disable tests on i686 to work around
+      ;; https://github.com/openbabel/openbabel/issues/2041.
+      #:tests? (or (%current-target-system)
+                   (not (string=? "i686-linux" (%current-system))))
+      #:configure-flags
+      '(list
+        "-DOPENBABEL_USE_SYSTEM_INCHI=ON"
+        (string-append
+         "-DINCHI_LIBRARY="
+         (search-input-file %build-inputs "/lib/inchi/libinchi.so.1"))
+        (string-append "-DINCHI_INCLUDE_DIR="
+                       (search-input-directory %build-inputs "/include/inchi")))
+      #:phases
+      '(modify-phases %standard-phases
+         ;; Fixed upstream:
+         ;; https://github.com/openbabel/openbabel/commit/c0570bfeb2d7e0a6a6de1f257cf28e7f3cac8739
+         (add-after 'unpack 'fix-time-check
+           (lambda _
+             (substitute* "src/config.h.cmake"
+               (("(#ifdef HAVE_(SYS_)?TIME)(.*)$" _ old _ suffix)
+                (string-append old "_H" suffix))))))))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list eigen inchi libxml2 zlib))
-    (home-page "http://openbabel.org/wiki/Main_Page")
+     (list eigen inchi libxml2 rapidjson zlib))
+    (home-page "https://openbabel.org/")
     (synopsis "Chemistry data manipulation toolbox")
     (description
      "Open Babel is a chemical toolbox designed to speak the many languages of
@@ -974,7 +986,7 @@ integrals for Gaussian type functions.")
 (define-public gemmi
   (package
     (name "gemmi")
-    (version "0.6.4")
+    (version "0.7.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -983,10 +995,9 @@ integrals for Gaussian type functions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0wciqqswc4p4v4kglfv36gnvyyimqn4lnywdzd0pgrjn443i860y"))
+                "01fdpb695gqsl5xznrlqjydnrckqbfndzr8fj66pryzv8d0fdfsg"))
               (patches
-               (search-patches "gemmi-fix-sajson-types.patch"
-                               "gemmi-fix-pegtl-usage.patch"))
+               (search-patches "gemmi-fix-pegtl-usage.patch"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -1010,24 +1021,28 @@ integrals for Gaussian type functions.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-includes
             (lambda _
-              (substitute* (list "src/sprintf.cpp"
+              (substitute* (list "src/json.cpp"
+                                 "src/sprintf.cpp"
                                  "include/gemmi/dirwalk.hpp"
                                  "include/gemmi/cif.hpp"
                                  "include/gemmi/json.hpp"
                                  "python/gemmi.cpp"
+                                 "python/serial.h"
                                  "include/gemmi/atof.hpp"
                                  "include/gemmi/numb.hpp"
                                  "include/gemmi/fourier.hpp")
                 (("<stb/stb_sprintf.h>") "<stb_sprintf.h>")
                 (("\"third_party/tinydir.h\"") "<tinydir.h>")
                 (("\"third_party/tao/pegtl.hpp\"") "<tao/pegtl.hpp>")
-                (("\"third_party/sajson.h\"") "<sajson.h>")
+                (("\"\\.\\./third_party/sajson.h\"") "<sajson.h>")
                 (("\"gemmi/third_party/tao/pegtl/parse_error.hpp\"")
                  "<tao/pegtl/parse_error.hpp>")
                 (("\"third_party/fast_float.h\"")
                  "<fast_float/fast_float.h>")
                 (("\"third_party/pocketfft_hdronly.h\"")
-                 "<pocketfft_hdronly.h>"))))
+                 "<pocketfft_hdronly.h>")
+                (("\"\\.\\./third_party/serializer.h\"")
+                 "<zpp/serializer.h>"))))
           (add-after 'unpack 'change-bin-prefix
             (lambda _
               (substitute* "CMakeLists.txt"
@@ -1039,7 +1054,7 @@ integrals for Gaussian type functions.")
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (with-directory-excursion "../source"
-                  (setenv "PYTHONPATH" "../build")
+                  (setenv "PYTHONPATH" "../build/py")
                   (invoke "python3" "-m" "unittest" "discover" "-v"
                           "-s" "tests"))))))))
     (inputs (list python zlib))
@@ -1048,10 +1063,11 @@ integrals for Gaussian type functions.")
            optionparser
            pegtl
            pocketfft-cpp
-           pybind11
+           python-nanobind
            sajson-for-gemmi
            stb-sprintf
-           tinydir))
+           tinydir
+           zpp-serializer))
     (home-page "https://gemmi.readthedocs.io/en/latest/")
     (synopsis "Macromolecular crystallography library and utilities")
     (description "GEMMI is a C++ library for macromolecular crystallography.
@@ -1119,6 +1135,12 @@ It can be used for working with
                  (string-append "AM_PROG_LIBTOOL\n" inst)))
               (substitute* "tests/Makefile.am"
                 (("libfreesasa\\.a") "libfreesasa.la"))))
+          (add-after 'unpack 'fix-new-gemmi
+            (lambda _
+              (substitute* "src/cif.cc"
+                (("models\\[i\\]\\.name")
+                 "std::to_string(models[i].num)")
+                (("convert_pair_to_loop") "ensure_loop"))))
           (add-before 'build 'build-lexer-and-parser
             (lambda _
               (with-directory-excursion "src"
@@ -1235,6 +1257,8 @@ emphasis on quality rather than speed.")
       #:configure-flags
       #~(list
          "-DUSE_BLAS_LAPACK=ON"
+         ;; Some functions are written in Fortran.
+         "-DCMAKE_C_FLAGS=-Wno-implicit-function-declaration"
          (string-append "-DPARM_FILE_LOC=" #$output
                         "/share/" #$name "-" #$version "/eht_parms.dat")
          "-DBIND_EXE_NAME=yaehmop-bind")

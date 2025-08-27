@@ -95,6 +95,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
@@ -151,6 +152,7 @@
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/99designs/aws-vault"
       #:build-flags
@@ -1079,7 +1081,9 @@ key URIs using the standard otpauth:// scheme.")
     (build-system qt-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -1088,9 +1092,12 @@ key URIs using the standard otpauth:// scheme.")
                       "QMAKE_LRELEASE=lrelease"
                       "QMAKE_LUPDATE=lupdate"
                       (string-append "PREFIX=" #$output))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'check (assoc-ref gnu:%standard-phases 'check))
           (add-before 'check 'pre-check
             ;; Fontconfig needs a writable cache.
             (lambda _ (setenv "HOME" "/tmp")))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-after 'install 'install-auxilliary
             ;; Install man-page, icon and .desktop file.
             (lambda _

@@ -72,6 +72,8 @@
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2025 Formbi <formbi@protonmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.ccom>
+;;; Copyright © 2025 VnPower <vnpower@loang.net>
+;;; Copyright © 2025 Zhu Zihao <all_but_last@163.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -95,6 +97,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
   #:use-module (guix packages)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -128,14 +131,13 @@
   #:use-module (gnu packages bittorrent)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages cdrom)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages datastructures)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages dejagnu)
   #:use-module (gnu packages dns)
@@ -156,6 +158,7 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphics)
@@ -166,6 +169,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages iso-codes)
+  #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libusb)
@@ -1923,45 +1927,6 @@ audio/video codec library.")
        ((#:configure-flags flags ''())
         #~(cons "--enable-avresample" #$flags))))))
 
-(define-public ffmpeg-3.4
-  (package
-    (inherit ffmpeg-4)
-    (version "3.4.13")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
-                                 version ".tar.xz"))
-             (sha256
-              (base32
-               "0np0yalqdrm7rn7iykgfzz3ly4vbgigrajg48c1l6n7qrzqvfszv"))
-             (patches (search-patches "ffmpeg-4-binutils-2.41.patch"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments ffmpeg-4)
-       ((#:modules modules %default-gnu-modules)
-        `((srfi srfi-1)
-          ,@modules))
-       ((#:configure-flags flags)
-        #~(fold delete #$flags
-                '("--enable-libdav1d"
-                  "--enable-libaom"
-                  "--enable-librav1e"
-                  "--enable-libsrt"
-                  "--enable-libsvtav1")))
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            #$@(if (target-x86-32?)
-                   #~((delete 'relax-gcc-14-strictness))
-                   #~())
-            (add-after 'configure 'relax-gcc-14-strictness
-              (lambda _
-                (substitute* "ffbuild/config.mak"
-                  (("CFLAGS *=" all)
-                   (string-append all
-                                  " -Wno-error=incompatible-pointer-types"
-                                  " -Wno-error=int-conversion")))))))))
-    (inputs (modify-inputs (package-inputs ffmpeg-4)
-              (delete "dav1d" "libaom" "rav1e" "srt")))))
-
 (define-public ffmpeg-for-stepmania
   (hidden-package
    (package
@@ -2398,8 +2363,8 @@ input files is possible, including video files.")
     (license license:expat)))
 
 (define-public gpac
-  (let ((commit "68875fcff08d7422bbf10cb0327403189589d9b6")
-        (revision "0"))
+  (let ((commit "9c1da9ec7e4d16b162856495f8ba284844a1b976")
+        (revision "1"))
     (package
       (name "gpac")
       ;; Use a git snapshot of the master branch, as it fixes build issues
@@ -2413,23 +2378,12 @@ input files is possible, including video files.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1rnbpcgnw31hadanwvmy0nr7prr4kypw0bmch75j6gvndy63bpgi"))))
+                  "0q3j9l8khq7cgzv0lwll65vhmsi9gqj1sfnz7az4mz3wqfv23vri"))))
       (build-system gnu-build-system)
       (arguments
        (list #:configure-flags
              #~(list (string-append "--cc=" #$(cc-for-target))
                      (string-append "--cxx=" #$(cxx-for-target))
-                     ;; Help the configure script correctly detect the
-                     ;; availability of freetype (see:
-                     ;; <https://github.com/gpac/gpac/issues/3307>).
-                     (format #f "--extra-cflags=-I~a"
-                             (search-input-directory %build-inputs
-                                                     "include/freetype2"))
-                     ;; The gpac modules do not have a rpath to the main
-                     ;; library, failing the validate-runpath phase (see:
-                     ;; <https://github.com/gpac/gpac/issues/3306>).
-                     (format #f "--extra-ldflags=-Wl,-rpath=~a/lib"
-                             #$output)
                      "--verbose")
              ;; The test suite is a git submodule that must synchronize its data
              ;; from the network.
@@ -2444,9 +2398,7 @@ input files is possible, including video files.")
              jack-2
              liba52
              libcaca
-             ;; The build currently fails with libcaption 0.7 (see:
-             ;; <https://github.com/gpac/gpac/issues/3305>).
-             ;;libcaption
+             libcaption
              libfreenect
              libjpeg-turbo
              libmad
@@ -2843,9 +2795,14 @@ projects while introducing many more.")
      (list #:tests? #false              ; no tests
            #:make-flags #~(list (string-append "PREFIX=" #$output)
                                 (string-append "CC=" #+(cc-for-target)))
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (delete 'configure)
+               (replace 'build (assoc-ref gnu:%standard-phases 'build))
+               (replace 'install (assoc-ref gnu:%standard-phases 'install))
                (add-after 'install 'wrap-executable
                  (lambda* (#:key inputs outputs #:allow-other-keys)
                    (let* ((out (assoc-ref outputs "out"))
@@ -2946,23 +2903,30 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.28.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/mikf/gallery-dl"
-                                  "/releases/download/v" version "/gallery_dl-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0j4hxp1lbcxgg34ilzhcpxvswgnvvrlk66pn3w9ksv5g8jdz7rpi"))))
-    (build-system python-build-system)
+    (version "1.30.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mikf/gallery-dl")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15sgvk81s61v4yzzv1s5ksr4z77qhmv7ynyn34zrx5x41g72hgpz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: A lot of those require network.
+      #:test-flags #~(list "--ignore=test/test_results.py")))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs (list python-requests ffmpeg))
     (home-page "https://github.com/mikf/gallery-dl")
     (synopsis "Command-line program to download images from several sites")
-    (description "Gallery-dl is a command-line program that downloads image
-galleries and collections from several image hosting sites.  While this package
-can use youtube-dl or yt-dlp packages to download videos, the focus is more on
-images and image hosting sites.")
+    (description
+     "Gallery-dl is a command-line program that downloads image galleries and
+collections from several image hosting sites.  While this package can use
+yt-dlp packages to download videos, the focus is more on images and image
+hosting sites.")
     (license license:gpl2)))
 
 (define-public mpv-mpris
@@ -3020,6 +2984,31 @@ To load this plugin, specify the following option when starting mpv:
 @code{--script $GUIX_PROFILE/lib/mpris.so} or link it into
 @file{$HOME/.config/mpv/scripts}.")
     (license license:expat)))
+
+(define-public mpvpaper
+  (package
+    (name "mpvpaper")
+    (version "1.8")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/GhostNaN/mpvpaper")
+                    (commit version)))
+              (sha256
+               (base32 "0pzc6f5r85qd0dgp6aa6pp8ba2m7ghzd3pc4xnqnarh2bx55jf95"))
+              (file-name (git-file-name name version))))
+    (build-system meson-build-system)
+     (inputs
+      (list mpv libdisplay-info wlroots))
+     (native-inputs
+      (list pkg-config cmake-minimal))
+     (home-page "https://github.com/GhostNaN/mpvpaper")
+     (synopsis
+      "Video wallpaper program for wlroots-based wayland compositors")
+     (description "The mpvpaper package provides a wallpaper program for
+wlroots-based wayland compositors, allowing you to play videos as your
+wallpaper using mpv.")
+     (license license:gpl3)))
 
 (define-public libvpx
   (package
@@ -3150,93 +3139,12 @@ to download videos from Austria's national television broadcaster.")
 video streaming services of the Finnish national broadcasting company Yle.")
     (license license:gpl3+)))
 
-(define-public youtube-dl
-  (package
-    (name "youtube-dl")
-    (version "2021.12.17")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://youtube-dl.org/downloads/latest/"
-                                  "youtube-dl-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1prm84ci1n1kjzhikhrsbxbgziw6br822psjnijm2ibqnz49jfwz"))
-              (snippet
-               '(begin
-                  ;; Delete the pre-generated files, except for the man page
-                  ;; which requires 'pandoc' to build.
-                  (for-each delete-file '("youtube-dl"
-                                          ;;pandoc is needed to generate
-                                          ;;"youtube-dl.1"
-                                          "youtube-dl.bash-completion"
-                                          "youtube-dl.fish"
-                                          "youtube-dl.zsh"))))))
-    (build-system python-build-system)
-    (arguments
-     ;; The problem here is that the directory for the man page and completion
-     ;; files is relative, and for some reason, setup.py uses the
-     ;; auto-detected sys.prefix instead of the user-defined "--prefix=FOO".
-     ;; So, we need pass the prefix directly.  In addition, make sure the Bash
-     ;; completion file is called 'youtube-dl' rather than
-     ;; 'youtube-dl.bash-completion'.
-     `(#:tests? #f ; Many tests fail. The test suite can be run with pytest.
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'default-to-the-ffmpeg-input
-                    (lambda _
-                      ;; See <https://issues.guix.gnu.org/43418#5>.
-                      ;; ffmpeg is big but required to request free formats
-                      ;; from, e.g., YouTube so pull it in unconditionally.
-                      ;; Continue respecting the --ffmpeg-location argument.
-                      (substitute* "youtube_dl/postprocessor/ffmpeg.py"
-                        (("\\.get\\('ffmpeg_location'\\)" match)
-                         (format #f "~a or '~a'" match (which "ffmpeg"))))))
-                  (add-before 'build 'build-generated-files
-                    (lambda _
-                      ;; Avoid the make targets that require pandoc.
-                      (invoke "make"
-                              "PYTHON=python"
-                              "youtube-dl"
-                              ;;"youtube-dl.1"   ; needs pandoc
-                              "youtube-dl.bash-completion"
-                              "youtube-dl.zsh"
-                              "youtube-dl.fish")))
-                  (add-before 'install 'fix-the-data-directories
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((prefix (assoc-ref outputs "out")))
-                        (mkdir "bash-completion")
-                        (rename-file "youtube-dl.bash-completion"
-                                     "bash-completion/youtube-dl")
-                        (substitute* "setup.py"
-                          (("youtube-dl\\.bash-completion")
-                           "bash-completion/youtube-dl")
-                          (("'etc/")
-                           (string-append "'" prefix "/etc/"))
-                          (("'share/")
-                           (string-append "'" prefix "/share/"))))))
-                  (add-after 'install 'install-completion
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out"))
-                             (zsh (string-append out
-                                                 "/share/zsh/site-functions")))
-                        (mkdir-p zsh)
-                        (copy-file "youtube-dl.zsh"
-                                   (string-append zsh "/_youtube-dl"))))))))
-    (native-inputs
-     (list zip))
-    (inputs
-     (list ffmpeg))
-    (synopsis "Download videos from YouTube.com and other sites")
-    (description
-     "Youtube-dl is a small command-line program to download videos from
-YouTube.com and many more sites.")
-    (home-page "https://yt-dl.org")
-    (properties '((release-monitoring-url . "https://yt-dl.org/downloads/")))
-    (license license:public-domain)))
+(define-deprecated/public-alias youtube-dl yt-dlp)
 
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.06.30")
+    (version "2025.08.22")
     (source
      (origin
        (method git-fetch)
@@ -3245,50 +3153,57 @@ YouTube.com and many more sites.")
              (commit version)))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
-       (snippet '(substitute* "pyproject.toml"
-                   (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
+       (snippet #~(substitute* "pyproject.toml"
+                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "14pk2rk5vm9469ghkvciaz74fihbl8dfi27qj6xnxv71hpm5w03p"))))
+        (base32 "19phlzms38r6v6g2za8w0pj6cb4sbv2vi04sbah4263q3gw27i77"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? ,(not (%current-target-system))
-       #:test-flags '("--ignore=test/test_websockets.py")
-       #:phases
-       (modify-phases %standard-phases
-         ;; See <https://issues.guix.gnu.org/43418#5>.
-         ;; ffmpeg is big but required to request free formats from, e.g.,
-         ;; YouTube so pull it in unconditionally.  Continue respecting the
-         ;; --ffmpeg-location argument.
-         (add-after 'unpack 'default-to-the-ffmpeg-input
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "yt_dlp/postprocessor/ffmpeg.py"
-               (("location = self.get_param(.*)$")
-                (string-append
+     (list
+      #:tests? (not (%current-target-system))
+      #:test-flags #~'("--ignore=test/test_websockets.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; See <https://issues.guix.gnu.org/43418#5>.
+          ;; ffmpeg is big but required to request free formats from, e.g.,
+          ;; YouTube so pull it in unconditionally.  Continue respecting the
+          ;; --ffmpeg-location argument.
+          (add-after 'unpack 'default-to-the-ffmpeg-input
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "yt_dlp/postprocessor/ffmpeg.py"
+                (("location = self.get_param(.*)$")
+                 (string-append
                   "location = '"
                   (dirname (search-input-file inputs "bin/ffmpeg"))
                   "'\n")))))
-         (add-before 'build 'build-generated-files
-           (lambda* (#:key inputs #:allow-other-keys)
-             (if (assoc-ref inputs "pandoc")
-               (invoke "make"
-                       "PYTHON=python"
-                       "yt-dlp"
-                       "yt-dlp.1"
-                       "completions")
-               (invoke "make"
-                       "PYTHON=python"
-                       "yt-dlp"
-                       "completions"))))
-         (replace 'check
-           (lambda* (#:key tests? test-flags #:allow-other-keys)
-             (when tests?
-               (apply invoke "pytest" "-k" "not download" test-flags)))))))
+          (add-before 'build 'build-generated-files
+            (lambda* (#:key inputs #:allow-other-keys)
+              (if (search-input-file inputs "bin/pandoc")
+                  (invoke "make"
+                          "PYTHON=python"
+                          "yt-dlp"
+                          "yt-dlp.1"
+                          "completions")
+                  (invoke "make"
+                          "PYTHON=python"
+                          "yt-dlp"
+                          "completions"))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "pytest"
+                       "-k"
+                       (string-append
+                        "not download"
+                        " and not "
+                        "test_partial_read_then_full_read")
+                       test-flags)))))))
     (inputs (list ffmpeg python-brotli
                   python-certifi
                   python-mutagen
                   python-pycryptodomex
                   python-requests-next ; TODO Remove this special package
-                  python-urllib3-1.26  ; TODO Remove this one too
+                  python-urllib3
                   python-websockets))
     (native-inputs
      (append
@@ -3375,8 +3290,7 @@ audio, images) from the Web.  It can use either mpv or vlc for playback.")
            perl-term-readline-gnu
            perl-unicode-linebreak
            xdg-utils
-           ;; Some videos play without youtube-dl, but others silently fail to.
-           youtube-dl))
+           yt-dlp))
     (arguments
      `(#:modules ((guix build perl-build-system)
                   (guix build utils)
@@ -3389,9 +3303,9 @@ audio, images) from the Web.  It can use either mpv or vlc for playback.")
          (add-after 'unpack 'refer-to-inputs
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "lib/WWW/YoutubeViewer.pm"
-               (("'youtube-dl'")
-                (format #f "'~a/bin/youtube-dl'"
-                        (assoc-ref inputs "youtube-dl"))))
+               (("'yt-dlp'")
+                (format #f "'~a'"
+                        (search-input-file inputs "bin/yt-dlp"))))
              (substitute* '("bin/gtk2-youtube-viewer"
                             "bin/gtk3-youtube-viewer")
                (("'xdg-open'")
@@ -3485,6 +3399,7 @@ playlists.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/Kethsar/ytarchive"
       #:embed-files #~(list "children" "nodes" "text")
@@ -4145,7 +4060,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "30.1.2")
+    (version "31.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4155,21 +4070,27 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "02pm6397h7l0xhdpscbh1kq8y98zx236z95wvw60kbhq38s0i0ik"))
+                "1wiaiva2wh9781mcwmlkf3xfg805q0s8gz4q7n1vnmk27750i6j1"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
-      #~(list (string-append "-DOBS_VERSION_OVERRIDE=" #$version)
-              "-DENABLE_UNIT_TESTS=ON"
-              "-DENABLE_NEW_MPEGTS_OUTPUT=OFF"
-              "-DENABLE_AJA=OFF"
-              "-DENABLE_QSV11=OFF"
-              ;; Browser plugin requires cef, but it is not packaged yet.
-              ;; <https://bitbucket.org/chromiumembedded/cef/src/master/>
-              "-DBUILD_BROWSER=OFF")
+      #~(let ((libdir (string-append (assoc-ref %outputs "out") "/lib")))
+          (list (string-append "-DOBS_VERSION_OVERRIDE=" #$version)
+                (string-append "-DOBS_EXECUTABLE_RPATH=" libdir)
+                (string-append "-DOBS_LIBRARY_RPATH=" libdir)
+                (string-append "-DOBS_MODULE_RPATH=" libdir)
+                "-DENABLE_UNIT_TESTS=ON"
+                "-DENABLE_NEW_MPEGTS_OUTPUT=OFF"
+                "-DENABLE_AJA=OFF"
+                "-DENABLE_QSV11=OFF"
+                "-DENABLE_NVENC=OFF"
+                ;; Browser plugin requires cef, but it is not packaged yet.
+                ;; <https://bitbucket.org/chromiumembedded/cef/src/master/>
+                "-DBUILD_BROWSER=OFF"))
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'install 'wrap-executable
@@ -4201,6 +4122,7 @@ be used for realtime video capture via Linux-specific APIs.")
       bash-minimal
       curl
       eudev
+      extra-cmake-modules
       ffmpeg
       fontconfig
       freetype
@@ -4225,10 +4147,12 @@ be used for realtime video capture via Linux-specific APIs.")
       qtbase
       qtsvg
       qtwayland
+      rnnoise
       speexdsp
       v4l-utils
-      vulkan-headers
+      uthash
       vlc
+      vulkan-headers
       wayland
       wayland-protocols
       websocketpp
@@ -4678,7 +4602,7 @@ different filters than the original.")
 (define-public obs-source-copy
   (package
     (name "obs-source-copy")
-    (version "0.2.4")
+    (version "0.2.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4687,7 +4611,7 @@ different filters than the original.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1l3ls3j57yh03vkwiah6yj1xnnmq7q2ngjjn1k4h1sqqk0dxn86j"))))
+                "0hkjpjli1bw090asc0a9km1gqjachv3hsx5z642kqc5mrnq7fnq3"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4767,7 +4691,7 @@ Wayland compositors.")
 (define-public obs-vkcapture
   (package
     (name "obs-vkcapture")
-    (version "1.5.0")
+    (version "1.5.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4776,7 +4700,7 @@ Wayland compositors.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00a69rg1inkssccqmwp1j85vrw17j2k6d5pidvzfdq94vvad10w5"))))
+                "0p4v3c6wsgkvh3kszdl47w8j0f4q5n1rv6bk8alvipf97r4x25w2"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f)) ;no tests
@@ -5057,44 +4981,6 @@ specifications.")
     (description "libaacs is a library which implements the Advanced Access
 Content System specification.")
     (license license:lgpl2.1+)))
-
-(define-public mps-youtube
-  (package
-    (name "mps-youtube")
-    (version "0.2.8")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/mps-youtube/mps-youtube")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1w1jhw9rg3dx7vp97cwrk5fymipkcy2wrbl1jaa38ivcjhqg596y"))))
-    (build-system python-build-system)
-    (arguments
-     ;; Tests need to be disabled until #556 upstream is fixed. It reads as if the
-     ;; test suite results differ depending on the country and also introduce
-     ;; non-determinism in the tests.
-     ;; https://github.com/mps-youtube/mps-youtube/issues/556
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases
-                  ;; Loading this as a library will create cache directories,
-                  ;; etc; which fails in the build container.
-                  (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-pafy python-pygobject)) ; For mpris2 support
-    (home-page "https://github.com/mps-youtube/mps-youtube")
-    (synopsis "Terminal based YouTube player and downloader")
-    (description
-     "@code{mps-youtube} is based on mps, a terminal based program to
-search, stream and download music.  This implementation uses YouTube as
-a source of content and can play and download video as well as audio.
-It can use either mpv or mplayer for playback, and for conversion of
-formats ffmpeg or libav is used.  Users should install one of the
-supported players in addition to this package.")
-    (license license:gpl3+)))
 
 (define-public handbrake
   (package
@@ -5910,7 +5796,7 @@ It counts more than 100 plugins.")
 (define-public motion
   (package
     (name "motion")
-    (version "4.5.1")
+    (version "4.7.0")
     (home-page "https://motion-project.github.io/")
     (source (origin
               (method git-fetch)
@@ -5919,7 +5805,7 @@ It counts more than 100 plugins.")
                     (commit (string-append "release-" version))))
               (sha256
                (base32
-                "09j919bba75d05rkqpib5rcmn1ff5nvn4ss8yy4fi6iz0lnacffx"))
+                "1pwsl1v0aqh5k5608siy0614lyf5bscy9a47ha8i5vqsbqxy4s3c"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -6113,7 +5999,8 @@ create smoother and stable videos.")
            qtsvg-5
            zeromq))
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list (string-append "-DPYTHON_MODULE_PATH:PATH=" %output "/lib/python"
                             ,(version-major+minor (package-version python))
                             "/site-packages")
@@ -6202,7 +6089,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "25.03.29")
+    (version "25.07.26")
     (source
      (origin
        (method git-fetch)
@@ -6211,7 +6098,7 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "114h7g1ambj3b91f54yrwsg02pcdh0b6npg2w84qympib0f30ck6"))))
+        (base32 "0213adgk8zlsw160dz3bbdkhlz627cg42i6ng35flgxdx0z050hn"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -6561,68 +6448,6 @@ result in several formats:
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-aom-sys" ,rust-aom-sys-0.3)
-        ("rust-arbitrary" ,rust-arbitrary-1)
-        ("rust-arg-enum-proc-macro" ,rust-arg-enum-proc-macro-0.3)
-        ("rust-arrayvec" ,rust-arrayvec-0.7)
-        ("rust-av-metrics" ,rust-av-metrics-0.9)
-        ("rust-av1-grain" ,rust-av1-grain-0.2)
-        ("rust-backtrace" ,rust-backtrace-0.3)
-        ("rust-bitstream-io" ,rust-bitstream-io-2)
-        ("rust-built" ,rust-built-0.7)
-        ("rust-byteorder" ,rust-byteorder-1)
-        ("rust-cc" ,rust-cc-1)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-clap-complete" ,rust-clap-complete-4)
-        ("rust-console" ,rust-console-0.15)
-        ("rust-crossbeam" ,rust-crossbeam-0.8)
-        ("rust-fern" ,rust-fern-0.6)
-        ("rust-image" ,rust-image-0.24)
-        ("rust-interpolate-name" ,rust-interpolate-name-0.2)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-ivf" ,rust-ivf-0.1)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-libdav1d-sys" ,rust-libdav1d-sys-0.6)
-        ("rust-libfuzzer-sys" ,rust-libfuzzer-sys-0.4)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-maybe-rayon" ,rust-maybe-rayon-0.1)
-        ("rust-nasm-rs" ,rust-nasm-rs-0.2)
-        ("rust-new-debug-unreachable" ,rust-new-debug-unreachable-1)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-noop-proc-macro" ,rust-noop-proc-macro-0.3)
-        ("rust-num-derive" ,rust-num-derive-0.4)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-paste" ,rust-paste-1)
-        ("rust-profiling" ,rust-profiling-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rand-chacha" ,rust-rand-chacha-0.3)
-        ("rust-scan-fmt" ,rust-scan-fmt-0.2)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-big-array" ,rust-serde-big-array-0.5)
-        ("rust-signal-hook" ,rust-signal-hook-0.3)
-        ("rust-simd-helpers" ,rust-simd-helpers-0.1)
-        ("rust-system-deps" ,rust-system-deps-6)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-toml" ,rust-toml-0.8)
-        ("rust-tracing" ,rust-tracing-0.1)
-        ("rust-tracing-chrome" ,rust-tracing-chrome-0.7)
-        ("rust-tracing-subscriber" ,rust-tracing-subscriber-0.3)
-        ("rust-v-frame" ,rust-v-frame-0.3)
-        ("rust-wasm-bindgen" ,rust-wasm-bindgen-0.2)
-        ("rust-y4m" ,rust-y4m-0.8))
-       #:cargo-development-inputs
-       (("rust-assert-cmd" ,rust-assert-cmd-2)
-        ("rust-criterion" ,rust-criterion-0.5)
-        ("rust-interpolate-name" ,rust-interpolate-name-0.2)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-pretty-assertions" ,rust-pretty-assertions-1)
-        ("rust-quickcheck" ,rust-quickcheck-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rand-chacha" ,rust-rand-chacha-0.3)
-        ("rust-semver" ,rust-semver-1))
        #:phases
        (modify-phases %standard-phases
          (replace 'build
@@ -6671,7 +6496,7 @@ result in several formats:
                  '())
              (list pkg-config rust-cargo-c)))
     (inputs
-     (list libgit2-1.8 zlib))
+     (cons* libgit2-1.9 zlib (cargo-inputs 'rav1e)))
     (home-page "https://github.com/xiph/rav1e/")
     (synopsis "Fast and safe AV1 encoder")
     (description "@code{rav1e} is an AV1 video encoder.  It is designed to
@@ -6715,6 +6540,92 @@ With Peek, you simply place the Peek window over the area you want to record
 and press \"Record\".  Peek is optimized for generating animated GIFs, but you
 can also directly record to WebM or MP4 if you prefer.")
     (license license:gpl3+)))
+
+(define-public python-yewtube
+  (package
+    (name "python-yewtube")
+    (version "2.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mps-youtube/yewtube")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bvn1zcycsq2gnvs10hn82ic8zp9q4s9gmmi6flahg3wavpnspzr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "mps_youtube/__init__.py"
+                (("from pip\\._vendor import pkg_resources.*")
+                 "")
+                (("__version__ =.*")
+                 (format #f "__version__ = ~s~%"
+                         #$(package-version this-package))))
+              (substitute* "requirements.txt"
+                (("httpx.*")
+                 "httpx\n"))))
+          (add-before 'check 'configure-tests
+            (lambda _
+              (setenv "HOME" (getcwd))))
+          ;; XXX: This can happen when some side-effects happens at
+          ;; initialization. See https://codeberg.org/guix/guix/issues/1089
+          (add-before 'sanity-check 'patch-script
+            (lambda _
+              (substitute* (string-append #$output "/bin/.yt-real")
+                (("import mps_youtube as mod")
+                 "from mps_youtube.main import main")
+                (("sys\\.exit \\(mod\\.main\\.main \\(\\)\\)")
+                 "sys.exit(main())"))))
+          (replace 'sanity-check
+            (lambda _
+              (invoke (string-append #$output "/bin/yt") "-h"))))))
+    (native-inputs
+     (list python-dbus
+           python-pygobject
+           python-pytest
+           python-setuptools-next
+           python-wheel))
+    (propagated-inputs
+     (list python-pylast
+           python-pyperclip
+           python-requests
+           python-youtube-search
+           yt-dlp))
+    (home-page "https://github.com/mps-youtube/yewtube")
+    (synopsis "Terminal based YouTube player and downloader")
+    (description
+     "This package provides a terminal based @code{YouTube} player and
+downloader.  It does not require a Youtube API key.")
+    (license license:gpl3+)))
+
+(define-deprecated/public-alias mps-youtube python-yewtube)
+
+(define-public python-youtube-search
+  (package
+    (name "python-youtube-search")
+    (version "1.6.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "youtube-search-python" version))
+       (sha256
+        (base32 "1xgw6nqypnj3ymjkfyzc1vvwar73qvp08prnp15ypmzcd7bx2s25"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-httpx))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/alexmercerind/youtube-search-python")
+    (synopsis "Search for YouTube videos, channels & playlists")
+    (description
+     "This package provides tools to search for @code{YouTube} videos,
+channels and playlists; as well as getting video metadata from links.  This
+package does not rely on the @code{YouTube} Data API v3.")
+    (license license:expat)))
 
 (define-public wf-recorder
   (package
@@ -6861,26 +6772,31 @@ includes @code{dvdxchap} tool for extracting chapter information from DVD.")
     (home-page "https://www.bunkus.org/videotools/ogmtools/")))
 
 (define-public libcaption
-  (package
-    (name "libcaption")
-    (version "0.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/szatmary/libcaption")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "16mhw8wpl7wdjj4n7rd1c294p1r8r322plj7z91crla5aah726rq"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f ; Cannot figure out how to run the unit tests
-       #:configure-flags '("-DENABLE_RE2C=ON")))
-    (native-inputs
-     (list re2c))
-    (synopsis "CEA608 / CEA708 closed-caption codec")
-    (description "Libcaption creates and parses closed-caption data,
+  ;; This is the latest commit of the 'develop' branch, which corresponds to
+  ;; the de facto, never-released v0.8 version that most applications using
+  ;; libcaption rely on.
+  (let ((commit "e8b6261090eb3f2012427cc6b151c923f82453db")
+        (revision "0"))
+    (package
+      (name "libcaption")
+      (version (git-version "0.7" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/szatmary/libcaption")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1m9rw3r502923sch8rz2s1v8wz2klgbi7hqd37l63l3plh837nzn"))))
+      (build-system cmake-build-system)
+      (arguments
+       `(#:tests? #f ; Cannot figure out how to run the unit tests
+                  #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
+                                      "-DENABLE_RE2C=ON")))
+      (native-inputs (list re2c))
+      (synopsis "CEA608 / CEA708 closed-caption codec")
+      (description "Libcaption creates and parses closed-caption data,
 providing an encoder / decoder for the EIA608 and CEA708 closed-caption
 standards.
 
@@ -6894,8 +6810,8 @@ structure.
 In addition, utility functions to create h.264 SEI (Supplementary enhancement
 information) NALUs (Network Abstraction Layer Unit) for inclusion into an h.264
 elementary stream are provided.")
-    (home-page "https://github.com/szatmary/libcaption")
-    (license license:expat)))
+      (home-page "https://github.com/szatmary/libcaption")
+      (license license:expat))))
 
 (define-public video-contact-sheet
   (package

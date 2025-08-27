@@ -11,7 +11,7 @@
 ;;; Copyright © 2015 Florian Paul Schmidt <mista.tapas@gmx.net>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016, 2018 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2021, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2021, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2017, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Petter <petter@mykolab.ch>
@@ -249,7 +249,7 @@ command line, without displaying a keyboard at all.")
 (define-public aquamarine
   (package
     (name "aquamarine")
-    (version "0.8.0")
+    (version "0.9.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -258,14 +258,13 @@ command line, without displaying a keyboard at all.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01lmzmb5bzphichbyim7iy04405af5mqcqf8ki3if4wdxkdmbfn9"))))
+                "0cwbd9cdbg40frhircwfbaxdqh11s8jqq9dqy228j9zvb27y2b72"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:cmake cmake-next
-           ;; TODO: Figure out what's expected in the test environment.
+     (list ;; TODO: Figure out what's expected in the test environment.
            #:tests? #f))
     (native-inputs
-     (list gcc-14 hyprwayland-scanner pkg-config))
+     (list gcc-15 hyprwayland-scanner pkg-config))
     (inputs
      (list eudev
            hwdata
@@ -907,26 +906,22 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
     (source
      (origin
        (method url-fetch)
-       (uri
-        (string-append
-         "https://www.cairographics.org/releases/pixman-"
-         version ".tar.gz"))
+       (uri (string-append "https://www.cairographics.org/releases/pixman-"
+                           version ".tar.gz"))
        (sha256
         (base32 "0pk298iqxqr64vk3z6nhjwr6vjg1971zfrjkqy5r9zd2mppq057a"))
-       (patches
-        (search-patches
-         "pixman-CVE-2016-5296.patch"))))
+       (patches (search-patches "pixman-CVE-2016-5296.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
-       (list
-        "--disable-static"
-        "--enable-timers"
-        "--enable-gnuplot")))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libpng zlib))
+       (list "--disable-static"
+             "--enable-timers"
+             "--enable-gnuplot"
+             ,@(if (target-arm32?)
+                   `("--disable-arm-simd")
+                   '()))))
+    (native-inputs (list pkg-config))
+    (inputs (list libpng zlib))
     (synopsis "Low-level pixel manipulation library")
     (description "Pixman is a low-level software library for pixel
 manipulation, providing features such as image compositing and trapezoid
@@ -1998,7 +1993,7 @@ less if you are working in front of the screen at night.")
 (define-public xscreensaver
   (package
     (name "xscreensaver")
-    (version "6.08")
+    (version "6.12")
     (source
      (origin
        (method url-fetch)
@@ -2006,7 +2001,7 @@ less if you are working in front of the screen at night.")
         (string-append "https://www.jwz.org/xscreensaver/xscreensaver-"
                        version ".tar.gz"))
        (sha256
-        (base32 "18vnbs2ns42cgnnsvwn0zh98wcfzxf2k9mib5x5zkv6f4njjpxaw"))
+        (base32 "0hvn67qs0rns6qi9phhs601vzbryx2kyvginfcybrfz32y17kxjg"))
        (modules '((guix build utils)))
        (snippet
         ;; 'configure.ac' checks for $ac_unrecognized_opts and exits if it's
@@ -2856,17 +2851,18 @@ both binary and text data.")
 (define-public python-pyperclip
   (package
     (name "python-pyperclip")
-    (version "1.8.2")
+    (version "1.9.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "pyperclip" version))
         (sha256
-         (base32
-          "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh"))))
-    (build-system python-build-system)
+         (base32 "046k4wjmwjprra363fa8nm925f90m6fs3vh7fmfgq6y8vm103pmp"))))
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f)) ; Not clear how to make tests pass.
+    (native-inputs
+     (list python-setuptools-next))
     (inputs
      (list xclip xsel))
     (home-page "https://github.com/asweigart/pyperclip")
@@ -3411,8 +3407,7 @@ virtual-pointer (pointer command) protocols.")
         (base32 "14gnkz18dipsa2v24f4nm9syxaa7g21iqjm7y65jn849ka2jr1h8"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTING=ON")
-           #:phases #~(modify-phases %standard-phases
+     (list #:phases #~(modify-phases %standard-phases
                         (add-after 'unpack 'disable-problematic-tests
                           (lambda _
                             (substitute* "config_parser_test.cc"
@@ -3747,7 +3742,7 @@ desktop notifications.")
 (define-public wofi
   (package
     (name "wofi")
-    (version "1.4.1")
+    (version "1.5.1")
     (source (origin
               (method hg-fetch)
               (uri (hg-reference
@@ -3756,7 +3751,7 @@ desktop notifications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1z2pmmwq2h3lfsvdazjiz9s3978rcqan7dqdk5iwk4sz2m96irv9"))))
+                "1xqgpqx7zing9b2w73f8x1shk52g63jyncnq36ss7wbh69c7rsmg"))))
     (build-system meson-build-system)
     (arguments
      (list #:glib-or-gtk? #t))
@@ -3932,7 +3927,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprsunset
   (package
     (name "hyprsunset")
-    (version "0.1.0")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)
@@ -3941,17 +3936,17 @@ This package is the fork of hsetroot by Hyriand.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "110cw7nd6a0krsg6764hx2i45lc8n4b1iln3b8jz1x6pziw1qna9"))))
+        (base32 "0h0iibncjl780nnwvf1mfmqckdzzc4b4fphflj4mq56nswf697ha"))))
     (build-system cmake-build-system)
     (arguments
-     (list
-      #:tests? #f)) ;No tests.
+     (list #:tests? #f)) ;No tests.
     (native-inputs
-     (list gcc-14
+     (list gcc-15
            pkg-config))
     (inputs
      (list hyprwayland-scanner
            hyprutils
+           hyprlang
            wayland
            hyprland-protocols
            wayland-protocols))
@@ -3970,7 +3965,7 @@ reduce percieved brightness below the monitor's minimum.")
 (define-public hyprlock
   (package
    (name "hyprlock")
-   (version "0.8.2")
+   (version "0.9.0")
    (source
     (origin
      (method git-fetch)
@@ -3979,11 +3974,10 @@ reduce percieved brightness below the monitor's minimum.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "1wrndp1bkyfp741mgvjflkbq4pvdlccrh6xaz41y1f9967j8magm"))))
+      (base32 "1f0vcp0c9d3m9v3avajprpv14khnv3wk3y9fi3pcwr5xf2alaxv2"))))
    (build-system cmake-build-system)
    (arguments
-    `(#:cmake ,cmake-next
-      #:phases
+    `(#:phases
       (modify-phases %standard-phases
                      ;; remove when fixed
                      (add-after 'unpack 'fixgldiscover
@@ -3994,7 +3988,7 @@ reduce percieved brightness below the monitor's minimum.")
                           (("OpenGL REQUIRED")
                            "OpenGL REQUIRED COMPONENTS GLES2 EGL")))))
       #:tests? #f)) ;; no test
-   (native-inputs (list gcc-14 pkg-config))
+   (native-inputs (list gcc-15 pkg-config))
    (inputs (list cairo
                  file
                  hyprgraphics
@@ -4011,7 +4005,7 @@ reduce percieved brightness below the monitor's minimum.")
                  sdbus-c++
                  wayland
                  wayland-protocols))
-   (home-page "https://hyprland.org/")
+   (home-page "https://hypr.land/")
    (synopsis "Hyprland's screen locking utility")
    (description
     "This package provides Hyprland's simple, yet multi-threaded and
@@ -4032,9 +4026,7 @@ GPU-accelerated screen locking utility.")
              (base32
               "0j3hbqfx40cjxkvaiqzfij8pgblg2hyv9lbbjjh4iahciwgh7623"))))
    (build-system cmake-build-system)
-   (arguments
-    `(#:tests? #f ;; no test
-      #:cmake ,cmake-next))
+   (arguments '(#:tests? #f)) ;; no test
    (native-inputs (list gcc-14 pkg-config))
    (inputs
     (list cairo
@@ -4341,6 +4333,45 @@ on the screen and which then writes out the necessary C code for it.")
                          (append mesa)))
     (synopsis
      "GUI toolkit for X based on the X11 Xlib library, with OpenGL support")))
+
+(define-public xiccd
+  (let* ((version "0.4.1")
+         (tag (string-append "v" version)))
+    (package
+      (name "xiccd")
+      (version version)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/agalakhov/xiccd")
+               (commit tag)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01favi5v4qbpj6v6k6iab7wxhjy4vjnqwcykhhv2rgcqw5dx4w4a"))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     (substitute* "configure.ac"
+                       (("m4_esyscmd_s\\([^\n\\(\\)\\[\\]]*\\)")
+                        #$tag)
+                       (("tar-ustar")
+                        "tar-ustar foreign")) #t))))
+      (build-system gnu-build-system)
+      (inputs (list colord glib libx11 libxrandr))
+      (native-inputs (list autoconf automake gettext-minimal libtool
+                           pkg-config))
+      (home-page "https://github.com/agalakhov/xiccd")
+      (synopsis "X color profile daemon")
+      (description
+       "@command{xiccd} provides color profile support for desktop environments
+other than GNOME and KDE.  It does the following tasks:
+@itemize
+@item Enumerates displays and register them in colord.
+@item Creates default ICC profiles based on EDID data.
+@item Applies ICC profiles provided by colord.
+@item Maintains user's private ICC storage directory.
+@end itemize")
+      (license license:gpl3))))
 
 (define-public xxkb
   (package

@@ -25,11 +25,15 @@
 
 (define-module (guix scripts import)
   #:use-module (guix import utils)
+  #:use-module (guix diagnostics)
+  #:use-module (guix i18n)
   #:use-module (guix ui)
   #:use-module (guix scripts)
   #:use-module (guix read-print)
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-37)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
   #:export (%standard-import-options
@@ -40,7 +44,14 @@
 ;;; Command line options.
 ;;;
 
-(define %standard-import-options '())
+(define %standard-import-options
+  (list
+   ;; Hidden option for importer-specific file preprocessing.
+   (option '("file-to-insert") #f #t
+           (lambda (opt name arg result)
+             (if (file-exists? arg)
+                 (alist-cons 'file-to-insert arg result)
+                 (leave (G_ "file '~a' does not exist~%") arg))))))
 
 
 ;;;
@@ -70,7 +81,7 @@ Run IMPORTER with ARGS.\n"))
   (display (G_ "
   -h, --help             display this help and exit"))
   (display (G_ "
-  -i, --insert           insert packages into file alphabetically"))
+  -i, --insert=FILE      insert packages into FILE alphabetically"))
   (display (G_ "
   -V, --version          display version information and exit"))
   (newline)
@@ -84,7 +95,8 @@ PROC callback."
         ((and expr (or ('package _ ...)
                        ('let _ ...)))
          (proc (package->definition expr)))
-        ((and expr ('define-public _ ...))
+        ((and expr (or ('define-public _ ...)
+                       ('define _ ...)))
          (proc expr))
         ((expressions ...)
          (for-each (lambda (expr)
@@ -92,7 +104,8 @@ PROC callback."
                        ((and expr (or ('package _ ...)
                                       ('let _ ...)))
                         (proc (package->definition expr)))
-                       ((and expr ('define-public _ ...))
+                       ((and expr (or ('define-public _ ...)
+                                      ('define _ ...)))
                         (proc expr))))
                    expressions))
         (x
@@ -107,7 +120,18 @@ PROC callback."
   (category packaging)
   (synopsis "import a package definition from an external repository")
 
-  (match args
+  (define (process-args args)
+    (match args
+      ;; Workaround to accpet ‘--insert=FILE’, for the consistency of
+      ;; command-line interface.
+      ((arg . rest)
+       (if (string-prefix? "--insert=" arg)
+           (append (string-split arg #\=)
+                   rest)
+           args))
+      (_ args)))
+
+  (match (process-args args)
     (()
      (format (current-error-port)
              (G_ "guix import: missing importer name~%")))
@@ -118,20 +142,33 @@ PROC callback."
      (show-version-and-exit "guix import"))
     ((or ("-i" file importer args ...)
          ("--insert" file importer args ...))
-     (let ((find-and-insert
+     (let* ((define-prefixes
+             `(,@(if (member importer '("crate"))
+                     '(define)
+                     '())
+               define-public))
+            (define-prefix? (cut member <> define-prefixes))
+            (find-and-insert
              (lambda (expr)
                (match expr
-                 (('define-public term _ ...)
-                  (let ((source-properties
-                          (find-definition-insertion-location
-                            file term)))
-                    (if source-properties
-                      (insert-expression source-properties expr)
-                      (let ((port (open-file file "a")))
-                        (pretty-print-with-comments port expr)
-                        (newline port)
-                        (close-port port)))))))))
-       (import-as-definitions importer args find-and-insert)))
+                 (((? define-prefix? define-prefix) term _ ...)
+                  ;; Skip existing definition.
+                  (unless (find-definition-location
+                           file term #:define-prefix define-prefix)
+                    (let ((source-properties
+                           (find-definition-insertion-location
+                            file term #:define-prefix define-prefix)))
+                      (if source-properties
+                          (insert-expression source-properties expr)
+                          (let ((port (open-file file "a")))
+                            (pretty-print-with-comments port expr)
+                            (newline port)
+                            (newline port)
+                            (close-port port))))))))))
+       (import-as-definitions importer
+                              (cons (string-append "--file-to-insert=" file)
+                                    args)
+                              find-and-insert)))
     ((importer args ...)
      (let ((print (lambda (expr)
                     (leave-on-EPIPE

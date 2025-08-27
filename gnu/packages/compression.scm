@@ -33,7 +33,7 @@
 ;;; Copyright © 2021 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2021 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
-;;; Copyright © 2021, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Ahmad Jarara <git@ajarara.io>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
@@ -862,7 +862,7 @@ with the sfArk algorithm.")
 (define-public minizip-ng
   (package
     (name "minizip-ng")
-    (version "4.0.5")
+    (version "4.0.10")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -871,12 +871,35 @@ with the sfArk algorithm.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0lgx4s4aykxn8x3b4m4c4isasd2608bbyfm4lxc2spcc4xqwhzkz"))))
+                "1y6yvswzl1gzrv1am3yhr6r2zpsh50d1l7g381ccccn9sz19jw13"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
-                                     "-DMZ_BUILD_TESTS=ON"
-                                     "-DMZ_BUILD_UNIT_TESTS=ON")))
+     (list
+      #:parallel-tests? #f
+      #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
+                                "-DMZ_BUILD_TESTS=ON"
+                                "-DMZ_BUILD_UNIT_TESTS=ON"
+                                "-DMZ_COMPAT=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'sanitize-config-file
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((minizip-config
+                     (or (false-if-exception
+                          (search-input-file
+                           outputs
+                           "lib/cmake/minizip-ng/minizip-ng-config.cmake"))
+                         (search-input-file ;for the minizip variant
+                          outputs
+                          "lib/cmake/minizip/minizip-config.cmake"))))
+                (substitute* minizip-config
+                  ;; The find_dependency calls appear useful only in a
+                  ;; static library context, to ensure the transitive
+                  ;; dependencies are available for linking. Remove these to
+                  ;; avoid having to propagate all optional inputs (see:
+                  ;; <https://github.com/zlib-ng/minizip-ng/issues/898>).
+                  ((".*CMakeFindDependencyMacro.*") "")
+                  ((".*find_dependency.*") ""))))))))
     (native-inputs (list googletest pkg-config))
     (inputs (list openssl zlib `(,zstd "lib")))
     (home-page "https://github.com/zlib-ng/minizip-ng")
@@ -884,6 +907,31 @@ with the sfArk algorithm.")
     (description "@code{minizip-ng} is a zip manipulation library written in
 C, forked from the zip manipulation library found in the zlib distribution.")
     (license license:bsd-3)))
+
+(define-public minizip-ng-compat
+  (package/inherit minizip-ng
+    (name "minizip-ng-compat")
+    (arguments
+     (substitute-keyword-arguments (package-arguments minizip-ng)
+       ((#:configure-flags flags)
+        #~(delete "-DMZ_COMPAT=OFF" #$flags))))))
+
+;; The following package is needed for opencolorio@2.4.2, see
+;; https://github.com/AcademySoftwareFoundation/OpenColorIO/issues/2157
+;; https://github.com/NixOS/nixpkgs/pull/406607
+(define-public minizip-ng-4.0.9
+  (package/inherit minizip-ng
+    (name "minizip-ng")
+    (version "4.0.9")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/zlib-ng/minizip-ng")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0bychb3ysbxdhgfvjvmy0rkzjd0ngfkha7d5jy6w8zam53xb0248"))))))
 
 (define-public sfarkxtc
   (let ((commit "13cd6f93725a90d91ec5ea75babf1dbd694ac463")
@@ -2120,6 +2168,15 @@ timestamps in the file header with a fixed time (1 January 2008).
                (base32
                 "18578xbzj8j89srv4bwayjm11bg56fl34sya0znq4fwq3apm037i"))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Avoid the integration test, which requires a system bus.
+          (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
     (inputs
      (list zlib))
     (native-inputs (list perl ; for the documentation
@@ -2496,7 +2553,9 @@ download times, and other distribution and storage costs.")
 (define-public quazip
   (package
     (name "quazip")
-    (version "1.4")
+    ;; When updating, change also the version in quazip-qt5,
+    ;; which shares the same source.
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -2505,7 +2564,7 @@ download times, and other distribution and storage costs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jsw4xm5wyaqcj1pma5zzd8f5xbgd5lcjh18ah3kg36xz5i69yi4"))))
+        (base32 "0ni1656g2xf0cspwjp645hhd2p4iaqki4z26xhkxz04l5nzsdrh0"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ;no test
@@ -2533,7 +2592,7 @@ reading from and writing to ZIP archives.")
   (package
     (inherit quazip)
     (name "quazip-qt5")
-    (version "1.4")
+    (version "1.5")
     (inputs (list qtbase-5 zlib))))
 
 (define-public zchunk
@@ -2736,6 +2795,8 @@ RAR, RPM, DEB, tar, and ZIP.  It cannot perform functions for archives, whose
 archiver is not installed.")
     (license license:gpl2+)))
 
+;; XXX: This software is abandoned since 2018. It may be removed as soon as
+;; the build breaks; see also the discussion at #1734.
 (define-public tarsplitter
   (package
     (name "tarsplitter")
@@ -2825,7 +2886,8 @@ computations.")
                 "17kqwvw2n6bgzidi8f5906s5hc9wm1lbfbpd491gf7csxjck99sx"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_STATIC=OFF"
+     (list #:parallel-tests? #f
+           #:configure-flags #~(list "-DBUILD_STATIC=OFF"
                                      "-DDEACTIVATE_AVX2=ON"
                                      "-DDEACTIVATE_AVX512=ON"
                                      "-DPREFER_EXTERNAL_LZ4=ON"
@@ -2960,7 +3022,8 @@ can append files to the end of such compressed archives.")
           "00ibddiy62kbs9wl52c35j0hbqanx6pi7lvzkpzmbsizkj8mhp1p"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
+     '(#:tests? #f
+       #:configure-flags
        (let* ((out (assoc-ref %outputs "out"))
               (lib (string-append out "/lib")))
          (list
@@ -3031,7 +3094,7 @@ compression and decompression speed compared to Deflate using Zlib.")
 (define-public unrar-free
   (package
     (name "unrar-free")
-    (version "0.3.1")
+    (version "0.3.2")
     (source
      (origin
        (method git-fetch)
@@ -3040,7 +3103,7 @@ compression and decompression speed compared to Deflate using Zlib.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qf2fdr4bl10kys2fsb6090r9xj0ascrk7pn0iklsv1ajwcql3qf"))))
+        (base32 "13qkflwcdfnyrajs3hf2hgrzq4l0kqzngxwa5vyqhw4zz0r9djpm"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf

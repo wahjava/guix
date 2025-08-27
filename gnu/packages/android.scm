@@ -123,7 +123,8 @@ use their packages mostly unmodified in our Android NDK build system.")
         (base32
          "0bjlljmbf8glnd9qjabx73w6pd7ibv43yiyngqvmvgxsabzr8399"))))
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")
+     `(#:tests? #f
+       #:configure-flags '("-DBUILD_SHARED_LIBS=ON")
        #:phases
        (modify-phases %standard-phases
          (add-after 'install 'install-host-libraries
@@ -771,7 +772,7 @@ line.  The project also attempts to maintain the same terminal output.")
 (define-public android-udev-rules
   (package
     (name "android-udev-rules")
-    (version "20210501")
+    (version "20250525")
     (source
      (origin
        (method git-fetch)
@@ -780,7 +781,7 @@ line.  The project also attempts to maintain the same terminal output.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pl1wfd7k9vz8mvy2jb2icc5f11c5p07aixpyhjs6gi5cyaywm5f"))))
+        (base32 "1m5ngii9alsia81nk0cr8d13kpkrizbk7gpf9ai5yq8m9bsd9q70"))))
     (build-system trivial-build-system)
     (native-inputs `(("source" ,source)))
     (arguments

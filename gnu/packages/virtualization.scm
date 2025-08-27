@@ -82,7 +82,6 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages containers)
   #:use-module (gnu packages cpio)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cross-base)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
@@ -169,6 +168,8 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wget)
+  #:use-module (gnu packages vnc)
+  #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -2341,43 +2342,67 @@ main monitor/GPU.")
 (define-public runc
   (package
     (name "runc")
-    (version "1.1.14")
-    ;; XXX: Source contains "vendor", consider to unbundle and pack missing
-    ;; packages.
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/opencontainers/runc/releases/"
-                    "download/v" version "/runc.tar.xz"))
-              (file-name (string-append name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1nypczyb3fp3cnfdg13grxjhg9361i44zialsdkxcfxb0c9g79jf"))))
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/opencontainers/runc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0midvxwmj4fvhy5mqv616bhlx39j0gd6y890adx7dnz5in506ym1"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/opencontainers/runc"
-       #:install-source? #f
-       ;; XXX: 20/139 tests fail due to missing /var, cgroups and apparmor in
-       ;; the build environment.
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'build
+     (list
+      ;; XXX: 20/139 tests fail due to missing /var, cgroups and apparmor in
+      ;; the build environment.
+      #:tests? #f
+      #:install-source? #f
+      #:import-path "github.com/opencontainers/runc"
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-after 'unpack 'patch-source
            (lambda* (#:key import-path #:allow-other-keys)
-             (with-directory-excursion (string-append "src/" import-path)
-               (invoke "make" "all" "man"))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "make" "localunittest"))))
-         (replace 'install
-           (lambda* (#:key import-path outputs #:allow-other-keys)
-             (with-directory-excursion (string-append "src/" import-path)
-               (let ((out (assoc-ref outputs "out")))
-                 (invoke "make" "install" "install-bash" "install-man"
-                         (string-append "PREFIX=" out)))))))))
+             (substitute*  (string-append "src/" import-path "/Makefile")
+               (("/bin/bash") (which "bash")))))
+          (replace 'build
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (invoke "make" "all" "man"))))
+          (replace 'install
+            (lambda* (#:key import-path outputs #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (invoke "make" "install" "install-bash" "install-man"
+                        (string-append "PREFIX=" #$output))))))))
     (native-inputs
-     (list go-md2man pkg-config))
+     (list go-github-com-checkpoint-restore-go-criu-v6
+           go-github-com-containerd-console
+           go-github-com-coreos-go-systemd-v22
+           go-github-com-cyphar-filepath-securejoin
+           go-github-com-docker-go-units
+           go-github-com-godbus-dbus-v5
+           go-github-com-moby-sys-capability
+           go-github-com-moby-sys-mountinfo
+           go-github-com-moby-sys-user
+           go-github-com-moby-sys-userns
+           go-github-com-mrunalp-fileutils
+           go-github-com-opencontainers-cgroups-0.0.1
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-opencontainers-selinux
+           go-github-com-seccomp-libseccomp-golang
+           go-github-com-sirupsen-logrus
+           go-github-com-urfave-cli
+           go-github-com-vishvananda-netlink
+           go-golang-org-x-net
+           go-golang-org-x-sys
+           go-google-golang-org-protobuf
+           go-md2man
+           pkg-config))
     (inputs
      (list libseccomp))
     (synopsis "Open container initiative runtime")
@@ -2393,44 +2418,58 @@ Open Container Initiative specification.")
 (define-public umoci
   (package
     (name "umoci")
-    (version "0.4.7")
-    ;; XXX: Source contain vendor, consider to pack all missing dependencies.
+    (version "0.5.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/opencontainers/umoci/releases/download/v"
-             version "/umoci.tar.xz"))
-       (file-name (string-append "umoci-" version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/opencontainers/umoci")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0fvljj9k4f83wbqzd8nbijz0p1zaq633f8yxyvl5sy3wjf03ffk9"))))
+        (base32 "10pxiqk4194nbnvlvfvlbk31wp8k35in3g694y20f9261nn0qx6n"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/opencontainers/umoci"
-       #:install-source? #f
-       #:test-subdirs '(".")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'unpack
-           (lambda* (#:key source import-path #:allow-other-keys)
-             ;; Unpack the tarball into 'umoci' instead of "runc-${version}".
-             (let ((dest (string-append "src/" import-path)))
-               (mkdir-p dest)
-               (invoke "tar" "-C" (string-append "src/" import-path)
-                       "--strip-components=1"
-                       "-xvf" source))))
-         (replace 'build
-           (lambda* (#:key import-path #:allow-other-keys)
-             (with-directory-excursion (string-append "src/" import-path)
-               ;; TODO: build manpages with 'go-md2man'.
-               (invoke "make" "SHELL=bash"))))
-         (replace 'install
-           (lambda* (#:key import-path outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bindir (string-append out "/bin")))
-               (install-file (string-append "src/" import-path "/umoci")
-                             bindir)
-               #t))))))
+     (list
+      #:install-source? #f
+      #:import-path "github.com/opencontainers/umoci/cmd/umoci"
+      #:unpack-path "github.com/opencontainers/umoci"
+      #:test-flags
+      ;; Two tests fail with error: unpack config.json: convert spec to
+      ;; rootless: inspecting mount flags of /etc/resolv.conf: no such file or
+      ;; directory
+      #~(list "-skip" (string-append "TestUnpackManifestCustomLayer"
+                                     "|TestUnpackStartFromDescriptor"))
+      #:test-subdirs #~(list "../../...")       ;test the whole libary
+      #:build-flags
+      #~(list (string-append "-ldflags="
+                             "-X github.com/opencontainers/umoci.version="
+                             #$version))))
+    ;; TODO: build manpages from <doc/man> with 'go-md2man'.
+    (native-inputs
+     (list go-github-com-adalogics-go-fuzz-headers
+           go-github-com-apex-log
+           go-github-com-blang-semver-v4
+           go-github-com-cyphar-filepath-securejoin
+           go-github-com-docker-go-units
+           go-github-com-klauspost-compress
+           go-github-com-klauspost-pgzip
+           go-github-com-moby-sys-user
+           go-github-com-moby-sys-userns
+           go-github-com-mohae-deepcopy
+           go-github-com-opencontainers-go-digest
+           go-github-com-opencontainers-image-spec-1.0.2
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-rootless-containers-proto-go-proto
+           go-github-com-stretchr-testify
+           go-github-com-urfave-cli
+           go-github-com-vbatts-go-mtree
+           go-golang-org-x-sys
+           go-google-golang-org-protobuf))
     (home-page "https://umo.ci/")
     (synopsis "Tool for modifying Open Container images")
     (description
@@ -2441,7 +2480,7 @@ Open Container Initiative (OCI) image layout and its tagged images.")
 (define-public skopeo
   (package
     (name "skopeo")
-    (version "1.19.0")
+    (version "1.20.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2450,7 +2489,7 @@ Open Container Initiative (OCI) image layout and its tagged images.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gwp8k9bxkis7qwcy7l2mrclii039fqrslvkb5q4rfhlrzqcqbay"))))
+                "1436w3i0w1x60r43j8kw9iaxjvyi99h5yaxzvxc3z3r5la8ka3mv"))))
     (build-system gnu-build-system)
     (native-inputs
      (list go-1.23
@@ -2659,28 +2698,69 @@ by default and can be made read-only.")
 (define-public bochs
   (package
     (name "bochs")
-    (version "2.8")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://sourceforge.net/projects/bochs/files/bochs/"
-                           version "/bochs-" version ".tar.gz"))
-       (sha256
-        (base32 "0n80v8wjd9i3rhc51sq7n7xw2paz7g1scsrmkxx1yhfqyypi6nx8"))))
+    (version "3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/bochs/bochs/" version
+                                  "/bochs-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1al1fx8dbb0ny7a4wbngnz8pqav0nl6rhakb434jqnpka4mm8vyb"))
+              (snippet
+               #~(begin
+                   (use-modules (guix build utils))
+                   ;; This file is non-free.
+                   (delete-file "bios/i440fx.bin")
+                   ;; make -C bios bios-clean
+                   (for-each delete-file
+                             (find-files "bios" "^BIOS-bochs-"))))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f))                    ; no tests exist
-    (inputs
-     (list libxrandr))
-    (home-page "https://bochs.sourceforge.net/")
-    (synopsis "Emulator for x86 PC")
-    (description
-     "Bochs is an emulator which can emulate Intel x86 CPU, common I/O
-devices, and a custom BIOS.  It can also be compiled to emulate many different
-x86 CPUs, from early 386 to the most recent x86-64 Intel and AMD processors.
-Bochs can run most Operating Systems inside the emulation including Linux,
-DOS or Microsoft Windows.")
-    (license license:lgpl2.0+)))
+     (list #:tests? #f                  ;no test suite
+           #:configure-flags
+           ;; Enable support for more modern machine emulation not enabled by
+           ;; default.
+           #~(list "--enable-x86-64"
+                   "--enable-smp"
+                   "--enable-all-optimizations"
+                   "--enable-readline"
+                   "--enable-avx"
+                   "--enable-evex"
+                   "--enable-amx"
+                   "--enable-vmx=2"
+                   "--enable-svm"
+                   "--enable-protection-keys"
+                   "--enable-cet"
+                   "--enable-es1370"
+                   "--enable-sb16"
+                   "--enable-uintr"
+                   "--enable-3dnow"
+                   "--enable-usb"
+                   "--enable-usb-ohci"
+                   "--enable-usb-ehci"
+                   "--enable-usb-xhci"
+                   "--enable-pnic"
+                   "--enable-e1000"
+                   "--enable-using-libslirp"
+                   "--with-vncsrv")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'make-reproducible
+                 (lambda _
+                   (substitute* "bios/Makefile.in"
+                     (("BUILDDATE.*")
+                      "BUILDDATE = `date --utc --date='@0'")))))))
+    (native-inputs (list pkg-config))
+    (inputs (list libslirp libx11 libvnc readline wxwidgets))
+    (home-page "https://bochs.sourceforge.io/")
+    (synopsis "IA-32 (x86) PC emulator")
+    (description "Bochs is a highly portable IA-32 (x86) PC emulator written
+in C++.  It includes emulation of the Intel x86 CPU, common I/O devices, and a
+custom BIOS.  Bochs can be compiled to emulate many different x86 CPUs, from
+early 386 to the most recent x86-64 Intel and AMD processors.  Bochs is
+capable of running most operating systems inside the emulation including
+GNU/Linux, DOS or Microsoft Windows.")
+    (license license:lgpl2.1+)))
 
 (define-public xen
   (package
@@ -2896,33 +2976,12 @@ which is a hypervisor.")
                (base32 "1ab6mgrvnd49m0ay9fbfyd02xaf3qvkwhyyavra4a7wpz0brg54h"))))
     (build-system cargo-build-system)
     (arguments
-     (list
-       #:install-source? #f
-       #:cargo-inputs
-       (list rust-futures-0.3
-             rust-libc-0.2
-             rust-tokio-1
-             rust-netlink-packet-core-0.7
-             rust-netlink-packet-route-0.18
-             rust-netlink-proto-0.11
-             rust-rtnetlink-0.14
-             rust-async-stream-0.3
-             rust-os-info-3
-             rust-pnet-datalink-0.35    ; any version
-             rust-pnet-base-0.35        ; any version
-             rust-ipnetwork-0.20        ; any version
-             rust-log-0.4
-             rust-env-logger-0.10
-             rust-clap-4
-             rust-xenstore-rs-0.6
-             ;; Unix-specific dependencies
-             rust-uname-0.1
-             rust-syslog-6
-             rust-sysctl-0.5)))
+     (list #:install-source? #f))
     (native-inputs
      (list pkg-config
            xen ; Pull in Xen for libxenstore
            clang))
+    (inputs (cargo-inputs 'xen-guest-agent))
     (home-page "https://gitlab.com/xen-project/xen-guest-agent")
     (synopsis "Provides guest VM information to hosting Xen hypervisor")
     (description "The agent gathers some guest information, and writes them to
@@ -3149,7 +3208,7 @@ to host the RISC-V Linux port.")
                (base32
                 "0g0rib62qg81fda8lxsaa7a1ykqy4rl5sq185pdqm9y9xifa8bx5"))))
     (build-system gnu-build-system)
-    (native-inputs (list automake
+    (native-inputs (list automake-1.16.5
                          autoconf
                          gettext-minimal
                          libtool

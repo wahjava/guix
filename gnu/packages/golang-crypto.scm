@@ -28,6 +28,7 @@
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -213,6 +214,7 @@ primitives.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/99designs/keyring"
       #:test-flags
       #~(list "-skip" (string-join
@@ -271,34 +273,6 @@ pcredential store, Pass, Secret Service, KDE Wallet, Encrypted File.")
      "ChaCha is a stream cipher family created by Daniel Bernstein.  The most
 common ChaCha variant is ChaCha20 (20 rounds).  ChaCha20 is standardized in
 RFC 7539.")
-    (license license:expat)))
-
-(define-public go-github-com-aead-ecdh
-  (package
-    (name "go-github-com-aead-ecdh")
-    (version "0.2.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/aead/ecdh")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0b0ps5wzm0q0skzikp91l8slgaw5s9z42g4wnmc69am5gw7h4mpd"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/aead/ecdh"))
-    (propagated-inputs
-     (list go-golang-org-x-crypto))
-    (home-page "https://github.com/aead/ecdh")
-    (synopsis "Elliptic Cureves Deffie-Hellman key exchange implementation in Golang")
-    (description
-     "Package ecdh implements the Diffie-Hellman key exchange using elliptic
-curves (ECDH).  It directly provides ECDH implementations for the NIST curves
-P224, P256, P384, and Bernstein's Cruve25519.  The same logic is available in
-Go 1.20 @code{crypto/ecdh} standard package.")
     (license license:expat)))
 
 (define-public go-github-com-aperturerobotics-jacobsa-crypto
@@ -388,6 +362,7 @@ with its management port enabled.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:skip-build? #t
       #:import-path "github.com/blanu/Dust"))
     (propagated-inputs
@@ -568,16 +543,8 @@ described at @url{https://xxhash.com/}.")
       (build-system go-build-system)
       (arguments
        (list
-        #:import-path "github.com/chmduquesne/rollinghash/"
-        #:phases
-        #~(modify-phases %standard-phases
-            ;; XXX: Run all tests, workaround for go-build-system's lack of Go
-            ;; modules support.
-            (replace 'check
-              (lambda* (#:key tests? import-path #:allow-other-keys)
-                (when tests?
-                  (with-directory-excursion (string-append "src/" import-path)
-                    (invoke "go" "test" "-v" "./..."))))))))
+        #:go go-1.23
+        #:import-path "github.com/chmduquesne/rollinghash/"))
       (propagated-inputs
        (list go-code-cloudfoundry-org-bytefmt))
       (home-page "https://github.com/chmduquesne/rollinghash")
@@ -772,7 +739,7 @@ and AVX acceleration and zero allocations.")
 (define-public go-github-com-decred-dcrd-dcrec-secp256k1-v4
   (package
     (name "go-github-com-decred-dcrd-dcrec-secp256k1-v4")
-    (version "4.3.0")
+    (version "4.4.0")
     (source
      (origin
        (method git-fetch)
@@ -781,7 +748,7 @@ and AVX acceleration and zero allocations.")
              (commit (go-version->git-ref version #:subdir "dcrec/secp256k1"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19yqrrspm6n1x7wa1chqj0j95bc5w02ygddr06ajzf6x7i7q09q5"))
+        (base32 "069v37xz9wxyjj79ag462kafhzdjq7jahp20kilx4435h8vhxxyg"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -1235,7 +1202,6 @@ RSA, RSA-PSS, and ECDSA, though hooks are present for adding your own.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.22
       #:import-path "github.com/google/go-tpm"
       #:phases
       #~(modify-phases %standard-phases
@@ -1831,7 +1797,7 @@ times faster decoding.")
 (define-public go-github-com-nats-io-jwt-v2
   (package
     (name "go-github-com-nats-io-jwt-v2")
-    (version "2.7.3")
+    (version "2.7.4")
     (source
      (origin
        (method git-fetch)
@@ -1840,11 +1806,13 @@ times faster decoding.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09gfzhahm6wfnkaqm5yam8vd9y50rnyjxcl6mw3a9y4far1vpmvb"))))
+        (base32 "0gjfayslmvs5kpgrb7sscaafi5fsm2j6446vbjm830ak0nhq8df9"))))
     (build-system go-build-system)
     (arguments
-     (list #:import-path "github.com/nats-io/jwt/v2"
-           #:unpack-path "github.com/nats-io/jwt"))
+     (list
+      #:go go-1.23
+      #:import-path "github.com/nats-io/jwt/v2"
+      #:unpack-path "github.com/nats-io/jwt"))
     (propagated-inputs (list go-github-com-nats-io-nkeys))
     (home-page "https://github.com/nats-io/jwt")
     (synopsis "Go library signing JWT tokens with NKeys for the NATS ecosystem")
@@ -2178,7 +2146,7 @@ done by Marc Stevens and Dan Shumow, and can be found at:
 (define-public go-github-com-protonmail-go-crypto
   (package
     (name "go-github-com-protonmail-go-crypto")
-    (version "1.1.3")
+    (version "1.3.0")
     (source
      (origin
        (method git-fetch)
@@ -2187,19 +2155,17 @@ done by Marc Stevens and Dan Shumow, and can be found at:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kcan2bw548cn6pm282zyddysv400dankcsrdanha7qmxqki34c0"))))
+        (base32 "0h4zhdxpg5qh5li4r2nsjya757d9kghqjxg3cch4pm3wqvkpjg1h"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "github.com/ProtonMail/go-crypto"
       #:test-flags
       (if (target-riscv64?)
           ;; This test times out on riscv64-linux.
           #~(list "-skip" "TestEndToEnd")
-          #~'())
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build)))) ; no go files in project's root
+          #~'())))
     (propagated-inputs
      (list go-github-com-cloudflare-circl
            go-golang-org-x-crypto))
@@ -2368,7 +2334,7 @@ user-defined collections.")
 (define-public go-github-com-skeema-knownhosts
   (package
     (name "go-github-com-skeema-knownhosts")
-    (version "1.3.0")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -2377,11 +2343,14 @@ user-defined collections.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1i74wqingiflrrvpzhahwdly9f8c27i2far1qxkszi7aswhpj956"))))
+        (base32 "04lb198n9k9y96v7kvyrvwx2w70kb6jq47p6p19h6wd77c7r0flj"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/skeema/knownhosts"))
+      #:import-path "github.com/skeema/knownhosts"
+      ;; Unexpected number of keys returned by
+      ;; HostKeys("multi.example.test:2233"): expected 3, found 4
+      #:test-flags #~(list "-skip" "TestHostKeys")))
     (propagated-inputs (list go-golang-org-x-crypto))
     (home-page "https://github.com/skeema/knownhosts")
     (synopsis "Go SSH known_hosts wrapper with host key lookup")
@@ -2544,6 +2513,38 @@ support the streaming mode required by Go's standard Hash interface.")
     (arguments
      (list
       #:import-path "github.com/twpayne/go-pinentry/v4"))))
+
+(define-public go-github-com-veraison-go-cose
+  ;; XXX: The latest commits provides test fixtures, see:
+  ;; <https://github.com/veraison/go-cose/pull/214/>. Revert back to git tag
+  ;; when a fresh release is available.
+  (let ((commit "a633822d54e270749baecce653c5ba4f07ccbb46")
+        (revision "0"))
+    (package
+      (name "go-github-com-veraison-go-cose")
+      (version (git-version "1.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/veraison/go-cose")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0nni0pv8s6mn1jpk6pxpi464qdji0s0pq587y2mnsa4zkp9pp09z"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/veraison/go-cose"))
+      (propagated-inputs
+       (list go-github-com-fxamacker-cbor-v2))
+      (home-page "https://github.com/veraison/go-cose")
+      (synopsis "COSE specification for Go")
+      (description
+       "This package provides a Go library for the Concise Binary Object
+Representation (CBOR) Object Signing and Encryption
+@url{https://datatracker.ietf.org/doc/rfc9052/, (COSE) specification}.")
+      (license license:mpl2.0))))
 
 (define-public go-github-com-xanzy-ssh-agent
   (package

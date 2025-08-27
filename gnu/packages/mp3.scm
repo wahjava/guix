@@ -668,8 +668,7 @@ command-line tool.")
     (arguments
      `(#:tests? #f ; tests require googletest *sources*
        ;;#:configure-flags '("-DBUILD_TESTS=ON") ; for building the tests
-       #:configure-flags '("-DBUILD_TOOLS=ON") ; for fpcalc
-       #:test-target "check"))
+       #:configure-flags '("-DBUILD_TOOLS=ON"))) ; for fpcalc
     (inputs
      ;; requires one of FFmpeg (prefered), FFTW3 or vDSP
      ;; use the same ffmpeg version as for acoustid-fingerprinter
@@ -828,7 +827,7 @@ simple to use yet fully featured.")
                  (,(string-append (assoc-ref inputs "gtk+")
                                   "/share/glib-2.0/schemas"))))))))))
     (native-inputs
-     (list pkg-config cmake))
+     (list pkg-config cmake-minimal))
     (inputs
      (list glib
            gtk+

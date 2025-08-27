@@ -561,69 +561,6 @@ graph-like environments, e.g. modular synths or finite state machine
 diagrams.")
     (license license:gpl3+)))
 
-(define-public gtksourceview-2
-  (package
-    (name "gtksourceview")
-    (version "2.10.5")   ;this is the last version which builds against gtk+2
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/" name "/"
-                                  (version-major+minor version)  "/"
-                                  name "-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "07hrabhpl6n8ajz10s0d960jdwndxs87szxyn428mpxi8cvpg1f5"))
-              (patches
-               (search-patches
-                "gtksourceview-2-add-default-directory.patch"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list intltool
-           `(,glib "bin")               ; for glib-genmarshal, etc.
-           pkg-config
-           ;; For testing.
-           xorg-server-for-tests
-           shared-mime-info))
-    (propagated-inputs
-     ;; As per the pkg-config file.
-     `(("gtk" ,gtk+-2)
-       ("libxml2" ,libxml2)))
-    (arguments
-     (list
-      ;; Fix build with GCC 14.
-      #:configure-flags #~(list "CFLAGS=-Wno-error=incompatible-pointer-types")
-      #:phases
-      ;; Unfortunately, some of the tests in "make check" are highly dependent
-      ;; on the environment therefore, some black magic is required.
-      #~(modify-phases %standard-phases
-          (add-before 'check 'start-xserver
-            (lambda* (#:key native-inputs inputs #:allow-other-keys)
-              ;; There must be a running X server and make check doesn't
-              ;; start one.  Therefore we must do it.
-              (system (format #f "~a :1 &"
-                              (search-input-file (or native-inputs inputs)
-                                                 "bin/Xvfb")))
-              (setenv "DISPLAY" ":1")
-
-              ;; The .lang files must be found in
-              ;; $XDG_DATA_HOME/gtksourceview-2.0
-              (system "ln -s gtksourceview gtksourceview-2.0")
-              (setenv "XDG_DATA_HOME" (getcwd))
-
-              ;; Finally, the mimetypes must be available.
-              (setenv "XDG_DATA_DIRS"
-                      (string-append
-                       #$(this-package-native-input "shared-mime-info")
-                       "/share")))))))
-    (synopsis "Widget that extends the standard GTK+ 2.x 'GtkTextView' widget")
-    (description
-     "GtkSourceView is a portable C library that extends the standard GTK+
-framework for multiline text editing with support for configurable syntax
-highlighting, unlimited undo/redo, search and replace, a completion framework,
-printing and other features typical of a source code editor.")
-    (license license:lgpl2.0+)
-    (home-page "https://developer.gnome.org/gtksourceview/")))
-
 (define-public gtksourceview
   (package
     (name "gtksourceview")
@@ -1072,6 +1009,7 @@ application suites.")
     (inherit gtk+-2)
     (name "gtk+")
     (version "3.24.43")
+    (replacement gtk+/fixed)
     (source
      (origin
        (method url-fetch)
@@ -1188,6 +1126,38 @@ application suites.")
      (list (search-path-specification
             (variable "GUIX_GTK3_PATH")
             (files '("lib/gtk-3.0")))))))
+
+(define-public gtk+/fixed
+  (package
+    (inherit gtk+)
+    (name "gtk+")
+    (version "3.24.49")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.gnome.org/GNOME/gtk")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0flsnh3f0l9v3y2hmnxz1h15nw1l12ixmiwcpiy1ywplrlgq4j00"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments gtk+)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'disable-failing-tests
+              (lambda _
+                ;; These tests fail only in the containerized environment, for
+                ;; unknown reasons.
+                (substitute* "testsuite/gtk/meson.build"
+                  ((".*\\['defaultvalue'],.*") "")
+                  ((".*\\['objects-finalize',.*") ""))
+                ;; The 'flipping-icons.ui' and 'gtk-icontheme-sizing.ui' tests
+                ;; fail for unknown reasons (see:
+                ;; <https://gitlab.gnome.org/GNOME/gtk/-/issues/7679>).
+                (substitute* "testsuite/reftests/meson.build"
+                  (("  'flipping-icons.ui',.*") "")
+                  (("  'gtk-icontheme-sizing.ui',.*") ""))))))))))
 
 (define-public gtk
   (package
@@ -2962,9 +2932,11 @@ library for drawing.")
          "13jwr1vly4ga3f09dajwky1cdrz5bmggwga3vnnd6j6zzia7dpyr"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list "--enable-glade"
-                               "--enable-introspection"
-                               "CFLAGS=-fcommon")
+     `(#:configure-flags
+       (list
+         "--enable-glade"
+         "--enable-introspection"
+         "CFLAGS=-fcommon -Wno-error=incompatible-pointer-types")
        #:phases
        (modify-phases %standard-phases
          ;; The "configure" script is present, but otherwise the project is

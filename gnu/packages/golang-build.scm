@@ -44,7 +44,8 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages gcc))
+  #:use-module (gnu packages gcc)
+  #:use-module (gnu packages golang))
 
 ;;; Commentary:
 ;;;
@@ -62,16 +63,16 @@
 (define-public go-github-com-goccmack-gocc
   (package
     (name "go-github-com-goccmack-gocc")
-    (version "0.0.0-20230228185258-2292f9e40198")
+    (version "1.0.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/goccmack/gocc")
-             (commit (go-version->git-ref version))))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ah1z1bmn9y9sbh2z1jxsjgsrv1rfrzzzi4c4nq646z2n25c2x8s"))))
+        (base32 "0rv0v0k13lql0z9s9bffkjsan32a0i0m8405w3xng1y0jk3706mh"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -85,15 +86,15 @@
     (description
      "Gocc is a compiler kit for Go written in Go.  Gocc generates lexers and
 parsers or stand-alone DFAs or parsers from a BNF.  Lexers are DFAs, which
-recognise regular languages. Gocc lexers accept UTF-8 input. Gocc parsers are
-PDAs, which recognise LR-1 languages. Optional LR1 conflict handling
+recognise regular languages. Gocc lexers accept UTF-8 input.  Gocc parsers are
+PDAs, which recognise LR-1 languages.  Optional LR1 conflict handling
 automatically resolves shift / reduce and reduce / reduce conflicts.")
     (license license:asl2.0)))
 
 (define-public go-github-com-golang-glog
   (package
     (name "go-github-com-golang-glog")
-    (version "1.2.3")
+    (version "1.2.5")
     (source
      (origin
        (method git-fetch)
@@ -102,7 +103,7 @@ automatically resolves shift / reduce and reduce / reduce conflicts.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sfgcf18wg4glcamgq9njmbny17xq0dd14g3094sj5c1cwjij982"))))
+        (base32 "15gza8cb5qs8brwqjn1lpbm9p5z5332m44gmxz9m0qxkr27lcmhr"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -188,7 +189,16 @@ as an ordered, mutable data structure.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/google/go-cmdtest"))
+      #:import-path "github.com/google/go-cmdtest"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-source
+            (lambda _
+              (substitute* "src/github.com/google/go-cmdtest/cmdtest_test.go"
+                ;; Since Go 1.24, fmt procedures are checked to use a constant
+                ;; format string.
+                (("t.Errorf\\(diff)")
+                 "t.Errorf(\"%s\", diff)")))))))
     (propagated-inputs
      (list go-github-com-google-renameio go-github-com-google-go-cmp))
     (home-page "https://github.com/google/go-cmdtest")
@@ -203,7 +213,7 @@ also update a file with new \"golden\" output that is deemed correct.")
 (define-public go-github-com-google-go-cmp
   (package
     (name "go-github-com-google-go-cmp")
-    (version "0.6.0")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
@@ -212,7 +222,7 @@ also update a file with new \"golden\" output that is deemed correct.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n1j4hi50bl05pyys4i7y417k9g6k1blslj27z327qny7kkdl2ma"))))
+        (base32 "1cys8lz68za30z5cabvwrpnv2pg1ppqxdncmiz8iy2j624a5kg15"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -243,7 +253,7 @@ semantically equal.")
 (define-public go-github-com-google-renameio
   (package
     (name "go-github-com-google-renameio")
-    (version "1.0.1")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -252,7 +262,7 @@ semantically equal.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qn84nra9nxqyqg4i496b6ijbhnxvx66hdndwl7qh7r6q8lz2ba5"))))
+        (base32 "13vc7p43zz5pmgli4k18b15khxpca1zd8v1ga0ryq7ddyz55fg7i"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -379,6 +389,7 @@ primitives in Go.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/twitchyliquid64/golang-asm"))
     (home-page "https://github.com/twitchyliquid64/golang-asm")
     (synopsis "Assembler from the Go compiler, in library form")
@@ -391,7 +402,7 @@ library.")
 (define-public go-github-com-yuin-goldmark
   (package
     (name "go-github-com-yuin-goldmark")
-    (version "1.7.8")
+    (version "1.7.12")
     (source
      (origin
        (method git-fetch)
@@ -400,7 +411,7 @@ library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1iz7x1hqdixx8dkcbaa8lr842i59n843mc553jv5grq057s76yjx"))))
+        (base32 "1qc665b8clfvah62l8bkk473ybng7qzwwibxsq5wskfswv5yaj94"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -423,7 +434,7 @@ library.")
 (define-public go-github-com-yuin-goldmark-emoji
   (package
     (name "go-github-com-yuin-goldmark-emoji")
-    (version "1.0.4")
+    (version "1.0.6")
     (source
      (origin
        (method git-fetch)
@@ -432,7 +443,7 @@ library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "001dgjaa9crbl1yb803gyq1dbcnnfzvv205ycgd97qw9p4xjg21g"))))
+        (base32 "09n5ws797ma47kj0jwg0g2gkwq899kb40ny62r9f44wg6dkrpppr"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -449,7 +460,7 @@ library.")
 (define-public go-golang-org-x-arch
   (package
     (name "go-golang-org-x-arch")
-    (version "0.12.0")
+    (version "0.17.0")
     (source
      (origin
        (method git-fetch)
@@ -458,7 +469,7 @@ library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "104mnfx3v6lwjndjd35ly8r6yb4bb74lq5sq1cqpxw38mqyzqmx2"))))
+        (base32 "02qwvciikyrssifdp50zbjgqvpkb6sj09jzjvyl1n9v5fvg7mxba"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -483,7 +494,7 @@ toolchain.  The parts needed in the main Go repository are copied in.")
 (define-public go-golang-org-x-crypto
   (package
     (name "go-golang-org-x-crypto")
-    (version "0.31.0")
+    (version "0.38.0")
     (source
      (origin
        (method git-fetch)
@@ -492,7 +503,7 @@ toolchain.  The parts needed in the main Go repository are copied in.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pd3qipz2wb5wbbb44lgbfygxhf9lq5rknf82p2dmaicszn0rd53"))
+        (base32 "1wx7wf3ifb10cx2yckm925a9ydy5bw3iv664cma27abkfssj07ba"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -553,7 +564,9 @@ language.")
 (define-public go-golang-org-x-exp
   (package
     (name "go-golang-org-x-exp")
-    (version "0.0.0-20241217172543-b2144cdd0a67")
+    ;; Note: Beware, the updater gets this wrong.  Take the latest version
+    ;; string from <https://pkg.go.dev/golang.org/x/exp?tab=versions>.
+    (version "0.0.0-20250531010427-b6e5de432a8b")
     (source
      (origin
        (method git-fetch)
@@ -562,7 +575,7 @@ language.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01dq7llbqqdybv5s372zwlfiyq2syqpfqs7h4lxvbpqjq0aayf60"))
+        (base32 "0vszjiblb7i79dp9x1zvfpjidnmkzsaq6ij2jfh63hv9ph7yz3hf"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -636,7 +649,10 @@ directory) packages.")
 (define-public go-golang-org-x-exp-typeparams
   (package
     (name "go-golang-org-x-exp-typeparams")
-    (version "0.0.0-20241210194714-1829a127f884")
+    ;; Note: Beware, the updater gets this wrong.  Take the latest version
+    ;; string from
+    ;; <https://pkg.go.dev/golang.org/x/exp/typeparams?tab=versions>.
+    (version "0.0.0-20250531010427-b6e5de432a8b")
     (source
      (origin
        (method git-fetch)
@@ -645,7 +661,7 @@ directory) packages.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16lc0sgydpr4gbb5c9ygq86jdmq6f9qjf0vv1m5mhh3dggc1fzpp"))))
+        (base32 "0vszjiblb7i79dp9x1zvfpjidnmkzsaq6ij2jfh63hv9ph7yz3hf"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -672,7 +688,7 @@ compile does not support generics.")
 (define-public go-golang-org-x-image
   (package
     (name "go-golang-org-x-image")
-    (version "0.23.0")
+    (version "0.27.0")
     (source
      (origin
        (method git-fetch)
@@ -681,7 +697,7 @@ compile does not support generics.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xm3cqzh0j6s8m8k6c3rd170qbmz2lwb628jb48cl4wr6ivq5fp9"))))
+        (base32 "0kc75lbfb0m9xp0idcqlpcis6xahblw2q7cj6vg9lmblxzqy5nvh"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -719,7 +735,7 @@ compile does not support generics.")
     ;; "go/version" module, see
     ;; <https://cs.opensource.google/go/go/+/refs/tags/
     ;; go1.23.0:src/go/version/version.go>.
-    (version "0.21.0")
+    (version "0.24.0")
     (source
      (origin
        (method git-fetch)
@@ -728,7 +744,7 @@ compile does not support generics.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rk4vbdrdmiaacx50a1q31hydidwl9rnlcl7rim3f535vyw01fxk"))))
+        (base32 "17sjk98d3qwh9s6gqjmfy07z0gyj5hyv5a9kyg4si3yjfzbnwhx7"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -766,7 +782,7 @@ loading algorithms.")
 (define-public go-golang-org-x-net
   (package
     (name "go-golang-org-x-net")
-    (version "0.33.0")
+    (version "0.40.0")
     (source
      (origin
        (method git-fetch)
@@ -775,7 +791,7 @@ loading algorithms.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0k3vbxj4dxyki7rflbnad95avz7hnapwr02aa7jqgs79vd9j9k7n"))))
+        (base32 "0zsh08wbamzlvlwvlw6slgcqhaa59rwz9pq01lbyjigw6cfww406"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -810,7 +826,7 @@ loading algorithms.")
 (define-public go-golang-org-x-sync
   (package
     (name "go-golang-org-x-sync")
-    (version "0.10.0")
+    (version "0.14.0")
     (source
      (origin
        (method git-fetch)
@@ -819,7 +835,7 @@ loading algorithms.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yp7pcfvy4793mjbfq28hxbr05yg38m0njnwam580xkb54lfwshx"))))
+        (base32 "1gpa1v6wnp1bszk5iyiakq1j37icgxswj3iysdrdyp0yadw0pm30"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -854,7 +870,7 @@ cancellation for groups of goroutines working on subtasks of a common task
 (define-public go-golang-org-x-sys
   (package
     (name "go-golang-org-x-sys")
-    (version "0.28.0")
+    (version "0.33.0")
     (source
      (origin
        (method git-fetch)
@@ -863,7 +879,7 @@ cancellation for groups of goroutines working on subtasks of a common task
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lgsisl36knlr41inqls3w51xcqfl6d3hkacxry0nqx39167b882"))))
+        (base32 "19m090xd3abysvk1y07fhhd025k3s456i71ww0pq0b2pzsva5ra2"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -917,7 +933,9 @@ low-level interaction with the operating system.")
 (define-public go-golang-org-x-telemetry
   (package
     (name "go-golang-org-x-telemetry")
-    (version "0.0.0-20240912191618-22fe4a1e7b9c")
+    ;; Beware: the updater gets this wrong.  Use the latest commit and its
+    ;; matching date.
+    (version "0.0.0-20250529002037-25d2f7894191")
     (source
      (origin
        (method git-fetch)
@@ -926,7 +944,7 @@ low-level interaction with the operating system.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05gvxiv0yqfclckm2ysavbfy1jpz8v71r2glrcvhjq8wzw90g9gz"))
+        (base32 "0ymqig10vyrmzkali1wqhxrrb3fjvl7z9wmzf5g0dydb9a8ng42l"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -952,7 +970,10 @@ low-level interaction with the operating system.")
                              "TestRun_ModeHandling/on"
                              "TestRun_MultipleUploads"
                              "TestRun_Retries"
-                             "TestStart") ; no upload occurred on 2786
+                             "TestStart" ;no upload occurred on 2786
+                             ;; TestLoadedChartsAreValid fails with "go: list
+                             ;; -cannot be used with GO111MODULE=off"
+                             "TestLoadedChartsAreValid")
                        "|"))
       #:import-path "golang.org/x/telemetry"))
     (propagated-inputs
@@ -970,7 +991,7 @@ Go toolchain programs with opt-in telemetry.")
 (define-public go-golang-org-x-telemetry-config
   (package
     (name "go-golang-org-x-telemetry-config")
-    (version "0.36.0")
+    (version "0.48.0")
     (source
      (origin
        (method git-fetch)
@@ -980,7 +1001,7 @@ Go toolchain programs with opt-in telemetry.")
                                           #:subdir "config"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nib4d3p1zknd8m0grkylpd3qfknnw7cffv2v1l4sq0rf30gi04m"))))
+        (base32 "0lzybsdibr71y6n3x8qh37yh9vfwdmmdb6vksqimg4ayys373q7x"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1000,7 +1021,7 @@ telemetry uploads: GOOS, GOARCH, Go version, and per-program counters.")
 (define-public go-golang-org-x-term
   (package
     (name "go-golang-org-x-term")
-    (version "0.27.0")
+    (version "0.32.0")
     (source
      (origin
        (method git-fetch)
@@ -1009,7 +1030,7 @@ telemetry uploads: GOOS, GOARCH, Go version, and per-program counters.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gfykqmzgwgrb3adlbknjrb96i58bx2q2vjcdvfvwm554gznkgki"))))
+        (base32 "09q25x265yyy4jfjqpm10x8jai30wcbhb7bqgkjll4gw2sz3zhz1"))))
     (build-system go-build-system)
     (arguments '(#:import-path "golang.org/x/term"))
     (propagated-inputs
@@ -1034,7 +1055,7 @@ terminals, as commonly found on Unix systems.")
 (define-public go-golang-org-x-text
   (package
     (name "go-golang-org-x-text")
-    (version "0.21.0")
+    (version "0.25.0")
     (source
      (origin
        (method git-fetch)
@@ -1043,12 +1064,22 @@ terminals, as commonly found on Unix systems.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02zh18l5rlr8hg8ipn9r5m4rir3hskp80pzr4ljyfmgy72gxbhlv"))))
+        (base32 "1r9532ml0psfby89agf20q23qzwfikhydl8q77ad5y73xvdx89lf"))))
     (build-system go-build-system)
     (arguments
      (list
       #:skip-build? #t
-      #:import-path "golang.org/x/text"))
+      #:import-path "golang.org/x/text"
+      #:test-flags
+      #~(list "-skip"
+              (string-join
+               (list
+                ;; TestLinking fails with error: "dict_test.go:19: size(base)
+                ;; - size(compact) = 4929873 - 4898852 = was 31021; want >
+                ;; 1.5MB
+                "TestLinking"
+                "TestFullCycle")         ;requires go module support
+               "|"))))
     (home-page "https://go.googlesource.com/text")
     (native-inputs
      (list go-golang-org-x-mod-bootstrap
@@ -1074,7 +1105,7 @@ processing.")
 (define-public go-golang-org-x-time
   (package
     (name "go-golang-org-x-time")
-    (version "0.8.0")
+    (version "0.11.0")
     (source
      (origin
        (method git-fetch)
@@ -1083,7 +1114,7 @@ processing.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m2xfgq3a6y1xckl0al9n03il927z3rp2a8fvb8369035d3al3qh"))))
+        (base32 "1bqgxv7b3n69h4mi4hwr51pfr1hr6s1h6k7nb3dl32dryy7xwr12"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1099,7 +1130,7 @@ time.")
 (define-public go-golang-org-x-tools
   (package
     (name "go-golang-org-x-tools")
-    (version "0.25.0")
+    (version "0.33.0")
     (source
      (origin
        (method git-fetch)
@@ -1108,7 +1139,7 @@ time.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12r0cwsq898vka7jkxwjv1s8y8z2gxzq8z15ssl37y85hhcadkl8"))
+        (base32 "1lbb4y1c5b4719pdhfcb90sdzagzsb2lw5hx8gizsba3cj0r0f25"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1161,7 +1192,18 @@ time.")
                           "./refactor/importgraph/..."
                           "./refactor/rename/..."
                           "./refactor/satisfy/..."
-                          "./txtar/..."))))))))
+                          "./txtar/..."
+                          "-skip"
+                          (string-join
+                           (list
+                            ;; The GenericPaths test fails with "invalid
+                            ;; memory address or nil pointer dereference".
+                            "TestGenericPaths"
+                            ;; The ordering and paths tests fails because they
+                            ;; can't find test packages (perhaps because we do
+                            ;; not support Go modules).
+                            "TestOrdering" "TestPaths")
+                           "|")))))))))
     (native-inputs
      (list gccgo-14
            go-github-com-google-go-cmp))
@@ -1193,7 +1235,7 @@ Go programming language.")
     (name "go-golang-org-x-vuln")
     ;; XXX: Newer version of govulncheck requires golang.org/x/telemetry,
     ;; which needs to be discussed if it may be included in Guix.
-    (version "1.1.3")
+    (version "1.1.4")
     (source
      (origin
        (method git-fetch)
@@ -1202,7 +1244,7 @@ Go programming language.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0izm18r8ksx4n10an9nxyflc8cgr766qrwfmx5nbk702x80prln9"))))
+        (base32 "004hmcaahgj0ajvpkrhbvs6av1nas8302vzy9is9msxyya3mclkp"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1286,7 +1328,7 @@ values.")
 (define-public go-google-golang-org-protobuf
   (package
     (name "go-google-golang-org-protobuf")
-    (version "1.36.0")
+    (version "1.36.6")
     (source
      (origin
        (method git-fetch)
@@ -1295,7 +1337,7 @@ values.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a6l9zcm1za7w9f9n86wjszn9fm53cfacl0liyk3wpsqx4h4x6dl"))))
+        (base32 "0lp1a6bcwdiil4my0aq85ranxf2k757m8q0ss9658jyrh5g7av79"))))
     (build-system go-build-system)
     (arguments
      (list

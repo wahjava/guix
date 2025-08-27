@@ -1,11 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2017-2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2017, 2018 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020, 2021, 2022 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2025 Felix Lechner <felix.lechner@lease-up.com>
+;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -40,61 +41,9 @@
   #:use-module (guix packages)
   #:use-module (guix utils))
 
-(define-public nyacc-0.86
-  ;; Nyacc used for bootstrap.
+(define-public nyacc-1.08.1
   (package
     (name "nyacc")
-    (version "0.86.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://savannah/nyacc/"
-                                  name "-" version ".tar.gz"))
-              (patches (search-patches "nyacc-binary-literals.patch"))
-              (sha256
-               (base32
-                "0lkd9lyspvhxlfs0496gsllwinh62jk9wij6gpadvx9gwz6yavd9"))))
-    (build-system gnu-build-system)
-    (native-inputs (list guile-2.2))
-    (synopsis "LALR(1) Parser Generator in Guile")
-    (description
-     "NYACC is an LALR(1) parser generator implemented in Guile.
-The syntax and nomenclature should be considered not stable.  It comes with
-extensive examples, including parsers for the Javascript and C99 languages.")
-    (home-page "https://savannah.nongnu.org/projects/nyacc")
-    (license (list gpl3+ lgpl3+))))
-
-(define-public nyacc-0.99
-  (package
-    (inherit nyacc-0.86)
-    (version "0.99.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://savannah/nyacc/nyacc-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0hl5qxx19i4x1r0839sxm19ziqq65g4hy97yik81cc2yb9yvgyv3"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  (substitute* (find-files "." "^Makefile\\.in$")
-                    (("^SITE_SCM_DIR =.*")
-                     "SITE_SCM_DIR = \
-@prefix@/share/guile/site/@GUILE_EFFECTIVE_VERSION@\n")
-                    (("^SITE_SCM_GO_DIR =.*")
-                     "SITE_SCM_GO_DIR = \
-@prefix@/lib/guile/@GUILE_EFFECTIVE_VERSION@/site-ccache\n")
-                    (("^INFODIR =.*")
-                     "INFODIR = @prefix@/share/info\n")
-                    (("^DOCDIR =.*")
-                     "DOCDIR = @prefix@/share/doc/$(PACKAGE_TARNAME)\n"))
-                  #t))))
-    (native-inputs (list pkg-config))
-    (inputs (list guile-2.2))))
-
-(define-public nyacc
-  (package
-    (inherit nyacc-0.99)
     (version "1.08.1")
     (source (origin
               (method url-fetch)
@@ -109,19 +58,26 @@ extensive examples, including parsers for the Javascript and C99 languages.")
                   (("GUILE_GLOBAL_SITE=\\$prefix.*")
                    "GUILE_GLOBAL_SITE=\
 $prefix/share/guile/site/$GUILE_EFFECTIVE_VERSION\n")))))
+    (build-system gnu-build-system)
+    (native-inputs (list pkg-config))
     (inputs (list guile-3.0))
     (propagated-inputs (list guile-bytestructures))
+    (home-page "https://savannah.nongnu.org/projects/nyacc")
+    (synopsis "LALR(1) Parser Generator in Guile")
     (description
      "@acronym{NYACC, Not Yet Another Compiler Compiler} is set of Guile modules
 for generating parsers and lexical analyzers.  It provides sample parsers,
 pretty-printers using SXML trees as an intermediate representation, a decent C
 parser and an `FFI Helper' tool to help create Guile Scheme bindings for C-based
 libraries.  It also provides (partially implemented) compilers based on these
-parsers to allow execution with Guile as extension languages.")))
+parsers to allow execution with Guile as extension languages.")
+    (license (list gpl3+ lgpl3+))))
 
 (define-public nyacc-1.00.2
+  ;; The source of this package is used for bootstrapping in
+  ;; commencement.scm. Otherwise it could be removed.
   (package
-    (inherit nyacc)
+    (inherit nyacc-1.08.1)
     (version "1.00.2")
     (source (origin
               (method url-fetch)
@@ -170,20 +126,38 @@ parsers to allow execution with Guile as extension languages.")))
                    "GUILE_GLOBAL_SITE=\
 $prefix/share/guile/site/$GUILE_EFFECTIVE_VERSION\n")))))))
 
+(define-public nyacc
+  (package
+    (inherit nyacc-1.00.2)
+    (version "2.02.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://savannah/nyacc/nyacc-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "01829c24v531036rj8grcwx4hmiy3f0jznc9zbfa4wrslmq566k9"))
+              (modules '((guix build utils)))
+              (snippet
+               '(substitute* "configure"
+                  (("GUILE_GLOBAL_SITE=\\$prefix.*")
+                   "GUILE_GLOBAL_SITE=\
+$prefix/share/guile/site/$GUILE_EFFECTIVE_VERSION\n")))))))
+
 (define-public mes
   (package
     (name "mes")
-    (version "0.27")
+    (version "0.27.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/mes/"
                                   "mes-" version ".tar.gz"))
               (sha256
                (base32
-                "1a5ag8i303yhf76sg05rpcans9vadvnpxcpa4sl09z4cv5bfcgh3"))))
+                "0pgjzlynfzdfq5xrxirvsrj4sdvnwq99s6xxwfhzhjga8zm40fhq"))))
     (supported-systems '("armhf-linux" "i686-linux"
                          "x86_64-linux" "riscv64-linux"))
-    (propagated-inputs (list mescc-tools nyacc-1.00.2))
+    (propagated-inputs (list mescc-tools nyacc))
     (native-inputs
      (append (list guile-3.0)
          (let ((target-system (or (%current-target-system)
@@ -232,14 +206,14 @@ Guile.")
 (define-public mescc-tools
   (package
     (name "mescc-tools")
-    (version "1.5.2")
+    (version "1.7.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://savannah/" name "/"
                                   name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1jak61gxab8bj8ddpgwfn9lqs917szq1phadmg8y5cjsndn1hv4k"))))
+                "0p2pnvci9vglmf7zas12ay2v5gnrwafqsqqw1dfyb2bgayzzg0mn"))))
     (build-system gnu-build-system)
     (supported-systems '("i686-linux" "x86_64-linux"
                          "armhf-linux" "aarch64-linux"
@@ -263,7 +237,7 @@ get_machine.")
 (define-public m2-planet
   (package
     (name "m2-planet")
-    (version "1.11.0")
+    (version "1.12.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -271,7 +245,7 @@ get_machine.")
                     "Release_" version "/" name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1c510p55amxjyvjlx9jpa30gixlgmf6mmfnaqcs46412krymwg38"))))
+                "16vgad5wa5lmh6mjnkid4qn2xs7hfcfn43z9gd8iljzvsxl2i8z7"))))
     (native-inputs (list mescc-tools))
     (build-system gnu-build-system)
     (supported-systems '("i686-linux" "x86_64-linux"

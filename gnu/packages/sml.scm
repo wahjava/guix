@@ -4,6 +4,7 @@
 ;;; Copyright © 2018 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019, 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2021, 2022 Foo Chuan Wei <chuanwei.foo@hotmail.com>
+;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,7 +36,7 @@
 (define-public polyml
   (package
     (name "polyml")
-    (version "5.9.1")
+    (version "5.9.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -44,16 +45,22 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1s7lpnxg826r2lm2c81j9a61zwljy2ybkqwadjiwrfi0hmbczn89"))))
+                "1kvkpighzz6dkfh9gr1franvjfjhr4lcwyb0cmngzvb2nf6g8f6v"))))
     (build-system gnu-build-system)
     (inputs
-     (list gmp lesstif libffi libx11 libxt))
+     (list gmp libffi libx11 libxt motif))
     (arguments
      '(#:configure-flags
        (list "--with-gmp"
              "--with-x")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'patch-config-h
+           (lambda _
+             ;; courtesy: https://github.com/NixOS/nixpkgs/pull/372200
+             (call-with-port (open-file "config.h.in" "a")
+               (lambda (out)
+                 (display "\n#define _Static_assert static_assert\n" out)))))
          (add-after 'build 'build-compiler
            (lambda* (#:key make-flags parallel-build? #:allow-other-keys)
              (define flags

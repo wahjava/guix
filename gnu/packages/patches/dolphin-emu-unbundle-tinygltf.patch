@@ -1,0 +1,69 @@
+Upstream-status: https://github.com/dolphin-emu/dolphin/pull/13824
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 964a33ac13..7779cf2eac 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -657,7 +657,11 @@ add_subdirectory(Externals/glslang)
+ if(WIN32 OR APPLE)
+   add_subdirectory(Externals/spirv_cross)
+ endif()
+-add_subdirectory(Externals/tinygltf)
++
++dolphin_find_optional_system_library(TinyGLTF Externals/tinygltf)
++if(NOT TARGET tinygltf)
++  add_library(tinygltf ALIAS tinygltf::tinygltf) # using system library
++endif()
+ 
+ if(ENABLE_VULKAN)
+   add_definitions(-DHAS_VULKAN)
+diff --git a/Externals/tinygltf/CMakeLists.txt b/Externals/tinygltf/CMakeLists.txt
+index 0d86268bbe..9e6a99c6f8 100644
+--- a/Externals/tinygltf/CMakeLists.txt
++++ b/Externals/tinygltf/CMakeLists.txt
+@@ -7,5 +7,5 @@ if (NOT MSVC)
+ endif()
+ target_sources(tinygltf PRIVATE
+   tinygltf/tiny_gltf.cc)
+-target_include_directories(tinygltf INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
++target_include_directories(tinygltf INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf)
+ dolphin_disable_warnings(tinygltf)
+diff --git a/Externals/tinygltf/exports.props b/Externals/tinygltf/exports.props
+index 7e2fde81cf..09f43c1bae 100644
+--- a/Externals/tinygltf/exports.props
++++ b/Externals/tinygltf/exports.props
+@@ -2,7 +2,7 @@
+ <Project>
+   <ItemDefinitionGroup>
+     <ClCompile>
+-      <AdditionalIncludeDirectories>$(ExternalsDir)tinygltf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ExternalsDir)tinygltf\tinygltf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>TINYGLTF_NOEXCEPTION;TINYGLTF_NO_EXTERNAL_IMAGE;TINYGLTF_USE_CPP14;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+     </ClCompile>
+   </ItemDefinitionGroup>
+diff --git a/Externals/tinygltf/tinygltf.vcxproj b/Externals/tinygltf/tinygltf.vcxproj
+index e33d949e56..4995626f22 100644
+--- a/Externals/tinygltf/tinygltf.vcxproj
++++ b/Externals/tinygltf/tinygltf.vcxproj
+@@ -17,7 +17,7 @@
+   <PropertyGroup Label="UserMacros" />
+   <ItemDefinitionGroup>
+     <ClCompile>
+-      <AdditionalIncludeDirectories>tinygltf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>tinygltf\tinygltf;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+     </ClCompile>
+   </ItemDefinitionGroup>
+   <ItemGroup>
+diff --git a/Source/Core/VideoCommon/Assets/MeshAsset.cpp b/Source/Core/VideoCommon/Assets/MeshAsset.cpp
+index bde8c8aab6..13eb2b4448 100644
+--- a/Source/Core/VideoCommon/Assets/MeshAsset.cpp
++++ b/Source/Core/VideoCommon/Assets/MeshAsset.cpp
+@@ -7,7 +7,7 @@
+ #include <array>
+ #include <utility>
+ 
+-#include <tinygltf/tiny_gltf.h>
++#include <tiny_gltf.h>
+ 
+ #include "Common/IOFile.h"
+ #include "Common/Logging/Log.h"

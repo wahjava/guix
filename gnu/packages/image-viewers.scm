@@ -30,6 +30,7 @@
 ;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Mathieu Laparie <mlaparie@disr.it>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -341,15 +342,15 @@ collection.  Geeqie was initially based on GQview.")
 (define-public gpicview
   (package
     (name "gpicview")
-    (version "0.2.5")
+    (version "0.3.1")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://sourceforge/lxde/"
-                                  "GPicView%20%28image%20Viewer%29/0.2.x/"
-                                  name "-" version ".tar.xz"))
+              (uri (string-append
+                    "https://github.com/lxde/releases/raw/refs/heads/master/releases/"
+                    name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0hi9v0rdx47nys0wvm9xasdrafa34r5kq6crb074a0ipwmc60iiq"))))
+                "0k7anzzaarzi4dmp4g4hrvy3wmzs2whqkrw6gisq2bnb0gl5dj0b"))))
     (build-system gnu-build-system)
     (arguments (list #:configure-flags #~(list "--enable-gtk3")))
     (inputs (list gtk+ libjpeg-turbo))
@@ -821,6 +822,9 @@ Poppler-Qt5 binding, PDF documents.")
      (list
       #:qtbase qtbase
       #:tests? #f ; test code doesn't compile
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -835,7 +839,9 @@ Poppler-Qt5 binding, PDF documents.")
             (lambda _
               (substitute* "src/qvaboutdialog.cpp"
                 (("qvApp->checkUpdates\\(\\);") "")
-                (("updateText\\(\\);") "")))))))
+                (("updateText\\(\\);") ""))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (native-inputs
      (list qttools))
     (inputs
@@ -851,19 +857,19 @@ preloading.")
 (define-public chafa
   (package
     (name "chafa")
-    (version "1.14.0")
+    (version "1.16.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://hpjansson.org/chafa/releases/chafa-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1170g2qkcj2amsfl7sn81r42lwb2hy4z15xxhy0lrkayig15a3k7"))))
+                "1pv1g2gcn4qn27bkwm1g1k87nb1yq0gzw7jclhq53d49kbfrhy35"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list pkg-config))
+     (list pkg-config which))
     (inputs
-     (list freetype libjpeg-turbo glib imagemagick))
+     (list freetype libjpeg-turbo librsvg libtiff libwebp glib imagemagick))
     (synopsis "Convert images to ANSI/Unicode characters")
     (description
      "Chafa is a command-line utility that converts all kinds of images,
@@ -1150,7 +1156,7 @@ synchronization of multiple instances.")
 (define-public hydrus-network
   (package
     (name "hydrus-network")
-    (version "495")                       ;upstream has a weekly release cycle
+    (version "630") ;upstream has a weekly release cycle
     (source
      (origin
        (method git-fetch)
@@ -1160,7 +1166,7 @@ synchronization of multiple instances.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "03zhrcmjzbk37sl9nwjahfmr8aflss84c4xhg5ci5b8jvbbqmr1j"))
+         "0x133m93nx2rphs0zymmhfknp1274r2fh2jc91rrv9vmdqfh9yyc"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove pre-built binaries from bin/.
@@ -1171,7 +1177,7 @@ synchronization of multiple instances.")
       #:phases
       #~(let ((static-dir "/share/hydrus/static"))
           (modify-phases %standard-phases
-            ;; Hydrus is a python program but does not uses setup.py or any
+            ;; Hydrus is a python program but does not use setup.py or any
             ;; other build system to build itself - it's delivered ready to
             ;; run from the source.
             (replace 'check
@@ -1179,7 +1185,7 @@ synchronization of multiple instances.")
                 (setenv "DISPLAY" ":0")
                 (setenv "XDG_CACHE_HOME" (getcwd))
                 (setenv "HOME" (getcwd))
-                (invoke "xvfb-run" "python" "test.py")))
+                (invoke "xvfb-run" "python" "hydrus_test.py")))
             ;; XXX: program help files are not built.  Updating
             ;; python-pymdown-extensions to its latest version might be the
             ;; solution, but this would require also packaging its new build
@@ -1201,15 +1207,17 @@ synchronization of multiple instances.")
                       (substitute* "HydrusConstants.py"
                         (("STATIC_DIR = .*")
                          (string-append "STATIC_DIR = \"" out static-dir "\"\n")))
-                      (substitute* "HydrusFlashHandling.py"
-                        (("SWFRENDER_PATH = .*\n")
-                         (string-append "SWFRENDER_PATH = \"" swfrender "\"\n")))
-                      (substitute* "HydrusVideoHandling.py"
-                        (("FFMPEG_PATH = .*\n")
-                         (string-append "FFMPEG_PATH = \"" ffmpeg "\"\n")))
-                      (substitute* "networking/HydrusNATPunch.py"
-                        (("UPNPC_PATH = .*\n")
-                         (string-append "UPNPC_PATH = \"" upnpc "\"\n"))))))))
+                      (with-directory-excursion "files"
+                        (substitute* "HydrusFlashHandling.py"
+                          (("SWFRENDER_PATH = .*\n")
+                           (string-append "SWFRENDER_PATH = \"" swfrender "\"\n")))
+                        (substitute* "HydrusVideoHandling.py"
+                          (("FFMPEG_PATH = .*\n")
+                           (string-append "FFMPEG_PATH = \"" ffmpeg "\"\n"))))
+                      (with-directory-excursion "networking"
+                        (substitute* "HydrusNATPunch.py"
+                          (("UPNPC_PATH = .*\n")
+                           (string-append "UPNPC_PATH = \"" upnpc "\"\n")))))))))
             ;; Since everything lives in hydrus's root directory, it needs to
             ;; be spread out to comply with guix's expectations.
             (replace 'install
@@ -1226,9 +1234,9 @@ synchronization of multiple instances.")
                                                     #$(this-package-input "python"))
                                                    "/site-packages/hydrus"))
                   (mkdir (string-append out "/bin"))
-                  (copy-file "client.py" client)
+                  (copy-file "hydrus_client.py" client)
                   (chmod client #o0555)
-                  (copy-file "server.py" server)
+                  (copy-file "hydrus_server.py" server)
                   (chmod server #o0555))))))))
     ;; All native-inputs are only needed for the the check phase
     (native-inputs
@@ -1242,6 +1250,7 @@ synchronization of multiple instances.")
            python-cbor2
            python-chardet
            python-cloudscraper
+           python-dateparser
            python-html5lib
            python-lxml
            python-lz4
@@ -1249,11 +1258,8 @@ synchronization of multiple instances.")
            opencv ; its python bindings are a drop-in replacement for opencv-python-headless
            python-pillow
            python-psutil
-           python-pylzma
            python-pyopenssl
-           ;; Since hydrus' version 494 it supports python-pyside-6 but it's not yet
-           ;; in guix. pyside-2 is still supported as a fallback.
-           python-pyside-2
+           python-pyside-6
            python-pysocks
            python-mpv
            python-pyyaml
@@ -1291,7 +1297,6 @@ any user may run.  Everything is free and privacy is the first concern.")
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ; no tests.
-           #:cmake cmake-next
            #:configure-flags
            #~ (list "-DMARCH_NATIVE=OFF"
                     "-DCMAKE_BUILD_TYPE=Release"

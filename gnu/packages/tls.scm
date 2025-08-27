@@ -50,6 +50,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system trivial)
@@ -74,9 +75,11 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -324,19 +327,17 @@ required structures.")
     ;; This package supersedes the Guile bindings that came with GnuTLS until
     ;; version 3.7.8 included.
     (name "guile-gnutls")
-    (version "4.0.0")
-    (home-page "https://gitlab.com/gnutls/guile/")
+    (version "5.0.1")
+    (home-page "https://codeberg.org/guile-gnutls/guile-gnutls")
     (source (origin
               ;; url-fetch is used here to avoid a circular dependency with
               ;; git-download, see https://issues.guix.gnu.org/63331
               (method url-fetch)
-              (uri (string-append
-                    "https://gitlab.com/gnutls/guile/uploads/"
-                    "9060bc55069cedb40ab46cea49b439c0"
-                    "/guile-gnutls-" version ".tar.gz"))
+              (uri (string-append "mirror://gnu/gnutls/guile-gnutls-"
+                                  version ".tar.gz"))
               (sha256
                (base32
-                "0fdjmy9vfjwk2v616nan1zz6iy9i086vrh5mdcsfqxi00ckbjk2v"))))
+                "0azgp79a4hgmbg2p2ghd1x2zav8894m9ch3i4hbvq8dlxvrnf06c"))))
     (build-system gnu-build-system)
     (outputs '("out" "debug"))
     (arguments
@@ -350,11 +351,7 @@ required structures.")
               (string-append "--with-guile-site-ccache-dir="
                              "$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache")
               (string-append "--with-guile-extension-dir="
-                             "$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/extensions"))
-
-      ;; The 'gnutls' package currently lacks support for SRP, making this
-      ;; test fail.
-      #:make-flags #~'("XFAIL_TESTS=tests/srp-base64.scm")))
+                             "$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/extensions"))))
     (native-inputs
      (list libtool
            pkg-config
@@ -716,48 +713,48 @@ netcat implementation that supports TLS.")
   (package
     (name "python-acme")
     ;; Remember to update the hash of certbot when updating python-acme.
-    (version "2.3.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "acme" version))
-              (sha256
-               (base32
-                "1z6293g4pyxvx5w7v07j8wnaxyr7srsqfqvgly888b8k52fq9ipa"))))
-    (build-system python-build-system)
+    (version "4.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "acme" version))
+       (sha256
+        (base32 "0h8ckyal5j8lkm24fd52dajy38mxa76zh4q022i28f6b3878rxhd"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'build-documentation
-           (lambda _
-             (invoke "make" "-C" "docs" "man" "info")))
-         (add-after 'install 'install-documentation
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (man (string-append out "/share/man/man1"))
-                    (info (string-append out "/info")))
-               (install-file "docs/_build/texinfo/acme-python.info" info)
-               (install-file "docs/_build/man/acme-python.1" man))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("'PyOpenSSL.*',")
+                 "'PyOpenSSL',"))))
+          (add-after 'build 'build-documentation
+            (lambda _
+              (invoke "make" "-C" "docs" "man" "info")))
+          (add-after 'install 'install-documentation
+            (lambda _
+              (let ((man (string-append #$output "/share/man/man1"))
+                    (info (string-append #$output "/info")))
+                (install-file "docs/_build/texinfo/acme-python.info" info)
+                (install-file "docs/_build/man/acme-python.1" man)))))))
     (native-inputs
      (list python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel
            ;; For documentation
            python-sphinx
            python-sphinxcontrib-programoutput
            python-sphinx-rtd-theme
            texinfo))
     (propagated-inputs
-     (list python-chardet
+     (list python-cryptography
            python-josepy
-           python-requests
-           python-requests-toolbelt
-           python-pytz
+           python-pyopenssl
            python-pyrfc3339
-           python-pyasn1
-           python-cryptography
-           python-pyopenssl))
+           python-requests))
     (home-page "https://github.com/certbot/certbot")
     (synopsis "ACME protocol implementation in Python")
     (description "ACME protocol implementation in Python")
@@ -769,30 +766,33 @@ netcat implementation that supports TLS.")
     ;; Certbot and python-acme are developed in the same repository, and their
     ;; versions should remain synchronized.
     (version (package-version python-acme))
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "certbot" version))
-              (sha256
-               (base32
-                "12nd9nmdj3bf1xlvhj1ln473xbyv4qzxf6qhz0djbca7jl59zlwk"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "certbot" version))
+       (sha256
+        (base32 "0yy287h1sjdkm5cj4wazq316igwwla856yqcmi4yqaq7ib55c7pv"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(,@(substitute-keyword-arguments (package-arguments python-acme)
-           ((#:phases phases)
-            `(modify-phases ,phases
-              (replace 'install-documentation
-                (lambda* (#:key outputs #:allow-other-keys)
-                  (let* ((out (assoc-ref outputs "out"))
-                         (man1 (string-append out "/share/man/man1"))
-                         (man7 (string-append out "/share/man/man7"))
-                         (info (string-append out "/info")))
-                    (install-file "docs/_build/texinfo/Certbot.info" info)
-                    (install-file "docs/_build/man/certbot.1" man1)
-                    (install-file "docs/_build/man/certbot.7" man7)
-                    #t))))))))
+     (substitute-keyword-arguments (package-arguments python-acme)
+       ((#:test-flags flags '())
+        ;; XXX: No time zone found with key Asia/Sanghai, pytz version?
+        #~(list "-k" "not test_add_time_interval"))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'install-documentation
+              (lambda* (#:key outputs #:allow-other-keys)
+                (let ((man1 (string-append #$output "/share/man/man1"))
+                      (man7 (string-append #$output "/share/man/man7"))
+                      (info (string-append #$output "/info")))
+                  (install-file "docs/_build/texinfo/Certbot.info" info)
+                  (install-file "docs/_build/man/certbot.1" man1)
+                  (install-file "docs/_build/man/certbot.7" man7))))))))
     (native-inputs
      (list python-mock
            python-pytest
+           python-setuptools
+           python-wheel
            ;; For documentation
            python-sphinx
            python-sphinx-rtd-theme
@@ -812,8 +812,9 @@ netcat implementation that supports TLS.")
            python-requests
            python-pytz))
     (synopsis "Let's Encrypt client by the Electronic Frontier Foundation")
-    (description "Certbot automatically receives and installs X.509 certificates
-to enable Transport Layer Security (TLS) on servers.  It interoperates with the
+    (description
+     "Certbot automatically receives and installs X.509 certificates to enable
+Transport Layer Security (TLS) on servers.  It interoperates with the
 Let’s Encrypt certificate authority (CA), which issues browser-trusted
 certificates for free.")
     (home-page "https://certbot.eff.org/")
@@ -984,7 +985,8 @@ number generator")
         (base32 "0ldqhvmj9wl0yp3hz675zbnq69lw533s0ahy9bbdxxnj5gjb86gw"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:parallel-tests? #f
+           #:configure-flags
            #~(list "-DCMAKE_C_FLAGS=-Wno-error=calloc-transposed-args"
                    "-DUSE_SHARED_MBEDTLS_LIBRARY=ON"
                    "-DUSE_STATIC_MBEDTLS_LIBRARY=OFF")
@@ -1130,30 +1132,6 @@ ACME server (such as Let's Encrypt) implemented as a relatively simple Bash
 script.")
     (license license:expat)))
 
-(define-public go-github-com-certifi-gocertifi
-  (let ((commit "a5e0173ced670013bfb649c7e806bc9529c986ec")
-        (revision "1"))
-    (package
-      (name "go-github-com-certifi-gocertifi")
-      (version (git-version "2018.01.18" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                       (url "https://github.com/certifi/gocertifi")
-                       (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1n9drccl3q1rr8wg3nf60slkf1lgsmz5ahifrglbdrc6har3rryj"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/certifi/gocertifi"))
-      (synopsis "X.509 TLS root certificate bundle for Go")
-      (description "This package is a Go language X.509 TLS root certificate bundle,
-derived from Mozilla's collection.")
-      (home-page "https://certifi.io")
-      (license license:mpl2.0))))
-
 (define-public s2n
   (package
     (name "s2n")
@@ -1236,9 +1214,18 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
     (build-system cmake-build-system)
     (native-inputs (list perl))
     (arguments
-     '(#:test-target "run_minimal_tests"
-       #:configure-flags
-       '("-DBUILD_SHARED_LIBS=ON" "-DDISABLE_GO=ON")))
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON" "-DDISABLE_GO=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "run_minimal_tests" args))))))
     (synopsis "General purpose cryptographic library")
     (description "AWS libcrypto (aws-lc) contains portable C implementations
 of algorithms needed for TLS and common applications, and includes optimized

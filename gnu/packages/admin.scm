@@ -127,9 +127,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages curl)
@@ -269,7 +266,8 @@ usual file attributes can be checked for inconsistencies.")
                     "daemontools-" version ".tar.gz"))
               (sha256
                (base32
-                "07scvw88faxkscxi91031pjkpccql6wspk4yrlnsbrrb5c0kamd5"))))
+                "07scvw88faxkscxi91031pjkpccql6wspk4yrlnsbrrb5c0kamd5"))
+              (patches (search-patches "daemontools-gcc14.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ;; No tests as far as I can tell.
@@ -303,7 +301,7 @@ services.")
 (define-public detox
   (package
     (name "detox")
-    (version "2.0.0")
+    (version "3.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -312,7 +310,7 @@ services.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qix3ipvj5sn66id57k6gzilnz4f19jgwn4d72hj1jzi3m9f9k1h"))))
+                "0328w1hh279kgb4fn2vwbvwhmr32i7ayp665vs78pgjy84vhgxzy"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake bison flex pkg-config))
@@ -2105,6 +2103,9 @@ through the network interface controller.")
                (base32
                 "1855np7c4b0bqzhf1l1dyzxb90fpnvrirdisajhci5am6als31z9"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~'("CFLAGS=-O2 -g -Wno-implicit-function-declaration")))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -2686,16 +2687,20 @@ command.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:tests? #f ; no tests
       ;; Make sure the (rarely updated) package 'imagemagick/stable'
       ;; does not end up in the closure.
       #:disallowed-references (list imagemagick/stable)
-      #:test-target "check"
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _ (chdir "wpa_supplicant/wpa_gui-qt4")))
           (replace 'configure
             (lambda _ (invoke "qmake" "wpa_gui.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (add-after 'build 'build-icons
             (lambda _
               ;; Inkscape complains (but works) without a writable $HOME.
@@ -3446,7 +3451,7 @@ limits.")
 (define-public corectrl
   (package
     (name "corectrl")
-    (version "1.4.3")
+    (version "1.4.5")
     (source
      (origin
        (method git-fetch)
@@ -3455,7 +3460,7 @@ limits.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qpc04xxzv4jbqqlraqriipix4ph7bm1hfiry807jjp668i9n25d"))
+        (base32 "1gnqybf3s0bsm3qsbc6rd1spw09vxd417gn3hb6hflsj6377qfcb"))
        (patches (search-patches "corectrl-polkit-install-dir.patch"))))
     (build-system qt-build-system)
     (arguments
@@ -3486,7 +3491,7 @@ limits.")
                   "\"" (search-input-file inputs "bin/glxinfo") "\""))))))))
     ;; Text formatting only supported since C++20, which is available in gcc-13.
     ;; https://en.cppreference.com/w/cpp/compiler_support#cpp_lib_format_201907L
-    (native-inputs (list catch2-3
+    (native-inputs (list catch2-3.8
                          pkg-config
                          qttools-5))
     (inputs (list dbus
@@ -4414,7 +4419,7 @@ you are running, what theme or icon set you are using, etc.")
 (define-public hyfetch
   (package
     (name "hyfetch")
-    (version "1.99.0")
+    (version "2.0.1")
     (source
      (origin
        (method git-fetch)
@@ -4423,7 +4428,7 @@ you are running, what theme or icon set you are using, etc.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02bc6dhwvf1daqlsw3am9y2wjfkhs8lpw3vgdxw74jg0w9bpzg8q"))))
+        (base32 "1c81425jaa2i0jdkfp2v7rsb0z7vzgba3735lgf5m921618k18rr"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest
@@ -4634,7 +4639,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.48.1")
+    (version "2.50.2")
     (source
      (origin
        (method git-fetch)
@@ -4643,7 +4648,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gzpmc7vx5dqfjbga6facfqxybgb1hps6h2y9blngjwsskicsi7v"))
+        (base32 "17pasb0cckp9pjjcmfi07lfmsg5wf59gynxq7m5w57jlzq10k3vm"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -4661,7 +4666,15 @@ information tool.")
                                                "/share/hwdata/pci.ids")
                                 (string-append "-DCUSTOM_AMDGPU_IDS_PATH="
                                                #$(this-package-input "libdrm")
-                                               "/share/libdrm/amdgpu.ids"))))
+                                               "/share/libdrm/amdgpu.ids"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-yyjson
+            (lambda _
+              ;; workaround for https://github.com/fastfetch-cli/fastfetch/pull/1904
+              (substitute* "src/util/FFstrbuf.h"
+                (("\"3rdparty/yyjson/yyjson.h\"")
+                 "<yyjson.h>")))))))
     (inputs (list dbus
                   glib
                   hwdata
@@ -5534,14 +5547,14 @@ Netgear devices.")
 (define-public atop
   (package
     (name "atop")
-    (version "2.11.1")
+    (version "2.12.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.atoptool.nl/download/atop-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0m2ij25byrw7sn61pqjdpclmlmwlk2217hbdcvsvd273z5whyrbp"))))
+                "11ih6kan3j9kg83pjhy9yffgpr638b0mfg1fq90yzrhl1k4yq28d"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -5912,19 +5925,7 @@ it won't take longer to install 15 machines than it would to install just 2.")
                (base32 "1j3c7skby9scsq6p1f6nacbiy9b26y1sswchdsp8p3vv7fgdh2wf"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
-       (("rust-async-trait" ,rust-async-trait-0.1)
-        ("rust-enquote" ,rust-enquote-1)
-        ("rust-getopts" ,rust-getopts-0.2)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-nix" ,rust-nix-0.27)
-        ("rust-pam-sys" ,rust-pam-sys-0.5)
-        ("rust-rpassword" ,rust-rpassword-5)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-tokio" ,rust-tokio-1))
-       #:install-source? #f
+     `(#:install-source? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-/bin/sh
@@ -5971,7 +5972,7 @@ it won't take longer to install 15 machines than it would to install just 2.")
                  (install-file "agreety.1" man1))))))))
     (inputs
      ;; Full bash, not bash-minimal.  See https://issues.guix.gnu.org/76105.
-     (list bash linux-pam))
+     (cons* bash linux-pam (cargo-inputs 'greetd)))
     (native-inputs
      (list scdoc))
     (synopsis "Minimal and flexible login manager daemon")
@@ -6030,21 +6031,7 @@ interfering with any pam-mount configuration.")))
                 "0d7lfx5jg2w7fp7llwrirnbsp27nv74f21mhrspd9ilk2cacf12d"))))
     (build-system cargo-build-system)
     (arguments
-     (list #:cargo-inputs
-           `(("rust-chrono" ,rust-chrono-0.4)
-             ("rust-getopts" ,rust-getopts-0.2)
-             ("rust-greetd-ipc" ,rust-greetd-ipc-0.10)
-             ("rust-lazy-static" ,rust-lazy-static-1)
-             ("rust-memmap2" ,rust-memmap2-0.3)
-             ("rust-nix" ,rust-nix-0.25)
-             ("rust-os-pipe" ,rust-os-pipe-1)
-             ("rust-rusttype" ,rust-rusttype-0.9)
-             ("rust-serde" ,rust-serde-1)
-             ("rust-toml" ,rust-toml-0.5)
-             ("rust-wayland-client" ,rust-wayland-client-0.29)
-             ("rust-smithay-client-toolkit" ,rust-smithay-client-toolkit-0.15)
-             ("rust-wayland-protocols" ,rust-wayland-protocols-0.29))
-           #:phases
+     (list #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'remove-bundled-fonts
                  (lambda _
@@ -6068,10 +6055,11 @@ interfering with any pam-mount configuration.")))
                        inputs
                        (string-append "lib/" so-file)))))))))
     (inputs
-     (list font-dejavu
-           font-google-roboto
-           libxkbcommon
-           wayland))
+     (cons* font-dejavu
+            font-google-roboto
+            libxkbcommon
+            wayland
+            (cargo-inputs 'wlgreet)))
     (home-page "https://git.sr.ht/~kennylevinsen/wlgreet")
     (synopsis "Bare-bones Wayland-based greeter for @command{greetd}")
     (description
@@ -6101,6 +6089,29 @@ on a GUI toolkit.")
     (description
      "GTK-based greeter for greetd, to be run under a compositor such as Cage.")
     (home-page "https://git.sr.ht/~kennylevinsen/gtkgreet")
+    (license license:gpl3+)))
+
+(define-public tuigreet
+  (package
+    (name "tuigreet")
+    (version "0.9.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/apognu/tuigreet")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "15h2b97clllbhlw5jc4lwkmir18njnyk56zghafsas84m6jjsikv"))))
+    (build-system cargo-build-system)
+    (arguments (list #:install-source? #f))
+    (inputs (cargo-inputs 'tuigreet))
+    (home-page "https://github.com/apognu/tuigreet")
+    (synopsis "Graphical console greeter for @code{greetd}")
+    (description
+     "This package provides a graphical console greeter for @code{greetd}.  It
+doesn't need a Wayland compositor to be used.")
     (license license:gpl3+)))
 
 (define-public libseat
@@ -6546,39 +6557,17 @@ file or files to several hosts.")
 (define-public du-dust
   (package
     (name "du-dust")
-    (version "1.1.1")
+    (version "1.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "du-dust" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0qr6ikq2ds8bq35iw480qyhf3d43dj61wiwp8587n3mgqf5djx8w"))))
+        (base32 "1nx3a1vij6m7jkmjybaxpjmwqygh0byjqis94f8lx02i1yyw2w1d"))))
     (build-system cargo-build-system)
     (arguments
      (list #:install-source? #f
-           #:cargo-inputs `(("rust-ansi-term" ,rust-ansi-term-0.12)
-                            ("rust-chrono" ,rust-chrono-0.4)
-                            ("rust-clap" ,rust-clap-4)
-                            ("rust-clap-complete" ,rust-clap-complete-4)
-                            ("rust-clap-mangen" ,rust-clap-mangen-0.2)
-                            ("rust-config-file" ,rust-config-file-0.2)
-                            ("rust-ctrlc" ,rust-ctrlc-3)
-                            ("rust-directories" ,rust-directories-4)
-                            ("rust-filesize" ,rust-filesize-0.2)
-                            ("rust-lscolors" ,rust-lscolors-0.13)
-                            ("rust-rayon" ,rust-rayon-1)
-                            ("rust-regex" ,rust-regex-1)
-                            ("rust-serde" ,rust-serde-1)
-                            ("rust-serde-json" ,rust-serde-json-1)
-                            ("rust-stfu8" ,rust-stfu8-0.2)
-                            ("rust-sysinfo" ,rust-sysinfo-0.27)
-                            ("rust-terminal-size" ,rust-terminal-size-0.2)
-                            ("rust-thousands" ,rust-thousands-0.2)
-                            ("rust-unicode-width" ,rust-unicode-width-0.1)
-                            ("rust-winapi-util" ,rust-winapi-util-0.1))
-           #:cargo-development-inputs `(("rust-assert-cmd" ,rust-assert-cmd-2)
-                                        ("rust-tempfile" ,rust-tempfile-3))
            #:phases #~(modify-phases %standard-phases
                         (add-after 'install 'install-extras
                           (lambda* (#:key outputs #:allow-other-keys)
@@ -6597,6 +6586,7 @@ file or files to several hosts.")
                               (install-file "completions/_dust"
                                             (string-append share
                                              "/zsh/site-functions"))))))))
+    (inputs (cargo-inputs 'du-dust))
     (home-page "https://github.com/bootandy/dust")
     (synopsis "Graphical disk usage analyzer")
     (description "This package provides a graphical disk usage analyzer in

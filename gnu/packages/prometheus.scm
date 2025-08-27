@@ -192,7 +192,7 @@ registry.")
 (define-public go-github-com-prometheus-client-golang
   (package
     (name "go-github-com-prometheus-client-golang")
-    (version "1.21.1")
+    (version "1.22.0")
     (source
      (origin
        (method git-fetch)
@@ -201,7 +201,7 @@ registry.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01946gv7ncjzd0536dx0523safcdnwy64m7pa8b54vrwzryrvb7p"))
+        (base32 "08japwfsl7wlw6z8dkfdrhpgxr2w6frbinn96ksn0izab2h9s5gd"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -468,7 +468,7 @@ Protocol,ICMP} echo (ping) functionality.")
 (define-public go-github-com-prometheus-procfs
   (package
     (name "go-github-com-prometheus-procfs")
-    (version "0.16.0")
+    (version "0.16.1")
     (source
      (origin
        (method git-fetch)
@@ -477,7 +477,7 @@ Protocol,ICMP} echo (ping) functionality.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0f692685zcssryd38bahmamd72iaiilngp92gl1s9177891f44gm"))))
+        (base32 "0k2x2kqghr34ggc888ldaj0crx6zvxclr3c3r6n3nhznjwx0p79f"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -493,12 +493,6 @@ Protocol,ICMP} echo (ping) functionality.")
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
                 (invoke "./ttar" "-C" "testdata/" "-x" "-f" "testdata/fixtures.ttar"))))
-          ;; XXX: Replace when go-build-system supports nested path.
-          (replace 'check
-            (lambda* (#:key import-path tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./...")))))
           (add-after 'check 'remove-testdata
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)

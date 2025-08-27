@@ -20,9 +20,10 @@
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
-;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -52,6 +53,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
@@ -61,7 +63,7 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages dns)
@@ -78,9 +80,11 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages cyrus-sasl)
+  #:use-module (gnu packages openldap)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages serialization)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages perl)
@@ -353,6 +357,78 @@ one-time-password (OTP) YubiKey against Yubico’s servers.  See the Yubico
 website for more information about Yubico and the YubiKey.")
     (home-page "https://developers.yubico.com/yubico-c-client/")
     (license license:bsd-2)))
+
+(define-public libp11
+  (package
+    (name "libp11")
+    (version "0.4.16")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/OpenSC/libp11")
+                    (commit (string-append "libp11-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0sjd3jxpyp61d85n4drmw9rf3bh7hwhrplr5nw6lmcpr2xr4gqds"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-static"
+                   (string-append "--with-enginesdir="
+                                     #$output "/lib/engines-3")
+                   (string-append "--with-modulesdir="
+                                  #$output "/lib/ossl-modules"))))
+    (native-inputs (list autoconf automake libtool pkg-config))
+    (inputs (list openssl))
+    (home-page "https://github.com/OpenSC/libp11")
+    (synopsis "PKCS#11 wrapper library")
+    (description "This package provides two libraries:
+@table @code
+@item libp11
+provides a higher-level (compared to the PKCS#11 library) interface to access
+PKCS#11 objects.  It is designed to integrate with applications that use
+OpenSSL.
+@item pkcs11prov
+OpenSSL provider module that allows accessing PKCS#11 modules in a
+semi-transparent way.
+@end table")
+    (license license:lgpl2.1+)))
+
+(define-public pkcs11-provider
+  (package
+    (name "pkcs11-provider")
+    (version "1.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/latchset/" name
+                                  "/releases/download/v" version "/"
+                                  name "-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0lzn2wj3pxwb0b2xrx1dk96nkbm2bpl75clhkr1cpnfnc3v02gc4"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'adjust-provider-path
+                 ;; By default, the modulesdir variable from libcrypto.pc is
+                 ;; used, which points to OpenSSL's installation prefix.
+                 (lambda _
+                   (substitute* "meson.build"
+                     (("provider_path =.*")
+                      (format #f "provider_path = '~a/lib/ossl-modules'~%"
+                              #$output))))))))
+    (native-inputs (list pkg-config))   ;for PKG_CONFIG_PATH
+    (inputs (list openssl p11-kit))
+    (home-page "https://github.com/latchset/pkcs11-provider")
+    (synopsis "Pkcs#11 provider for OpenSSL")
+    (description "This is an OpenSSL provider to access hardware and software
+tokens using the PKCS#11 cryptographic token interface.  Access to tokens
+depends on loading an appropriate PKCS#11 driver that knows how to talk to the
+specific token.  The PKCS#11 provider is a connector that allows OpenSSL to
+make proper use of such drivers.")
+    (license license:asl2.0)))
 
 (define-public opensc
   (package
@@ -815,6 +891,9 @@ an unprivileged user.")
     (arguments
      (list
       #:tests? #f                       ;no test suite
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
@@ -825,6 +904,8 @@ an unprivileged user.")
           (replace 'configure
             (lambda _
               (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-after 'install 'install-desktop-resources
             (lambda _
               (let ((datadir (string-append #$output "/share")))
@@ -896,8 +977,6 @@ to the @code{python-yubikey-manager} package.")
                (base32
                 "0z39f8w0zvra874az0f67ck1al9kbpaidpilggbl8jnfs05010ck"))))
     (build-system cmake-build-system)
-    (arguments
-     '(#:configure-flags (list "-DBUILD_TESTING=on")))
     (native-inputs (list pkg-config qttools-5))
     (inputs (list catch2))
     (home-page "https://github.com/tplgy/cppcodec")
@@ -950,26 +1029,14 @@ v0.7/v0.8 and Nitrokey Storage devices.")
     (build-system cargo-build-system)
     (arguments
      `(#:tests? #f ;; 2/164 tests fail, nitrocli-ext tests failing
-       #:cargo-inputs
-       (("rust-anyhow" ,rust-anyhow-1)
-        ("rust-base32" ,rust-base32-0.4)
-        ("rust-directories" ,rust-directories-3)
-        ("rust-envy" ,rust-envy-0.4)
-        ("rust-libc-0.2" ,rust-libc-0.2)
-        ("rust-merge" ,rust-merge-0.1)
-        ("rust-nitrokey" ,rust-nitrokey-0.9)
-        ("rust-progressing" ,rust-progressing-3)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-structopt" ,rust-structopt-0.3)
-        ("rust-termion" ,rust-termion-1)
-        ("rust-toml" ,rust-toml-0.5))
-       #:cargo-development-inputs
-       (("rust-nitrokey-test" ,rust-nitrokey-test-0.5)
-        ("rust-nitrokey-test-state" ,rust-nitrokey-test-state-0.1)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-tempfile" ,rust-tempfile-3))))
+       #:install-source? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'use-system-deps
+           (lambda _
+             (setenv "USE_SYSTEM_LIBNITROKEY" "1"))))))
     (inputs
-     (list hidapi gnupg))
+     (cons* hidapi libnitrokey gnupg (cargo-inputs 'nitrocli)))
     (home-page "https://github.com/d-e-s-o/nitrocli")
     (synopsis "Command line tool for Nitrokey devices")
     (description
@@ -1134,4 +1201,59 @@ It also has limited support for Mifare Classic compatible cards (Thalys card)")
      "This package includes the IFD driver for the cyberJack
 contactless (RFID) and contact USB chipcard readers.")
     (home-page "http://www.reiner-sct.com/")
+    (license license:lgpl2.1+)))
+
+(define-public qdigidoc
+  (package
+    (name "qdigidoc")
+    (version "4.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-eid/DigiDoc4-Client")
+             (commit (string-append "v" version))
+             ;; The repository contains two git modules, an empty and obsolete
+             ;; "cmake" repository and https://github.com/open-eid/qt-common,
+             ;; which is an internal "libdigidoccommon" library with no
+             ;; support for standalone installation.
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05ncaw8m6d5lsswji950yx4p96y3ri0254vwrrdn4vkkflkc8any"))
+       (patches (search-patches "qdigidoc-bundle-config-files.patch"
+                                "qdigidoc-bundle-tsl-files.patch"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:qtbase qtbase                   ;qt6
+      #:tests? #f                       ;no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; QDigiDoc4 dlopens OpenSC libraries.
+          (add-after 'unpack 'patch-opensc-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "client/QPKCS11.cpp"
+                (("\"opensc-pkcs11.so\"")
+                 (format #f "~S"
+                         (search-input-file inputs
+                                            "lib/opensc-pkcs11.so")))))))))
+    (native-inputs
+     (list pkg-config
+           gettext-minimal
+           qttools))
+    (inputs (list flatbuffers
+                  libdigidocpp
+                  openldap
+                  opensc
+                  openssl
+                  pcsc-lite
+                  qtsvg
+                  zlib))
+    (home-page "https://github.com/open-eid/DigiDoc4-Client")
+    (synopsis "Estonian ID card application")
+    (description
+     "This application provides support for using private and governmental
+e-services, signing and encrypting DigiDoc documents, and configuring Estonian
+ID cards.  It requires a running pcscd service and a compatible card reader.")
     (license license:lgpl2.1+)))

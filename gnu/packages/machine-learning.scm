@@ -17,7 +17,7 @@
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2022, 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022-2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Kiran Shila <me@kiranshila.com>
 ;;; Copyright © 2022 Wiktor Zelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
@@ -31,6 +31,7 @@
 ;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Andy Tai <atai@atai.org>
 ;;; Copyright © 2025 Lapearldot <lapearldot@disroot.org>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -76,16 +77,12 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages c)
+  #:use-module (gnu packages calendar)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages cran)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-tls)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
@@ -128,6 +125,7 @@
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages qt)
   #:use-module (gnu packages rdf)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rocm)
@@ -138,6 +136,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages swig)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
@@ -219,6 +218,40 @@ representations and sentence classification.")
 family of functions.")
     (license license:expat)))
 
+(define-public python-faster-whisper
+  (package
+    (name "python-faster-whisper")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/SYSTRAN/faster-whisper")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g9cdvphifn4rqhh7p4z1d3pp6bhcx0jmcahjigvcgry0qsijgfn"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Currently tests requires model download, which we'd rather avoid
+    ;; in Guix unless we're sure about the FOSS weights. To test in source :
+    ;; guix shell -D python-faster-whisper -- pytest
+    (arguments (list #:tests? #f))
+    (propagated-inputs (list (list onnxruntime "python")
+                             python-av
+                             python-ctranslate2
+                             python-huggingface-hub
+                             python-tokenizers
+                             python-tqdm))
+    (native-inputs (list python-numpy
+                         python-pytest
+                         python-setuptools-next))
+    (home-page "https://github.com/SYSTRAN/faster-whisper")
+    (synopsis "Whisper transcription reimplementation")
+    (description
+     "This package provides a reimplementation of OpenAI's Whisper model using
+CTranslate2, which is a inference engine for transformer models.")
+    (license license:expat)))
+
 (define-public python-fasttext
   (package
     (inherit fasttext)
@@ -241,6 +274,7 @@ family of functions.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; tests: 7636 passed, 3859 skipped, 2 deselected, 69 xfailed, 2 xpassed
       #:test-flags
       '(list "-k"
              (string-append
@@ -252,23 +286,14 @@ family of functions.")
     (propagated-inputs (list python-makefun python-multipledispatch
                              python-numpy python-opt-einsum
                              python-typing-extensions))
-    (native-inputs (list python-black
-                         python-flake8
-                         python-isort
-                         python-nbsphinx
-                         python-pandas
+    (native-inputs (list python-pandas
                          python-pillow
                          python-pyro-api
                          python-pytest
-                         python-pytest-xdist
                          python-requests
                          python-scipy
-                         python-setuptools
-                         python-sphinx
-                         python-sphinx-gallery
-                         python-sphinx-rtd-theme
-                         python-torchvision
-                         python-wheel))
+                         python-setuptools-next
+                         python-torchvision))
     (home-page "https://github.com/pyro-ppl/funsor")
     (synopsis "Tensor-like library for functions and distributions")
     (description
@@ -432,6 +457,42 @@ machine learning algorithms based on GPs.")
     (inputs
      (list python))
     (synopsis "Python bindings of libSVM")))
+
+(define-public python-mcfit
+  ;; PyPI variant fails during compile-bytecode phase: "IndentationError:
+  ;; expected an indented block after function definition on line 10
+  ;; (mkfit.py, line 15)".
+  ;; GitHub provides no release tags, use the latest commit from the master
+  ;; branch.
+  ;; See: <https://github.com/eelregit/mcfit/issues/5>.
+  (let ((commit "be3a5cf9c474e16875126adcd35ba785fb781ebb")
+        (revision "0"))
+    (package
+      (name "python-mcfit")
+      (version (git-version "0.0.22" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/eelregit/mcfit")
+                (commit commit)))
+         (sha256
+          (base32 "120ybwhrqpn9a9q96m6l8pw8a7cdz705vzqn3s87wnffa8nslbsi"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-mpmath
+             python-numpy
+             python-scipy))
+      (home-page "https://github.com/eelregit/mcfit")
+      (synopsis "Multiplicatively convolutional fast integral transforms")
+      (description
+       "This package provides multiplicatively convolutional fast integral
+transforms.")
+      (license license:gpl3+))))
 
 (define-public python-ml-collections
   (package
@@ -646,7 +707,7 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((tag "b5013"))
+  (let ((tag "b6101"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -658,7 +719,7 @@ Performance is achieved by using the LLVM JIT compiler.")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "0s73dz871x53dr366lkzq19f677bwgma2ri8m5vhbfa9p8yp4p3r"))))
+          (base32 "0yz97dk19pxqck9l83wvlwzf1i78wrc55hrk9ynraqybdz7yqjdc"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -693,11 +754,23 @@ Performance is achieved by using the LLVM JIT compiler.")
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-paths
               (lambda* (#:key inputs #:allow-other-keys)
-                (substitute* "ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
-                 (("\"/bin/sh\"")
-                  (string-append "\"" (search-input-file inputs "/bin/sh") "\"")))))
+                (substitute* (format #f "~a~a"
+                                     "ggml/src/ggml-vulkan/vulkan-shaders/"
+                                     "vulkan-shaders-gen.cpp")
+                  (("\"/bin/sh\"")
+                   (string-append "\"" (search-input-file inputs "/bin/sh")
+                                  "\"")))))
             (add-after 'unpack 'fix-tests
               (lambda _
+                ;; test-thread-safety downloads ML model from network,
+                ;; cannot run in Guix build environment
+                (substitute* '("tests/CMakeLists.txt")
+                  (("llama_build_and_test\\(test-thread-safety.cpp.*")
+                   "")
+                  ;; error while handling argument "-m": expected value for
+                  ;; argument
+                  (("llama_build_and_test\\(test-arg-parser.cpp.*")
+                   ""))
                 ;; test-eval-callback downloads ML model from network, cannot
                 ;; run in Guix build environment
                 (substitute* '("examples/eval-callback/CMakeLists.txt")
@@ -714,11 +787,13 @@ Performance is achieved by using the LLVM JIT compiler.")
                                        (string-append (assoc-ref outputs "out")
                                                       "/bin")
                                        "^test-")))))))
-      (inputs (list curl glslang python python-gguf
-                    vulkan-headers vulkan-loader))
-      (native-inputs (list pkg-config shaderc bash-minimal))
+      (inputs
+       (list curl glslang python-gguf python-minimal openblas spirv-headers
+             spirv-tools vulkan-headers vulkan-loader))
+      (native-inputs
+       (list bash-minimal pkg-config shaderc))
       (propagated-inputs
-       (list python-numpy python-pytorch python-sentencepiece openblas))
+       (list python-numpy python-pytorch python-sentencepiece))
       (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
       (home-page "https://github.com/ggml-org/llama.cpp")
       (synopsis "Port of Facebook's LLaMA model in C/C++")
@@ -730,7 +805,7 @@ independently to be able to run a LLaMA model.")
 (define-public whisper-cpp
   (package
     (name "whisper-cpp")
-    (version "1.7.5")
+    (version "1.7.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -739,7 +814,7 @@ independently to be able to run a LLaMA model.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fs15rizz4psd3flfjpdivzvc9w19i3706flisn136ax0k8r7w5n"))))
+                "0gn64jw4pr4vfnn2hll7yd98r8yhaqg97hhg5z22vq4j423436kn"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -763,9 +838,15 @@ independently to be able to run a LLaMA model.")
               "-DGGML_AVX2=OFF"
               "-DGGML_AVX512=OFF"
               "-DGGML_AVX512_VBMI=OFF"
-              "-DGGML_AVX512_VNNI=OFF")
+              "-DGGML_AVX512_VNNI=OFF"
+              "-DGGML_VULKAN=ON")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+                (("\"/bin/sh\"")
+                 (string-append "\"" (search-input-file inputs "/bin/sh") "\"")))))
           #$@(if (not (target-64bit?))
                  '((add-after 'unpack 'skip-failing-tests
                      (lambda _
@@ -775,11 +856,21 @@ independently to be able to run a LLaMA model.")
                        (substitute* "tests/CMakeLists.txt"
                          (("LABELS \"large\"")
                           "DISABLED true")))))
-                 '()))))
+                 '())
+          (add-after 'unpack 'skip-failing-vad-tests
+            (lambda _
+              (substitute* "tests/CMakeLists.txt"
+                ;; error: failed to read audio data as wav (Unknown error)
+                (("\\$\\{VAD_TEST\\} PROPERTIES LABELS \"unit\"")
+                 "${VAD_TEST} PROPERTIES DISABLED true")
+                ;; error: failed to read audio data as wav (Unknown error)
+                (("\\$\\{VAD_TARGET\\} PROPERTIES LABELS \"base;en\"")
+                 "${VAD_TEST} PROPERTIES DISABLED true")))))))
     (native-inputs
-     (list pkg-config))
+     (list pkg-config shaderc))
     (inputs
-     (list openblas sdl2 git))
+     (list openblas sdl2 git spirv-headers spirv-tools
+           vulkan-headers vulkan-loader))
     (synopsis "OpenAI's Whisper model in C/C++")
     (description
      "This package is a high-performance inference of OpenAI's
@@ -797,7 +888,7 @@ without dependencies, with
 @item C-style API
 @end itemize")
     (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
-    (home-page "https://github.com/ggerganov/whisper.cpp")
+    (home-page "https://github.com/ggml-org/whisper.cpp/")
     (license license:expat)))
 
 (define-public mcl
@@ -815,8 +906,11 @@ without dependencies, with
                 "15xlax3z31lsn62vlg94hkm75nm40q4679amnfg13jm8m2bnhy5m"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list "--enable-blast"
-                               "CFLAGS=-fcommon")))
+     (list
+      #:configure-flags
+      #~(list "--enable-blast"
+              (string-append "CFLAGS=-fcommon -g -O2"
+                             " -Wno-error=implicit-function-declaration"))))
     (inputs
      (list perl))
     (home-page "https://micans.org/mcl/")
@@ -1100,23 +1194,24 @@ cardinality matching from a bipartite graph.")
 (define-public python-persim
   (package
     (name "python-persim")
-    (version "0.3.2")
+    (version "0.3.8")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "persim" version))
        (sha256
-        (base32 "0q8wfakx8q4h3ryvw8cba0v6z7xn9139qkrzs3mi1ggyzacnx9d7"))))
+        (base32 "03d4kgakpgj54c3pl9dkqrkbmj6w13gmczkds5jagf3n85c1hgg1"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-deprecated
-                             python-hopcroftkarp
-                             python-joblib
-                             python-matplotlib
-                             python-numpy
-                             python-scikit-learn
-                             python-scipy))
-    (native-inputs (list python-pytest python-pytest-cov python-setuptools
-                         python-wheel))
+    (native-inputs
+     (list python-pytest python-setuptools-next))
+    (propagated-inputs
+     (list python-deprecated
+           python-hopcroftkarp
+           python-joblib
+           python-matplotlib
+           python-numpy
+           python-scikit-learn
+           python-scipy))
     (home-page "https://persim.scikit-tda.org")
     (synopsis "Tools for analyzing persistence diagrams in Python")
     (description
@@ -1281,34 +1376,6 @@ and not test_wmt22_references")
 and reproducible BLEU, chrF, and TER scores for natural language processing.")
     (license license:asl2.0)))
 
-(define-public rust-safetensors
-  (package
-    (name "rust-safetensors")
-    (version "0.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "safetensors" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1fbx56wikqcvqb4y0ym0cys68lj0v3cpanhsy5i13fkz5jr7dvcc"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs
-       (("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1))
-       #:cargo-development-inputs
-       (("rust-criterion" ,rust-criterion-0.5)
-        ("rust-memmap2" ,rust-memmap2-0.9)
-        ("rust-proptest" ,rust-proptest-1))))
-    (home-page "https://github.com/huggingface/safetensors")
-    (synopsis "Simple and safe way to store and distribute tensors")
-    (description
-     "This package provides a fast (zero-copy) and safe (dedicated) format for
-storing tensors safely, named safetensors.  They aim to be safer than their
-@code{PyTorch} counterparts.")
-    (license license:asl2.0)))
-
 (define-public python-safetensors
   (package
     (name "python-safetensors")
@@ -1333,31 +1400,15 @@ storing tensors safely, named safetensors.  They aim to be safer than their
                (unless (member file '("." ".."))
                  (rename-file (string-append "bindings/python/" file)
                               file)))
-             (scandir "bindings/python"))))))
+             (scandir "bindings/python"))
+            (substitute* "Cargo.toml"
+              (("^path = .*") ""))))))
     (build-system cargo-build-system)
     (arguments
      (list
-      #:modules '((guix build cargo-build-system)
-                  (guix build utils)
-                  (ice-9 regex)
-                  (ice-9 textual-ports)
-                  (srfi srfi-26))
+      #:install-source? #f
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack-rust-crates 'inject-safetensors
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("\\[dependencies\\]")
-                 (format #f "[dependencies]~%safetensors = ~s"
-                         #$(package-version rust-safetensors))))
-              (call-with-input-file "Cargo.toml"
-                (lambda (port)
-                  (let* ((content (get-string-all port))
-                         (top-match (string-match
-                                     "\\[dependencies.safetensors"
-                                     content)))
-                    (call-with-output-file "Cargo.toml"
-                      (cut display (match:prefix top-match) <>)))))))
           (add-before 'check 'install-rust-library
             (lambda _
               (copy-file "target/release/libsafetensors_rust.so"
@@ -1387,14 +1438,9 @@ storing tensors safely, named safetensors.  They aim to be safer than their
                 (copy-file "PKG-INFO" (string-append info "/METADATA"))
                 (copy-recursively
                  "py_src/safetensors"
-                 (string-append lib "safetensors"))))))
-      #:cargo-inputs
-      `(("rust-pyo3" ,rust-pyo3-0.21)
-        ("rust-memmap2" ,rust-memmap2-0.9)
-        ("rust-safetensors" ,rust-safetensors)
-        ("rust-serde-json" ,rust-serde-json-1))))
+                 (string-append lib "safetensors"))))))))
     (inputs
-     (list rust-safetensors))
+     (cargo-inputs 'python-safetensors))
     (native-inputs
      (list python-h5py
            python-minimal
@@ -1404,9 +1450,9 @@ storing tensors safely, named safetensors.  They aim to be safer than their
            python-pytorch))
     (home-page "https://huggingface.co/docs/safetensors")
     (synopsis "Simple and safe way to store and distribute tensors")
-    (description "This package provides a fast (zero-copy) and safe
-(dedicated) format for storing tensors safely.  This package builds upon
-@code{rust-safetensors} and provides Python bindings.")
+    (description
+     "This package provides a fast (zero-copy) and safe (dedicated) format for
+storing tensors safely.")
     (license license:asl2.0)))
 
 (define-public python-sentencepiece
@@ -1431,37 +1477,25 @@ unsupervised text tokenizer.")
 (define-public python-sentence-transformers
   (package
     (name "python-sentence-transformers")
-    (version "3.0.1")
+    (version "5.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "sentence_transformers" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/UKPLab/sentence-transformers/")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1xmzbyrlp6wa7adf42n67c544db17nz95b10ri603lf4gi9jqgca"))))
+        (base32
+         "1jkj77q25b21nxrdszvlw127jnx1m7x8czldiq2mfyj76yjk0ymj"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:test-flags
-      '(list
-        ;; Missing fixture / train or test data.
-        ;; Requires internet access.
-        "--ignore=tests/test_sentence_transformer.py"
-        "--ignore=tests/test_train_stsb.py"
-        "--ignore=tests/test_compute_embeddings.py"
-        "--ignore=tests/test_cross_encoder.py"
-        "--ignore=tests/test_model_card_data.py"
-        "--ignore=tests/test_multi_process.py"
-        "--ignore=tests/test_pretrained_stsb.py"
-        "-k" (string-append
-              "not test_LabelAccuracyEvaluator"
-              " and not test_ParaphraseMiningEvaluator"
-              " and not test_cmnrl_same_grad"
-              " and not test_paraphrase_mining"
-              " and not test_simple_encode"))))
+     (list #:tests? #f))        ;network access is required
     (propagated-inputs (list python-huggingface-hub
                              python-numpy
                              python-pillow
                              python-pytorch
+                             python-typing-extensions
                              python-scikit-learn
                              python-scipy
                              python-tqdm
@@ -1722,7 +1756,7 @@ operators and standard data types.")
               (patches (search-patches "onnx-optimizer-system-library.patch"))
               (modules '((guix build utils)))
               (snippet '(delete-file-recursively "third_party"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      ;; reuse build system tweaks
      (substitute-keyword-arguments (package-arguments onnx)
@@ -1749,8 +1783,9 @@ operators and standard data types.")
                              " and not test_fuse_transpose")))))))))
     (native-inputs
      (append
-      (list cmake-minimal python-pytest python-pytest-runner
-            python-coverage)
+      (list cmake-minimal
+            python-pytest
+            python-setuptools-next)
       (filter
        (lambda (pkg)
          (member (or (%current-target-system)
@@ -1771,6 +1806,139 @@ Not all possible optimizations can be directly implemented on ONNX graphs---
 some will need additional backend-specific information---but many can, and the
 aim is to provide all such passes along with ONNX so that they can be re-used
 with a single function call.")
+    (license license:expat)))
+
+(define-public onnxruntime
+  (package
+    (name "onnxruntime")
+    (version "1.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/microsoft/onnxruntime")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z2s79l4wdilssw9lmj319ypyyqi2y0dx0fpwr2yhq8bax3ci50n"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils)
+                  ((guix build pyproject-build-system) #:prefix py:))
+      #:imported-modules (append %cmake-build-system-modules
+                                 %pyproject-build-system-modules)
+      #:configure-flags
+      #~(list "-Donnxruntime_BUILD_UNIT_TESTS=OFF"
+              "-Donnxruntime_BUILD_SHARED_LIB=ON"
+              "-Donnxruntime_ENABLE_LTO=ON"
+              "-Donnxruntime_ENABLE_PYTHON=ON"
+              "-Donnxruntime_USE_FULL_PROTOBUF=OFF"
+              ;; XXX: Fixes build with gcc@14.
+              "-DCMAKE_CXX_FLAGS=-Wl,-z,noexecstack")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "cmake")))
+          (add-after 'unpack 'relax-dependencies
+            (lambda _
+              (with-output-to-file "cmake/external/eigen.cmake"
+                (lambda _
+                  (display "find_package(Eigen3 REQUIRED)\n")))
+              (substitute* "cmake/external/abseil-cpp.cmake"
+                (("20240722")
+                 (car (string-split #$(package-version
+                                       (this-package-input "abseil-cpp"))
+                                    #\.))))))
+          (add-after 'install 'build-python
+            (lambda _
+              (invoke "python3" "../setup.py" "bdist_wheel")))
+          (add-after 'build-python 'install-python
+            (lambda* (#:key inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'install)
+               #:inputs inputs
+               #:outputs `(("out" . ,#$output:python)))))
+          (add-after 'install-python 'add-install-to-pythonpath
+            (lambda* (#:key inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'add-install-to-pythonpath)
+               #:inputs inputs
+               #:outputs `(("out" . ,#$output:python)))))
+          (delete 'check)
+          (add-after 'add-install-to-pythonpath 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (with-directory-excursion "../onnxruntime/test/python"
+                ((assoc-ref py:%standard-phases 'check)
+                 #:tests? tests?
+                 #:test-flags
+                 `(;; XXX: NotImplementedError
+                   "--ignore-glob=quantization/*"
+                   ;; XXX: These tests require transformer models or have
+                   ;; import issues.
+                   "--ignore=transformers/test_generation.py"
+                   "--ignore=transformers/test_gpt2_benchmark.py"
+                   "--ignore=transformers/test_gpt2_to_onnx.py"
+                   "--ignore=transformers/test_optimizer_huggingface_bert.py"
+                   "--ignore=transformers/test_parity_huggingface_gpt_attention.py"
+                   "--ignore=transformers/test_shape_infer_helper.py"
+                   ;; XXX: onnxscript ModuleNotFound
+                   "--ignore=transformers/test_gelu_fusions.py"
+                   "--ignore=transformers/test_gemma3_vision.py"
+                   ;; XXX: Other failing tests.
+                   "-k" ,(string-append
+                          "not test_gelu_is_fused_by_default"
+                          " and not test_inverse"))))))
+          (add-after 'check 'python-sanity-check
+            (lambda* (#:key tests? inputs #:allow-other-keys)
+              ((assoc-ref py:%standard-phases 'sanity-check)
+               #:inputs `(("sanity-check.py" . ,#$(default-sanity-check.py))
+                          ,@inputs)
+               #:outputs `(("out" . ,#$output:python))))))))
+    (outputs (list "out" "python"))
+    (inputs
+     (list abseil-cpp
+           boost
+           cpuinfo
+           dlpack
+           c++-gsl
+           date
+           eigen-for-onnxruntime
+           flatbuffers-23.5
+           googletest
+           nlohmann-json
+           onnx
+           protobuf
+           pybind11
+           re2-next
+           safeint
+           zlib))
+    (native-inputs
+     (list pkg-config
+           python-einops
+           python-wrapper
+           python-numpy
+           python-parameterized
+           python-psutil
+           python-pytest
+           python-pytorch
+           python-sentencepiece
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-coloredlogs
+           python-flatbuffers
+           python-protobuf
+           python-sympy))
+    (home-page "https://github.com/microsoft/onnxruntime")
+    (synopsis "Cross-platform, high performance scoring engine for ML models")
+    (description
+     "ONNX Runtime is a performance-focused complete scoring engine
+for Open Neural Network Exchange (ONNX) models, with an open
+extensible architecture to continually address the latest developments
+in AI and Deep Learning. ONNX Runtime stays up to date with the ONNX
+standard with complete implementation of all ONNX operators, and
+supports all ONNX releases (1.2+) with both future and backwards
+compatibility.")
     (license license:expat)))
 
 (define-public rxcpp
@@ -2222,50 +2390,6 @@ number of threads used in the threadpool-backed of common native libraries used
 for scientific computing and data science (e.g. BLAS and OpenMP).")
     (license license:bsd-3)))
 
-(define-public python-imbalanced-learn
-  (package
-    (name "python-imbalanced-learn")
-    (version "0.12.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "imbalanced-learn" version))
-       (sha256
-        (base32 "1hgncab4g4xry7yl6wwsj1wmfnxbsajx6qmycvr28wdhvk75c358"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags '(list "-k"
-                     ;; Although we cannot satify the Tensorflow and Keras requirements
-                     ;; (python-keras >= 2.4.3 and tensorflow >= 2.4.3), all tests
-                     ;; besides these pass.
-                     "not balanced_batch_generator and not BalancedBatchGenerator")
-      #:phases '(modify-phases %standard-phases
-                  (add-after 'unpack 'unbreak-tests
-                    (lambda _
-                      ;; Some tests require a home directory
-                      (setenv "HOME"
-                              (getcwd)))))))
-    (propagated-inputs (list python-joblib python-numpy python-scikit-learn
-                             python-scipy python-threadpoolctl))
-    (native-inputs (list python-black
-                         python-flake8
-                         python-keras
-                         python-mypy
-                         python-pandas
-                         python-pytest
-                         python-pytest-cov
-                         python-setuptools
-                         python-wheel
-                         tensorflow))
-    (home-page "https://github.com/scikit-learn-contrib/imbalanced-learn")
-    (synopsis "Toolbox for imbalanced dataset in machine learning")
-    (description
-     "This is a Python package offering a number of re-sampling
-techniques commonly used in datasets showing strong between-class imbalance.
-It is compatible with @code{scikit-learn}.")
-    (license license:expat)))
-
 (define-public python-hdbscan
   (package
     (name "python-hdbscan")
@@ -2530,7 +2654,7 @@ Covariance Matrix Adaptation Evolution Strategy (CMA-ES) for Python.")
 (define-public python-autograd
   (package
     (name "python-autograd")
-    (version "1.7.0")
+    (version "1.8.0")
     (source
      (origin
        (method git-fetch)
@@ -2538,12 +2662,14 @@ Covariance Matrix Adaptation Evolution Strategy (CMA-ES) for Python.")
              (url "https://github.com/HIPS/autograd")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1fpnmm3mzw355iq7w751j4mjfcr0yh324cxidba1l22652gg8r8m"))
+        (base32 "054pkhzz0h9p1jzva8774wb9dj7rvax4rcpr8ava971kbimdr2lk"))
        (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-hatchling
-           python-pytest))
+           python-pytest
+           python-pytest-cov
+           python-pytest-xdist))
     (propagated-inputs
      (list python-future
            python-numpy))
@@ -3850,6 +3976,21 @@ advanced research.")
               (with-directory-excursion "/tmp/fft2d"
                 (invoke "tar" "--strip-components=1"
                         "-xf" (assoc-ref inputs "fft2d-src")))))
+          (add-after 'copy-sources 'opencl-fix
+            (lambda _ (substitute* "delegates/gpu/cl/opencl_wrapper.h"
+              (("cl_ndrange_kernel_command_properties_khr")
+               "cl_command_properties_khr"))))
+          (add-after 'opencl-fix 'absl-fix
+            (lambda _ (substitute* '(
+                        "delegates/gpu/cl/cl_operation.h"
+                        "delegates/gpu/common/task/qcom_thin_filter_desc.cc"
+                        "delegates/gpu/common/tasks/special/thin_pointwise_fuser.cc")
+              (("#include <vector>")
+               "#include <vector>\n\n#include \"absl/strings/str_cat.h\"\n"))))
+          (add-after 'opencl-fix 'stdint-fix
+            (lambda _ (substitute* "kernels/internal/spectrogram.cc"
+              (("#include <math.h>")
+               "#include <math.h>\n#include <cstdint>\n"))))
           (add-after 'build 'build-shared-library
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir-p "c")
@@ -3874,7 +4015,7 @@ advanced research.")
               (when tests?
                 (invoke "ctest" "-L" "plain")))))))
     (inputs
-     `(("abseil-cpp" ,abseil-cpp-20200923.3)
+     `(("abseil-cpp" ,abseil-cpp)
        ("cpuinfo" ,cpuinfo)
        ("eigen" ,eigen)
        ("fp16" ,fp16)
@@ -4081,217 +4222,10 @@ any function).  It currently contains the interface and IO code from the Shap
 project, and it will potentially also do the same for the Lime project.")
     (license license:expat)))
 
-(define-public python-keras-applications
-  (package
-    (name "python-keras-applications")
-    (version "1.0.8")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras_Applications" version))
-       (sha256
-        (base32
-         "1rcz31ca4axa6kzhjx4lwqxbg4wvlljkj8qj9a7p9sfd5fhzjyam"))))
-    (build-system python-build-system)
-    ;; The tests require Keras, but this package is needed to build Keras.
-    (arguments '(#:tests? #f))
-    (propagated-inputs
-     (list python-h5py python-numpy))
-    (native-inputs
-     (list python-pytest python-pytest-cov
-           python-pytest-xdist))
-    (home-page "https://github.com/keras-team/keras-applications")
-    (synopsis "Reference implementations of popular deep learning models")
-    (description
-     "This package provides reference implementations of popular deep learning
-models for use with the Keras deep learning framework.")
-    (license license:expat)))
-
-(define-public python-keras-preprocessing
-  (package
-    (name "python-keras-preprocessing")
-    (version "1.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras_Preprocessing" version))
-       (sha256
-        (base32
-         "1r98nm4k1svsqjyaqkfk23i31bl1kcfcyp7094yyj3c43phfp3as"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-numpy python-six))
-    (native-inputs
-     (list python-pandas
-           python-pillow
-           python-pytest
-           python-pytest-cov
-           python-pytest-xdist
-           tensorflow))
-    (home-page "https://github.com/keras-team/keras-preprocessing/")
-    (synopsis "Data preprocessing and augmentation for deep learning models")
-    (description
-     "Keras Preprocessing is the data preprocessing and data augmentation
-module of the Keras deep learning library.  It provides utilities for working
-with image data, text data, and sequence data.")
-    (license license:expat)))
-
-(define-public python-keras
-  (package
-    (name "python-keras")
-    (version "2.3.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Keras" version))
-       (sha256
-        (base32
-         "1k68xd8n2y9ldijggjc8nn4d6d1axw0p98gfb0fmm8h641vl679j"))
-       (modules '((guix build utils)))
-       (snippet
-        '(substitute* '("keras/callbacks/callbacks.py"
-                        "keras/engine/training_utils.py"
-                        "keras/engine/training.py"
-                        "keras/engine/training_generator.py"
-                        "keras/utils/generic_utils.py")
-           (("from collections import Iterable")
-            "from collections.abc import Iterable")
-           (("collections.Container")
-            "collections.abc.Container")
-           (("collections.Mapping")
-            "collections.abc.Mapping")
-           (("collections.Sequence")
-            "collections.abc.Sequence")))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'tf-compatibility
-           (lambda _
-             (substitute* "keras/backend/tensorflow_backend.py"
-               (("^get_graph = .*")
-                "get_graph = tf.get_default_graph")
-               (("tf.compat.v1.nn.fused_batch_norm")
-                "tf.nn.fused_batch_norm")
-               ;; categorical_crossentropy does not support axis
-               (("from_logits=from_logits, axis=axis")
-                "from_logits=from_logits")
-               ;; dropout accepts a level number, not a named rate argument.
-               (("dropout\\(x, rate=level,")
-                "dropout(x, level,")
-               (("return x.shape.rank")
-                "return len(x.shape)"))))
-         (add-after 'unpack 'hdf5-compatibility
-           (lambda _
-             ;; The truth value of an array with more than one element is ambiguous.
-             (substitute* "tests/keras/utils/io_utils_test.py"
-               ((" *assert .* == \\[b'(asd|efg).*") ""))
-             (substitute* "tests/test_model_saving.py"
-               (("h5py.File\\('does not matter',")
-                "h5py.File('does not matter', 'w',"))
-             (substitute* "keras/utils/io_utils.py"
-               (("h5py.File\\('in-memory-h5py', driver='core', backing_store=False\\)")
-                "h5py.File('in-memory-h5py', 'w', driver='core', backing_store=False)")
-               (("h5file.fid.get_file_image")
-                "h5file.id.get_file_image"))
-             (substitute* "keras/engine/saving.py"
-               (("\\.decode\\('utf-?8'\\)") ""))))
-         (add-after 'unpack 'delete-unavailable-backends
-           (lambda _
-             (delete-file "keras/backend/theano_backend.py")
-             (delete-file "keras/backend/cntk_backend.py")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; These tests attempt to download data files from the internet.
-               (delete-file "tests/integration_tests/test_datasets.py")
-               (delete-file "tests/integration_tests/imagenet_utils_test.py")
-               (invoke "python" "-m" "pytest" "tests"
-                       "-p" "no:pep8"
-                       ;; FIXME: python-build-system lacks PARALLEL-TESTS?
-                       "-n" (number->string (parallel-job-count))
-                       ;; This one uses the theano backend that we don't have.
-                       "--ignore=tests/test_api.py"
-                       "--ignore=tests/keras/backend/backend_test.py"
-                       ;; Our Tensorflow version does not have the coder ops library.
-                       "--ignore=tests/keras/callbacks/callbacks_test.py"
-                       ;; ...nor do we have tensorboard
-                       "--ignore=tests/keras/callbacks/tensorboard_test.py"
-                       "-k"
-                       (string-append
-                        ;; See https://github.com/keras-team/keras/pull/7033
-                        "not test_TimeDistributed_learning_phase "
-                        ;; XXX fails because no closure is provided
-                        "and not test_func_dump_and_load_backwards_compat "
-                        ;; XXX real bug?  These are all tests that fail due to
-                        ;; shape mismatch, e.g. "got logits shape [12,3] and
-                        ;; labels shape [9]"
-                        "and not test_model_with_crossentropy_losses_channels_first "
-                        "and not test_masking_correctness_output_size_not_equal_to_first_state_size "
-                        "and not test_convolutional_recurrent "
-                        "and not test_axis "
-
-                        ;; XXX fails because of 3/15 values have unexpected differences.
-                        "and not test_masking_correctness_output_not_equal_to_first_state "
-                        ;; XXX fails because of a difference of about 0.1
-                        "and not test_sample_weighted "
-                        ;; XXX fails because of a difference of about 0.3
-                        "and not test_scalar_weighted "
-                        ;; XXX fails because of a difference of about 0.2
-                        "and not test_unweighted "
-
-                        ;; XXX I cannot reproduce this in an interactive
-                        ;; Python session, because l2_norm works just fine.
-                        "and not test_weighted " ;TestCosineSimilarity
-                        "and not test_config "   ;TestCosineSimilarity
-
-                        ;; The following test fails only in the build
-                        ;; container; skip it.
-                        "and not test_selu "
-                        ;; The following test was found flaky and removed in
-                        ;; recent versions.
-                        "and not test_stateful_metrics"))))))))
-    (propagated-inputs
-     (list python-h5py
-           python-keras-applications
-           python-keras-preprocessing
-           python-numpy
-           python-pydot
-           python-pyyaml
-           python-scipy
-           python-six
-           tensorflow
-           graphviz))
-    (native-inputs
-     (list python-flaky
-           python-markdown
-           python-pandas
-           python-pytest
-           python-pytest-cov
-           python-pytest-timeout
-           python-pytest-xdist
-           python-pyux
-           python-sphinx
-           python-requests))
-    (home-page "https://keras.io/")
-    (synopsis "High-level deep learning framework")
-    (description "Keras is a high-level neural networks API, written in Python
-and capable of running on top of TensorFlow.  It was developed with a focus on
-enabling fast experimentation.  Use Keras if you need a deep learning library
-that:
-@itemize
-@item Allows for easy and fast prototyping (through user friendliness,
-  modularity, and extensibility).
-@item Supports both convolutional networks and recurrent networks, as well as
-  combinations of the two.
-@item Runs seamlessly on CPU and GPU.
-@end itemize\n")
-    (license license:expat)))
-
 (define-public gloo
   (let ((version "0.0.0")                         ; no proper version tag
-        (commit "81925d1c674c34f0dc34dd9a0f2151c1b6f701eb")
-        (revision "2"))
+        (commit "c7b7b022c124d9643957d9bd55f57ac59fce8fa2")
+        (revision "3"))
     (package
       (name "gloo")
       (version (git-version version revision commit))
@@ -4304,7 +4238,7 @@ that:
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "16zs8ndbiv9nppn8bv6lfanzyyssz7g5pawxiqcnafwq3nvxpj9m"))))
+           "0xsp2m2if3g85l0c3cx9l0j3kz36j3kbmz9mai6kchdhrs13r7d5"))))
       (build-system cmake-build-system)
       (native-inputs
        (list googletest))
@@ -4538,7 +4472,8 @@ on quantized 8-bit tensors.")
                     (srfi srfi-26)))
          (snippet
           '(begin
-             (delete-file-recursively "bench/models")
+             (when (directory-exists? "bench/models")
+               (delete-file-recursively "bench/models"))
              ;; Remove autogenerated files, which contain the string
              ;; "Auto-generated file"
              (for-each
@@ -4552,30 +4487,26 @@ on quantized 8-bit tensors.")
                                 (get-string-all port)
                                 "Auto-generated file")))
                        (delete-file path))))
-                 (scandir dir (negate (cut member <> '("." ".." "simd"))))))
+                 (or (scandir dir (negate (cut member <> '("." ".." "simd"))))
+                     '())))
               (cons*
-               "test" "bench" "src/enums" "src/xnnpack"
-               "gen" "cmake/gen"
-               (filter
-                identity
-                (map
-                 (lambda (dir)
-                   (let ((path
-                          (string-append "src/" dir "/gen")))
-                     (and (file-exists? path) path)))
-                 (scandir "src" (negate (cut member <> '("." ".."))))))))))))
+               "test" "bench" "src/enums" "src/xnnpack" "gen" "cmake/gen"
+               (filter file-exists?
+                       (map (cut string-append "src/" <> "/gen")
+                            (scandir "src")))))))))
       (build-system cmake-build-system)
       (arguments
        (list
         #:build-type "Release" ;; Debugging symbols require a lot of disk space
-        #:configure-flags ''("-DXNNPACK_USE_SYSTEM_LIBS=YES"
-                             "-DBUILD_SHARED_LIBS=ON"
-                             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-                             "-DXNNPACK_LIBRARY_TYPE=shared"
-                             "-DXNNPACK_BUILD_BENCHMARKS=FALSE"
-                             ;; Tests fail to build with -DXNNPACK_LIBRARY_TYPE=shared:
-                             ;; https://github.com/google/XNNPACK/issues/6285
-                             "-DXNNPACK_BUILD_TESTS=OFF")
+        #:configure-flags
+        #~(list "-DXNNPACK_USE_SYSTEM_LIBS=YES"
+                "-DBUILD_SHARED_LIBS=ON"
+                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+                "-DXNNPACK_LIBRARY_TYPE=shared"
+                "-DXNNPACK_BUILD_BENCHMARKS=FALSE"
+                ;; Tests fail to build with -DXNNPACK_LIBRARY_TYPE=shared:
+                ;; https://github.com/google/XNNPACK/issues/6285
+                "-DXNNPACK_BUILD_TESTS=OFF")
         #:tests? #f
         #:modules '((ice-9 ftw)
                     (guix build cmake-build-system)
@@ -4601,14 +4532,18 @@ on quantized 8-bit tensors.")
                               (string-suffix? ".sh" name))
                      (let ((file (string-append "scripts/" name)))
                        (substitute* file
-                         ;; Turn the commands into targets and remove trailing
-                         ;; '&' characters
-                         (("(.*(\\.sh|\\.py|-o |--output)[^&]*)&?[[:space:]]*$" _ command)
+                         ;; Turn the commands into targets. Avoid comments and
+                         ;; lines starting with - (rest of multilines).
+                         (("\
+^[[:space:]]*([^ #-].*/.*(\\.sh|\\.py|-o |--output)[^&]*).*$"
+                           _ command)
                           (begin
                             (set! counter (+ counter 1))
-                            (string-append "target" (number->string counter)
+                            (string-append "\ntarget" (number->string counter)
                                            ":" target-deps
-                                           "\n\t" command "\n")))
+                                           "\n\t" command)))
+                         ;; Remove trailing '&' characters.
+                         (("&?[[:space:]]*$") "\n")
                          (("[[:space:]]*wait[[:space:]]*") "")
                          ;; The commands after this line depend on the
                          ;; previous commands in the file.
@@ -4634,12 +4569,15 @@ on quantized 8-bit tensors.")
                 (invoke "python3" "tools/generate-lut-norm-test.py"
                         "--spec" "test/u8-lut32norm.yaml"
                         "--output" "test/u8-lut32norm.cc")
-                (invoke "python3" "tools/generate-gemm-test.py"
-                        "--spec" "test/qd8-f16-qb4w-gemm-minmax.yaml"
-                        "--output-test" "test/qd8-f16-qb4w-gemm-minmax.cc")
-                (invoke "python3" "tools/generate-gemm-test.py"
-                        "--spec" "test/qd8-f32-qb4w-gemm-minmax.yaml"
-                        "--output-test" "test/qd8-f32-qb4w-gemm-minmax.cc"))))))
+                ;; Check existence to avoid doubling the phase for r-torch.
+                (when (file-exists? "test/qd8-f16-qb4w-gemm-minmax.yaml")
+                  (invoke "python3" "tools/generate-gemm-test.py"
+                          "--spec" "test/qd8-f16-qb4w-gemm-minmax.yaml"
+                          "--output-test" "test/qd8-f16-qb4w-gemm-minmax.cc"))
+                (when (file-exists? "test/qd8-f32-qb4w-gemm-minmax.yaml")
+                  (invoke "python3" "tools/generate-gemm-test.py"
+                          "--spec" "test/qd8-f32-qb4w-gemm-minmax.yaml"
+                          "--output-test" "test/qd8-f32-qb4w-gemm-minmax.cc")))))))
       (inputs
        (list clog
              cpuinfo
@@ -4740,7 +4678,7 @@ TensorFlow.js, PyTorch, and MediaPipe.")
 (define-public fbgemm
   (package
     (name "fbgemm")
-    (version "1.0.0")
+    (version "1.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4749,12 +4687,11 @@ TensorFlow.js, PyTorch, and MediaPipe.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1a5g5f32377fad99xsfggqkwvl7vh5gc1wj77swa06x06lc1qwyw"))
+                "0fjs7179iq5hy6nl4nyswnmk90fz87zsg14p7i5bk2vbd2vrq8a3"))
               (patches (search-patches "fbgemm-use-system-libraries.patch"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next
       #:configure-flags
       ''("-DFBGEMM_LIBRARY_TYPE=shared")
       ;; Tests require AVX2 or AVX-512 instructions
@@ -4823,7 +4760,6 @@ the tensors contained therein.")
       (build-system cmake-build-system)
       (arguments
        (list
-        #:test-target "cpptest"
         #:configure-flags
         #~(list "-DUSE_OPENCL=ON"
                 "-DUSE_VULKAN=ON"
@@ -4843,11 +4779,11 @@ the tensors contained therein.")
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
-              (lambda* (#:key source test-target tests? #:allow-other-keys)
+              (lambda* (#:key source tests? #:allow-other-keys)
                 (when tests?
                   (begin
                     (invoke "make" "-j"
-                            (number->string (parallel-job-count)) test-target)
+                            (number->string (parallel-job-count)) "cpptest")
                     ;; Disable below the actual run of the tests because
                     ;; several fail due to platform variations (for example,
                     ;; fp16 tests fail because not supported on CPUs).
@@ -4961,7 +4897,7 @@ PyTorch.")
         (base32
          "0hdpkhcjry22fjx2zg2r48v7f4ljrclzj0li2pgk76kvyblfbyvm"))))))
 
-(define %python-pytorch-version "2.7.0")
+(define %python-pytorch-version "2.8.0")
 
 (define %python-pytorch-src
   (origin
@@ -4972,7 +4908,7 @@ PyTorch.")
     (file-name (git-file-name "python-pytorch" %python-pytorch-version))
     (sha256
      (base32
-      "19prdpzx34n8y2q6wx9dn9vyms6zidjvfgh58d28rfcf5z7z5ra5"))
+      "0am8mx0mq3hqsk1g99a04a4fdf865g93568qr1f247pl11r2jldl"))
     (patches (search-patches "python-pytorch-system-libraries.patch"
                              "python-pytorch-runpath.patch"
                              "python-pytorch-without-kineto.patch"
@@ -5016,8 +4952,9 @@ PyTorch.")
            (for-each
             delete-file
             (find-files dir "\\.cu$")))
-         '("aten/src/ATen/native/transformers/cuda/flash_attn/kernels"
-           "aten/src/ATen/native/transformers/cuda/mem_eff_attention/kernels"))))))
+         '("aten/src/ATen/native/transformers/cuda/flash_attn"
+           "aten/src/ATen/native/transformers/cuda/mem_eff_attention"
+           "aten/src/ATen/native/transformers/hip/flash_attn"))))))
 
 (define-public qnnpack-pytorch
   (package
@@ -5099,7 +5036,7 @@ PyTorch.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'cmake-patches
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "cmake/Dependencies.cmake"
                 (("#POCKETFFT_INCLUDE_DIR")
                  (string-append
@@ -5107,6 +5044,9 @@ PyTorch.")
                 (("#FP16_INCLUDE_DIR")
                  (string-append
                   #$(this-package-input "fp16") "/include"))
+                (("#CONCURRENTQUEUE_INCLUDE_DIR")
+                 (dirname (search-input-file inputs
+                                           "include/concurrentqueue/concurrentqueue.h")))
                 ;; Disable opentelemetry
                 ((".*(add_library|target_include_directories).*opentelemetry.*")
                  ""))
@@ -5140,9 +5080,19 @@ PyTorch.")
                  "caffe2/serialize/inline_container.cc"
                  "torch/csrc/inductor/aoti_package/model_package_loader.cpp"))
 
+              ;; Fix moodycamel/concurrentqueue includes for system package
+              (substitute* '("c10/util/Semaphore.h"
+                             "c10/test/util/Semaphore_test.cpp")
+                (("<moodycamel/concurrentqueue\\.h>") "<concurrentqueue.h>")
+                (("<moodycamel/lightweightsemaphore\\.h>") "<lightweightsemaphore.h>"))
+
               (substitute* "aten/src/ATen/native/vulkan/api/Allocator.h"
                 (("<include/vk_mem_alloc.h>")
                  "<vk_mem_alloc.h>"))
+              ;; Fix missing <algorithm> header for std::for_each in Vulkan API
+              (substitute* "aten/src/ATen/native/vulkan/api/QueryPool.cpp"
+                (("#include <utility>" all)
+                 (string-append all "\n#include <algorithm>")))
               ;; For Vulkan
               (substitute* "CMakeLists.txt"
                 (("append_cxx_flag.*-Werror=(return-type|range-loop-construct).*") ""))
@@ -5174,14 +5124,14 @@ PyTorch.")
                           (package-transitive-supported-systems qnnpack)))
                   (setenv "USE_QNNPACK" "0"))
               (substitute* '("requirements.txt" "setup.py")
-                (("sympy==1\\.13\\.1")
+                (("sympy>=1\\.13\\.3")
                  "sympy>=1.13.1"))))
           (add-after 'use-system-libraries 'skip-nccl-call
             (lambda _
               ;; Comment-out `checkout_nccl()` invokation in build_pytorch().
               (substitute* "tools/build_pytorch_libs.py"
                 (("^[[:blank:]]*checkout_nccl\\(\\)" all)
-                 (string-append "# " all "  # Guix: use system NCCL\n")))))
+                 (string-append "# " all "\n        pass")))))
           ;; PyTorch is still built with AVX2 and AVX-512 support selected at
           ;; runtime, but these dependencies require it (nnpack only for
           ;; x86_64).
@@ -5302,6 +5252,7 @@ PyTorch.")
       (list asmjit
             brotli ; for cpp-httplib
             clog
+            concurrentqueue
             cpp-httplib
             eigen
             flatbuffers
@@ -5323,6 +5274,7 @@ PyTorch.")
             pybind11
             ;; qnnpack
             qnnpack-pytorch
+            rdma-core
             sleef
             tensorpipe
             vulkan-headers
@@ -5543,7 +5495,8 @@ Note: currently this package does not provide GPU support.")
              python-tqdm
              python-xxhash))
       (native-inputs
-       (list python-flit-core-next
+       (list openssl
+             python-flit-core-next
              python-pytest
              python-pytest-cov))
       (home-page "https://pyg.org")
@@ -5612,7 +5565,7 @@ Actions for the Lightning suite of libraries.")
 (define-public python-captum
   (package
     (name "python-captum")
-    (version "0.7.0")
+    (version "0.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5621,35 +5574,32 @@ Actions for the Lightning suite of libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0bgfwnlsi50hbmknn7qljiy93fi6ggwz3k7yk9kj7s37mhzaylym"))))
+                "066sal7hzpk9gsb6pk61sa9x01ckjbjb2mc8c69nc7aghqqrpqjs"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-k" (string-append
-                   ;; These two tests (out of more than 1000 tests) fail because of
-                   ;; accuracy problems.
-                   "not test_softmax_classification_batch_multi_target"
-                   " and not test_softmax_classification_batch_zero_baseline"
-                   ;; This test fails with PyTorch 2.7.0 due to stricter
-                   ;; torch.load weights_only behavior.
-                   " and not test_exp_sets_with_diffent_lengths"))))
+      #~(list "-k" (string-append
+                    ;; These two tests (out of more than 1000 tests) fail
+                    ;; because of accuracy problems.
+                    "not test_softmax_classification_batch_multi_target"
+                    " and not test_softmax_classification_batch_zero_baseline"
+                    ;; This test fails with PyTorch 2.7.0 due to stricter
+                    ;; torch.load weights_only behavior.
+                    " and not test_exp_sets_with_diffent_lengths")
+              "tests")))
+    (native-inputs
+     (list python-flask
+           python-pytest
+           python-flask-compress
+           python-parameterized
+           python-scikit-learn
+           python-setuptools))
     (propagated-inputs
-     (list python-matplotlib python-numpy python-pytorch python-tqdm))
-    (native-inputs (list jupyter
-                         python-annoy
-                         python-black
-                         python-flake8
-                         python-flask
-                         python-flask-compress
-                         python-ipython
-                         python-ipywidgets
-                         python-mypy
-                         python-parameterized
-                         python-pytest
-                         python-pytest-cov
-                         python-scikit-learn
-                         python-setuptools))
+     (list python-matplotlib
+           python-numpy
+           python-pytorch
+           python-tqdm))
     (home-page "https://captum.ai")
     (synopsis "Model interpretability for PyTorch")
     (description "Captum is a model interpretability and understanding library
@@ -5662,24 +5612,23 @@ as torchvision, torchtext, and others.")
 (define-public python-readchar
   (package
     (name "python-readchar")
-    (version "4.0.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "readchar" version))
-              (sha256
-               (base32
-                "09n8vl2jjbnbnrzfvkynijrnwrqvc91bb2267zg8r261sz15d908"))))
+    (version "4.2.1")
+    (source
+     (origin
+       ;; There is no tests data in PyPI archive.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/magmax/python-readchar/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "16ypci664l54ka6ickwkpaa2id14h9h00y7z24z0bv0szld4mrxg"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         ;; This one file requires the msvcrt module, which we don't have.
-         (add-after 'unpack 'delete-windows-file
-           (lambda _
-             (delete-file "readchar/_win_read.py"))))))
-    (propagated-inputs (list python-setuptools))
-    (native-inputs (list python-wheel))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools-next))
     (home-page "https://github.com/magmax/python-readchar")
     (synopsis "Library to easily read single chars and key strokes")
     (description "This package provides a Python library to easily read single
@@ -5867,7 +5816,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
 (define-public python-torchvision
   (package
     (name "python-torchvision")
-    (version "0.22.0")
+    (version "0.23.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5877,7 +5826,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hz6v8796vq8kinafzyq2v2wir5s3hykfn0rnlwx7qcsz62i3ggv"))
+                "1d09xwblldgzmzfdlrsyx6mgv939z4yi1hqanm9yx63cs2mr7w85"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5972,158 +5921,6 @@ definite approximations of Optimal Transport (Wasserstein) distances.
 @end itemize")
     (license license:expat)))
 
-(define-public rust-esaxx-rs-0.1
-  (package
-    (name "rust-esaxx-rs")
-    (version "0.1.10")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "esaxx-rs" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1rm6vm5yr7s3n5ly7k9x9j6ra5p2l2ld151gnaya8x03qcwf05yq"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs (("rust-cc" ,rust-cc-1))))
-    (home-page "https://github.com/Narsil/esaxx-rs")
-    (synopsis "Wrapper for sentencepiece's esaxxx library")
-    (description
-     "This package provides a wrapper around sentencepiece's esaxxx library.")
-    (license license:asl2.0)))
-
-(define-public rust-spm-precompiled-0.1
-  (package
-    (name "rust-spm-precompiled")
-    (version "0.1.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "spm_precompiled" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "09pkdk2abr8xf4pb9kq3rk80dgziq6vzfk7aywv3diik82f6jlaq"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:cargo-inputs
-       (("rust-base64" ,rust-base64-0.13)
-        ("rust-nom" ,rust-nom-7)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1))))
-    (home-page "https://github.com/huggingface/spm_precompiled")
-    (synopsis "Emulate sentencepiece's DoubleArray")
-    (description
-     "This crate aims to emulate
-@url{https://github.com/google/sentencepiece,sentencepiece}
-Dart::@code{DoubleArray} struct and it's Normalizer.  This crate is highly
-specialized and not intended for general use.")
-    (license license:asl2.0)))
-
-(define-public rust-hf-hub-0.3
-  (package
-    (name "rust-hf-hub")
-    (version "0.3.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "hf-hub" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "0cnpivy9fn62lm1fw85kmg3ryvrx8drq63c96vq94gabawshcy1b"))))
-    (build-system cargo-build-system)
-    (arguments
-     `(#:tests? #f  ; require network connection
-       #:cargo-inputs
-       (("rust-dirs" ,rust-dirs-5)
-        ("rust-futures" ,rust-futures-0.3)
-        ("rust-indicatif" ,rust-indicatif-0.17)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-native-tls" ,rust-native-tls-0.2)
-        ("rust-num-cpus" ,rust-num-cpus-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-reqwest" ,rust-reqwest-0.11)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-tokio" ,rust-tokio-1)
-        ("rust-ureq" ,rust-ureq-2))
-       #:cargo-development-inputs
-       (("rust-hex-literal" ,rust-hex-literal-0.4)
-        ("rust-sha2" ,rust-sha2-0.10)
-        ("rust-tokio-test" ,rust-tokio-test-0.4))))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list openssl))
-    (home-page "https://github.com/huggingface/hf-hub")
-    (synopsis "Interact with HuggingFace in Rust")
-    (description
-     "This crates aims ease the interaction with
-@url{https://huggingface.co/,huggingface}.  It aims to be compatible with
-@url{https://github.com/huggingface/huggingface_hub/,huggingface_hub}
-python package, but only implements a smaller subset of functions.")
-    (license license:asl2.0)))
-
-(define-public rust-tokenizers
-  (package
-    (name "rust-tokenizers")
-    (version "0.19.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (crate-uri "tokenizers" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32 "1zg6ffpllygijb5bh227m9p4lrhf0pjkysky68kddwrsvp8zl075"))
-       (modules '((guix build utils)))
-       (snippet
-        #~(substitute* "Cargo.toml"
-            (("0.1.12") ; rust-monostate requires a rust-syn-2 update
-             "0.1.11")
-            (("version = \"6.4\"")  ; rust-onig
-             "version = \"6.1.1\"")))))
-    (build-system cargo-build-system)
-    (arguments
-     (list
-      #:tests? #f  ; tests are relying on missing data.
-      #:cargo-inputs
-      `(("rust-aho-corasick" ,rust-aho-corasick-1)
-        ("rust-derive-builder" ,rust-derive-builder-0.20)
-        ("rust-esaxx-rs" ,rust-esaxx-rs-0.1)
-        ("rust-fancy-regex" ,rust-fancy-regex-0.13)
-        ("rust-getrandom" ,rust-getrandom-0.2)
-        ("rust-hf-hub" ,rust-hf-hub-0.3)
-        ("rust-indicatif" ,rust-indicatif-0.17)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-lazy-static" ,rust-lazy-static-1)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-macro-rules-attribute" ,rust-macro-rules-attribute-0.2)
-        ("rust-monostate" ,rust-monostate-0.1)
-        ("rust-onig" ,rust-onig-6)
-        ("rust-paste" ,rust-paste-1)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rayon" ,rust-rayon-1)
-        ("rust-rayon-cond" ,rust-rayon-cond-0.3)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-regex-syntax" ,rust-regex-syntax-0.8)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-spm-precompiled" ,rust-spm-precompiled-0.1)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-unicode-normalization-alignments" ,rust-unicode-normalization-alignments-0.1)
-        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
-        ("rust-unicode-categories" ,rust-unicode-categories-0.1))
-      #:cargo-development-inputs
-      `(("rust-assert-approx-eq" ,rust-assert-approx-eq-1)
-        ("rust-criterion" ,rust-criterion-0.5)
-        ("rust-tempfile" ,rust-tempfile-3))))
-    (home-page "https://github.com/huggingface/tokenizers")
-    (synopsis "Implementation of various popular tokenizers")
-    (description
-     "This package provides a Rust implementation of today's most used
-tokenizers, with a focus on performances and versatility.")
-    (license license:asl2.0)))
-
 (define-public python-tokenizers
   (package
     (name "python-tokenizers")
@@ -6146,49 +5943,22 @@ tokenizers, with a focus on performances and versatility.")
                         (unless (member file '("." ".."))
                           (rename-file (string-append "bindings/python/" file) file)))
                       (scandir "bindings/python"))
-            (delete-file-recursively ".cargo")))))
+            (delete-file-recursively ".cargo")
+            (substitute* "Cargo.toml"
+              (("^path = .*")
+               (format #f "version = ~s~%" #$version)))))))
     (build-system cargo-build-system)
     (arguments
      (list
+      #:install-source? #f
       #:cargo-test-flags ''("--no-default-features")
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
       #:modules '((guix build cargo-build-system)
                   ((guix build pyproject-build-system) #:prefix py:)
-                  (guix build utils)
-                  (ice-9 regex)
-                  (ice-9 textual-ports))
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack-rust-crates 'inject-tokenizers
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("\\[dependencies\\]")
-                 (format #f "
-[dev-dependencies]
-tempfile = ~s
-pyo3 = { version = ~s, features = [\"auto-initialize\"] }
-
-[dependencies]
-tokenizers = ~s"
-                         #$(package-version rust-tempfile-3)
-                         #$(package-version rust-pyo3-0.21)
-                         #$(package-version rust-tokenizers))))
-              (let ((file-path "Cargo.toml"))
-                (call-with-input-file file-path
-                  (lambda (port)
-                    (let* ((content (get-string-all port))
-                           (top-match (string-match
-                                       "\\[dependencies.tokenizers" content)))
-                      (call-with-output-file file-path
-                        (lambda (out)
-                          (format out "~a" (match:prefix top-match))))))))))
-          (add-after 'patch-cargo-checksums 'loosen-requirements
-            (lambda _
-              (substitute* "Cargo.toml"
-                (("version = \"6.4\"")
-                 (format #f "version = ~s"
-                         #$(package-version rust-onig-6))))))
           (add-after 'check 'python-check
             (lambda _
               (copy-file "target/release/libtokenizers.so"
@@ -6211,28 +5981,16 @@ tokenizers = ~s"
                 (copy-file "PKG-INFO" (string-append info "/METADATA"))
                 (copy-recursively
                  "py_src/tokenizers"
-                 (string-append lib "tokenizers"))))))
-      #:cargo-inputs
-      `(("rust-rayon" ,rust-rayon-1)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-env-logger" ,rust-env-logger-0.11)
-        ("rust-pyo3" ,rust-pyo3-0.21)
-        ("rust-numpy" ,rust-numpy-0.21)
-        ("rust-ndarray" ,rust-ndarray-0.15)
-        ("rust-onig" ,rust-onig-6)
-        ("rust-itertools" ,rust-itertools-0.12)
-        ("rust-tokenizers" ,rust-tokenizers))
-      #:cargo-development-inputs
-      `(("rust-tempfile" ,rust-tempfile-3))))
+                 (string-append lib "tokenizers"))))))))
     (native-inputs
-     (list python-minimal python-pytest))
+     (list pkg-config python-minimal python-pytest))
+    (inputs
+     (cons oniguruma (cargo-inputs 'python-tokenizers)))
     (home-page "https://huggingface.co/docs/tokenizers")
     (synopsis "Implementation of various popular tokenizers")
     (description
-     "This package provides bindings to a Rust implementation of the most used
-tokenizers, @code{rust-tokenizers}.")
+     "This package provides an implementation of today’s most used tokenizers,
+with a focus on performance and versatility.")
     (license license:asl2.0)))
 
 (define-public python-transformers
@@ -6315,7 +6073,6 @@ Jax, PyTorch and TensorFlow — with a seamless integration between them.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:test-target "ctranslate2_test"
       ;; XXX: mkl and openblas seem incompatible.
       #:configure-flags `(list "-DBUILD_TESTS=ON"
                                "-DWITH_ACCELERATE=OFF"
@@ -6324,7 +6081,16 @@ Jax, PyTorch and TensorFlow — with a seamless integration between them.")
                                "-DWITH_CUDA=OFF"
                                "-DWITH_CUDNN=OFF"
                                "-DWITH_MKL=OFF"
-                               "-DWITH_OPENBLAS=ON")))
+                               "-DWITH_OPENBLAS=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "ctranslate2_test" args))))))
     (native-inputs (list libomp
                          cxxopts
                          spdlog
@@ -6549,20 +6315,25 @@ and Numpy.")
   (package
     (name "python-pyro-api")
     (version "0.1.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pyro-api" version))
-              (sha256
-               (base32
-                "086r2h6x9i5d9ayl1x65lx6p84rlydzsn8xingxc588ab3ch1fd1"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/pyro-ppl/pyro-api")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17x7niagx43cajqq67dxmssr7q94db6axyg154y7vqdxzp25hf7g"))))
+    (build-system pyproject-build-system)
     (arguments '(#:tests? #false)) ;requires pyro
     (native-inputs
      (list python-flake8
            python-ipython
            python-pytest
+           python-setuptools
            python-sphinx
-           python-sphinx-rtd-theme))
+           python-sphinx-rtd-theme
+           python-wheel))
     (home-page "https://github.com/pyro-ppl/pyro-api")
     (synopsis "Generic API for dispatch to Pyro backends")
     (description "This package provides a generic API for dispatch to Pyro backends.")
@@ -6766,7 +6537,7 @@ linear algebra routines needed for structured matrices (or operators).")
                    (lambda (x) (install-file x src))
                    (find-files "." "\\.h$"))))))))
       (inputs (list kaldi openfst openblas))
-      (home-page "https://alphacephei.com/vosk")
+      (home-page "https://alphacephei.com/vosk/")
       (synopsis "Speech recognition toolkit based on @code{kaldi}")
       (description "This package provides a speech recognition toolkit based
 on @code{kaldi}.  It supports more than 20 languages and dialects - English,
@@ -6787,10 +6558,12 @@ simple speech recognition.")
   (package
     (inherit vosk-api)
     (name "python-vosk")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-cffi python-requests python-tqdm python-srt python-websockets))
     (inputs (list vosk-api))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (arguments
      (list
       #:tests? #f  ;; TODO There are tests but not run through Makefile.
@@ -6833,22 +6606,25 @@ simple speech recognition.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/ideasman42/nerd-dictation")
-               (commit commit)))
+                (url "https://github.com/ideasman42/nerd-dictation")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
           (base32 "0frdpswv6w3cwj3c7wd5w8gj3s1hvpdwd48qhfhfxf7imahz9bqf"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'chdir
-             (lambda _ (chdir "package/python"))))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "package/python"))))))
+      (native-inputs (list python-setuptools python-wheel))
       (propagated-inputs (list python-vosk))
       (home-page "https://github.com/ideasman42/nerd-dictation")
       (synopsis "Offline speech-to-text for desktop Linux")
-      (description "\
-This package provides simple access speech to text for using in
+      (description
+       "This package provides simple access speech to text for using in
 Linux without being tied to a desktop environment, using the @code{vosk-api}.
 The user configuration lets you manipulate text using Python string
 operations.  It has zero overhead, as this relies on manual activation and
@@ -7072,35 +6848,33 @@ performance library of basic building blocks for deep learning applications.")
         (base32 "1zyw5rd8x346bb7gac9a7x3saviw3zvp6aqz2z1l9sv163vmjfz6"))))))
 
 (define-public python-gguf
-  ;; They didn't tag the commit
-  (let ((commit "69050a11be0ae3e01329f11371ecb6850bdaded5"))
-    (package
-      (name "python-gguf")
-      (version "0.16.0")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/ggml-org/llama.cpp")
-               (commit commit)))
-         (file-name (git-file-name name commit))
-         (sha256
-          (base32 "1563mbrjykwpsbhghhzi4h1qv9qy74gq5vq4xhs58zk0jp20c7zz"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
-              (lambda _
-                (chdir "gguf-py"))))))
-      (propagated-inputs (list python-numpy python-pyyaml python-sentencepiece
-                               python-tqdm))
-      (native-inputs (list python-poetry-core python-pytest))
-      (home-page "https://ggml.ai")
-      (synopsis "Read and write ML models in GGUF for GGML")
-      (description "A Python library for reading and writing GGUF & GGML format ML models.")
-      (license license:expat))))
+  (package
+    (name "python-gguf")
+    (version "0.17.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ggml-org/llama.cpp")
+              (commit (string-append "gguf-v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lrvj0ahhyj5paxfzk0brps2m8j7fy47n7k4v4xjg9xqqq6wqc2y"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "gguf-py"))))))
+    (propagated-inputs (list python-numpy python-pyyaml python-pyside-6
+                             python-sentencepiece python-tqdm))
+    (native-inputs (list python-poetry-core python-pytest))
+    (home-page "https://ggml.ai")
+    (synopsis "Read and write ML models in GGUF for GGML")
+    (description "A Python library for reading and writing GGUF & GGML format ML models.")
+    (license license:expat)))
 
 (define-public python-gymnasium
   (package

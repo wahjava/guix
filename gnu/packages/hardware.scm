@@ -21,6 +21,7 @@
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Eric Bavier <bavier@posteo.net>
+;;; Copyright © 2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -782,6 +783,38 @@ color (good for notifications)
     (home-page "https://github.com/enwi/hueplusplus")
     (license license:lgpl3+)))
 
+(define-public utmp-cli
+  (package
+    (name "utmp-cli")
+    (version "1.063")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/usbtemp/utmp-cli")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "07j827nin4wm4hh8ljsj1dj3harb3dxan05ck8n68c443qqakz4a"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f
+           #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (install-file "utmp-cli"
+                                 (string-append (assoc-ref outputs "out")
+                                                "/bin")))))))
+    (home-page "https://github.com/usbtemp/utmp-cli")
+    (synopsis "Read temperature from USB thermometer")
+    (description "Read temperature from usbtemp.com USB thermometer and
+DS9097E compatible 1-wire adapter with one DS18B20 digital probe attached
+through command line interface.")
+    (license license:expat)))
+
 (define-public i7z
   (let ((revision "0")
         (commit "1a41ff13db747e962456ddbb5ccb2b7fc43ca0cb"))
@@ -1149,6 +1182,9 @@ technology, such as head mounted displays with built in head tracking.")
        #:tests? #f ; doesn't have tests
        #:make-flags
        #~(list (string-append "INSTALL_ROOT=" #$output ))
+       #:modules '((guix build qt-build-system)
+                   ((guix build gnu-build-system) #:prefix gnu:)
+                   (guix build utils))
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'unpack 'unbundle
@@ -1167,7 +1203,9 @@ technology, such as head mounted displays with built in head tracking.")
                                                "/bin/chmod")))))
            ;; Call qmake instead of configure to create a Makefile.
            (replace 'configure
-             (lambda _ (invoke "qmake" "PREFIX=/" "OpenRGB.pro"))))))
+             (lambda _ (invoke "qmake" "PREFIX=/" "OpenRGB.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list coreutils
            hidapi
@@ -1467,6 +1505,9 @@ management, attestation, encryption, and signing.")
     (arguments
      (list
       #:configure-flags #~(list "-DLIBCPUID_ENABLE_TESTS=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'absolutize
@@ -1481,7 +1522,11 @@ management, attestation, encryption, and signing.")
               (when (and #$(target-linux?)
                          #$(target-arm?))
                 (substitute* "drivers/arm/linux/CMakeLists.txt"
-                  (("/usr/src/") (string-append #$output "/src/")))))))))
+                  (("/usr/src/") (string-append #$output "/src/"))))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "test" args))))))
     (inputs
      (append
        (if (target-linux?)
@@ -1519,7 +1564,7 @@ confused with the @code{cpuid} command line utility from package @code{cpuid}.")
         (base32 "1cc95ggs64jqq9lk5c8fm4nk6fdnv1x7lr3k4znamj0vv6w22bcd"))))
     (build-system meson-build-system)
     (native-inputs
-     (list cmake pkg-config))
+     (list cmake-minimal pkg-config))
     (inputs
      (list avahi libtirpc libxml2))
     (home-page "https://lxi-tools.github.io/")
@@ -1559,7 +1604,7 @@ your network, send SCPI commands, and receive responses.")
                 (("update-desktop-database") (which "true"))))))))
     (native-inputs
      (list bash-completion
-           cmake
+           cmake-minimal
            (list glib "bin")
            pkg-config
            python

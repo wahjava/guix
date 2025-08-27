@@ -32,10 +32,11 @@
 ;;; Copyright © 2023, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022-2023, 2025 Adam Faiz <adam.faiz@disroot.org>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
-;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2025 Arnaud Lechevallier <arnaud.lechevallier@free.fr>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -81,6 +82,7 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages c)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages check)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)
@@ -756,7 +758,7 @@ support.")
 (define-public slade
   (package
     (name "slade")
-    (version "3.2.5a")
+    (version "3.2.7")
     (source
      (origin
        (method git-fetch)
@@ -764,7 +766,7 @@ support.")
              (url "https://github.com/sirjuddington/SLADE")
              (commit version)))
        (sha256
-        (base32 "1pdrw5ysyh9s907gj6bwf16sf9nm89dlnwlpn0y8x49662kx41v3"))
+        (base32 "0yxy9dpgb5bgq6cc7b1k7f1bvs72mhifi9xpjgysznnfxkm78bps"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -1071,44 +1073,59 @@ It is capable of creating games for SCUMM version 6 and partially version 7.")
 (define-public sfml
   (package
     (name "sfml")
-    (version "2.5.1")
-    (source (origin
-              (method git-fetch)
-              ;; Do not fetch the archives from
-              ;; http://mirror0.sfml-dev.org/files/ because files there seem
-              ;; to be changed in place.
-              (uri (git-reference
-                    (url "https://github.com/SFML/SFML")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0abr8ri2ssfy9ylpgjrr43m6rhrjy03wbj9bn509zqymifvq5pay"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Ensure system libraries are used.
-                  (delete-file-recursively "extlibs")
-                  #t))))
+    (version "3.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       ;; Do not fetch the archives from
+       ;; http://mirror0.sfml-dev.org/files/ because files there seem
+       ;; to be changed in place.
+       (uri (git-reference
+              (url "https://github.com/SFML/SFML")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "12f1d45995qf5sazjmmfdydllcd6alhqs1s4xwv3jiq1fw66hcy9"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        '(begin
+           ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+           (define (delete-all-but directory . preserve)
+             (with-directory-excursion directory
+               (let* ((pred (negate (cut member <> (cons* "." ".." preserve))))
+                      (items (scandir "." pred)))
+                 (for-each (cut delete-file-recursively <>) items))))
+           (delete-all-but "extlibs/headers"
+                           "glad")))))  ;pre-generated headers
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
-       (list "-DSFML_INSTALL_PKGCONFIG_FILES=TRUE"
-             "-DSFML_OS_PKGCONFIG_DIR=lib/pkgconfig")
-       #:tests? #f)) ; no tests
+     (list #:tests? #f             ;attempts to fetch catch2 from the internet
+           #:configure-flags
+           #~(list "-DBUILD_SHARED_LIBS=ON"
+                   (string-append "-DCMAKE_CXX_FLAGS=-I"
+                                  (search-input-directory %build-inputs
+                                                          "include/vulkan")))))
     (native-inputs
-     (list pkg-config))
+     (list miniaudio                    ;header-only library
+           minimp3                      ;header-only library
+           pkg-config))
     (inputs
-     `(("mesa" ,mesa)
-       ("glew" ,glew)
-       ("libx11" ,libx11)
-       ("xcb-util-image" ,xcb-util-image)
-       ("libxrandr" ,libxrandr)
-       ("eudev" ,eudev)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libsndfile" ,libsndfile)
-       ("stb-image" ,stb-image)
-       ("stb-image-write" ,stb-image-write)))
+     (list eudev
+           glew
+           libjpeg-turbo
+           libsndfile
+           libx11
+           libxcursor
+           libxi
+           libxrandr
+           mesa
+           stb-image
+           stb-image-write
+           vulkan-headers
+           xcb-util-image))
     (propagated-inputs
      ;; In Requires.private of pkg-config files.
      (list flac freetype libvorbis openal))
@@ -1120,10 +1137,29 @@ to ease the development of games and multimedia applications.  It is composed
 of five modules: system, window, graphics, audio and network.")
     (license license:zlib)))
 
+(define-public sfml-2
+  (package
+    (inherit sfml)
+    (name "sfml")
+    (version "2.6.2")
+    (source (origin
+              (inherit (package-source sfml))
+              (method git-fetch)
+              ;; Do not fetch the archives from
+              ;; http://mirror0.sfml-dev.org/files/ because files there seem
+              ;; to be changed in place.
+              (uri (git-reference
+                    (url "https://github.com/SFML/SFML")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "04qjfp23db0ga4lckil9jqigmjr3253p190r568kpaksrrf5bhcv"))))))
+
 (define-public csfml
   (package
     (name "csfml")
-    (version "2.5.1")
+    (version "2.6.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1132,13 +1168,13 @@ of five modules: system, window, graphics, audio and network.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wj1p798myyavld2xdhvvflb5h4nf1vgxxzs6nh5qad44vj9b3kb"))))
+                "19xxlan0yy9f92bmzkzqg3hjc18g6ds4mhg0rrs62qg9434p8aqh"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags #~(list "-DCSFML_BUILD_DOC=TRUE")
            #:tests? #f)) ;no tests
     (native-inputs (list doxygen))
-    (inputs (list sfml))
+    (inputs (list sfml-2))
     (synopsis "C bindings for the SFML multimedia library")
     (description
      "CSFML is the official C binding to the SFML libraries.  SFML provides a
@@ -1454,6 +1490,10 @@ It offers the following features:
                (base32
                 "08ddhywdy2qg17m592ng3yr0p1ih96irg8wg729g75hsxxq9ipks"))))
     (build-system gnu-build-system)
+    (arguments
+      `(#:configure-flags
+        ;; Disable added pointer type checks (quesoglc no longer maintained)
+        '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")))
     (native-inputs (list pkg-config))
     (inputs (list fontconfig freeglut fribidi glew))
     (home-page "https://quesoglc.sourceforge.net")
@@ -1537,38 +1577,40 @@ and multimedia programs in the Python language.")
 (define-public python-pygame-menu
   (package
     (name "python-pygame-menu")
-    (version "4.5.1")
+    (version "4.5.4")
     (source
      ;; Tests not included in release.
      (origin
        (method git-fetch)
        (uri
         (git-reference
-         (url "https://github.com/ppizarror/pygame-menu")
-         (commit version)))
+          (url "https://github.com/ppizarror/pygame-menu")
+          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0xd5d6nfkd5bp2zfq77yglp6mz043w28zprfz7savgmph5kvdnfh"))))
+        (base32 "1a474rvjkm9d45h0bhgaf9h21r3lcgqd27686fav8601395jgwrg"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'check 'prepare-test-environment
-                 (lambda _
-                   (setenv "HOME" (getcwd))))
-               (add-before 'check 'skip-certain-tests
-                 (lambda _
-                   (substitute* "test/test_font.py"
-                     (("test_font_argument") "skip_test_font_argument")
-                     (("test_system_load") "skip_test_system_load"))
-                   (substitute* "test/test_baseimage.py"
-                     ;; Tuples differ: (111, 110) != (110, 109)
-                     (("test_invalid_image") "skip_test_invalid_image")
-                     (("test_scale") "skip_test_scale")))))))
-    (propagated-inputs (list python-pygame python-pyperclip
-                             python-typing-extensions))
-    (native-inputs (list python-nose2 python-setuptools python-wheel))
+     (list
+      #:test-flags
+      ;; AssertionError: Tuples differ: (111, 110) != (110, 109)
+      #~(list "--deselect=test/test_baseimage.py::BaseImageTest::test_invalid_image"
+              ;; IndexError: list index out of range
+              "--deselect=test/test_font.py::FontTest::test_font_argument"
+              ;;IndexError: pop from empty list
+              "--deselect=test/test_font.py::FontTest::test_system_load")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-pygame
+           python-pyperclip
+           python-typing-extensions))
     (home-page "https://pygame-menu.readthedocs.io")
     (synopsis "Menu for pygame")
     (description
@@ -1627,6 +1669,72 @@ staying close to the original, but also adding some SDL2-specific features.
 While it aims to be used as a drop-in replacement, it appears to be
 developed mainly for Ren'py.")
       (license (list license:lgpl2.1 license:zlib)))))
+
+(define-public python-pygame-ce
+  (package
+    (name "python-pygame-ce")
+    (version "2.5.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pygame_ce" version))
+       (sha256
+        (base32 "0sxfchimdg606z65qychgvm66mq0aybs2isxsqb5zqy64g19gwm7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Ignore interactive tests first.
+                    (list "not DisplayUpdateInteractiveTest"
+                          "DisplayInteractiveTest"
+                          "FullScreenToggleTestsInteractive"
+                          "MessageBoxInteractiveTest"
+                          "VisualTestsInteractive"
+                          "TouchInteractiveTest"
+                          ;; Pytest error reading from stdin
+                          "test__get_count_interactive"
+                          "test_get_count_interactive"
+                          "test_set_source_location"
+                          ;; Will not convert image with alpha channel to RGB
+                          "testSavePNG24"
+                          "testSavePNG8"
+                          "testSavePaletteAsPNG8"
+                          ;; Content could not be saved in clipboard
+                          "test_get__owned_empty_type"
+                          "test_init__reinit"
+                          "test_put"
+                          "test_put__bmp_image"
+                          "test_put__text"
+                          "test_issue_223"
+                          ;; AssertionError
+                          "test_palette_colorkey"
+                          "test_palette_colorkey_fill"
+                          "test_palette_colorkey_set_px"
+                          "test_create_aliases"
+                          ;; Possibly flaky tests
+                          "test_multiple_timers"
+                          "test_timer_common_reference")
+                    " and not "))
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'pre-check
+                     (lambda _
+                       (setenv "HOME" "/tmp")
+                       (setenv "SDL_VIDEODRIVER" "dummy")
+                       (setenv "SDL_AUDIODRIVER" "disk"))))))
+    (native-inputs (list meson-python
+                         pkg-config
+                         python-cython-3
+                         python-numpy
+                         python-pytest
+                         python-setuptools))
+    (inputs (list freetype portmidi sdl2 sdl2-image sdl2-mixer sdl2-ttf))
+    (home-page "https://pyga.me/")
+    (synopsis "Python Game Development")
+    (description "Pygame-CE is a fork of the upstream pygame project by its
+former core developers.  It aims to offer more frequent releases, continuous
+bugfixes and enhancements, and a new governance model.")
+    (license license:lgpl2.1+)))
 
 (define-public python-renpy
   (package
@@ -3142,7 +3250,6 @@ is designed to be used in interactive 3D graphics applications.")
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags '("-DBUILD_DOCUMENTATION=ON"
-                           "-DBUILD_TESTING=ON"
                            "-DENABLE_DOUBLE_PRECISION=ON")))
     (native-inputs
      (list python-sphinx))
@@ -3255,9 +3362,19 @@ rigid body physics library written in C.")
               "include <doctest/doctest.h>"))))))
     (build-system cmake-build-system)
     (arguments
-     `(#:test-target "unit_test"
-       #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
-                           "-DBOX2D_BUILD_TESTBED=OFF")))
+     (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=ON"
+                                 "-DBOX2D_BUILD_TESTBED=OFF")
+           #:modules '((guix build cmake-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys #:rest args)
+                   (when tests?
+                     (apply (assoc-ref gnu:%standard-phases 'check)
+                            #:tests? tests? #:test-target "unit_test" args)
+                     (invoke "bin/unit_test")))))))
     (native-inputs
      (list doctest))                    ;for tests
     (inputs
@@ -3288,11 +3405,13 @@ physics engine is just a system for procedural animation.")
    (arguments
     (substitute-keyword-arguments
         (package-arguments box2d)
-      ((#:test-target _) "")            ; no check
       ((#:configure-flags original-flags)
-       `(cons* "-DBOX2D_UNIT_TESTS=OFF" ; enkiTS need for all test apps
-               "-DBOX2D_SAMPLES=OFF"
-               (delete "-DBOX2D_BUILD_TESTBED=OFF" ,original-flags)))))))
+       #~(cons* "-DBOX2D_UNIT_TESTS=OFF" ; enkiTS need for all test apps
+                "-DBOX2D_SAMPLES=OFF"
+                (delete "-DBOX2D_BUILD_TESTBED=OFF" #$original-flags)))
+      ((#:phases phases)
+       #~(modify-phases #$phases
+           (delete 'check)))))))        ; no check
 
 (define-public libtcod
   (package
@@ -3647,7 +3766,8 @@ progresses the level, or you may regenerate tiles as the world changes.")
            #:configure-flags
            #~(list "-DBUILD_SHARED_LIBS=ON"
                    "-DUSE_EXTERNAL_GLFW=ON"
-                   "-DCMAKE_C_FLAGS=-lpulse")
+                   (string-append "-DCMAKE_C_FLAGS=-lpulse "
+                                  "-Wno-error=incompatible-pointer-types"))
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'configure 'configure-miniaudio
@@ -3737,6 +3857,8 @@ progresses the level, or you may regenerate tiles as the world changes.")
              #~'("-DBUILD_STATIC=ON" ;don't build runtimes as shared libraries
                  "-DPREFER_SYSTEM_LIBRARIES=ON"
                  "-DCMAKE_EXE_LINKER_FLAGS=-lpulse" ;for miniaudio
+                 "-DCMAKE_C_FLAGS=-Wno-error=incompatible-pointer-types"
+                                                    ;for miniaudio
                  ;; TODO: moon, python, wren
                  "-DBUILD_WITH_FENNEL=ON"
                  "-DBUILD_WITH_JANET=ON"

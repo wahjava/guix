@@ -810,7 +810,8 @@ mappings intended for the use with SDL2's game controller functionality.")
                (base32
                 "18g9qavk0wh1bvfh6gdi5q75fd57dk0gp5r20c80x7xnp2ywywih"))))
     (build-system cmake-build-system)
-    (arguments (list #:configure-flags
+    (arguments (list #:tests? #f
+                     #:configure-flags
                      #~(list "-DBUILD_TESTS=ON")))
     (propagated-inputs (list sdl3))
     (home-page "https://github.com/sabdul-khabir/SDL3_gfx")
@@ -821,6 +822,34 @@ and other support functions wrapped up in an add-on, C-based library
 for the Simple Direct Media (SDL) cross-platform API layer.")
     (license license:zlib)
     (properties '((upstream-name . "SDL3_gfx")))))
+
+(define-public sdl3-ttf
+  (package
+    (name "sdl3-ttf")
+    (version "3.2.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/libsdl-org/SDL_ttf.git")
+                     (commit (string-append "release-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "09jiajs9imscwa7b0q4z20znxcvazilks5ilggdvxjiv3cpxzcl3"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests
+    (native-inputs
+     (list pkg-config))
+    (propagated-inputs
+     (list sdl3))
+    (inputs
+     (list harfbuzz freetype))
+    (synopsis "TrueType fonts in SDL3")
+    (description "This package provides a library to load TrueType (.ttf)
+font files with Simple Directmedia Layer.")
+    (home-page "https://wiki.libsdl.org/SDL3/FrontPage")
+    (license license:zlib)))
 
 (define-public guile-sdl
   (package

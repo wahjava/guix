@@ -11,6 +11,7 @@
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Alex Bosco <me@alexbos.co>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,9 +30,11 @@
 
 (define-module (gnu packages tmux)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix gexp)
+  #:use-module (guix packages)
   #:use-module (guix git-download)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
@@ -46,7 +49,10 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python-xyz)
-  #:use-module (gnu packages sphinx))
+  #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages ssh)
+  #:use-module (gnu packages tls)
+  #:use-module (gnu packages version-control))
 
 (define-public tmux
   (package
@@ -234,7 +240,7 @@ them, etc., by attaching to the corresponding pane in tmux.")
 (define-public tmux-xpanes
   (package
     (name "tmux-xpanes")
-    (version "4.1.3")
+    (version "4.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -243,7 +249,7 @@ them, etc., by attaching to the corresponding pane in tmux.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09fmnn1q76r1l4cv7clmfr3j9cjmd053kq238d0qj2i486948ivv"))))
+                "0k37zswn6s9iclm9yasil9jhy768qn9fv3m489irfwrx1vc8lp9w"))))
     (build-system trivial-build-system)
     (inputs
      (list bash))
@@ -372,7 +378,7 @@ left it off the last time it was used.")
 (define-public tmux-plugin-mem-cpu-load
   (package
     (name "tmux-plugin-mem-cpu-load")
-    (version "3.7.0")
+    (version "3.8.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -380,7 +386,7 @@ left it off the last time it was used.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "03bax7g9jlsci44ccs50drh617ya3fzvlplwyvxfyb7mgmh85r72"))
+                "041hd6s6prk63r121yggxmzhbp40h6r04mrby0q51x43lfgvmvw3"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (synopsis "CPU, RAM, and load monitor for use with tmux")
@@ -395,3 +401,36 @@ also displays a textual bar graph of the current percent usage.
 The system load average is also displayed.")
     (home-page "https://github.com/thewtex/tmux-mem-cpu-load")
     (license license:asl2.0)))
+
+(define-public tmux-plugin-sessionizer
+  (package
+    (name "tmux-plugin-sessionizer")
+    (version "0.4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "tmux-sessionizer" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0fwdc8jyx9fab442c6zsl3yn8nh1s5h35g97cgqhyp3blxl6h9ix"))
+       (snippet #~(begin
+                    (use-modules (guix build utils))
+                    (substitute* "Cargo.toml"
+                      (("\"vendored-openssl\"")
+                       ""))))))
+    (build-system cargo-build-system)
+    (native-inputs (list pkg-config))
+    (inputs
+     (cons* openssl
+            libgit2-1.8
+            libssh2
+            (cargo-inputs 'tmux-plugin-sessionizer)))
+    (arguments
+     `(#:install-source? #f))
+    (home-page "https://github.com/jrmoulton/tmux-sessionizer")
+    (synopsis "Fuzzy find Git repositories and open them as Tmux sessions")
+    (description
+     "Tmux Sessionizer is a command-line tool to fuzzy find all the Git
+repositories in a list of specified folders and open them as a new tmux session.
+For @code{git worktrees}, this tool opens all checked out worktrees as new windows.")
+    (license license:expat)))

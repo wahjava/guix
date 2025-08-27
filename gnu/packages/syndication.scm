@@ -8,6 +8,7 @@
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Luis Guilherme Coelho <lgcoelho@disroot.org>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,9 +45,6 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
@@ -237,14 +235,14 @@ cards.")
 (define-public newsboat
   (package
     (name "newsboat")
-    (version "2.38")
+    (version "2.39")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://newsboat.org/releases/" version
                            "/newsboat-" version ".tar.xz"))
        (sha256
-        (base32 "11fv2klyc16sfma0zy8phmp4x61w0hswxfwdds10gwa8i7qgdznn"))))
+        (base32 "00z57dk0cjsv4v1andkir8h98kayg78dpyc7gapv6zsdaxyilmb2"))))
     (build-system cargo-build-system)
     (native-inputs
      (append
@@ -256,42 +254,19 @@ cards.")
            (list ruby-asciidoctor/minimal)
            '())))
     (inputs
-     (list curl
-           json-c
-           libxml2
-           ncurses
-           stfl
-           sqlite))
+     (cons* curl
+            json-c
+            libxml2
+            ncurses
+            stfl
+            sqlite
+            (cargo-inputs 'newsboat)))
     (arguments
      (list
        #:modules '((guix build cargo-build-system)
                    (guix build utils)
                    ((guix build gnu-build-system) #:prefix gnu:))
        #:install-source? #f
-       #:cargo-inputs
-       (list rust-backtrace-0.3
-             rust-bitflags-2
-             rust-chrono-0.4
-             rust-curl-sys-0.4
-             rust-cxx-1
-             rust-cxx-build-1
-             rust-fastrand-2
-             rust-gettext-rs-0.7
-             rust-httpmock-0.7
-             rust-lexopt-0.3
-             rust-libc-0.2
-             rust-md5-0.7
-             rust-natord-1
-             rust-nom-7
-             rust-percent-encoding-2
-             rust-url-2
-             rust-unicode-width-0.1
-             rust-unicode-segmentation-1
-             rust-xdg-2)
-       #:cargo-development-inputs
-       (list rust-tempfile-3
-             rust-proptest-1
-             rust-section-testing-0.0.5)
        #:phases
        #~(modify-phases %standard-phases
            #$@(if (not (this-package-native-input "ruby-asciidoctor"))
@@ -311,11 +286,6 @@ cards.")
                  (("if curl-config")
                   (string-append
                     "if " (search-input-file inputs "/bin/curl-config"))))))
-           (add-after 'configure 'dont-vendor-self
-             (lambda* (#:key vendor-dir #:allow-other-keys)
-               ;; Don't keep the whole tarball in the vendor directory
-               (delete-file-recursively
-                 (string-append vendor-dir "/" #$name "-" #$version ".tar.xz"))))
            (add-after 'unpack 'patch-source
              (lambda* (#:key outputs #:allow-other-keys)
                (substitute* "Makefile"
@@ -355,7 +325,7 @@ file system, and many more features.")
 (define-public newsraft
   (package
     (name "newsraft")
-    (version "0.28")
+    (version "0.32")
     (source
      (origin
        (method git-fetch)
@@ -364,7 +334,7 @@ file system, and many more features.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10i5khna9wpaisarmzym9dvfaq91mnf1wvwsymnzl052d4n106l9"))))
+        (base32 "1jdj1820k7dsgpv2ks9amr71lvq1nl1y95jgfqb02fkid1gana4v"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -601,7 +571,7 @@ to create RSS feeds for websites that don't provide any.")
                  (base32 "1fl362920n6nz4x9wihyzbr82d9cy60sknhmajj62whd5gs49sbw"))))
       (build-system meson-build-system)
       (inputs (list fmt tidy-html pybind11 python pugixml))
-      (native-inputs (list cmake pkg-config)) ; need cmake to find pybind11
+      (native-inputs (list cmake-minimal pkg-config)) ; need cmake to find pybind11
       (home-page "https://gitlab.com/gabmus/syndication-domination")
       (synopsis "RSS/Atom feed parser")
       (description "This package provides an experimental RSS/Atom feed

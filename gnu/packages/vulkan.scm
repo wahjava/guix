@@ -190,7 +190,16 @@ SPIR-V, aiming to emit GLSL or MSL that looks like human-written code.")
                (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
                               #$output "/lib")
                "-DBUILD_SHARED_LIBS=ON"
-               "-DLLVM_SPIRV_INCLUDE_TESTS=ON")))
+               "-DLLVM_SPIRV_INCLUDE_TESTS=ON")
+       #:modules '((guix build cmake-build-system)
+                   ((guix build gnu-build-system) #:prefix gnu:)
+                   (guix build utils))
+       #:phases
+       #~(modify-phases %standard-phases
+           (replace 'check
+             (lambda* (#:rest args)
+               (apply (assoc-ref gnu:%standard-phases 'check)
+                      #:test-target "test" args))))))
     (inputs (list llvm-18))
     (native-inputs (list clang-18 llvm-18 python-lit spirv-headers))
     (home-page "https://github.com/KhronosGroup/SPIRV-LLVM-Translator")
@@ -216,8 +225,7 @@ translation between LLVM IR and SPIR-V.")
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:cmake ,cmake-minimal-3.30
-       #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
+     `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON"
                            "-DALLOW_EXTERNAL_SPIRV_TOOLS=ON"
                            ,@(if (target-riscv64?)
                                  `("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
@@ -371,6 +379,7 @@ Enhanced Subpixel Morphological Anti-Aliasing
       ;; Limit the tests to those architectures tested upstream.
       #:tests? (and (not (%current-target-system))
                     (target-x86?))
+      #:parallel-tests? #f
       #:configure-flags
       #~(list (string-append "-DVULKAN_HEADERS_INSTALL_DIR="
                              (dirname (dirname

@@ -15,7 +15,7 @@
 ;;; Copyright © 2020 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2021 Felipe Balbi <balbi@kernel.org>
 ;;; Copyright © 2021, 2024 Felix Gruber <felgru@posteo.net>
-;;; Copyright © 2021, 2024, 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2021, 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2023 c4droid <c4droid@foxmail.com>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
@@ -73,6 +73,7 @@
   #:use-module (gnu packages digest)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages elf)
+  #:use-module (gnu packages file-systems)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fltk)
   #:use-module (gnu packages fonts)
@@ -111,6 +112,7 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages toolkits)
   #:use-module (gnu packages upnp)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
@@ -128,6 +130,92 @@
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system trivial))
+
+(define-public ares
+  (package
+    (name "ares")
+    (version "145")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ares-emulator/ares")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "074kkgrbiga7grkwhnhw51ih7krxgf91m9zrrwjkj4q1hdjhlz5a"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                  ; No tests
+           #:configure-flags
+           #~(list "-DARES_BUILD_LOCAL=FALSE"
+                   "-DARES_BUILD_OFFICIAL=TRUE"
+                   "-DARES_BUNDLE_SHADERS=FALSE"
+                   "-DARES_SKIP_DEPS=TRUE"
+                   (string-append "-DARES_VERSION_OVERRIDE=" #$version))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'avoid-libglvnd
+                 (lambda _
+                   ;; XXX: Our mesa doesn't have libglvnd support.
+                   (substitute* "ruby/cmake/os-linux.cmake"
+                     (("OpenGL::GLX") "OpenGL::GL")))))))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list alsa-lib
+           ao
+           gtk+
+           gtksourceview-3
+           libx11
+           libxv
+           mesa                         ; OpenGL
+           sdl3
+           vulkan-loader
+           zlib))
+    (synopsis "Multi-system accuracy-focused emulator")
+    (description
+     "@command{ares} is a multi-system emulator that began development
+on 2004-10-14.  It is a descendant of higan and bsnes, and focuses on accuracy
+and preservation.
+Here are some supported systems:
+@itemize
+@item Arcade
+@item Atari 2600
+@item Bandai Wonderswan
+@item Bandai Wonderswan Color
+@item Benesse Pocket Challenge V2
+@item Colecovision
+@item MSX 1 and 2
+@item Nec Pc Engine Turbografx Cd
+@item Nec Pc Engine Supergrafx
+@item Nec Pc Engine Turbografx
+@item Nichibutsu My Vision
+@item Nintendo Famicom Disk System
+@item Nintendo Game Boy
+@item Nintendo Game Boy Advance
+@item Nintendo Game Boy Color
+@item Nintendo Nes Famicom
+@item Nintendo Nintendo 64
+@item Nintendo Nintendo 64DD
+@item Nintendo Satellaview
+@item Nintendo Snes Super Famicom
+@item Nintendo Sufami Turbo
+@item Sega 32x
+@item Sega Game Gear
+@item Sega Master System Mark Iii
+@item Sega Mega Cd
+@item Sega Mega Drive Genesis
+@item Sega Sg 1000
+@item Sinclair Zx Spectrum
+@item Snk Neo Geo Aesmvs
+@item Snk Neo Geo Pocket
+@item Snk Neo Geo Pocket Color
+@item Sony Playstation
+@end itemize
+")
+    (home-page "https://ares-emu.net/")
+    (license license:isc)))
 
 (define-public vice
   (package
@@ -322,97 +410,103 @@ console.")
 It aims to support Nintendo DSi and 3DS as well.")
    (license license:gpl3+)))
 
-;; Building from recent Git because the official 5.0 release no longer builds.
-;; Following commits and revision numbers of beta versions listed at
-;; https://dolphin-emu.org/download/.
+(define dolphin-rcheevos-submodule
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/RetroAchievements/rcheevos")
+           (commit "b443902b1cdfee5a66b09fec20a94d2d2afaf2ec")))
+    (file-name "dolphin-rcheevos-submodule-checkout")
+    (sha256
+     (base32
+      "1118l6ln73rjj7hw45712lm2i24m96nygiiw57hlcyaxijppl1vj"))))
+
 (define-public dolphin-emu
-  (let ((commit "f9deb68aee962564b1495ff04c54c015e58d086f")
-        (revision "13669"))
+  ;; Note: make sure to update the above rcheevos commit to match that of the
+  ;; corresponding git submodule in dolphin (see:
+  ;; <https://github.com/dolphin-emu/dolphin/tree/master/Externals/>).
+  (let ((commit "64d4c4020cf444d5afea708b38d1b363e532c7ba")
+        (revision "0"))
     (package
       (name "dolphin-emu")
-      (version (git-version "5.0" revision commit))
+      (version (git-version "2506" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/dolphin-emu/dolphin")
-               (commit commit)))
+                (url "https://github.com/dolphin-emu/dolphin")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1p8qsxlabgmz3nic0a9ghh9d3lzl5f8i3kmdrrvx6w8kdlp33018"))
+          (base32 "095326n1dznaplll5crlfdg2d39qxxlhgch5fn7vz8majz0qb5pg"))
          (modules '((guix build utils)
-                    (ice-9 regex)))
+                    (ice-9 ftw)
+                    (ice-9 regex)
+                    (srfi srfi-26)))
          (snippet
-          '(begin
-             ;; Remove external stuff we don't need.
-             (for-each (lambda (dir)
-                         (delete-file-recursively
-                          (string-append "Externals/" dir)))
-                       '("LZO" "OpenAL" "Qt" "SFML" "bzip2"
-                         ;; XXX: Attempting to use the vulkan-headers package
-                         ;; results in "error:
-                         ;; ‘VK_PRESENT_MODE_RANGE_SIZE_KHR’ was not declared
-                         ;; in this scope".
-                         ;;"Vulkan"
-                         "cubeb" "curl" "enet"
-                         "ffmpeg" "fmt" "gettext"
-                         ;; XXX: Attempting to use an unbundled glslang at the
-                         ;; exact commit used by Dolphin still results in
-                         ;; "error: ‘DefaultTBuiltInResource’ is not a member
-                         ;; of ‘glslang’".
-                         ;;"glslang"
-                         ;; XXX: Googletest cannot currently easily be
-                         ;; unbundled, as there are missing linking
-                         ;; directives.
-                         ;;"gtest"
-                         "hidapi" "libpng" "libusb" "mbedtls"
-                         "miniupnpc" "minizip" "MoltenVK" "pugixml"
-                         "soundtouch"
-                         "xxhash" "zlib" "zstd"))
-             ;; Clean up the source.
-             (for-each delete-file
-                       (find-files
-                        "."
-                        (lambda (file _)
-                          (and (string-match "\\.(bin|dsy|exe|jar|rar)$" file)
-                               ;; Preserve the important wc24 .bin
-                               ;; configuration *data* files.
-                               (not (member (basename file)
-                                            '("misc.bin"
-                                              "nwc24dl.bin"
-                                              "nwc24fl.bin"
-                                              "nwc24fls.bin")))))))
-             ;; Do not attempt to include now-missing directories.
-             (substitute* "CMakeLists.txt"
-               ((".*add_subdirectory.*Externals/enet.*") "")
-               ((".*add_subdirectory.*Externals/soundtouch.*") "")
-               ((".*add_subdirectory.*Externals/xxhash.*") ""))))
-         (patches (search-patches "dolphin-emu-data.patch"))))
+          #~(begin
+              (define (delete-all-but directory . preserve)
+                (with-directory-excursion directory
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (cut delete-file-recursively <>) items))))
+
+              ;; Clean up the source from bundled libraries we don't need.
+              (delete-all-but "Externals"
+                              ;; XXX: The build system is currently hard-coded
+                              ;; to rely on these bundled copies.
+                              "Bochs_disasm"
+                              "FatFs"
+                              "FreeSurround"
+                              "cpp-optparse"
+                              "expr"
+                              "glslang"
+                              "imgui"
+                              "implot"  ;submodule
+                              "picojson"
+                              "rangeset"
+                              "rcheevos") ;submodule
+              (with-directory-excursion "Externals"
+                ;; Note: Not copying implot sources here, which would
+                ;; introduce a top-level circular dependency.
+                (copy-recursively #$dolphin-rcheevos-submodule
+                                  "rcheevos/rcheevos"))
+
+              (for-each delete-file
+                        (find-files
+                         "."
+                         (lambda (file _)
+                           (and (string-match "\\.(bin|dsy|exe|jar|rar)$" file)
+                                ;; Preserve the important wc24 .bin
+                                ;; configuration *data* files.
+                                (not (member (basename file)
+                                             '("misc.bin"
+                                               "nwc24dl.bin"
+                                               "nwc24fl.bin"
+                                               "nwc24fls.bin")))))))))
+         (patches (search-patches "dolphin-emu-unbundle-watcher.patch"
+                                  "dolphin-emu-unbundle-tinygltf.patch"))))
       (build-system cmake-build-system)
       (arguments
        (list
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
-            (add-before 'configure 'remove-unittests-target-post-build-command
+            (add-after 'unpack 'copy-implot-source
               (lambda _
-                ;; To skip a few problematic tests, CTest will be manually
-                ;; invoked in the post-check phase.
-                (with-directory-excursion "Source/UnitTests"
-                  (substitute* "CMakeLists.txt"
-                    (("add_custom_command\\(TARGET unittests POST_BUILD.*")
-                     "")))))
-            (add-before 'configure 'generate-fonts&hardcore-libvulkan-path
+                (copy-recursively #$(package-source implot)
+                                  "Externals/implot/implot")))
+            (add-before 'configure 'generate-fonts&hardcode-libvulkan-path
               (lambda* (#:key inputs #:allow-other-keys)
                 (let ((fontfile
-                       (search-input-file inputs
-                                          "/share/fonts/truetype/wqy-microhei.ttc"))
+                       (search-input-file
+                        inputs "/share/fonts/truetype/wqy-microhei.ttc"))
                       (libvulkan
                        (search-input-file inputs "/lib/libvulkan.so")))
                   (chdir "docs")
-                  ;; Include a missing header, needed for gcc@14.
-                  (substitute* "gc-font-tool.cpp"
-                    (("#include <cstring>" all)
-                      (string-append all "\n#include <cstdint>")))
                   (invoke "bash" "-c" "g++ -O2 $(freetype-config \
 --cflags --libs) gc-font-tool.cpp -o gc-font-tool")
                   (invoke "./gc-font-tool" "a" fontfile "font_western.bin")
@@ -424,21 +518,10 @@ It aims to support Nintendo DSi and 3DS as well.")
                     (("\"vulkan\", 1") (string-append "\"vulkan\""))
                     (("\"vulkan\"") (string-append "\"" libvulkan "\""))
                     (("Common::DynamicLibrary::GetVersionedFilename") "")))))
-            (add-after 'check 'post-check
-              (lambda* (#:key tests? #:allow-other-keys)
-                (when tests?
-                  (with-directory-excursion "Source/UnitTests"
-                    (invoke "ctest" "-V" "--output-on-failure"
-                            ;; These tests fail due to libusb failing to
-                            ;; init inside the build container.
-                            "-E" (string-join
-                                  '("MMIOTest"
-                                    "PageFaultTest"
-                                    "CoreTimingTest"
-                                    "FileSystemTest"
-                                    "PowerPCTest"
-                                    "VertexLoaderTest")
-                                  "|"))))))
+            (replace 'check
+              (lambda* (#:rest args)
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:test-target "unittests" args)))
             (add-before 'install 'build-codeloader.bin
               (lambda _
                 (with-directory-excursion "../source/docs"
@@ -462,26 +545,13 @@ It aims to support Nintendo DSi and 3DS as well.")
                 (with-directory-excursion "../source"
                   (invoke "python3" "docs/DSP/free_dsp_rom/generate_coefs.py")
                   (rename-file "dsp_coef.bin" "Data/Sys/GC/dsp_coef.bin")))))
-        ;; The FindGTK2 cmake script only checks hardcoded directories for
-        ;; glib/gtk headers.  Also add some include directories via the CXX
-        ;; flags to let GCC find some headers not actively searched by the
-        ;; build system.
         #:configure-flags
-        #~(list (string-append "-DCMAKE_CXX_FLAGS="
-                               "-I" (search-input-directory
-                                     %build-inputs "include/soundtouch"))
-                "-DDSPTOOL=ON"
-                (string-append "-DX11_INCLUDE_DIR="
-                               #$(this-package-input "libx11")
-                               "/include")
-                (string-append "-DX11_LIBRARIES="
-                               (search-input-file %build-inputs
-                                                  "lib/libX11.so"))
-                "-DX11_FOUND=1")
-        #:test-target "unittests"))
+        #~(list "-DUSE_DISCORD_PRESENCE=OFF" ;avoid bundled discord-rpc lib
+                "-DDSPTOOL=ON")))
       (native-inputs
        (list (cross-gcc "powerpc-linux-gnu")
              gettext-minimal
+             googletest
              pkg-config
              python-minimal
              python-numpy))
@@ -494,14 +564,14 @@ It aims to support Nintendo DSi and 3DS as well.")
              curl
              enet
              eudev
-             ffmpeg-4
-             fmt-7
+             ffmpeg
+             fmt-11
              font-wqy-microhei
              freetype
              glew
              glib
              glu
-             gtk+-2
+             gtk+
              hidapi
              libevdev
              libpng
@@ -509,20 +579,28 @@ It aims to support Nintendo DSi and 3DS as well.")
              libx11
              libxi
              libxrandr
+             lz4
              lzo
              mbedtls-lts
+             mgba-for-dolphin
              mesa
              miniupnpc
              minizip-ng
              openal
              pugixml
              pulseaudio
-             qtbase-5
-             sdl2
+             qtbase
+             qtsvg
+             sdl3
              sfml
              soil
-             soundtouch-1/integer-samples
+             spirv-cross
+             spng
+             tinygltf
+             vulkan-headers             ;references loader
              vulkan-loader
+             vulkan-memory-allocator
+             watcher
              xxhash
              zlib
              `(,zstd "lib")))
@@ -536,36 +614,95 @@ turbo speed, networked multiplayer, and graphical enhancements.")
       ;; dolphin/Data/Sys/GC/font_*.bin: Licensed under ASL2.0.
       (license (list license:gpl2+ license:asl2.0 license:fdl1.2+)))))
 
+;;; XXX: The libretro port is currently based on an old version of dolphin, so
+;;; its packaging/inputs are lagging behind.
 (define-public libretro-dolphin-emu
   ;; There are no tag or release; use the latest commit.
-  (let ((commit "89a4df725d4eb24537728f7d655cddb1add25c18")
-        (revision "0"))
+  (let ((commit "a09f78f735f0d2184f64ba5b134abe98ee99c65f")
+        (revision "1"))
     (package
       (inherit dolphin-emu)
       (name "libretro-dolphin-emu")
       (version (git-version "5.0" revision commit))
-      (source (origin
-                (inherit (package-source dolphin-emu))
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/libretro/dolphin")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1fvm6hy0ihc0j3sgv88a7ak08c0kyikmmiif827j981fy7zvglvz"))
-                (patches (search-patches "libretro-dolphin-emu-data.patch"))))
+      (source
+       (origin
+         (inherit (package-source dolphin-emu))
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/libretro/dolphin")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "15vv3kz1vcsk53m4b19ckx9xx9cx8l0lgpzalpy625iv7qvdcj9m"))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (ice-9 regex)
+                    (srfi srfi-26)))
+         (snippet
+          #~(begin
+              ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+              (define (delete-all-but directory . preserve)
+                (with-directory-excursion directory
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (cut delete-file-recursively <>) items))))
+
+              ;; Clean up the source from bundled libraries we don't need.
+              (delete-all-but "Externals"
+                              ;; XXX: The build system is currently hard-coded
+                              ;; to rely on these bundled copies.
+                              "Bochs_disasm"
+                              "FreeSurround"
+                              "Libretro"
+                              "cpp-optparse"
+                              "glslang"
+                              "imgui"
+                              "picojson")
+              (for-each delete-file
+                        (find-files
+                         "."
+                         (lambda (file _)
+                           (and (string-match "\\.(bin|dsy|exe|jar|rar)$" file)
+                                ;; Preserve the important wc24 .bin
+                                ;; configuration *data* files.
+                                (not (member (basename file)
+                                             '("misc.bin"
+                                               "nwc24dl.bin"
+                                               "nwc24fl.bin"
+                                               "nwc24fls.bin")))))))))
+         (patches
+          (search-patches "libretro-dolphin-emu-data.patch"
+                          "libretro-dolphin-emu-gc-font-tool.patch"
+                          "libretro-dolphin-emu-libusb-assert.patch"
+                          "libretro-dolphin-emu-vulkan-headers.patch"))))
       (arguments
        (substitute-keyword-arguments (package-arguments dolphin-emu)
          ((#:configure-flags flags ''())
-          #~(cons "-DLIBRETRO=ON" #$flags))
+          #~(cons* (string-append "-DCMAKE_CXX_FLAGS="
+                                  "-I" (search-input-directory
+                                        %build-inputs "include/soundtouch"))
+                   "-DLIBRETRO=ON"
+                   "-DUSE_SHARED_ENET=ON"
+                   #$flags))
          ((#:phases phases '%standard-phases)
           #~(modify-phases #$phases
+              (add-after 'unpack 'link-unittest-to-gtest
+                (lambda _
+                  ;; Otherwise, linking with the tests with gtest_main fails
+                  ;; with a "DSO missing from command line"
+                  (substitute* "Source/UnitTests/CMakeLists.txt"
+                    (("PRIVATE core uicommon gtest_main" all)
+                     (string-append all " gtest")))))
               (add-after 'unpack 'deregister-bundled-sources
                 (lambda _
                   (substitute* "CMakeLists.txt"
                     ((".*add_subdirectory.*Externals/curl.*") "")
-                    ((".*add_subdirectory.*Externals/libpng.*") ""))))
+                    ((".*add_subdirectory.*Externals/gtest.*") "")
+                    ((".*add_subdirectory.*Externals/libpng.*") "")
+                    ((".*add_subdirectory.*Externals/soundtouch.*") "")
+                    ((".*add_subdirectory.*Externals/xxhash.*") ""))))
               (replace 'install
                 (lambda _
                   (install-file "dolphin_libretro.so"
@@ -581,11 +718,45 @@ turbo speed, networked multiplayer, and graphical enhancements.")
                     (copy-recursively "../source/Data/Sys"
                                       (string-append sysdir "/Sys")))))))))
       (inputs
-       ;; Delete large and extraneous inputs.
-       (modify-inputs (package-inputs dolphin-emu)
-         (delete "ffmpeg"
-                 "gtk+"
-                 "qtbase")))
+       (list alsa-lib
+             ao
+             bluez
+             bzip2
+             cubeb
+             curl
+             enet
+             eudev
+             fmt
+             font-wqy-microhei
+             freetype
+             glew
+             glib
+             glu
+             googletest
+             hidapi
+             libevdev
+             libpng
+             libusb
+             libx11
+             libxi
+             libxrandr
+             lzo
+             mbedtls-lts
+             mesa
+             miniupnpc
+             minizip-ng-compat
+             openal
+             pugixml
+             pulseaudio
+             sdl2
+             sfml-2
+             soil
+             soundtouch-1/integer-samples
+             xxhash
+             vulkan-loader
+             vulkan-headers
+             zlib
+             `(,zstd "lib")))
       (synopsis "Libretro port of Dolphin, the Nintendo Wii/GameCube emulator"))))
 
 (define-public dosbox
@@ -699,39 +870,44 @@ emulate a serial nullmodem over TCP/IP.")
                 "1fal7a8y5g0rqqjrk795jh1l50ihz01ppjnrfjrk9vkjbd59szbp"))))
     (build-system qt-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX=" (assoc-ref outputs "out"))
-                     "qtmips.pro")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (substitute* "tests/test.sh"
-               (("qtchooser.*") ""))
-             (substitute* '("tests/cpu_trap/test.sh"
-                            "tests/registers/test.sh")
-               (("sub-qtmips_cli") "qtmips_cli"))
-             (if tests?
-               (invoke "tests/run-all.sh")
-               #t)))
-         (replace 'install
-           ;; There is no install target.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (apps (string-append out "/share/applications"))
-                    (icons (string-append out "/share/icons/hicolor")))
-               (install-file "qtmips_gui/qtmips_gui" bin)
-               (install-file "qtmips_cli/qtmips_cli" bin)
-               (install-file "data/qtmips.desktop" apps)
-               (install-file "data/icons/qtmips_gui.svg"
-                             (string-append icons "/scalable/apps"))
-               (install-file "data/icons/qtmips_gui.png"
-                             (string-append icons "/48x48/apps"))
-               #t))))
-       #:tests? #f))    ; test suite wants mips toolchain
+     (list
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX=" (assoc-ref outputs "out"))
+                      "qtmips.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (substitute* "tests/test.sh"
+                (("qtchooser.*") ""))
+              (substitute* '("tests/cpu_trap/test.sh"
+                             "tests/registers/test.sh")
+                (("sub-qtmips_cli") "qtmips_cli"))
+              (if tests?
+                (invoke "tests/run-all.sh")
+                #t)))
+          (replace 'install
+            ;; There is no install target.
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bin (string-append out "/bin"))
+                     (apps (string-append out "/share/applications"))
+                     (icons (string-append out "/share/icons/hicolor")))
+                (install-file "qtmips_gui/qtmips_gui" bin)
+                (install-file "qtmips_cli/qtmips_cli" bin)
+                (install-file "data/qtmips.desktop" apps)
+                (install-file "data/icons/qtmips_gui.svg"
+                              (string-append icons "/scalable/apps"))
+                (install-file "data/icons/qtmips_gui.png"
+                              (string-append icons "/48x48/apps"))
+                #t))))
+        #:tests? #f))    ; test suite wants mips toolchain
     (inputs
      (list elfutils qtbase-5 qtwayland-5))
     (home-page "https://github.com/cvut/QtMips")
@@ -913,34 +1089,41 @@ The following systems are supported:
 (define-public mgba
   (package
     (name "mgba")
-    (version "0.10.4")
+    (version "0.10.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/mgba-emu/mgba")
-             (commit version)))
+              (url "https://github.com/mgba-emu/mgba")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0lfn5jhgqb06f1i1b8w8fvbi4fy4k8dvialblwg8h49qjqmf610q"))
-       (modules '((guix build utils)))
+         "1scyvcp8l5z1sy1hcr0wgdf8zrirg07fzqjdmhkjnyhxmb9sibb5"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
        (snippet
-        ;; Make sure we don't use the bundled software.
-        '(begin
-           (for-each
-            (lambda (subdir)
-              (let ((lib-subdir (string-append "src/third-party/" subdir)))
-                (delete-file-recursively lib-subdir)))
-            '("libpng" "lzma" "sqlite3" "zlib"))))))
-    (build-system cmake-build-system)
+        #~(begin
+            (define (delete-all-but directory . preserve)
+              (with-directory-excursion directory
+                (let* ((pred (negate (cut member <> (cons* "." ".." preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (cut delete-file-recursively <>) items))))
+
+            (delete-all-but "src/third-party"
+                            "blip_buf"
+                            "inih")))))
+    (build-system qt-build-system)
     (arguments
-     `(#:tests? #f                      ;no "test" target
-       #:configure-flags
-       (list "-DBUILD_LTO=OFF" ;FIXME: <https://github.com/mgba-emu/mgba/issues/3115>
-             "-DUSE_LZMA=OFF"           ;do not use bundled LZMA
-             "-DUSE_LIBZIP=OFF")))      ;use "zlib" instead
-    (native-inputs (list pkg-config qttools-5))
+     (list
+      #:qtbase qtbase
+      #:configure-flags
+      #~(list "-DBUILD_SUITE=ON"
+              "-DUSE_DISCORD_RPC=OFF"   ;avoid bundled copy
+              "-DUSE_LIBZIP=OFF"        ;use "zlib" instead
+              "-DUSE_LZMA=OFF")))       ;do not use bundled LZMA
+    (native-inputs (list cmocka pkg-config qttools))
     (inputs
      (list ffmpeg
            libedit
@@ -950,8 +1133,8 @@ The following systems are supported:
            mesa
            minizip
            ncurses
-           qtbase-5
-           qtmultimedia-5
+           qtbase
+           qtmultimedia
            sdl2
            sqlite
            zlib))
@@ -961,10 +1144,38 @@ The following systems are supported:
      "mGBA is an emulator for running Game Boy Advance games.  It aims to be
 faster and more accurate than many existing Game Boy Advance emulators, as
 well as adding features that other emulators lack.  It also supports Game Boy
-and Game Boy Color games.")
-    ;; Code is mainly MPL 2.0. "blip_buf.c" is LGPL 2.1+, "inih.c" is
-    ;; BSD-3, and "discord-rpc" is Expat.
-    (license (list license:mpl2.0 license:lgpl2.1+ license:bsd-3 license:expat))))
+and Game Boy Color games")
+    (license (list license:mpl2.0       ;mgba itself
+                   license:lgpl2.1+     ;blip_buf bundled library
+                   license:bsd-3))))    ;inih bundled library
+
+(define-public mgba-for-dolphin
+  ;; The commit should match that of the mgba git submodule in dolphin (see:
+  ;; <https://github.com/dolphin-emu/dolphin/tree/master/Externals/mGBA>).
+  (let ((commit "8739b22fbc90fdf0b4f6612ef9c0520f0ba44a51")
+        (revision "0"))
+    (hidden-package
+     (package
+       (inherit mgba)
+       (name "mgba-for-dolphin")
+       (version (git-version "0.9.1" revision commit))
+       (source
+        (origin
+          (inherit (package-source mgba))
+          (method git-fetch)
+          (uri (git-reference
+                 (url "https://github.com/mgba-emu/mgba")
+                 (commit commit)))
+          (file-name (git-file-name name version))
+          (sha256
+           (base32
+            "1bbcsikgcycf3cp9ciicg4yckjyamdfvgk4fgw079la59q8aw13q"))))
+       (arguments
+        (substitute-keyword-arguments (package-arguments mgba)
+          ((#:configure-flags flags ''())
+           ;; Relax error checks to avoid a build failure with GCC 14.
+           #~(cons "-DCMAKE_C_FLAGS=-Wno-error=incompatible-pointer-types"
+                   #$flags))))))))
 
 (define-public sameboy
   (package
@@ -1758,8 +1969,8 @@ as RetroArch.")
 (define-public libretro-mupen64plus-nx
   ;; There are no proper release; use the latest commit of the master branch
   ;; (their stable branch).
-  (let ((commit "9d940bacb95c4d86733f42b67b57fc83046a6d39")
-        (revision "0"))
+  (let ((commit "3a676196500545b637b83cb19fb393d2359e1f9d")
+        (revision "1"))
     (package
       (name "libretro-mupen64plus-nx")
       (version (git-version "0" revision commit))
@@ -1771,7 +1982,7 @@ as RetroArch.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0s3l62mfkbzmv8g1y4r40iayfwdz68rq6l6khc0d8kw08qk7ggl9"))))
+                  "0al0z52idssmvpn6400cmjlxg5qkp7wdb97i6yywip230xpjwlb8"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -1814,7 +2025,7 @@ libretro API, based on Mupen64Plus.  It incorporates the following projects:
 (define-public retroarch-assets
   (package
     (name "retroarch-assets")
-    (version "1.19.0")
+    (version "1.20.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1823,7 +2034,7 @@ libretro API, based on Mupen64Plus.  It incorporates the following projects:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1i496x0lkqard5i9045yf438kivwd6f6za8p9fil8w1rfrhk2knz"))))
+                "0ngbc2wmqgz5davan7rnvqapai5wc8j9afylff1yzlk3lgsjlv1x"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -1839,7 +2050,7 @@ generate the various User Experience (UX) environments.")
 (define-public libretro-core-info
   (package
     (name "libretro-core-info")
-    (version "1.20.0")
+    (version "1.21.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1848,7 +2059,7 @@ generate the various User Experience (UX) environments.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rfvp0lkv99jgpfyb9pp6vrh1i1974p3lckh93y1bibdizyxmwjg"))))
+                "12yramra6hd33g094krygq2a5h7mjkh0nh5d8qny4b6f61fxaxwk"))))
     (build-system copy-build-system)
     (arguments
      (list #:install-plan #~'(("." "lib/libretro/"
@@ -1866,7 +2077,7 @@ metadata about each known libretro core.  The snapshot is taken from the
 (define-public libretro-database
   (package
     (name "libretro-database")
-    (version "1.20.0")
+    (version "1.21.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1875,7 +2086,7 @@ metadata about each known libretro core.  The snapshot is taken from the
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "086a9grpd1irsdns2zx3hlna72bbrmsfra4r498wi4ia9zf8nb0p"))))
+                "1grkdg6k6dclwrh286dins4k50mp0wf3bvddikaspl309dldjrgw"))))
     (build-system gnu-build-system)
     (arguments (list #:tests? #f
                      #:make-flags #~(list (string-append "PREFIX=" #$output))))
@@ -1904,7 +2115,7 @@ Various scripts that are used to maintain the database files.
 (define-public retroarch-joypad-autoconfig
   (package
     (name "retroarch-joypad-autoconfig")
-    (version "1.20.0")
+    (version "1.21.1")
     (source
      (origin
        (method git-fetch)
@@ -1914,7 +2125,7 @@ Various scripts that are used to maintain the database files.
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nlz3j3575dlv9s15250qrhi90xcs6mg5i40g4lhq1hbwd075lsd"))))
+         "06mii4zpkrwxiw9qhfvjzri8q8fps1b96nkxp7px2w7cgdl4kg68"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no meaningful test suite
@@ -1936,8 +2147,8 @@ physical device and the RetroPad virtual controller.")
   ;; audited for newly added items, with the snippet allow-list updated
   ;; accordingly, due to various items lacking license information or being
   ;; non-free (see: https://github.com/libretro/slang-shaders/issues/150).
-  (let ((commit "a8e35920c5a53448bf6ce78dfe4575485a20a41f")
-        (revision "0"))
+  (let ((commit "82d91f7daf81a41ece49644d2a26b2a40228be61")
+        (revision "1"))
     (package
       (name "libretro-slang-shaders")
       (version (git-version "0" revision commit))
@@ -2604,7 +2815,7 @@ physical device and the RetroPad virtual controller.")
                 "edge-smoothing/scalefx/shaders/old/scalefx.slangp"))))
          (sha256
           (base32
-           "0r45p61nhi44f7ka5dvcabin7q2l25liyhgynm159pwlpwxz83nv"))))
+           "0wmvmpgayizr5444qfxr27zyn4r1yngjfvxfipa0vcrmazw6f6yd"))))
       (build-system gnu-build-system)
       (arguments
        (list #:tests? #f                ;no test suite
@@ -2634,7 +2845,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
 (define-public retroarch-minimal
   (package
     (name "retroarch-minimal")
-    (version "1.20.0")
+    (version "1.21.0")
     (source
      (origin
        (method git-fetch)
@@ -2648,18 +2859,11 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
                          (srfi srfi-26))
             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             ;; Remove as much bundled sources as possible, shaving off about
             ;; 65 MiB.
             (delete-all-but "deps"
@@ -2669,11 +2873,10 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
             ;; This is an old root certificate used in net_socket_ssl_mbed.c,
             ;; not actually from mbedtls.
             (delete-all-but "deps/mbedtls" "cacert.h")))
-       (patches (search-patches "retroarch-improved-search-paths.patch"
-                                "retroarch-unbundle-spirv-cross.patch"))
+       (patches (search-patches "retroarch-unbundle-spirv-cross.patch"))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yc16j3g2g0if64xqd7qr4dza8rw10x0zypwbl92y735825p87qi"))))
+        (base32 "17l3x77vd52g7zq62g3j1jxr51ksmdnxif1qh671qi19fsd19v1r"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2755,7 +2958,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
            openssl
            pulseaudio
            python
-           qtbase-5
+           qtbase
            sdl2
            spirv-cross
            spirv-headers
@@ -3358,59 +3561,58 @@ assembler, and debugger for the Intel 8085 microprocessor.
 
 (define-public pcsxr
   ;; No release since 2017.
-  (let ((commit "6484236cb0281e8040ff6c8078c87899a3407534"))
+  (let ((commit "666604321bf2d3dd5e5f58b534cfce41e72ad7d1")
+        (revision "1"))
     (package
       (name "pcsxr")
-      ;; Version is tagged here: https://github.com/frealgagu/PCSX-Reloaded
-      (version "1.9.95")
+      ;; From CMakeLists.txt.
+      (version (git-version "1.9.94" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/pcsxr/PCSX-Reloaded")
+               (url "https://github.com/MaddTheSane/PCSX-Reloaded")
                (commit commit)))
+         (patches (search-patches "pcsxr-find-harfbuzz.patch"
+                                  "pcsxr-fix-definitions.patch"))
          (sha256
-          (base32
-           "138mayp7zi9v4l3lm5f6xxkds619w1fgg769zm8s45c84jbz7dza"))
+          (base32 "0lcypcawnipm02m3wnjsrm9r10llabncx78ramk7iw03a646dngj"))
          (file-name (git-file-name name commit))))
       (build-system cmake-build-system)
       (arguments
-       `(#:tests? #f                    ;no "test" target
-         #:configure-flags
-         (list "-DSND_BACKEND=pulse"
-               "-DENABLE_CCDDA='ON'"
-               "-DUSE_LIBARCHIVE='ON'"
-               "-DUSE_LIBCDIO='ON'")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'cd-subdir
-             (lambda _ (chdir "pcsxr") #t))
-           (add-before 'configure 'fix-cdio-lookup
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "cmake/FindCdio.cmake"
-                 (("/usr/include/cdio")
-                  (search-input-directory inputs "/include/cdio")))))
-           (add-after 'install 'wrap-program
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (wrap-program (string-append (assoc-ref outputs "out")
-                                            "/bin/pcsxr")
-                 ;; For GtkFileChooserDialog.
-                 `("GSETTINGS_SCHEMA_DIR" =
-                   (,(string-append (assoc-ref inputs "gtk+")
-                                    "/share/glib-2.0/schemas")))))))))
-      (native-inputs
-       (list pkg-config intltool
-             `(,glib "bin")))
-      (inputs
-       (list bash-minimal
-             libcdio
-             sdl2
-             gtk+
-             ffmpeg-4
-             libxv
-             libarchive
-             pulseaudio))
-      (home-page "https://archive.codeplex.com/?p=pcsxr")
+       (list
+        #:tests? #f ;no "test" target
+        #:configure-flags
+        #~(list "-DSND_BACKEND=pulse"
+                "-DENABLE_CCDDA='ON'"
+                "-DUSE_LIBARCHIVE='ON'"
+                "-DUSE_LIBCDIO='ON'"
+                "-DCMAKE_C_FLAGS=-Wno-incompatible-pointer-types")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'configure 'fix-cdio-lookup
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "cmake/FindCdio.cmake"
+                  (("/usr/include/cdio")
+                   (search-input-directory inputs "/include/cdio")))))
+            (add-after 'install 'wrap-program
+              (lambda* (#:key inputs #:allow-other-keys)
+                (wrap-program (string-append #$output "/bin/pcsxr")
+                  ;; For GtkFileChooserDialog.
+                  `("GSETTINGS_SCHEMA_DIR" =
+                    (,(string-append (assoc-ref inputs "gtk+")
+                                     "/share/glib-2.0/schemas")))))))))
+      (native-inputs (list pkg-config intltool
+                           `(,glib "bin")))
+      (inputs (list bash-minimal
+                    libcdio
+                    sdl2
+                    gtk+
+                    ffmpeg-4
+                    libxv
+                    libarchive
+                    pulseaudio))
+      (home-page "https://github.com/MaddTheSane/PCSX-Reloaded")
       (synopsis "PlayStation emulator")
       (description
        "A PlayStation emulator based on PCSX-df Project with bugfixes and
@@ -3592,7 +3794,7 @@ Programming Interface} for emulators.")
 (define-public jgrf
   (package
     (name "jgrf")
-    (version "1.2.0")
+    (version "1.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3611,7 +3813,7 @@ Programming Interface} for emulators.")
                           (delete-file-recursively "deps/miniz")))
               (sha256
                (base32
-                "1ivc8jj0majvgi0rj9nn429bmh7wp2nf87hq8xg05fjqwalfy3bl"))))
+                "06q3yiz8rwgyx7iri94lg51lcqwhz8zz8y890haw5x1vc7f7yn1v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                ;no test suite
@@ -3658,7 +3860,7 @@ as a \"white-label\" frontend for statically linked standalone emulators.")
 (define-public jg-bsnes
   (package
     (name "jg-bsnes")
-    (version "2.0.0")
+    (version "2.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3678,7 +3880,7 @@ as a \"white-label\" frontend for statically linked standalone emulators.")
                           (delete-file-recursively "deps/libsamplerate")))
               (sha256
                (base32
-                "0z1ka4si8vcb0j6ih087cni18vpgfd3qnaw24awycxz23xc0jkdv"))))
+                "1750ff70y9kiqa0mxxw6530fscana0wf2fslb0d801y5g4mymp73"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -3764,8 +3966,8 @@ Advance.")
 
 (define-public libretro-bsnes-jg
   ;; There aren't any release yet; use the latest commit.
-  (let ((commit "0d42dea0cb20aba8bfec05b928e4aed2b295352a")
-        (revision "0"))
+  (let ((commit "6400024854702110c4019f5b0a7336dca7112fdb")
+        (revision "1"))
     (package
       (inherit jg-bsnes)
       (name "libretro-bsnes-jg")
@@ -3778,7 +3980,7 @@ Advance.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1dq2ypf4g4karayc9sgqn74bfnnsq2f4b3r615xyczchdaf2mi1n"))))
+                  "1sbhq614rvcm01ln7883ivdhni1mg1v4lyyvcwsy92i9wbh8qd9i"))))
       (arguments
        (substitute-keyword-arguments (package-arguments jg-bsnes)
          ((#:make-flags flags)
@@ -3798,12 +4000,12 @@ Advance.")
                     ((".*\\$\\(CORE_DIR)/deps/libsamplerate/.*")
                      ""))))))))
       (home-page "https://git.libretro.com/libretro/bsnes-jg")
-      (synopsis "libretro port of bsnes-jg"))))
+      (synopsis "Libretro port of bsnes-jg"))))
 
 (define-public jg-nestopia
   (package
     (name "jg-nestopia")
-    (version "1.52.1")
+    (version "1.53.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3812,7 +4014,7 @@ Advance.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "19qg9hgh25aaym7b81v5g7165v4fyymas6dmzc4z867mzaphbn6s"))))
+                "16saiwj4dmk6d0aqgczyrs9qpz7h79xxg3in11jnf2k7crzkk5ql"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -3836,7 +4038,7 @@ of the Nestopia emulator.")
 (define-public jg-cega
   (package
     (name "jg-cega")
-    (version "0.6.0")
+    (version "0.6.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3847,7 +4049,7 @@ of the Nestopia emulator.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10qxfch08850zivxf4s1mhh0clx4h1cfn440acm6d7glb6wbv822"))))
+                "1zcxy6zkh3gg3kg050j21bqwf6wdq7q0xifqg3vs07s30yh042zc"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -3927,7 +4129,7 @@ graphic filters.  Some of its features include:
                     (("include\\(cmake/")
                      "include(")))))
     (build-system pyproject-build-system)
-    (native-inputs (list cmake pkg-config python-setuptools python-wheel))
+    (native-inputs (list cmake-minimal pkg-config python-setuptools python-wheel))
     (home-page "https://www.unicorn-engine.org")
     (synopsis "Generic CPU emulator framework")
     (description
@@ -4150,72 +4352,96 @@ on a Commodore C64, C128 etc.")
     (license license:zlib)))
 
 (define-public flycast
-  (package
-    (name "flycast")
-    (version "2.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/flyinghead/flycast")
-             (commit (string-append "v" version))
-             ;; There are many bundled packages here included as git
-             ;; submodules. Removing many of them would require patching the
-             ;; source code and repository layout.
-             (recursive? #t)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0ainy75gkrvilcm89hq6wq9md41w0mxgp6l27q5fzrxxykpjh6ym"))
-       (modules '((guix build utils)))
-       (snippet #~(begin
-                    (substitute* "CMakeLists.txt"
-                      (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
-                       "find_package(VulkanHeaders)"))
-                    (with-directory-excursion "core/deps"
-                      (for-each delete-file-recursively
-                                '("SDL"
-                                  "Spout"
-                                  "Syphon"
-                                  "Vulkan-Headers"
-                                  "breakpad"
-                                  "discord-rpc"
-                                  "libzip"
-                                  "oboe")))))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f ; no test suite
-      #:configure-flags
-      #~(list "-DUSE_ALSA=ON"
-              "-DUSE_BREAKPAD=OFF"
-              "-DUSE_DX11=OFF"
-              "-DUSE_DX9=OFF"
-              ;; The USE_HOST_GLSLANG option is not implemented correctly.
-              ;; (see: https://github.com/flyinghead/flycast/issues/1843)
-              "-DUSE_HOST_GLSLANG=OFF"
-              "-DUSE_HOST_LIBZIP=ON"
-              "-DUSE_HOST_SDL=ON"
-              "-DUSE_LIBAO=ON"
-              "-DUSE_LUA=ON"
-              "-DUSE_PULSEAUDIO=ON"
-              "-DUSE_VULKAN=ON")))
-    (inputs (list alsa-lib
-                  ao
-                  curl
-                  glslang
-                  libzip
-                  lua
-                  miniupnpc
-                  pulseaudio
-                  sdl2
-                  spirv-tools
-                  vulkan-headers
-                  pkg-config))
-    (home-page "https://github.com/flyinghead/flycast")
-    (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
-    (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
+  ;; Use a git snapshot as the latest 2.5 release is still on an older glslang
+  ;; version that doesn't build with GCC 14.
+  (let ((commit "33833cfd1ed2d94d907223442fdb8cdafd8d5d80")
+        (revision "0"))
+    (package
+      (name "flycast")
+      (version (git-version "2.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/flyinghead/flycast")
+                (commit commit)
+                ;; There are many bundled packages here included as git
+                ;; submodules, but removing many of them would require patching
+                ;; the source code and repository layout (see: <>).
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "16vwhw33zhq2b8mpg863cn7sz4f04wxjz2650jgqjv7i5lkdd1g9"))
+         (modules '((guix build utils)))
+         (snippet #~(begin
+                      ;; TODO: Uncomment after our vulkan-headers
+                      ;; are update to 1.3.261.0 or newer.
+                      ;; (substitute* "CMakeLists.txt"
+                      ;;   (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
+                      ;;    "find_package(VulkanHeaders)"))
+                      (with-directory-excursion "core/deps"
+                        (for-each
+                         delete-file-recursively
+                         '("SDL"
+                           "Spout"
+                           "Syphon"
+                           ;; TODO: Uncomment after our vulkan-headers
+                           ;; are update to 1.3.261.0 or newer.
+                           ;;"Vulkan-Headers"
+                           "breakpad"
+                           "discord-rpc"
+                           ;; XXX: The libretro build requires the bundled
+                           ;; libzip, which it uses to produce a
+                           ;; static library.
+                           ;;"libzip"
+                           "oboe")))))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:tests? #f                       ;no test suite
+        #:configure-flags
+        #~(list "-DUSE_ALSA=ON"
+                "-DUSE_BREAKPAD=OFF"
+                "-DUSE_DX11=OFF"
+                "-DUSE_DX9=OFF"
+                ;; The USE_HOST_GLSLANG option is not implemented correctly.
+                ;; (see: https://github.com/flyinghead/flycast/issues/1843)
+                "-DUSE_HOST_GLSLANG=OFF"
+                "-DUSE_HOST_LIBZIP=ON"
+                "-DUSE_HOST_SDL=ON"
+                "-DUSE_LIBAO=ON"
+                "-DUSE_LIBCDIO=ON"
+                "-DUSE_LUA=ON"
+                "-DUSE_PULSEAUDIO=ON"
+                "-DUSE_VULKAN=ON")))
+      (native-inputs (list pkg-config))
+      (inputs (list alsa-lib
+                    ao
+                    curl
+                    glslang
+                    libcdio
+                    libzip
+                    lua
+                    miniupnpc
+                    pulseaudio
+                    sdl2
+                    spirv-tools
+                    ;; TODO: Uncomment after vulkan-headers
+                    ;; is updated to 1.3.261.0 or newer.
+                    ;;vulkan-headers
+                    ))
+      (home-page "https://github.com/flyinghead/flycast")
+      (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
+      (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
 and Atomiswave emulator derived from reicast.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
+
+(define-public libretro-flycast
+  (package/inherit flycast
+    (name "libretro-flycast")
+    (arguments (substitute-keyword-arguments (package-arguments flycast)
+                 ((#:configure-flags flags)
+                  #~(cons "-DLIBRETRO=ON" #$flags))))))
 
 (define-public freedisksysrom
   ;; There is no release; use the latest commit.
@@ -4376,7 +4602,7 @@ stack-machine, written in ANSI C.  Graphical output is implemented using SDL2.")
         (base32 "1xahdr6bh3dw5swrc2r8kqa8ljhqlb7k2kxv5mrw5rhcmcnzcyig"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list cmake
+     (list cmake-minimal
            python-setuptools
            python-wheel))
     (home-page "https://www.keystone-engine.org")

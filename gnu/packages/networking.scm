@@ -26,7 +26,7 @@
 ;;; Copyright © 2018, 2020-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018, 2020, 2021, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
-;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2019 Timotej Lazar <timotej.lazar@araneo.si>
@@ -98,6 +98,7 @@
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system trivial)
@@ -173,6 +174,7 @@
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
@@ -724,7 +726,8 @@ from any network device in any of three ASCII graph formats.")
         (base32 "1zr1l9zkai7rpw9cn5j9h4zrv08hgpfmwscwyscf2j4cgwf0rxrr"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:parallel-tests? #f
+       #:configure-flags
        (list
         (string-append "-DCMAKE_INSTALL_BINDIR="
                        (assoc-ref %outputs "out") "/bin")
@@ -1412,7 +1415,13 @@ or server shell scripts with network connections.")
            (lambda _
              (chmod "." #o755)
              ;; Upstream doesn't generate a shared library.  So we have to do it.
-             (setenv "CC" "gcc -fno-builtin -fPIC")
+             (setenv "CC" (string-join '("gcc"
+                                         "-fno-builtin"
+                                         "-fPIC"
+                                         "-Wno-implicit-function-declaration"
+                                         "-Wno-implicit-int"
+                                         "-Wno-return-mismatch")
+                                       " "))
              (substitute* "Makefile"
                (("^(all[^\n]*)" line) (string-append line " libwrap.so\n
 libwrap.so: $(LIB_OBJ)\n
@@ -2726,17 +2735,19 @@ HTTP proxies.")
 (define-public enet
   (package
     (name "enet")
-    (version "1.3.17")
+    (version "1.3.18")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "http://enet.bespin.org/download/"
-                           "enet-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lsalzman/enet")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1p6f9mby86af6cs7pv6h48032ip9g32c05cb7d9mimam8lchz3x3"))))
+        (base32
+         "0yavjrmvn34b67z8kkzp68s2wwd1nrriwkl2jc5pvwhgf51aar6c"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
+    (native-inputs (list autoconf automake libtool pkg-config))
     (synopsis "Network communication layer on top of UDP")
     (description
      "ENet's purpose is to provide a relatively thin, simple and robust network
@@ -3615,20 +3626,28 @@ asynchronous model using a modern C++ approach.")
        (sha256
         (base32 "02mp5905nz02d7amb4zc77rcrkxmvy8mf5rci7mvy58g24lvbw25"))
        (file-name (git-file-name name version))))
-    (inputs
-     (list openssl))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-crypto-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "shadowsocks/shell.py"
-               (("config\\.get\\('libopenssl', None\\)")
-                (format #f "config.get('libopenssl', ~s)"
-                        (string-append
-                         (assoc-ref inputs "openssl")
-                         "/lib/libssl.so")))))))))
-    (build-system python-build-system)
+     (list
+      ;; XXX: Package is deprecated, but it might be a good thing to try and
+      ;; keep it.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-crypto-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "shadowsocks/shell.py"
+                (("config\\.get\\('libopenssl', None\\)")
+                 (format #f "config.get('libopenssl', ~s)"
+                         (search-input-file inputs "lib/libssl.so"))))))
+          (add-after 'unpack 'python-fixes
+            (lambda _
+              (substitute* "shadowsocks/lru_cache.py"
+                (("collections\\.MutableMapping")
+                 "collections.abc.MutableMapping")))))))
+    (inputs (list openssl))
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/shadowsocks/shadowsocks")
     (synopsis "Fast tunnel proxy that helps you bypass firewalls")
     (description
@@ -3869,7 +3888,10 @@ never see any machines other than the one Dante is running on.")
     (inputs
      (list asio catch-framework openssl))
     (arguments
-     `(#:configure-flags
+     `(;; Running parallel tests results in "bind: Address already in use" error
+       ;; in test service_status_feature_test_suite.
+       #:parallel-tests? #f
+       #:configure-flags
        '("-DBUILD_SSL=NO")
        #:phases
        (modify-phases %standard-phases
@@ -3914,6 +3936,8 @@ communication over HTTP.")
     (build-system cmake-build-system)
     (arguments
      (list
+      ;; Error when tests are run in parallel: "bind: Address already in use".
+      #:parallel-tests? #f
       #:configure-flags
       #~(list "-DRESTINIO_INSTALL=ON"
               "-DRESTINIO_TEST=ON"
@@ -4118,7 +4142,6 @@ A very simple IM client working over the DHT.
        (list
         #:configure-flags #~(list "-DBUILD_DEPENDENCIES=OFF"
                                   "-DBUILD_SHARED_LIBS=ON"
-                                  "-DBUILD_TESTING=ON"
                                   "-DDNC_SYSTEMD=OFF")
         #:phases
         #~(modify-phases %standard-phases
@@ -4829,7 +4852,7 @@ implementing them.")
            go-github-com-hashicorp-go-syslog
            go-github-com-hjson-hjson-go-v4
            go-github-com-kardianos-minwinsvc
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-quic-go-quic-go
            go-github-com-vishvananda-netlink
            go-github-com-wlynxg-anet

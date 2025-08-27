@@ -59,7 +59,6 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gl)
@@ -117,14 +116,14 @@
 (define computed-origin-method (@@ (guix packages) computed-origin-method))
 
 (define firefox-l10n
-  (let ((commit "3657ec7a1e4f01ceb1033b1a015a0160b85e7f83"))
+  (let ((commit "25c14798b15f9933b6c1e2bc655030842b6e0edd"))
     (origin
       (method git-fetch)
       (uri (git-reference
             (url "https://github.com/mozilla-l10n/firefox-l10n.git")
             (commit commit)))
       (file-name (git-file-name "firefox-l10n" commit))
-      (sha256 (base32 "1vzpd2960g63np162g3c4bmdp48hypv7b22jr60v8splqndij6vg")))))
+      (sha256 (base32 "06iymygkf94s04ixvk1mlis9p5lmypx5k8pmrd3z3jddpmawk0r1")))))
 
 (define* (make-librewolf-source #:key version firefox-hash librewolf-hash l10n)
   (let* ((ff-src (firefox-source-origin
@@ -205,24 +204,23 @@
 ;;; but since in Guix only the latest packaged Rust is officially supported,
 ;;; it is a tradeoff worth making.
 ;;; 0: https://firefox-source-docs.mozilla.org/writing-rust-code/update-policy.html
-;; 136.0.1 wants 1.84, but it's not available in Guix yet.
-(define rust-librewolf rust-1.82)
+(define rust-librewolf rust)
 
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
 ;; or: (format-time-string "%Y%m%d%H%M%S")
-(define %librewolf-build-id "20250628094930")
+(define %librewolf-build-id "20250727200313")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "140.0.2-1")
+    (version "141.0-1")
     (source
      (make-librewolf-source
       #:version version
-      #:firefox-hash "00swi8y46r7yibi2klc0z23j33blydx60972fim6bmgm82l5bbkh"
-      #:librewolf-hash "06v57209s38sqzr77bk2jq3nzd3qjbxd736rwir8x8f0ff19j8n4"
+      #:firefox-hash "1j1m6niw47xi6aj9rlcny8jhqkppjvg22cq7mikim93wpf22m640"
+      #:librewolf-hash "18k3d09dr6jkhr6g8z8c3aa7jj0ynjalkmvc3nj7wd98mgvky2xj"
       #:l10n firefox-l10n))
     (build-system gnu-build-system)
     (arguments
@@ -644,7 +642,7 @@
                   libxt
                   mesa
                   mit-krb5
-                  nspr-4.36
+                  nspr
                   nss-rapid
                   pango
                   pciutils

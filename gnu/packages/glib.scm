@@ -1269,18 +1269,11 @@ programming language.  It also provides the @command{dbusxx-xml2cpp} and
               (snippet '(delete-file-recursively "tools/libcppgenerate"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTING=ON"
-                                     "-DENABLE_TOOLS=ON"
+     (list #:configure-flags #~(list "-DENABLE_TOOLS=ON"
                                      "-DENABLE_GLIB_SUPPORT=ON"
                                      "-DTOOLS_BUNDLED_CPPGENERATE=OFF")
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     ;; There is no /etc/machine-id file in the build
-                     ;; environment.
-                     (invoke "ctest" "-E" "test-machine-uuid-method")))))))
+           ;; There is no /etc/machine-id file in the build environment.
+           #:test-exclude "test-machine-uuid-method"))
     ;; These are propagated due to being referenced in headers and pkg-config
     ;; .pc files.
     (propagated-inputs (list glib libsigc++))
@@ -1318,18 +1311,24 @@ Some codes examples can be find at:
     (arguments
      (list
       ;; Avoid the integration test, which requires a system bus.
-      #:test-target "sdbus-c++-unit-tests"
       #:configure-flags #~(list "-DSDBUSCPP_BUILD_CODEGEN=ON"
                                 "-DSDBUSCPP_BUILD_TESTS=ON"
                                 ;; Do not install tests.
                                 "-DSDBUSCPP_TESTS_INSTALL_PATH=/tmp"
                                 "-DCMAKE_VERBOSE_MAKEFILE=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'do-not-install-tests
             (lambda _
               (substitute* "tests/CMakeLists.txt"
-                (("/etc/dbus-1/system.d") "/tmp")))))))
+                (("/etc/dbus-1/system.d") "/tmp"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "sdbus-c++-unit-tests" args))))))
     (native-inputs (list googletest-1.17 pkg-config))
     (inputs (list expat))
     (propagated-inputs (list elogind)) ;required by sdbus-c++.pc
@@ -1608,6 +1607,7 @@ that uses asynchronous and future-based APIs.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f                       ; fail with GLib-CRITICAL errors
       #:configure-flags
       #~(list "-DINTERNAL_EXPECTED=OFF")))
     (inputs (list boost fmt expected-lite))

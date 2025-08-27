@@ -153,7 +153,7 @@
   ;; <https://bitcoincore.org/en/lifecycle/#schedule>.
   (package
     (name "bitcoin-core")
-    (version "28.1")
+    (version "28.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -161,7 +161,7 @@
                               version "/bitcoin-" version ".tar.gz"))
               (sha256
                (base32
-                "1fl312ns86syc6871il9l3lzf96nm6jhnj92qyvxkyf78782vbn5"))))
+                "0l23ff0z25v6fgxnldb7bgzhbd9z9kq3fgh86i7wv4w7spwxlxsr"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf
@@ -226,6 +226,74 @@ central authority: managing transactions and issuing money are carried out
 collectively by the network.  Bitcoin Core is the reference implementation
 of the bitcoin protocol.  This package provides the Bitcoin Core command
 line client and a client based on Qt.")
+    (license license:expat)))
+
+(define-public bitcoin-cash-node
+  (package
+    (name "bitcoin-cash-node")
+    (version "28.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://gitlab.com/bitcoin-cash-node/bitcoin-cash-node.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19v38clhxg6yd4xb8wh8bm3sf1ipv3ifg68nwgq0p8l5zqx41wgw"))))
+    (build-system cmake-build-system)
+    (native-inputs
+     (list help2man
+           pkg-config
+           python
+           python-scipy
+           qttools-5))
+    (inputs
+     (list bdb-5.3
+           boost
+           expat
+           gmp
+           jemalloc
+           libevent
+           libnatpmp
+           miniupnpc
+           openssl
+           qrencode
+           qtbase-5
+           zeromq
+           zlib))
+    (arguments
+     (list #:configure-flags #~(list "-DCLIENT_VERSION_IS_RELEASE=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'check 'set-home
+                 (lambda _
+                   ;; Tests write to $HOME.
+                   (setenv "HOME" (getenv "TMPDIR"))))
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python3" "./test/functional/test_runner.py"
+                             (string-append "--jobs=" (number->string
+                                                       (parallel-job-count)))
+                             ;; FIXME: rpc_bind test fails with:
+                             ;;  File ".../netutil.py", line 132, in addr_to_hex
+                             ;;    if '.' in addr:  # IPv4
+                             ;;  TypeError: argument of type 'NoneType' is not
+                             ;;  iterable
+                             "-x" "rpc_bind")))))))
+    (home-page "https://bitcoincashnode.org/")
+    (synopsis "Bitcoin Cash peer-to-peer client")
+    (description
+     "Bitcoin Cash is a digital currency that enables instant payments to
+anyone, anywhere in the world.  It uses peer-to-peer technology to operate with
+no central authority: managing transactions and issuing money are carried out
+collectively by the network.  Bitcoin Cash is a descendant of Bitcoin.  It
+became a separate currency from the version supported by Bitcoin Core when the
+two split on August 1, 2017.  Bitcoin Cash and the Bitcoin Core version of
+Bitcoin share the same transaction history up until the split.
+This package provides the Bitcoin Cash Node command line client and a client
+based on Qt.")
     (license license:expat)))
 
 (define-public ghc-hledger
@@ -301,14 +369,14 @@ Accounting.")
 (define-public homebank
   (package
     (name "homebank")
-    (version "5.9.2")
+    (version "5.9.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.gethomebank.org/public/sources"
                                   "/homebank-" version ".tar.gz"))
               (sha256
                (base32
-                "1iqvzb3a27z6zcmv7rxvrzc11g2ciwsbskbandvxrf4lvjpqfxgb"))))
+                "1gwzj3x3rnd3f5z1fzvrl740zhpnxjcsbxlmabwgkw22l6226i4c"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool))
@@ -562,10 +630,80 @@ It's not clear at the moment whether one day it will be possible to
 do so.")
     (license license:agpl3+)))
 
+(define-public python-electrum-ecc
+  (package
+    (name "python-electrum-ecc")
+    (version "0.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "electrum_ecc" version))
+       (sha256
+        (base32 "1lmp5zmhabaxp6jha3xlsmqviivrxxhsy20x6z42ayqgd9cvhczp"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Delete the vendored dependency.
+           (delete-file-recursively "libsecp256k1")))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'prepare-env
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       ;; Do not attempt to compile vendored libsecp256k1.
+                       (setenv "ELECTRUM_ECC_DONT_COMPILE" "1")
+                       ;; Make the package find our libsecp256k1.
+                       (substitute* "src/electrum_ecc/ecc_fast.py"
+                         (("library_paths = \\[\\]")
+                          (string-append
+                           "library_paths = ['"
+                           (search-input-file inputs "/lib/libsecp256k1.so")
+                           "']"))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list libsecp256k1))
+    (home-page "https://github.com/spesmilo/electrum-ecc")
+    (synopsis "Pure python ctypes wrapper for libsecp256k1")
+    (description "This package provides a pure Python ctypes wrapper for
+@code{libsecp256k1}.")
+    (license license:expat)))
+
+(define-public electrum-aionostr
+  (package
+    (name "electrum-aionostr")
+    (version "0.0.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "electrum_aionostr" version))
+       (sha256
+        (base32 "10fgidah8ca59j3gssg9b434j49c1dd9cs3224nanjsxwl0ivsqf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Test below fails to match an exit code, pointing to this in Click:
+      ;; https://github.com/pallets/click/pull/1489
+      ;; This was fixed in Click 8.2.0.
+      #:test-flags #~(list "-k" "not test_command_line_interface")))
+    (inputs (list python-aiohttp
+                  python-aiohttp-socks
+                  python-aiorpcx
+                  python-cryptography
+                  python-electrum-ecc))
+    (native-inputs (list python-click
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/spesmilo/electrum-aionostr")
+    (synopsis "Asyncio nostr client")
+    (description "This package is a fork of @code{aionostr} that does not
+require Coincurve.")
+    (license license:bsd-3)))
+
 (define-public electrum
   (package
     (name "electrum")
-    (version "4.4.6")
+    (version "4.6.1")
     (source
      (origin
        (method url-fetch)
@@ -573,42 +711,51 @@ do so.")
                            version "/Electrum-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1f0hb8xmqv1j9pf82xpyvxnn2dzmi93rhf0sh0iqakja2pbl4707"))
+        (base32 "1h7z019sp99csrj1djmhlm9y7vyyzl7wvar7z9x4jx59lmmvs1xs"))
        (modules '((guix build utils)))
        (snippet
         '(begin
            ;; Delete the bundled dependencies.
            (delete-file-recursively "packages")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Either pycryptodomex or cryptography must be available.
+      ;; This package uses python-cryptography, but this test checks for
+      ;; cryptodomex anyway.  Skip it since it's not useful.
+      #:test-flags #~(list "-k" "not test_pycryptodomex_is_available")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-deps
+            (lambda _
+              (substitute* "contrib/requirements/requirements.txt"
+                ;; These packages have tight version requirements because
+                ;; the developer does not want to introduce Hatchling in
+                ;; the build environment.  They do work at runtime.
+                (("attrs.*") "attrs")
+                (("dnspython.*") "dnspython"))))
+          (add-before 'check 'set-home
+            (lambda _ ; 3 tests run mkdir
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs
-     (list libsecp256k1
+     (list electrum-aionostr
            python-aiohttp
            python-aiohttp-socks
            python-aiorpcx
            python-attrs
-           python-bitstring
-           python-btchip-python
            python-certifi
            python-cryptography
            python-dnspython
+           python-electrum-ecc
            python-hidapi
-           python-ledgerblue
+           python-jsonpatch
            python-protobuf
-           python-pyqt
+           python-pyaes
+           python-pyqt-6
            python-qdarkstyle
            python-qrcode
            zbar))
-    (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-libsecp256k1-input
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "electrum/ecc_fast.py"
-               (("library_paths = \\[\\]")
-                (string-append "library_paths = ['"
-                               (assoc-ref inputs "libsecp256k1")
-                               "/lib/libsecp256k1.so']"))))))))
     (home-page "https://electrum.org/")
     (synopsis "Bitcoin wallet")
     (description
@@ -698,7 +845,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.4.0")
+    (version "0.18.4.2")
     (source
      (origin
        (method git-fetch)
@@ -716,7 +863,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "0dfb9yxpfijdjgl67dgmhgn4xd42rnwfn4nnp0dfakq34imv2cjh"))))
+        (base32 "1285kigw9j633ghvp4apld9ddrvw7hjgjv23yabjvl7l2gc6hlv6"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -803,7 +950,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.4.0")
+    (version "0.18.4.2")
     (source
      (origin
        (method git-fetch)
@@ -819,7 +966,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "0gzq3cq54mr85f86yibsska19lri2w2ak98pb4z237dffgjqkaj5"))))
+        (base32 "0sa90shh82k6pzj1xr1f6x13q1q4mif4v00zahq96i7iglqpn4b6"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)
@@ -922,28 +1069,35 @@ the Monero GUI client.")
     (license license:bsd-3)))
 
 (define-public python-bech32
-  (package
-    (name "python-bech32")
-    (version "1.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "bech32" version))
-              (sha256
-               (base32
-                "16fq5cfy5id9hp123ylhpl55pf38xwk0hv7sziqpig838qhvhvbx"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/fiatjaf/bech32")
-    (synopsis "Reference implementation for Bech32 and Segwit addresses")
-    (description "This package provides a python reference implementation for
+  ;; XXX: No tags upstream.
+  (let ((commit "231e4d88b15f3dc8faf7d339f365b84f6ab5cbcc")
+        (revision "0"))
+    (package
+      (name "python-bech32")
+      (version (git-version "1.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/fiatjaf/bech32")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0wq6q0yrw3x42d81v445xy4nh2qlrn7swsydgpv81dkay11kajrz"))))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-setuptools python-wheel))
+      (home-page "https://github.com/fiatjaf/bech32")
+      (synopsis "Reference implementation for Bech32 and Segwit addresses")
+      (description "This package provides a python reference implementation for
 Bech32 and segwit addresses.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-trezor-agent
   ;; It is called 'libagent' in pypi; i.e. this is the library as opposed to
   ;; the toplevel app called trezor-agent.
   (package
     (name "python-trezor-agent")
-    (version "0.14.7")
+    (version "0.15.0")
     (source
      (origin
        (method git-fetch)
@@ -952,22 +1106,21 @@ Bech32 and segwit addresses.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04dds5bbw73nk36zm8d02qw6qr92nrlcf8r1cq8ba96mzi34jbk0"))))
-    (build-system python-build-system)
+        (base32 "09y55ys3x5krszh58yhl5gpdri0zrlhfld6psrmiyxfbp344asin"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-requires-backports-shutil-which
-           ;; Remove requires on backport of shutil_which, as python 3.4+ has
-           ;; a built-in implementation supported in python-trezor-agent.
-           (lambda _
-             (substitute* "setup.py"
-               (("'backports.shutil_which>=3.5.1',") ""))))
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-v")))))))
+     (list
+      #:test-flags
+      ;; XXX: Requires $HOME to be /run/user.
+      #~(list "-k" "not test_get_agent_sock_path")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-requires-backports-shutil-which
+            ;; Remove requires on backport of shutil_which, as python 3.4+ has
+            ;; a built-in implementation supported in python-trezor-agent.
+            (lambda _
+              (substitute* "setup.py"
+                (("'backports.shutil_which>=3.5.1',") "")))))))
     (propagated-inputs
      (list python-bech32
            python-configargparse
@@ -985,7 +1138,9 @@ Bech32 and segwit addresses.")
     (native-inputs ; Only needed for running the tests
      (list gnupg
            python-mock
-           python-pytest))
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/romanz/trezor-agent")
     (synopsis "Use hardware wallets as SSH and GPG agent")
     (description
@@ -1261,7 +1416,7 @@ the KeepKey Hardware Wallet.")
        (uri (origin-uri (package-source python-trezor-agent)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04dds5bbw73nk36zm8d02qw6qr92nrlcf8r1cq8ba96mzi34jbk0"))
+        (base32 "09y55ys3x5krszh58yhl5gpdri0zrlhfld6psrmiyxfbp344asin"))
        (modules
         '((guix build utils)
           (ice-9 ftw)
@@ -1281,45 +1436,40 @@ the KeepKey Hardware Wallet.")
                      (scandir "./agents/trezor/"
                               (negate (cut member <> '("." "..") string=))))
            (delete-file-recursively "./agents")
-           ;; Without deleting ./contrib the sanity-check phase fails. Reported
-           ;; upstream as https://github.com/romanz/trezor-agent/issues/429.
-           (delete-file-recursively "./contrib")
            ;; Without deleting ./libagent setuptools complains as follows:
            ;; "error: Multiple top-level packages discovered in a flat-layout: ['contrib', 'libagent']."
            (delete-file-recursively "./libagent")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("'trezor\\[hidapi]>=0.12.0,<0.13'")
-                "'trezor[hidapi]>=0.13'"))))
-         (add-after 'wrap 'fixup-agent-py
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out")))
-               ;; The wrap phase also wraps trezor_agent.py (besides the
-               ;; public facing executable called trezor-agent). We need to
-               ;; undo that wrapping. The reason this is needed is that the
-               ;; python easy install generates a toplevel script (?) that
-               ;; messes with argv[0] and then re-opens the python
-               ;; module. This fails when the wrapped file is actually a shell
-               ;; script, not a python file.
-               (delete-file (string-append out "/bin/.trezor_agent.py-real"))
-               ;; Overwrite the wrapped one with the real thing.
-               (install-file "./trezor_agent.py"
-                             (string-append out "/bin"))))))))
-    (build-system python-build-system)
+     (list
+      #:tests? #f ; No tests there.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'wrap 'fixup-agent-py
+            (lambda _
+              ;; The wrap phase also wraps trezor_agent.py (besides the public
+              ;; facing executable called trezor-agent). We need to undo that
+              ;; wrapping. The reason this is needed is that the python easy
+              ;; install generates a toplevel script (?) that messes with
+              ;; argv[0] and then re-opens the python module. This fails when
+              ;; the wrapped file is actually a shell script, not a python file.
+              (delete-file
+               (string-append #$output "/bin/.trezor_agent.py-real"))
+              ;; Overwrite the wrapped one with the real thing.
+              (install-file "./trezor_agent.py"
+                            (string-append #$output "/bin")))))))
     (inputs
      (list python-trezor python-trezor-agent))
     (native-inputs ; Only needed for running the tests
      (list python-attrs
            python-bech32
-           python-simple-rlp))
+           python-simple-rlp
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/romanz/trezor-agent")
     (synopsis "Using Trezor as hardware SSH/GPG agent")
-    (description "This package allows using Trezor as a hardware SSH/GPG
-agent.")
+    (description
+     "This package allows using Trezor as a hardware SSH/GPG agent.")
     (license license:lgpl3)))
 
 (define-public keepkey-agent
@@ -1359,8 +1509,10 @@ agent.")
     (inputs (list libzip qtsvg qtwebengine qt5compat))
     (arguments
      (list #:tests? #f           ; tests do not even build with Qt6 anymore
-           #:test-target "check"
            #:qtbase qtbase       ; use Qt6
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'configure
@@ -1372,6 +1524,7 @@ agent.")
                    (substitute* "kitsasproject.pro"
                      ((" *(unittest|testit).*") "")
                      (("\\\\") ""))))
+               (replace 'build (assoc-ref gnu:%standard-phases 'build))
                (replace 'install
                  (lambda* _
                    (install-file "kitsas/kitsas"
@@ -1689,35 +1842,38 @@ trezord as a regular user instead of needing to it run as root.")
         (license license:lgpl3+))))
 
 (define-public trezord
-  (package
-    (name "trezord")
-    (version "2.0.33")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/trezor/trezord-go")
-             (commit (string-append "v" version))))
-       (sha256
-        (base32 "0nnfh9qkb8ljajkxwrn3nn85zrsw10hp7c5i4zh60qgfyl0djppw"))
-       (file-name (git-file-name name version))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.18
-      #:install-source? #f
-      #:import-path "github.com/trezor/trezord-go"))
-    (native-inputs
-     (list go-github-com-gorilla-csrf
-           go-github-com-gorilla-handlers
-           go-github-com-gorilla-mux
-           go-gopkg-in-natefinch-lumberjack-v2))
-    (home-page "https://trezor.io")
-    (synopsis "Trezor Communication Daemon aka Trezor Bridge (written in Go)")
-    (description
-     "This allows a Trezor hardware wallet to communicate to the Trezor
+  ;; XXX: The latest commit provides support for Go 1.24+, move back to the
+  ;; tag when it is released.
+  (let ((commit "a58468e4f70619d4ca7dd6404bdf9bdcff8011f0")
+        (revision "0"))
+    (package
+      (name "trezord")
+      (version (git-version "2.0.33" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/trezor/trezord-go")
+               (commit commit)))
+         (sha256
+          (base32 "15bqxg98wp4w8yc697rf228298dcxfmlvf7pzq370g852w8hm6q8"))
+         (file-name (git-file-name name version))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:install-source? #f
+        #:import-path "github.com/trezor/trezord-go"))
+      (native-inputs
+       (list go-github-com-gorilla-csrf
+             go-github-com-gorilla-handlers
+             go-github-com-gorilla-mux
+             go-gopkg-in-natefinch-lumberjack-v2))
+      (home-page "https://trezor.io")
+      (synopsis "Trezor Communication Daemon aka Trezor Bridge (written in Go)")
+      (description
+       "This allows a Trezor hardware wallet to communicate to the Trezor
 wallet.")
-    (license license:lgpl3+)))
+      (license license:lgpl3+))))
 
 (define-public libofx
   (package
@@ -1764,88 +1920,6 @@ following three utilities are included with the library:
 @item @code{ofxconnect}
 @end enumerate")
     (license license:gpl2+)))
-
-(define-public bitcoin-unlimited
-  (package
-    (name "bitcoin-unlimited")
-    (version "2.1.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/bitcoinunlimited/BCHUnlimited.git/")
-             (commit (string-append "BCHunlimited" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0cny12s03wsgx8iijg5cbr7r6wif9ck7dn98hsv9sz8xq1i5vjk4"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf
-           automake
-           libtool
-           pkg-config
-           python ; for the tests
-           util-linux ; provides the hexdump command for tests
-           qttools-5))
-    (inputs
-     (list bdb-4.8
-           boost
-           libevent
-           miniupnpc
-           openssl
-           protobuf
-           qrencode
-           qtbase-5
-           zeromq
-           zlib))
-    (arguments
-     `(#:configure-flags
-       (list
-        ;; Boost is not found unless specified manually.
-        (string-append "--with-boost="
-                       (assoc-ref %build-inputs "boost"))
-        ;; XXX: The configure script looks up Qt paths by
-        ;; `pkg-config --variable=host_bins Qt5Core`, which fails to pick
-        ;; up executables residing in 'qttools-5', so we specify them here.
-        (string-append "ac_cv_path_LRELEASE="
-                       (assoc-ref %build-inputs "qttools")
-                       "/bin/lrelease")
-        (string-append "ac_cv_path_LUPDATE="
-                       (assoc-ref %build-inputs "qttools")
-                       "/bin/lupdate")
-        "--disable-static")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           (lambda _
-             ;; Disable utilprocess_tests because it never ends.
-             ;; It looks like it tries to start /bin/sleep and waits until it
-             ;; is in the list of running processes, but /bin/sleep doesn't
-             ;; exist.
-             (substitute* "src/Makefile.test.include"
-               (("test/utilprocess_tests.cpp")
-                ""))
-             ;; Disable PaymentServer failing test because it's using
-             ;; an expired SSL certificate.
-             (substitute* "src/qt/test/test_main.cpp"
-               (("if \\(QTest::qExec\\(&test2\\) != 0\\)")
-                "if (QTest::qExec(&test2) == 0)"))
-             ;; The following test passes with OpenSSL 1.1, but fails with
-             ;; OpenSSL 3.
-             (substitute* "src/secp256k1/src/tests.c"
-               (("run_ecdsa_der_parse\\(\\);")
-                ""))))
-         (add-before 'check 'set-home
-           (lambda _
-             ;; Tests write to $HOME
-             (setenv "HOME" (getenv "TMPDIR")))))))
-    (home-page "https://www.bitcoinunlimited.info/")
-    (synopsis "Client for the Bitcoin Cash protocol")
-    (description
-     "Bitcoin Unlimited is a client for the Bitcoin Cash peer-to-peer
-electronic cash system.  This package provides a command line client and
-a Qt GUI.")
-    (license license:expat)))
 
 (define-public fulcrum
   (package
@@ -2456,7 +2530,7 @@ and manipulation.")
 (define-public xmrig
   (package
     (name "xmrig")
-    (version "6.22.2")
+    (version "6.24.0")
     (source
      (origin
        (method git-fetch)
@@ -2464,7 +2538,7 @@ and manipulation.")
              (url "https://github.com/xmrig/xmrig")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0dis9v8xykiqqzcib22djgmzyvx71akjs25aqvxjjzl1n8cm4npz"))
+       (sha256 (base32 "10q91sh29hlb7yd4lkfjsrk16qgb2j1z19ac77c9y7ccfci97f01"))
        (modules '((guix build utils)))
        (snippet
         ;; TODO: Try to use system libraries instead of bundled ones in
@@ -2513,7 +2587,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.6")
+    (version "4.9.1")
     (source
      (origin
        (method git-fetch)
@@ -2522,7 +2596,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "1qal9ilpyxds6nk2fgzfypk3y1qxh06f6lly3alawz385gf68fkv"))
+       (sha256 (base32 "0zdsp6pb4rlbdqanx94rw1rii5jih1szf4rl3nf8fldvjkwkydlf"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively
@@ -2533,6 +2607,8 @@ mining.")
                       "external/src/rapidjson"
                       "external/src/robin-hood-hashing")))))
     (build-system cmake-build-system)
+    (native-inputs
+     (list xz))
     (inputs
      (list cppzmq curl libuv rapidjson robin-hood-hashing zeromq))
     (arguments
@@ -2547,8 +2623,9 @@ mining.")
                      (chdir "tests")
                      (invoke "cmake" "-DWITH_LTO=OFF" "../../source/tests")
                      (invoke "make" "-j" (number->string (parallel-job-count)))
-                     (invoke "gzip" "-d" "sidechain_dump.dat.gz")
-                     (invoke "gzip" "-d" "sidechain_dump_mini.dat.gz")
+                     (invoke "xz" "-d" "sidechain_dump.dat.xz")
+                     (invoke "xz" "-d" "sidechain_dump_mini.dat.xz")
+                     (invoke "xz" "-d" "sidechain_dump_nano.dat.xz")
                      (invoke "./p2pool_tests")
                      (chdir ".."))))
                (replace 'install

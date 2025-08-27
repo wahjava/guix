@@ -160,11 +160,10 @@
                          eigen
                          expat
                          ffmpeg
-                         fmt
+                         fmt-11
                          freetype
                          gdal
                          gl2ps
-                         glew
                          gmsh
                          hdf5
                          jsoncpp
@@ -607,32 +606,26 @@ the complexity of that interface.  Parallel support depends on the
 (define-public python-fenics-ufl
   (package
     (name "python-fenics-ufl")
-    (version "2019.1.0")
+    (version "2025.1.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "fenics-ufl" version))
-        (sha256
-          (base32
-            "10dz8x3lm68x2w3kkqcjask38h0zkhhak26jdbkppr8g9y8wny7p"))))
-    (build-system python-build-system)
-    (inputs
-     (list python-numpy))
-    (native-inputs
-     (list python-pytest))
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "py.test" "test"))))))
-    (home-page "https://bitbucket.org/fenics-project/ufl/")
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/fenics/ufl")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256 (base32 "1ybf6l2nn4ni4a77ad1f36nhd7ddcbbvyc5frdggsmcjdmds9bf3"))))
+    (build-system pyproject-build-system)
+    (inputs (list python-numpy))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/fenics/ufl")
     (synopsis "Unified language for form-compilers")
-    (description "The Unified Form Language (UFL) is a domain specific
-language for declaration of finite element discretizations of
-variational forms.  More precisely, it defines a flexible interface
-for choosing finite element spaces and defining expressions for weak
-forms in a notation close to mathematical notation.
+    (description
+     "The Unified Form Language (UFL) is a domain specific language for
+declaration of finite element discretizations of variational forms.  More
+precisely, it defines a flexible interface for choosing finite element spaces
+and defining expressions for weak forms in a notation close to mathematical
+notation.
 
 UFL is part of the FEniCS Project.")
     (license license:lgpl3+)))
@@ -755,7 +748,8 @@ FFC is part of the FEniCS Project.")
                                 "fenics-dolfin-demo-init.patch"
                                 "fenics-dolfin-boost.patch"
                                 "fenics-dolfin-config-slepc.patch"
-                                "fenics-dolfin-hdf5-version-check.patch"))
+                                "fenics-dolfin-hdf5-version-check.patch"
+                                "fenics-dolfin-integer-types.patch"))
        (modules '((guix build utils)))
        (snippet '(begin
                    ;; Make sure we don't use the bundled test framework.
@@ -778,7 +772,6 @@ FFC is part of the FEniCS Project.")
                   python-3
                   pt-scotch32
                   suitesparse
-                  sundials-openmpi
                   zlib))
     (native-inputs (list catch-framework pkg-config))
     (propagated-inputs (list python-fenics-ffc petsc-openmpi slepc-openmpi))
@@ -789,7 +782,7 @@ FFC is part of the FEniCS Project.")
           "-DDOLFIN_ENABLE_MPI:BOOL=ON"
           "-DDOLFIN_ENABLE_PARMETIS:BOOL=OFF"
           "-DDOLFIN_ENABLE_SCOTCH:BOOL=ON"
-          "-DDOLFIN_ENABLE_SUNDIALS:BOOL=ON"
+          "-DDOLFIN_ENABLE_SUNDIALS:BOOL=OFF"
           "-DDOLFIN_ENABLE_TRILINOS:BOOL=OFF")
       #:phases
       #~(modify-phases %standard-phases
@@ -810,8 +803,6 @@ FFC is part of the FEniCS Project.")
                       #$(this-package-input "slepc"))
               (setenv "SCOTCH_DIR"
                       #$(this-package-input "scotch"))
-              (setenv "SUNDIALS_DIR"
-                      #$(this-package-input "sundials"))
               (setenv "UMFPACK_DIR"
                       #$(this-package-input "suitesparse"))))
           (add-before 'check 'pre-check

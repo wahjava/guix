@@ -36,6 +36,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -355,7 +356,7 @@ and a wide variety of other metadata.")
 (define-public libpano13
   (package
     (name "libpano13")
-    (version "2.9.21")
+    (version "2.9.22")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/panotools/libpano13/"
@@ -364,7 +365,7 @@ and a wide variety of other metadata.")
                                   "/libpano13-" version ".tar.gz"))
               (sha256
                (base32
-                "141mccp4klj0qdpvki97q5wjf5a1b7pj09s6c4lmwc4r452s3rbr"))))
+                "1qx8822cd81vpxnrqq6lzzcsdk9axa6vzp1i4y6w4wdyrlq6iz5g"))))
     (build-system cmake-build-system)
     (native-inputs
      (list perl))                       ; for pod2man
@@ -514,17 +515,41 @@ scene to produce an image that looks much like a tone-mapped image.")
         (base32 "1lwf3cwldvh9qfmh3w7nqqildfmxx2i5f5bn0vr8y6qc5kh7a1s9"))))
     (build-system cmake-build-system)
     (arguments
-     `(,@(if (any (cute string-prefix? <> (or (%current-system)
-                                              (%current-target-system)))
-                  '("x86_64" "i686"))
-        ;; SSE and SSE2 are supported only on Intel processors.
-        '()
-        '(#:configure-flags '("-DBUILD_FOR_SSE=OFF" "-DBUILD_FOR_SSE2=OFF")))
-       #:tests? #f)) ; There are no tests to run.
+     (list
+      #:imported-modules `(,@%cmake-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cmake-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:configure-flags
+      (if (any (cute string-prefix? <> (or (%current-system)
+                                           (%current-target-system)))
+               '("x86_64" "i686"))
+          ;; SSE and SSE2 are supported only on Intel processors.
+          #~'()
+          #~'("-DBUILD_FOR_SSE=OFF" "-DBUILD_FOR_SSE2=OFF"))
+      #:tests? #f ; There are no tests to run.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-egg
+            (lambda _
+              (substitute* "apps/CMakeLists.txt"
+                ;; Prevent creation of Python egg.
+                (("\\$\\{SETUP_PY\\} install")
+                 "${SETUP_PY} install --single-version-externally-managed --root=/"))))
+          (add-after 'install 'python-wrap
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (for-each (lambda (program)
+                          (wrap-program (search-input-file outputs program)
+                            `("GUIX_PYTHONPATH" ":" prefix
+                              (,(getenv "GUIX_PYTHONPATH")
+                               ,(py:site-packages inputs outputs)))))
+                        (list "bin/lensfun-update-data"
+                              "bin/lensfun-add-adapter")))))))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glib))
+     (list bash-minimal glib python))
     (home-page "https://lensfun.github.io/")
     (synopsis "Library to correct optical lens defects with a lens database")
     (description "Digital photographs are not ideal.  Of course, the better is
@@ -559,7 +584,6 @@ photographic equipment.")
      (list
       #:configure-flags
       #~(list "-DBINARY_PACKAGE_BUILD=On"
-              "-DBUILD_TESTING=On"
               "-DDONT_USE_INTERNAL_LIBRAW=On")
       #:phases
       #~(modify-phases %standard-phases
@@ -678,8 +702,20 @@ and enhance them.")
       (arguments
        (list
         #:tests? #f ;Tests are only examples
-        #:configure-flags #~(list "-DUSE_BUNDLED_LIBRAW=OFF")
-        #:build-type "Release")) ;Rawspeed fails on default 'RelWithDebInfo'
+        #:configure-flags
+        #~(list "-DUSE_BUNDLED_LIBRAW=OFF"
+                "-DBINARY_PACKAGE_BUILD=ON")
+        #:build-type "Release" ;Rawspeed fails on default 'RelWithDebInfo'
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'libOpenCL-path
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Statically link to libOpenCL.
+                (substitute* "./src/common/dlopencl.c"
+                  (("\"libOpenCL\"")
+                   (string-append "\""
+                                  (search-input-file inputs "/lib/libOpenCL.so")
+                                  "\""))))))))
       (native-inputs
        (list cmocka
              desktop-file-utils
@@ -818,7 +854,7 @@ such as Batch image processing.")
                   `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))
                   `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
     (native-inputs
-     (list cmake
+     (list cmake-minimal
            gettext-minimal
            `(,glib "bin")
            gobject-introspection

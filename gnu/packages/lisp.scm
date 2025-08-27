@@ -1160,7 +1160,7 @@ libraries for Machine Learning, Neural Nets and statistical estimation.")
 (define-public picolisp
   (package
     (name "picolisp")
-    (version "24.9")
+    (version "25.6")
     (supported-systems '("aarch64-linux"
                          "powerpc64le-linux"
                          "x86_64-linux"))
@@ -1169,7 +1169,7 @@ libraries for Machine Learning, Neural Nets and statistical estimation.")
        (method url-fetch)
        (uri (string-append "https://software-lab.de/picoLisp-" version ".tgz"))
        (sha256
-        (base32 "1bsp14vjzvlav813mxzgigcdrmsxhrrhlhdzfdvdq6havacm0cwf"))))
+        (base32 "0cr1w4lcszipfp7d0pk7v42dzqrd6i7b498f81lqymijgp3v4vkd"))))
     (build-system gnu-build-system)
     (inputs (list clang readline libffi openssl pkg-config))
     (arguments
@@ -1238,7 +1238,7 @@ including a built-in database engine and a GUI system.")
 (define-public roswell
   (package
    (name "roswell")
-   (version "23.10.14.114")
+   (version "24.10.115")
    (home-page "https://github.com/roswell/roswell")
    (source
     (origin
@@ -1248,7 +1248,7 @@ including a built-in database engine and a GUI system.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "05w5sjh1bfy2wnblc09cb9qs8h7hxkx5hcqlbgpn7md32b0m4h7g"))))
+      (base32 "1az9295cp2swyms0bkrb7l00x5s04b9zk8b4yf67cgfi1ka019nr"))))
    (build-system gnu-build-system)
    (arguments
     (list #:configure-flags #~(list (string-append "--prefix=" #$output))
@@ -1325,7 +1325,8 @@ not likely to change.")
                                (invoke #$(cc-for-target) "notcurses_s7.c"
                                        "-I." "-O2" "-g"
                                        "-shared" "-o" "libnotcurses_s7.so"
-                                       "-lnotcurses-core" "-fPIC")
+                                       "-lnotcurses-core" "-fPIC"
+                                       "-Wno-error=implicit-function-declaration")
                                ;; Need s7.o and ffitest for tests
                                (display "[BUILD] s7.o\n")
                                (invoke #$(cc-for-target) "-c" "s7.c" "-o"
@@ -1702,7 +1703,7 @@ the HTML documentation of TXR.")
 (define-public txr
   (package
     (name "txr")
-    (version "300")
+    (version "302")
     (source
      (origin
        (method git-fetch)
@@ -1711,7 +1712,7 @@ the HTML documentation of TXR.")
              (commit (string-append "txr-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cxdsk31wj8874nijwbcx7c3zsspsclr722jbaivisrm2wx5hbqn"))))
+        (base32 "01h09lbpgyzv64m8ycpr2vavdpdxhxdgvmc3p0jqrkvnrzhkdlhj"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags

@@ -74,7 +74,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages c)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
@@ -349,7 +349,11 @@ tables.  It includes a library and command-line utility.")
        #:make-flags (list (string-append "CPPFLAGS="
                                          " -I../common/include "
                                          " -I../debug/include "
-                                         " -I../exception/include"))))
+                                         " -I../exception/include")
+                          (string-append
+                            "CFLAGS="
+                            "-Wno-error=implicit-function-declaration "
+                            "-Wno-error=incompatible-pointer-types"))))
     (home-page "https://www.gnu.org/software/fdisk/")
     (synopsis "Low-level disk partitioning and formatting")
     (description
@@ -1402,7 +1406,7 @@ LVM D-Bus API).")
 (define-public rmlint
   (package
     (name "rmlint")
-    (version "2.10.2")
+    (version "2.10.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1411,7 +1415,7 @@ LVM D-Bus API).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0sk4v1chnk2hvzi92svyf8qgamfs4fvial90qwx4a7dayxhkbsm4"))))
+                "1033h99z443wqb66rrh34gmnlnlbjsm5j1sqpg069jdih2ffi6a3"))))
     (build-system scons-build-system)
     (arguments
      (list
@@ -1465,7 +1469,7 @@ on your file system and offers to remove it.  @command{rmlint} can find:
 (define-public lf
   (package
     (name "lf")
-    (version "33")
+    (version "35")
     (source
      (origin
        (method git-fetch)
@@ -1474,7 +1478,7 @@ on your file system and offers to remove it.  @command{rmlint} can find:
              (commit (string-append "r" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jmqf27ysi35n3hqahlzs5hym7i4w1mplklrvv0lc0baddzx7av8"))))
+        (base32 "19hk78j1cdnpjg5gjilm797vzzlppfard1qas9vxjhx289n8i76i"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1805,11 +1809,17 @@ wrapper for disk usage querying and visualisation.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:tests? #f
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
             (lambda _
               (system* "qmake" (string-append "INSTALL_PREFIX=" #$output))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-after 'install 'wrap
             (lambda _
               (wrap-program (string-append #$output

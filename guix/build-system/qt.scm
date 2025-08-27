@@ -61,13 +61,6 @@
     (guix build qt-utils)
     ,@%cmake-build-system-modules))
 
-(define (default-cmake)
-  "Return the default CMake package."
-
-  ;; Do not use `@' to avoid introducing circular dependencies.
-  (let ((module (resolve-interface '(gnu packages cmake))))
-    (module-ref module 'cmake-minimal)))
-
 (define (default-qtbase)
   "Return the default qtbase package."
 
@@ -79,7 +72,8 @@
 ;; the variables defined here.
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
-                (cmake (default-cmake))
+                (cmake (default-cmake target))
+                (ninja (default-ninja))
                 (qtbase (default-qtbase))
                 #:allow-other-keys
                 #:rest arguments)
@@ -96,6 +90,7 @@
                           `(("source" ,source))
                           '())
                     ,@`(("cmake" ,cmake))
+                    ,@`(("ninja" ,ninja))
                     ,@`(("qtbase" ,qtbase))
                     ,@native-inputs
                     ,@(if target
@@ -128,9 +123,12 @@
                    (search-paths '())
                    (make-flags ''())
                    (out-of-source? #t)
+                   (generator "Unix Makefiles")
                    (build-type "RelWithDebInfo")
                    (tests? #t)
-                   (test-target "test")
+                   (test-exclude "")
+                   (test-repeat-until-pass? #t)
+                   (test-repeat-until-pass-count 5)
                    (parallel-build? #t) (parallel-tests? #t)
                    (validate-runpath? #t)
                    (patch-shebangs? #t)
@@ -168,9 +166,12 @@ provides a 'CMakeLists.txt' file as its build system."
                     #:configure-flags #$configure-flags
                     #:make-flags #$make-flags
                     #:out-of-source? #$out-of-source?
+                    #:generator #$generator
                     #:build-type #$build-type
                     #:tests? #$tests?
-                    #:test-target #$test-target
+                    #:test-exclude #$test-exclude
+                    #:test-repeat-until-pass? #$test-repeat-until-pass?
+                    #:test-repeat-until-pass-count #$test-repeat-until-pass-count
                     #:parallel-build? #$parallel-build?
                     #:parallel-tests? #$parallel-tests?
                     #:validate-runpath? #$validate-runpath?
@@ -205,9 +206,12 @@ provides a 'CMakeLists.txt' file as its build system."
                          (native-search-paths '())
                          (make-flags ''())
                          (out-of-source? #t)
+                         (generator "Unix Makefiles")
                          (build-type "RelWithDebInfo")
                          (tests? #f)              ; nothing can be done
-                         (test-target "test")
+                         (test-exclude "")
+                         (test-repeat-until-pass? #t)
+                         (test-repeat-until-pass-count 5)
                          (parallel-build? #t) (parallel-tests? #f)
                          (validate-runpath? #t)
                          (patch-shebangs? #t)
@@ -258,9 +262,12 @@ build system."
                     #:configure-flags #$configure-flags
                     #:make-flags #$make-flags
                     #:out-of-source? #$out-of-source?
+                    #:generator #$generator
                     #:build-type #$build-type
                     #:tests? #$tests?
-                    #:test-target #$test-target
+                    #:test-exclude #$test-exclude
+                    #:test-repeat-until-pass? #$test-repeat-until-pass?
+                    #:test-repeat-until-pass-count #$test-repeat-until-pass-count
                     #:parallel-build? #$parallel-build?
                     #:parallel-tests? #$parallel-tests?
                     #:validate-runpath? #$validate-runpath?

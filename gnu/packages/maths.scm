@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Luca Cirrottola <luca.cirrottola@inria.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
+;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -480,9 +481,7 @@ enough to be used effectively as a scientific calculator.")
                 "0csy4pjw1p8rp6g5qxi2h0ychhhp1fldv7gb761627fs2mclw9gv"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:test-target "test"
-       #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
-                           "-DBUILD_TESTING=ON")))
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
     (synopsis "Conversion routines for IEEE doubles")
     (description
      "The double-conversion library provides binary-decimal and decimal-binary
@@ -829,20 +828,6 @@ GNU MathProg modeling language, a subset of the AMPL language, and features a
 translator for the language.  In addition to the C library, a stand-alone
 LP/MIP solver is included in the package.")
     (license license:gpl3+)))
-
-(define-public glpk-4
-  (package
-    (inherit glpk)
-    (name "glpk")
-    (version "4.65")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (string-append "mirror://gnu/glpk/glpk-"
-                          version ".tar.gz"))
-      (sha256
-       (base32
-        "040sfaa9jclg2nqdh83w71sv9rc1sznpnfiripjdyr48cady50a2"))))))
 
 (define-public linasm
   (package
@@ -1199,8 +1184,7 @@ large scale eigenvalue problems.")
                           "-DCBLAS=ON"
                           "-DLAPACKE=ON"
                           ;; Build the 'LAPACKE_clatms' functions.
-                          "-DLAPACKE_WITH_TMG=ON"
-                          "-DBUILD_TESTING=ON")))
+                          "-DLAPACKE_WITH_TMG=ON")))
     (synopsis "Library for numerical linear algebra")
     (description
      "LAPACK is a Fortran 90 library for solving the most commonly occurring
@@ -2024,7 +2008,43 @@ extremely large and complex data collections.")
             (lambda _
               (invoke "perl" "bin/make_err" "src/H5err.txt")
               (invoke "perl" "bin/make_vers" "src/H5vers.txt")
-              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt"))))))
+              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt")))
+          ;; Remove references to GCC/GFortran/binutils in order to decrease
+          ;; package size.
+          (add-before 'generate-headers 'remove-referencess
+            (lambda _
+              (substitute* '("src/libhdf5.settings.cmake.in"
+                             "src/H5build_settings.cmake.c.in")
+                (("@CMAKE_AR@") "ar")
+                (("@CMAKE_RANLIB@") "ranlib")
+                (("@CMAKE_C_COMPILER@") "gcc")
+                (("@CMAKE_CXX_COMPILER") "g++")
+                (("@CMAKE_Fortran_COMPILER@") "gfortran"))
+              (substitute* '("src/libhdf5.settings.autotools.in"
+                             "src/H5build_settings.autotools.c.in")
+                (("@AR@") "ar")
+                (("@RANLIB@") "ranlib")
+                (("@CXX_VERSION@") "g++")
+                (("@@CC_VERSION@") "gcc")
+                (("@FC_VERSION@") "gfortran"))))
+          (add-after 'install 'remove-gcc-references
+            (lambda _
+              (substitute* (map (lambda (f)
+                                  (string-append #$output "/" f))
+                                '("bin/h5hlcc"
+                                  "bin/h5hlc++"
+                                  "bin/h5cc"
+                                  "bin/h5c++"))
+                (("/gnu/store/[a-z0-9]*-gcc-[0-9.]*/bin/")
+                 ""))))
+          (add-after 'install 'remove-gfortran-references
+            (lambda _
+              (substitute* (map (lambda (f)
+                                  (string-append #$output "/" f))
+                                '("bin/h5hlfc"
+                                  "bin/h5fc"))
+                (("/gnu/store/[a-z0-9]*-gfortran-[0-9.]*/bin/")
+                 "")))))))
     (inputs (list libaec zlib))
     (native-inputs
      (list bison
@@ -2282,7 +2302,15 @@ Swath).")
                 ;; test per line in this file).
                 (substitute* "testpar/CMakeLists.txt"
                   (("(t_pmulti_dset|t_shapesame|t_filters_parallel)" _ test)
-                   (string-append "# " test "\n")))))))))
+                   (string-append "# " test "\n")))))
+            (replace 'remove-gcc-references
+              (lambda _
+                (substitute* (map (lambda (f)
+                                    (string-append #$output "/" f))
+                                  '("bin/h5hlcc"
+                                    "bin/h5cc"))
+                  (("/gnu/store/[a-z0-9]*-gcc-[0-9.]*/bin/")
+                   ""))))))))
     (synopsis "Management suite for data with parallel IO support")))
 
 (define-public hdf5-blosc
@@ -3242,7 +3270,7 @@ includes a complete LAPACK implementation.")
 (define-public hpcombi
   (package
     (name "hpcombi")
-    (version "1.0.1")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3251,11 +3279,9 @@ includes a complete LAPACK implementation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00mbxw5x6m61n0x68dsiyq97i7b08h3hkbj9is2w6gcg571jy319"))))
-    (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
+                "0xxqjz4lba57vn65m2k5jxrz0v7y6jwnhxwg6njd4vrafv5w17yv"))))
     (native-inputs
-     (list catch2-3))
+     (list catch2-3.8))
     (build-system cmake-build-system)
     (home-page "https://libsemigroups.github.io/HPCombi/")
     (synopsis "Fast combinatorics in C++ using SSE/AVX instruction sets")
@@ -3605,6 +3631,22 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
                     "https://www.unicode.org/license.html")
                    ;; File src/NCollection/NCollection_StdAllocator.hxx:
                    license:public-domain))))
+
+;; PrusaSlicer has a hard dependency on this slightly older version of
+;; OpenCASCADE. According to them, all newer versions have a bug that causes
+;; chamfers to be triangulated incorrectly.
+;; See https://github.com/prusa3d/PrusaSlicer/commit/c6a02106fd1d3caa9a48a6b7c2bdd04546b24485.
+(define-public opencascade-occt-7.6.1
+  (hidden-package
+    (package/inherit opencascade-occt
+    (name "opencascade-occt")
+    (version "7.6.1")
+    (source
+      (origin
+        (inherit (package-source opencascade-occt))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1cc7n4rs26lm1awwn2bijvjq9b3kz204ffnks02lrpgs7pf8yk8b")))))))
 
 (define-public fast-downward
   (package
@@ -4641,6 +4683,40 @@ bindings to almost all functions of PETSc.")
     ;; <https://github.com/dimpase/primecountpy/issues/16>.
     (license license:gpl2+)))
 
+(define-public python-py-bobyqa
+  (package
+    (name "python-py-bobyqa")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/numericalalgorithmsgroup/pybobyqa")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k9iapdlbp1k2ck1550ckw0y75f71gxzqkv4clz89ym4fwqwszv2"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-pandas
+           python-scipy
+           python-setuptools))
+    (home-page "https://github.com/numericalalgorithmsgroup/pybobyqa")
+    (synopsis "Derivative-free solver for general objective minimization")
+    (description
+     "Py-BOBYQA is a flexible package for solving bound-constrained general
+objective minimization, without requiring derivatives of the objective.  At
+its core, it is a Python implementation of the BOBYQA algorithm by Powell,but
+Py-BOBYQA has extra features improving its performance on some problems.
+Py-BOBYQA is particularly useful when evaluations of the objective function
+are expensive and/or noisy.")
+    (license license:gpl3)))
+
 (define-public python-pyglm
   (package
     (name "python-pyglm")
@@ -5403,7 +5479,8 @@ implemented in ANSI C, and MPI for communications.")
      (list flex bison gfortran))
     (outputs '("out" "metis"))
     (arguments
-     (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
+     (list #:parallel-tests? #f
+           #:configure-flags #~'("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
                                  "-DBUILD_PTSCOTCH=OFF")
            #:phases
            #~(modify-phases %standard-phases
@@ -5498,6 +5575,7 @@ bio-chemistry.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:tests? #f
         #:configure-flags
         #~(list "-DBUILD_SHARED_LIBS=ON"
                 #$@(if (target-x86?)
@@ -8064,8 +8142,7 @@ supports compressed MAT files, as well as newer (version 7.3) MAT files.")
     (arguments
      (list
       #:configure-flags
-      #~(list "-DBUILD_TESTING=ON"
-              ;; By default, Vc will optimize for the CPU of the build machine.
+      #~(list ;; By default, Vc will optimize for the CPU of the build machine.
               ;; Setting this to "none" makes it create portable binaries.  See
               ;; "cmake/OptimizeForArchitecture.cmake".
               "-DTARGET_ARCHITECTURE=none")
@@ -8750,6 +8827,7 @@ reduction.")
     (inputs
      (list boost glu mesa qtbase-5))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (synopsis "Toolset for the mCRL2 formal specification language")
     (description
      "@dfn{mCRL2} (micro Common Representation Language 2) is a formal
@@ -8768,7 +8846,8 @@ analysed.")
     (inputs
      (list boost))
     (arguments
-     '(#:configure-flags '("-DMCRL2_ENABLE_GUI_TOOLS=OFF")))))
+     (list #:tests? #f
+           #:configure-flags #~(list "-DMCRL2_ENABLE_GUI_TOOLS=OFF")))))
 
 (define-public tcalc
   (package
@@ -9845,6 +9924,9 @@ optimized algorithms and implementation.")
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no check target
+           #:make-flags
+           #~(list (string-append "CFLAGS=-g -O2"
+                                  " -Wno-error=implicit-function-declaration"))
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-source
@@ -9884,8 +9966,8 @@ generic reader and writer API.")
                    license:bsd-3))))    ; blif2aig
 
 (define-public btor2tools
-  (let ((commit "b8456dda4780789e882f5791eb486f295ade4da4")
-        (revision "1"))
+  (let ((commit "fb69ee3b95e8baa5f0a9a6b0b19ee8beaad52932")
+        (revision "2"))
    (package
    (name "btor2tools")
    (version (git-version "1.0.0-pre" revision commit))
@@ -9897,7 +9979,7 @@ generic reader and writer API.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "0r3cm69q5xhnbxa74yvdfrsf349s4cxmiqlb4aq8appi7yg3qhww"))))
+              "1vxgcjgs90ywvclp1dvk0j202fcfdp0sjzxjrzsx0v96a2frq02p"))))
    (build-system cmake-build-system)
    (arguments
     (list #:out-of-source? #f
@@ -9928,6 +10010,8 @@ Boolector.")
               "0hyw9q42ir92vcaa7bwv6f631n85rfsxp463rnmklniq1wf6dyn9"))))
    (build-system gnu-build-system)
    (arguments (list #:configure-flags #~(list "--enable-shared")))
+   (native-inputs
+       (list gcc-13)) ;XXX: 1 test fails with gcc@14.
    ;; The original home-page was lost to time, so we reference the "unofficial"
    ;; Github mirror.  For what it's worth, the author of the library appears to
    ;; have been involved with this mirror at some point in time.
@@ -10214,8 +10298,8 @@ true in all models.")
                   (apply (assoc-ref %standard-phases 'install) args))))))))))
 
 (define-public louvain-community
-  (let ((commit "8cc5382d4844af127b1c1257373740d7e6b76f1e")
-        (revision "1"))
+  (let ((commit "681a711a530ded0b25af72ee4881d453a80ac8ac")
+        (revision "2"))
     (package
       (name "louvain-community")
       (version (git-version "1.0.0" revision commit))
@@ -10227,7 +10311,7 @@ true in all models.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ss00hkdvr9bdkd355hxf8zd7xycb3nm8qpy7s75gjjf6yng0bfj"))))
+                  "1ria6s5p7iw86mq1arbrhlbadll1k79j9y5c1bdg76zdwjfs17cs"))))
       (build-system cmake-build-system)
       (arguments
        (list #:tests? #f                ; tests appear to require missing files
@@ -10272,7 +10356,6 @@ community detection algorithm.")
     (arguments
      (list
       #:build-type "Release"
-      #:test-target "test"
       #:configure-flags #~(list "-DENABLE_TESTING=ON" "-DSTATS=ON")
       #:phases
       #~(modify-phases %standard-phases
@@ -10588,16 +10671,23 @@ projects up to the certification of critical software.")
         (base32 "0c88gc72j3zggyk4yrrip6i0v7xkx97l140vpy3xhxs2i7xy1461"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags '("-DBUILD_DOC=ON"
-                           "-DBUILD_TESTING=ON")
-       ;; The default "check" target also includes examples and benchmarks.
-       #:test-target "check-testsuite"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'build-doc
-           (lambda _
-             (invoke "make" "-j" (number->string (parallel-job-count))
-                     "blitz-doc"))))))
+     (list
+      #:configure-flags #~(list "-DBUILD_DOC=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-doc
+            (lambda _
+              (invoke "make" "-j" (number->string (parallel-job-count))
+                      "blitz-doc")))
+           (replace 'check
+             (lambda* (#:rest args)
+               (apply (assoc-ref gnu:%standard-phases 'check)
+                      ;; The default "check" target also includes examples and
+                      ;; benchmarks.
+                      #:test-target "check-testsuite" args))))))
     (native-inputs
      (list python texinfo))
     (synopsis "C++ template class library for multidimensional arrays")
@@ -11339,7 +11429,7 @@ Mathics3.")
              (setenv "PYTHONPATH" (getcwd))
              (setenv "DJANGO_SETTINGS_MODULE" "mathics_django.settings")
              (invoke "django-admin" "test"))))))
-    (propagated-inputs (list python-django-4.2
+    (propagated-inputs (list python-django
                              python-mathics-scanner
                              python-mathics-core
                              python-networkx
@@ -11350,6 +11440,36 @@ Mathics3.")
     (synopsis "A Django front end for Mathics3.")
     (description "This package provides a Django front end for Mathics3.")
     (license license:gpl3)))
+
+(define-public python-mathics3-notebook-frontends
+  (let ((commit "63b90a07704acab5b04acc7a9335a8a88916c402") ; no releases
+        (revision "0"))
+    (package
+      (name "python-mathics3-notebook-frontends")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Mathics3/Mathics3-notebook-frontends")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "02smq8w0m3kj1xssbyd7kl17b34mk1jzy9ds7fsqb54qa5pba78q"))))
+      (build-system pyproject-build-system)
+      (propagated-inputs (list python-mathics-core))
+      (arguments
+       (list #:tests? #f)) ; no tests
+      (native-inputs
+       (list python-setuptools
+             python-wheel))
+      (home-page "https://mathics.org/")
+      (synopsis "Mathics frontend for Jupyter Notebook")
+      (description
+       "This package provides a Mathics3 frontend for
+@url{https://jupyter.org/, Jupyter Notebook} and @url{https://marimo.io/,
+Marimo}.")
+      (license license:gpl3+))))
 
 (define-public lie
   (package

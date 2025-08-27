@@ -72,7 +72,7 @@
 ;;; Copyright © 2022 Roman Riabenko <roman@riabenko.com>
 ;;; Copyright © 2022, 2023, 2025 zamfofex <zamfofex@twdb.moe>
 ;;; Copyright © 2022 Gabriel Arazas <foo.dogsquared@gmail.com>
-;;; Copyright © 2022-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Hendursaga <hendursaga@aol.com>
 ;;; Copyright © 2022 Parnikkapore <poomklao@yahoo.com>
 ;;; Copyright © 2022 Cairn <cairn@pm.me>
@@ -94,6 +94,7 @@
 ;;; Copyright © 2025 Adrien 'neox' Bourmault <neox@gnu.org>
 ;;; Copyright © 2025 Ada Stevenson <adanskana@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Aiden Isik <aidenisik+git@member.fsf.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1020,6 +1021,12 @@ possible, while battling many vicious aliens.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'gcc14
+           ;; See line 84 of
+           ;; https://github.com/NixOS/nixpkgs/pull/369352/files#diff-d4e7b24a8c4ebea52238a5421f96f293576ae2be634cd72c1c1521ee043a01fdR84
+           (lambda _
+             (substitute* "hunt/hunt/otto.c"
+               (("sigpause\\(old_mask\\);") ""))))
          (replace 'configure
            (lambda* (#:key outputs inputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -1419,7 +1426,7 @@ more.  This package does @emph{not} provide the game assets.")
   ;; us today is a bunch of fixes that other distros shipped as patches.
   (package
     (name "cowsay")
-    (version "3.8.3")
+    (version "3.8.4")
     (source
      (origin
        (method git-fetch)
@@ -1428,7 +1435,7 @@ more.  This package does @emph{not} provide the game assets.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xdrpqj0lf3x1aib4s1bqfq4p7dxxlw1560pp1kw6pk3mzyvxih5"))))
+        (base32 "0as4axm1v37d2bm86sksi6wrd0yc4jm2lyfdhr5k179b1mvnfx4v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -1547,6 +1554,9 @@ practise.")
     (arguments
      (list
       #:tests? #f                       ;no tests
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -1556,6 +1566,8 @@ practise.")
                  #$output))
               (invoke "qmake" "DoomRunner.pro" "-spec" "linux-g++"
                       "\"CONFIG+=release\"")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-after 'install 'install-xdg
             (lambda _
               (with-directory-excursion "Install/XDG"
@@ -3205,6 +3217,85 @@ and defeat them with your bubbles!")
     ;; GPL2+ is for code, CC0 is for art.
     (license (list license:gpl2+ license:cc0))))
 
+(define-public serious-sam-classic
+  (package
+    (name "serious-sam-classic")
+    (version "1.10.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tx00100xt/SeriousSamClassic")
+             (commit version)))
+       (sha256
+        (base32 "1s1mbj2qpaxdrx0pfhdyk3v1vh7f2dp33w2i5ifpgphkchdx61jg"))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (patches (search-patches "serious-sam-classic-engine-patch-paths.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; no upstream tests
+      #:configure-flags
+      #~(list (string-append "-DCMAKE_INSTALL_PREFIX:PATH="
+                             #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-cmake
+            (lambda _
+              (substitute* (list "CMakeLists.txt"
+                                 "SamTFE/Sources/CMakeLists.txt"
+                                 "SamTSE/Sources/CMakeLists.txt")
+                (("\"Install to systems directories\" Off")
+                 "\"Install to systems directories\" On")
+                (("march=native") "mtune=generic")
+                (("CMAKE_SKIP_RPATH ON") "CMAKE_SKIP_RPATH OFF")
+                (("/usr") #$output)
+                (("lib64") "lib"))))
+          (add-after 'fix-cmake 'fix-paths
+            (lambda _
+              (substitute* (list "SamTFE/Sources/Engine/Engine.cpp"
+                                 "SamTSE/Sources/Engine/Engine.cpp")
+                (("@OUTPUT_DIR@") #$output)))))))
+    (inputs (list sdl2 libvorbis))
+    (native-inputs (list flex bison nasm imagemagick))
+    (home-page "https://github.com/tx00100xt/SeriousSamClassic")
+    (synopsis "SeriousSam engine and Serious Sam: TFE and TSE")
+    (description
+     "This is an open-source port of the Serious Engine from
+Serious Sam: The First Encounter and Serious Sam: The Second Encounter.
+To run, you must put your official game data, @code{Levels} and @code{Help} in
+@code{~/.local/share/Serious-Engine/{serioussam,serioussamse}/gamedata/}.}")
+    (license license:gpl2)))
+
+(define-public serious-sam-classic-vk
+  (package
+    (inherit serious-sam-classic)
+    (name "serious-sam-classic-vk")
+    (version "1.10.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tx00100xt/SeriousSamClassic-VK")
+             (commit version)))
+       (sha256
+        (base32 "1av3ll3pfdsadm10dz3srxfw9ld1xbg8i5xrgv7qynqsd0x8jxby"))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (patches (search-patches
+                 "serious-sam-classic-engine-patch-paths.patch"))))
+    (inputs (modify-inputs (package-inputs serious-sam-classic)
+              (prepend vulkan-loader vulkan-headers)))
+    (synopsis
+     "SeriousSam engine and Serious Sam: TFE and TSE with Vulkan renderer")
+    (description
+     "This is an open-source port of the Serious Engine from
+Serious Sam: The First Encounter and Serious Sam: The Second Encounter.
+This variant includes a Vulkan renderer.
+To run, you must put your official game data, @code{Levels} and @code{Help} in
+@code{~/.local/share/Serious-Engine/{serioussam,serioussamse}/gamedata/}.}")))
+
 (define-public solarus
   (package
     (name "solarus")
@@ -4084,7 +4175,7 @@ asynchronously and at a user-defined speed.")
 (define-public chess
   (package
     (name "chess")
-    (version "6.2.11")
+    (version "6.3.0")
     (source
      (origin
        (method url-fetch)
@@ -4092,7 +4183,7 @@ asynchronously and at a user-defined speed.")
                            ".tar.gz"))
        (sha256
         (base32
-         "1gg9764ld7skn7jps9pma6x8zqf9nka1cf5nryq197f6lpp404fq"))))
+         "0fm27h1xv56v1g1zq0cd9wlchvfw8iwmsgj4nyaxcalc171bwdqb"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
@@ -4252,35 +4343,31 @@ exec ~a/bin/freedink -refdir ~a/share/dink\n"
     (native-inputs '())))
 
 (define-public fuzzylite
-  (package
-    (name "fuzzylite")
-    (version "6.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/fuzzylite/fuzzylite")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0yay0qc81x0irlvxqpy7jywjxpkmpjabdhq2hdh28r9z85wp2nwb"))
-              (patches (search-patches "fuzzylite-use-catch2.patch"
-                                       "fuzzylite-soften-float-equality.patch"
-                                       "fuzzylite-relative-path-in-tests.patch"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'configure 'switch-to-fuzzylite-dir
-                    (lambda _
-                      (chdir "fuzzylite"))))))
-    (native-inputs (list catch2))
-    (home-page "https://www.fuzzylite.com/")
-    (synopsis "Fuzzy logic control binary")
-    (description
-     "This package provides fuzzylite, a fuzzy logic control library which
+  ;; Use the latest commit from the master branch, as the latest release fails
+  ;; to build.
+  (let ((commit "13b3122f5c353c0389ed4e66041d548c44ec9df6")
+        (revision "0"))
+    (package
+      (name "fuzzylite")
+      (version (git-version "6.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/fuzzylite/fuzzylite")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1ai7x5lfy8c1d11crz33ayy21alry740f78qjjxwzdfr6ph7pkzq"))))
+      (build-system cmake-build-system)
+      (native-inputs (list catch2-3))
+      (home-page "https://www.fuzzylite.com/")
+      (synopsis "Fuzzy logic control binary")
+      (description
+       "This package provides fuzzylite, a fuzzy logic control library which
 allows one to easily create fuzzy logic controllers in a few steps utilizing
 object-oriented programming.")
-    (license license:gpl3)))
+      (license license:gpl3+))))
 
 (define-public xboard
   (package
@@ -4441,9 +4528,7 @@ for common mesh file formats, and collision detection.")
     (license license:zlib)))
 
 (define-public mars
-  ;; The latest release on SourceForge relies on an unreleased version of SFML
-  ;; with a different API, so we take the latest version from the official
-  ;; repository on Github.
+  ;; No official release since 2013: use the latest commit.
   (let ((commit   "84664cda094efe6e49d9b1550e4f4f98c33eefa2")
         (revision "2"))
     (package
@@ -4473,7 +4558,7 @@ for common mesh file formats, and collision detection.")
                                 (assoc-ref outputs "out")
                                 "/share/games/marsshooter/\";"))))))))
       (inputs
-       (list mesa fribidi taglib sfml))
+       (list mesa fribidi taglib sfml-2))
       (home-page "https://mars-game.sourceforge.net/")
       (synopsis "2D space shooter")
       (description
@@ -4793,7 +4878,7 @@ Protocol).")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glu sfml))
+     (list glu sfml-2))
     (synopsis "High-speed arctic racing game based on Tux Racer")
     ;; Snarfed straight from Debian.
     (description "Extreme Tux Racer, or etracer as it is called for short, is
@@ -5260,7 +5345,7 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.18.3")
+    (version "1.18.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5269,7 +5354,7 @@ falling, themeable graphics and sounds, and replays.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0habv0whb0y0r52sjln7yin1nfm3vjjxqlavm7jarcrg2s3v743k"))))
+                "16mrdpz1yq12ppnrmm4yv768zmh08qjdxh892pzc5i17n7xkmpy4"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;no test target
@@ -6526,7 +6611,7 @@ tactics.")
 (define-public widelands
   (package
     (name "widelands")
-    (version "1.2")
+    (version "1.2.1")
     (source
      (origin
        (method git-fetch)
@@ -6535,7 +6620,7 @@ tactics.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m9hn1sh1siggribzsq79k7p0lggdw41ji7zdl6h648cjak9mdsp"))
+        (base32 "1n8daxarwcagcxpzlxrrdy0piir1zinwnfbcsyyg4yd789pixhgw"))
        (modules '((guix build utils)))
        (snippet
         #~(delete-file-recursively "src/third_party/minizip"))))
@@ -6926,7 +7011,7 @@ with the \"Stamp\" tool within Tux Paint.")
                           "-DUSE_SYSTEM_PHYSFS=ON")
       #:phases
       (modify-phases %standard-phases
-        (add-after 'unpack 'patch-squirrel-path
+        (add-after 'unpack 'adapt-squirrel
           (lambda* (#:key inputs #:allow-other-keys)
             (let ((squirrel (assoc-ref inputs "squirrel")))
               (substitute* "CMakeLists.txt"
@@ -6935,7 +7020,10 @@ with the \"Stamp\" tool within Tux Paint.")
                 (("add_dependencies\\(supertux2_lib squirrel\\)") "")
                 (("\\$\\{SQUIRREL_PREFIX\\}/include")
                  (string-append "${SQUIRREL_PREFIX}/include/squirrel"))))
-            #t)))))
+            ;; Adapt to changed API between squirrel-3.1 and 3.2.
+            (substitute* "src/scripting/wrapper.cpp"
+              (("sq_getinstanceup\\(vm, 1, &data, nullptr" all)
+               (string-append all ", 0"))))))))
    (build-system cmake-build-system)
    (inputs (list boost
                  curl
@@ -7100,6 +7188,9 @@ colors, pictures, and sounds.")
     (arguments
      (list
       #:tests? #f ;no test suite
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -7115,7 +7206,9 @@ colors, pictures, and sounds.")
                 (("    h264bitstream.*\n") "")
                 (("    app \\\\") "    app")
                 (("app.depends") "INCLUDEPATH +="))
-              (invoke "qmake" (string-append "PREFIX=" #$output)))))))
+              (invoke "qmake" (string-append "PREFIX=" #$output))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (native-inputs (list pkg-config qttools-5))
     (inputs (list ffmpeg
                   h264bitstream
@@ -7520,22 +7613,31 @@ screensaver.")))
     (native-inputs
      (list cppunit pkg-config))
     (arguments
-     `(#:configure-flags
-       (list "-DCMAKE_CXX_FLAGS=-fcommon"
-             "-DCMAKE_C_FLAGS=-fcommon"
-             (string-append "-DCUSTOM_DATA_INSTALL_PATH="
-                            (search-input-directory %build-inputs
-                                                    "share/megaglest"))
-             "-DBUILD_MEGAGLEST_TESTS=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-ini-search-path
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (substitute* "source/glest_game/global/config.cpp"
-                        (("/usr/share/megaglest/")
-                         (string-append (assoc-ref outputs "out")
-                                        "/share/megaglest/"))))))
-       #:test-target "megaglest_tests"))
+     (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:configure-flags
+      #~(list "-DCMAKE_CXX_FLAGS=-fcommon"
+              "-DCMAKE_C_FLAGS=-fcommon"
+              (string-append "-DCUSTOM_DATA_INSTALL_PATH="
+                             (search-input-directory %build-inputs
+                                                     "share/megaglest"))
+              "-DBUILD_MEGAGLEST_TESTS=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-ini-search-path
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       (substitute* "source/glest_game/global/config.cpp"
+                         (("/usr/share/megaglest/")
+                          (string-append (assoc-ref outputs "out")
+                                         "/share/megaglest/")))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys #:rest args)
+                (when tests?
+                  (apply (assoc-ref gnu:%standard-phases 'check)
+                         #:tests? tests? #:test-target "megaglest_tests" args)
+                  (invoke "source/tests/megaglest_tests")))))))
     (home-page "https://megaglest.org/")
     (synopsis "3D real-time strategy (RTS) game")
     (description "MegaGlest is a cross-platform 3D real-time strategy (RTS)
@@ -7761,26 +7863,31 @@ small robot living in the nano world, repair its maker.")
                   #t))))
     (build-system cmake-build-system)
     (arguments
-     `(#:test-target "run_tests"
+     (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
        #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Embed path to assets.
-             (substitute* "src/engine/shared/storage.cpp"
-               (("#define DATA_DIR.*")
-                (string-append "#define DATA_DIR \""
-                               (assoc-ref outputs "out")
-                               "/share/teeworlds/data"
-                               "\"")))
-             #t))
-         (add-after 'unpack 'replace-font
-           (lambda* (#:key inputs #:allow-other-keys)
-             (delete-file "datasrc/fonts/DejaVuSans.ttf")
-             (symlink (string-append (assoc-ref inputs "font-dejavu")
-                                     "/share/fonts/truetype/DejaVuSans.ttf")
-                      "datasrc/fonts/DejaVuSans.ttf")
-             #t)))))
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'patch-paths
+             (lambda* (#:key outputs #:allow-other-keys)
+               ;; Embed path to assets.
+               (substitute* "src/engine/shared/storage.cpp"
+                 (("#define DATA_DIR.*")
+                  (string-append "#define DATA_DIR \""
+                                 (assoc-ref outputs "out")
+                                 "/share/teeworlds/data"
+                                 "\"")))))
+           (add-after 'unpack 'replace-font
+             (lambda* (#:key inputs #:allow-other-keys)
+               (delete-file "datasrc/fonts/DejaVuSans.ttf")
+               (symlink (string-append (assoc-ref inputs "font-dejavu")
+                                       "/share/fonts/truetype/DejaVuSans.ttf")
+                        "datasrc/fonts/DejaVuSans.ttf")))
+           (replace 'check
+             (lambda* (#:rest args)
+               (apply (assoc-ref gnu:%standard-phases 'check)
+                      #:test-target "run_tests" args))))))
     (inputs
      (list freetype
            font-dejavu
@@ -8117,7 +8224,7 @@ fight against their plot and save his fellow rabbits from slavery.")
 (define-public 0ad-data
   (package
     (name "0ad-data")
-    (version "0.0.26-alpha")
+    (version "0.27.1")
     (source
      (origin
        (method url-fetch)
@@ -8125,7 +8232,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                            version "-unix-data.tar.xz"))
        (file-name (string-append name "-" version ".tar.xz"))
        (sha256
-        (base32 "0z9dfw2hn2fyrx70866lv5464fbagdb8dip321wq10pqb22y805j"))))
+        (base32 "16592xq1ncjxc072rd4lzn2bp941fmfj85r0q1gh52qkvxnjszl3"))))
     (build-system trivial-build-system)
     (native-inputs (list tar unzip xz))
     (arguments
@@ -8165,7 +8272,7 @@ fight against their plot and save his fellow rabbits from slavery.")
 (define-public 0ad
   (package
     (name "0ad")
-    (version "0.0.26-alpha")
+    (version "0.27.1")
     (source
      (origin
        (method url-fetch)
@@ -8173,7 +8280,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                            version "-unix-build.tar.xz"))
        (file-name (string-append name "-" version ".tar.xz"))
        (sha256
-        (base32 "0jzfq09ispi7740c01h6yqxqv9y3zx66d217z32pfbiiwgvns71f"))))
+        (base32 "1yvb04bxq1r7cva58xx0rgzdlx6ra1hp6w1p517x4s2rxdg3b9d0"))))
     ;; A snippet here would cause a build failure because of timestamps
     ;; reset.  See https://bugs.gnu.org/26734.
     (inputs
@@ -8183,7 +8290,7 @@ fight against their plot and save his fellow rabbits from slavery.")
            fmt
            freetype
            gloox
-           icu4c
+           icu4c-73
            libidn
            libpng
            libsodium
@@ -8191,7 +8298,7 @@ fight against their plot and save his fellow rabbits from slavery.")
            libxcursor
            libxml2
            miniupnpc
-           mozjs-78
+           mozjs-115
            openal
            sdl2
            wxwidgets
@@ -8202,7 +8309,8 @@ fight against their plot and save his fellow rabbits from slavery.")
            cxxtest
            mesa
            pkg-config
-           python-2))
+           python
+           premake5))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags '("config=release" "verbose=1" "-C" "build/workspaces/gcc")
@@ -8220,16 +8328,61 @@ fight against their plot and save his fellow rabbits from slavery.")
                                "\"")))))
          (add-after 'unpack 'fix-mozjs-compatibility
            ;; 0ad only builds fine with a specific version of mozjs
-           ;; (version 78.6 for 0ad-0.0.25).
-           ;; Here we change the error in case of version mismatch to a warning,
-           ;; and add some minor compatibility fixes.
+           ;; (version 115.16.1 for 0ad-0.27.1).
+           ;; Here we change the error in case of version mismatch to a warning.
            (lambda _
              (substitute* "source/scriptinterface/ScriptTypes.h"
                (("#error Your compiler is trying to use")
-                "#warning Your compiler is trying to use"))
-             (substitute* "source/scriptinterface/ScriptContext.cpp"
-               (("JS::PrepareZoneForGC\\(")
-                "JS::PrepareZoneForGC(m_cx, "))))
+                "#warning Your compiler is trying to use"))))
+         (add-after 'unpack 'patch-python-shebangs
+           ;; A couple Python scripts point to 'python' rather than 'python3'.
+           ;; They work fine under python3, so let's fix that.
+           (lambda _
+             (substitute* "source/tools/webservices/maint_graphics.py"
+               (("#!/usr/bin/env python")
+                "#!/usr/bin/env python3"))
+             (substitute* "source/tools/webservices/manage.py"
+               (("#!/usr/bin/env python")
+                "#!/usr/bin/env python3"))))
+         (add-after 'unpack 'prepare-builtin-libs
+           ;; Builtin libraries are included in the tarball as other tarballs.
+           ;; They're usually extracted during the build, but then shebangs
+           ;; within the libs don't get patched, so we do it here ourselves.
+           (lambda _
+             (let ((fcollada-version "28209")
+                   (nvtt-version "28209"))
+               (with-directory-excursion "libraries/source/fcollada"
+                 (invoke "tar" "-xvf"
+                         (string-append "fcollada-" fcollada-version ".tar.xz"))
+                 (substitute* "build.sh"
+                   (("rm -Rf fcollada-[$][{]PV[}]")
+                    "")
+                   (("\"[$][{]TAR[}]\" xf fcollada-[$][{]PV[}].tar.xz")
+                    "")))
+               (with-directory-excursion "libraries/source/nvtt"
+                 (invoke "tar" "-xvf"
+                         (string-append "nvtt-" nvtt-version ".tar.xz"))
+                 (substitute* "build.sh"
+                   (("rm -Rf nvtt-[$][{]PV[}]")
+                    "")
+                   (("\"[$][{]TAR[}]\" xf nvtt-[$][{]PV[}].tar.xz")
+                    ""))))))
+         (add-after 'unpack 'fix-gmake2-references
+           ;; The current version of 0AD expects premake action 'gmake2',
+           ;; this was renamed to just 'gmake', so we patch to reflect that.
+           ;; Remove this when updating to the next release (fixed in main).
+           (lambda _
+             (substitute* "build/premake/cxxtest/cxxtest.lua"
+               (("gmake2")
+                "gmake"))
+             (substitute* "build/premake/premake5.lua"
+               (("if _ACTION == \"gmake\" then")
+                "if _ACTION == \"gmakelegacy\" then")
+               (("if _ACTION == \"gmake2\" then")
+                "if _ACTION == \"gmake\" then"))
+             (substitute* "build/workspaces/update-workspaces.sh"
+               (("gmake2")
+                "gmake"))))
          (replace 'configure
            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
              (let* ((jobs (number->string (parallel-job-count)))
@@ -8237,15 +8390,25 @@ fight against their plot and save his fellow rabbits from slavery.")
                     (lib (string-append out "/lib"))
                     (data (string-append out "/share/0ad")))
                (setenv "JOBS" (string-append "-j" jobs))
-               (setenv "CC" "gcc")
+               (setenv "CC" ,(cc-for-target))
                (with-directory-excursion "build/workspaces"
                  (apply invoke
                         `("./update-workspaces.sh"
                           ,(string-append "--libdir=" lib)
                           ,(string-append "--datadir=" data)
                           ;; TODO: "--with-system-nvtt"
+                          "--with-system-premake5"
                           "--with-system-mozjs"
                           ,@(if tests? '() '("--without-tests"))))))))
+         (add-before 'build 'build-builtin-libs
+           (lambda _
+             (let ((jobs (number->string (parallel-job-count))))
+               (setenv "JOBS" (string-append "-j" jobs))
+               (setenv "CC" ,(cc-for-target))
+               (with-directory-excursion "libraries/source/fcollada"
+                                         (invoke "./build.sh"))
+               (with-directory-excursion "libraries/source/nvtt"
+                                         (invoke "./build.sh")))))
          (delete 'check)
          (replace 'install
            (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -8269,6 +8432,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                (for-each (lambda (file)
                            (install-file file lib))
                          (find-files "system" "\\.so$"))
+               (copy-recursively "../libraries/source/nvtt/lib" lib)
                ;; binaries
                (install-file "system/pyrogenesis" bin)
                (with-directory-excursion bin
@@ -9606,7 +9770,7 @@ open-source FPS of its kind.")
 (define-public frotz
   (package
     (name "frotz")
-    (version "2.54")
+    (version "2.55")
     (source (origin
               (method url-fetch)
               (uri (list (string-append
@@ -9617,7 +9781,7 @@ open-source FPS of its kind.")
                           "frotz/frotz-" version ".tar.gz")))
               (sha256
                (base32
-                "1vsfq9ryyb4nvzxpnnn40k423k9pdy8k67i8390qz5h0vmxw0fds"))))
+                "0wfqhxwgjwhgnjh1byjzsfj3mqhy5hialngyb53p5jjbz4pr3mp3"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; there are no tests
@@ -9705,7 +9869,7 @@ of lore accompanying everything from planets to equipment.")
 (define-public frotz-dumb-terminal
   (package
     (name "frotz-dumb-terminal")
-    (version "2.44")
+    (version "2.55")
     (source (origin
               (method url-fetch)
               (uri (list (string-append
@@ -9716,8 +9880,9 @@ of lore accompanying everything from planets to equipment.")
                           "frotz/frotz-" version ".tar.gz")))
               (sha256
                (base32
-                "1v735xr3blznac8fnwa27s1vhllx4jpz7kw7qdw1bsfj6kq21v3k"))))
+                "0wfqhxwgjwhgnjh1byjzsfj3mqhy5hialngyb53p5jjbz4pr3mp3"))))
     (build-system gnu-build-system)
+    (native-inputs (list pkg-config which))
     (arguments
      `(#:tests? #f                      ; there are no tests
        #:phases
@@ -9725,7 +9890,7 @@ of lore accompanying everything from planets to equipment.")
          (delete 'configure)
          (replace 'build
            (lambda _
-             (invoke "make" "dumb")))
+             (invoke "make" (string-append "CC=" ,(cc-for-target)) "dumb")))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -10667,7 +10832,9 @@ a fortress beyond the forbidden swamp.")
      (list
       #:configure-flags
       #~(list "-DAudio_TK=OpenAL")
-      #:test-target "tests"
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'prepare-gmock
@@ -10698,7 +10865,13 @@ a fortress beyond the forbidden swamp.")
               (substitute* "CMakeLists.txt"
                 (("share/games/openclonk") "share/openclonk")
                 (("TARGETS openclonk DESTINATION games")
-                 "TARGETS openclonk DESTINATION bin")))))))
+                 "TARGETS openclonk DESTINATION bin"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys #:rest args)
+              (when tests?
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:tests? tests? #:test-target "tests" args)
+                (invoke "tests/tests")))))))
     (native-inputs
      (list (package-source googletest)
            googletest
@@ -10954,7 +11127,7 @@ current computer, the world, and eventually the universe itself.")
                  (install-file "MarbleMarcher" bin))
                #t)))))
       (inputs
-       (list eigen mesa sfml))
+       (list eigen mesa sfml-2))
       (native-inputs
        (list pkg-config))
       (home-page "https://codeparade.itch.io/marblemarcher")
@@ -10993,13 +11166,7 @@ levels to unlock.")
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DSYSTEM_EXPAT=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; Skip tests that require internet access.
-               (invoke "ctest" "-E" "(http|dns)")))))))
+       #:test-exclude "(http|dns)"))
     (inputs
      `(("boost" ,boost)
        ("curl" ,curl)
@@ -11151,7 +11318,10 @@ attached joysticks and displays which buttons and axis are pressed.")
                  (base32
                   "1x5m6xvd1r9dhgzh6hp4vrszczbbxr04v7lyh4wjxxzrj3ahbmcq"))))
       (build-system cmake-build-system)
-      (arguments (list #:configure-flags #~(list "-DBUILD_TESTS=ON")))
+      (arguments
+       (list #:tests? #f
+             #:configure-flags
+             #~(list "-DBUILD_TESTS=ON")))
       (native-inputs (list pkg-config))
       (inputs (list gtkmm-3 libsigc++-2))
       (home-page "https://github.com/Grumbel/jstest-gtk/")
@@ -11671,12 +11841,17 @@ can be downloaded from @url{https://zero.sjeng.org/best-network}.")
     (arguments
      (list
       #:tests? #f
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
             (lambda _
               (invoke "qmake"
-                      (string-append "PREFIX=" #$output)))))))
+                      (string-append "PREFIX=" #$output))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs (list qtbase-5 qtsvg-5))
     (home-page "https://portnov.github.io/qcheckers/")
     (synopsis "Qt-based checkers boardgame")
@@ -11863,35 +12038,36 @@ and chess engines.")
     (inputs
      (list qtbase-5 qtmultimedia-5 qtspeech-5 qtsvg-5 zlib))
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "chessx.pro"
-               (("\\$\\$\\[QT_INSTALL_BINS\\]/lrelease")
-                (search-input-file inputs "/bin/lrelease")))))
-         (add-after 'fix-paths 'make-qt-deterministic
-           (lambda _
-             (setenv "QT_RCC_SOURCE_DATE_OVERRIDE" "1")
-             #t))
-         (add-after 'make-qt-deterministic 'disable-versioncheck
-           (lambda _
-             (substitute* "src/database/settings.cpp"
-               (("\"/General/onlineVersionCheck\", true")
-                "\"/General/onlineVersionCheck\", false"))
-             #t))
-         (replace 'configure
-           (lambda _
-             (invoke "qmake")
-             #t))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (install-file "release/chessx" (string-append out "/bin"))
-               (install-file "unix/chessx.desktop"
-                             (string-append out "/share/applications")))
-             #t)))))
+     (list
+      #:tests? #f
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "chessx.pro"
+                (("\\$\\$\\[QT_INSTALL_BINS\\]/lrelease")
+                 (search-input-file inputs "/bin/lrelease")))))
+          (add-after 'fix-paths 'make-qt-deterministic
+            (lambda _
+              (setenv "QT_RCC_SOURCE_DATE_OVERRIDE" "1")))
+          (add-after 'make-qt-deterministic 'disable-versioncheck
+            (lambda _
+              (substitute* "src/database/settings.cpp"
+                (("\"/General/onlineVersionCheck\", true")
+                 "\"/General/onlineVersionCheck\", false"))))
+          (replace 'configure
+            (lambda _
+              (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (install-file "release/chessx" (string-append out "/bin"))
+                (install-file "unix/chessx.desktop"
+                              (string-append out "/share/applications"))))))))
     (synopsis "Chess game database")
     (description
      "ChessX is a chess database.  With ChessX you can operate on your
@@ -12265,6 +12441,9 @@ game.")  ;thanks to Debian for description
     (arguments
      (list
       #:tests? #f                       ; No test suite
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-paths
@@ -12287,87 +12466,15 @@ game.")  ;thanks to Debian for description
           (replace 'configure
             (lambda _
               (invoke "qmake" "pokerth.pro" "CONFIG+=client"
-                      (string-append "PREFIX=" #$output)))))))
+                      (string-append "PREFIX=" #$output))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "https://www.pokerth.net")
     (synopsis "Texas holdem poker game")
     (description
      "With PokerTH you can play the Texas holdem poker game, either against
 computer opponents or against real players online.")
     (license license:agpl3+)))
-
-(define-public xblackjack
-  (package
-    (name "xblackjack")
-    (version "2.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.ibiblio.org/pub/X11/contrib/games/"
-                           "xblackjack-" version ".tar.gz"))
-       (sha256
-        (base32 "05h93rya7zwnx2l58f0a7wkjadymkj4y77clcr2hryhrhhy1vwjx"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((imake (assoc-ref inputs "imake"))
-                   (out (assoc-ref outputs "out")))
-               (substitute* "Imakefile"
-                 (("EXTRA_LIBRARIES = -lXm \\$\\(DEPLIBS\\) -lbsd")
-                  "EXTRA_LIBRARIES = -lXm -lXt -lXmu -lXext -lX11")
-                 (("^#define NonStandardInstallTargets NO")
-                  "#define NonStandardInstallTargets YES")
-                 (("BINDIR = /usr/local/bin")
-                  (string-append "BINDIR = " out "/bin"))
-                 (("MANDIR = /usr/local/man/cat1")
-                  (string-append "MANDIR = " out "/share/man/man1"))
-                 (("XAPPLOADDIR = /usr/local/lib/app-defaults")
-                  (string-append "XAPPLOADDIR = " out "/lib/X11/app-defaults")))
-
-               (invoke "xmkmf")  ; Generate Makefile.
-               (substitute* "Makefile"
-                 ((imake) out)
-                 (("ETCX11DIR = /etc/X11")
-                  (string-append "ETCX11DIR = " out "/etc/X11"))
-                 ;; Fix incorrect argument given to gcc. Error message:
-                 ;; "gcc: error: DefaultGcc2AMD64Opt: No such file or directory"
-                 (("CDEBUGFLAGS = [^\n]*") ""))
-
-               ;; Fix header paths.
-               (substitute* '("Draw.c"
-                              "Strategy.c")
-                 (("^#include <X11/Xm/Xm.h>")
-                  "#include <Xm/Xm.h>"))
-               (substitute* "Strategy.c"
-                 (("^#include <X11/Xm/Label.h>")
-                  "#include <Xm/Label.h>"))
-
-               ;; Fix compilation errors.
-               (substitute* "Table.c"
-                 (("/\\* focus_moved_proc \\*/\tXtInheritFocusMovedProc,") "")
-                 (("_XmMoveObject\\(\\(RectObj\\) w, rx, ry\\);")
-                  "_XmMoveObject(w, rx, ry);")
-                 (("_XmResizeObject\\(\\(RectObj\\) managed->locs[i].w, nw, nh,")
-                  "_XmResizeObject(managed->locs[i].w, nw, nh,")))))
-         (add-after 'install 'install-man-pages
-           (lambda _
-             (invoke "make" "install.man"))))
-       #:tests? #f))  ; No check target.
-    (inputs
-     (list lesstif libx11 libxext libxmu libxt))
-    (native-inputs
-     (list imake))
-    (home-page "https://www.ibiblio.org/pub/X11/contrib/games/")
-    (synopsis "X11/Motif blackjack game")
-    (description
-     "Xblackjack is a MOTIF/OLIT based tool constructed to get you ready for
-the casino.  It was inspired by a book called \"Beat the Dealer\" by Edward
-O. Thorp, Ph.D. of UCLA.  A number of important statistics are maintained
-for display, and used by the program to implement Thorp's \"Complete Point
-System\" (high-low system).")
-    (license (license:x11-style "" "See file headers."))))
 
 (define-public xevil
   ;; This game is old.  Use a maintained fork that builds with modern toolchains
@@ -12737,7 +12844,7 @@ to start over several times to find the most satisfactory ending.")
        `(#:tests? #f                              ; no tests
          #:build-type "Release"))
       (inputs
-       (list sfml))
+       (list sfml-2))
       (home-page "https://github.com/sandsmark/Schiffbruch/")
       (synopsis "Pixelart survival game")
       (description
@@ -13341,7 +13448,6 @@ virtual reality devices.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next
       #:configure-flags
       #~(list "-DUSE_TESTS=ON" "-DOPENGL_BACKEND=OpenGL")))
     (native-inputs (list python-3.10 glibc-locales googletest))

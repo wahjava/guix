@@ -432,29 +432,59 @@ with different rules and mechanics.")
       (license (list license:lgpl3 license:cc-by-sa3.0))
       (properties `((upstream-name . "Jeija/mesecons"))))))
 
-(define-public luanti-mineclone
+(define-public luanti-mineclonia
   (package
-    (name "luanti-mineclone")
-    (version "0.80.1")
+    (name "luanti-mineclonia")
+    (version "0.115.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://git.minetest.land/MineClone2/MineClone2")
+                    (url "https://codeberg.org/mineclonia/mineclonia")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ndgzasjmj8397bb3y2aqalx9v72llwgvp9pv05mms3chpji2675"))))
+                "0y10rxh7fb6qwny0jpqyz6akw8cwsrdfcyadrqjv774hrr98371a"))))
     (build-system copy-build-system)
     (arguments
      `(#:install-plan
-       '(("." "share/luanti/games/mineclone"))))
-    (synopsis "Minecraft clone based on Luanti engine")
+       '(("." "share/luanti/games/mineclonia"))))
+    (home-page "https://content.luanti.org/packages/ryvnf/mineclonia/")
+    (synopsis "An unofficial Minecraft-like game for Luanti")
     (description
-     "MineClone is a Luanti subgame, that aims to recreate Minecraft as
-closely as the engine allows.")
-    (home-page "https://content.luanti.net/packages/Wuzzy/mineclone2/")
+     "Mineclonia is a stable and performant clone of Minecraft,
+released as free software. It aims to clone Minecraft as well as
+Luanti currently permits without resorting to hacks which are too
+heavyweight or complicated to maintain.")
     (license license:gpl3+)))
+
+(define-public luanti-voxelibre
+  (package
+    (name "luanti-voxelibre")
+    (version "0.90.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.minetest.land/VoxeLibre/VoxeLibre")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1i60v7rc13n4vd5429bckbg1nrs48p0qvwigjq276lfnbahdb06y"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan
+       '(("." "share/luanti/games/voxelibre"))))
+    (synopsis "A voxel-based sandbox game for Luanti")
+    (description
+     "VoxeLibre is a survival sandbox game for Luanti. Survive, gather,
+ hunt, mine for ores, build, explore, and do much more. Inspired by
+Minecraft, pushing beyond.")
+    (home-page "https://content.luanti.org/packages/Wuzzy/mineclone2/")
+    (license license:gpl3+)))
+
+(define-public luanti-mineclone
+  (deprecated-package "luanti-mineclone" luanti-voxelibre))
 
 (define-public luanti-mobs
   (package

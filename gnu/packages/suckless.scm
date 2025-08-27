@@ -37,7 +37,6 @@
 (define-module (gnu packages suckless)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cups)
@@ -63,6 +62,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix scripts)
   #:use-module (guix utils)
   #:use-module (guix packages))
 
@@ -79,14 +79,15 @@
         (base32 "1mpfrvn122lnaqid1pi99ckpxd6x679b0w91pl003xmdwsfdbcly"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:make-flags
-       (list
-        (string-append "CC=" ,(cc-for-target))
-        (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ; no configure script
+     (list
+      #:tests? #f                      ; no check target
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))         ; no configure script
     (home-page "https://tools.suckless.org/scroll/")
     (synopsis "Scroll-back buffer program for st")
     (description "Scroll is a program that provides a scroll back buffer for
@@ -96,37 +97,36 @@ terminal like @code{st}.")
 (define-public tabbed
   (package
     (name "tabbed")
-    (version "0.6")
+    (version "0.9")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://dl.suckless.org/tools/tabbed-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0hhwckyzvsj9aim2l6m69wmvl2n7gzd6b1ly8qjnlpgcrcxfllbn"))))
+        (base32 "1a0842lw666cnx5mx2xqqrad4ipvbz4wxad3pxpyc6blgd2qgkqa"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "config.mk"
-               (("/usr/local")
-                (assoc-ref outputs "out"))
-               (("/usr/X11R6")
-                (assoc-ref inputs "libx11"))
-               (("/usr/include/freetype2")
-                (string-append (assoc-ref inputs "freetype")
-                               "/include/freetype2"))
-               (("CC = cc")
-                (string-append "CC = " ,(cc-for-target))))))
-         (delete 'configure))))         ; no configure script
+     (list
+      #:tests? #f                      ; no check target
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "Makefile"
+                (("/usr/local") #$output)
+                (("/usr/X11R6") #$(this-package-input "libx11"))
+                (("/usr/include/freetype2")
+                 (string-append #$(this-package-input "freetype")
+                                "/include/freetype2"))
+                (("\\$\\{CC\\}")
+                 (string-append #$(cc-for-target))))))
+          (delete 'configure))))         ; no configure script
     (inputs
-     `(("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("libx11" ,libx11)
-       ("libxft" ,libxft)))
+     (list fontconfig
+           freetype
+           libx11
+           libxft))
     (home-page "https://tools.suckless.org/tabbed/")
     (synopsis "Tab interface for application supporting Xembed")
     (description "Tabbed is a generic tabbed frontend to xembed-aware
@@ -213,12 +213,14 @@ It provides the following features:
                 "0nncvzyipvkkd7zlgzwbjygp82frzs2hvbnk71gxf671np607y94"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:make-flags (list (string-append "CC=" ,(cc-for-target))
-                          (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ; no configure script
+     (list
+      #:tests? #f                      ; no check target
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))         ; no configure script
     (synopsis "Command line video editing utilities")
     (home-page "https://tools.suckless.org/blind/")
     (description
@@ -229,53 +231,49 @@ a custom raw video format with a simple container.")
 (define-public dwm
   (package
     (name "dwm")
-    (version "6.5")
+    (version "6.6")
+    (synopsis "Dynamic Window Manager")
     (source (origin
-             (method url-fetch)
-             (uri (string-append "https://dl.suckless.org/dwm/dwm-"
-                                 version ".tar.gz"))
-             (sha256
-              (base32 "0acpl05rg6rg6nrg3rv4kp388iqzp1n6dhin30a97yzjm6zrxmr1"))))
+              (method url-fetch)
+              (uri (string-append "https://dl.suckless.org/dwm/dwm-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "18q0zjvzsvpm76p2x1xlw163d8wbq44z41n9w94prh46jdnjrz3w"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f
-       #:make-flags (list (string-append "FREETYPEINC="
-                                         (assoc-ref %build-inputs "freetype")
-                                         "/include/freetype2"))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (substitute* "Makefile" (("\\$\\{CC\\}") "gcc"))
-             #t))
-        (replace 'install
-          (lambda* (#:key outputs #:allow-other-keys)
-            (let ((out (assoc-ref outputs "out")))
+     (list
+      #:tests? #f
+      #:make-flags
+      #~(list
+         (string-append "FREETYPEINC="
+                        #$(this-package-input "freetype")
+                        "/include/freetype2"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (substitute* "Makefile" (("\\$\\{CC\\}") #$(cc-for-target)))))
+          (replace 'install
+            (lambda _
               (invoke "make" "install"
-                      (string-append "DESTDIR=" out) "PREFIX="))))
-        (add-after 'build 'install-xsession
-          (lambda* (#:key outputs #:allow-other-keys)
-            ;; Add a .desktop file to xsessions.
-            (let* ((output (assoc-ref outputs "out"))
-                   (xsessions (string-append output "/share/xsessions")))
-              (mkdir-p xsessions)
-              (with-output-to-file
-                  (string-append xsessions "/dwm.desktop")
-                (lambda _
-                  (format #t
-                    "[Desktop Entry]~@
-                     Name=dwm~@
-                     Comment=Dynamic Window Manager~@
-                     Exec=~a/bin/dwm~@
-                     TryExec=~@*~a/bin/dwm~@
-                     Icon=~@
-                     Type=Application~%"
-                    output)))
-              #t))))))
+                      (string-append "DESTDIR=" #$output) "PREFIX=")))
+          (add-after 'build 'install-xsession
+            (lambda _
+              ;; Add a .desktop file to xsessions.
+              (let ((apps (string-append #$output "/share/xsessions")))
+                (mkdir-p apps)
+                (make-desktop-entry-file
+                 (string-append apps "/dwm.desktop")
+                 #:name "dwm"
+                 #:generic-name #$synopsis
+                 #:exec (string-append #$output "/bin/dwm %U")
+                 #:comment
+                 `(("en" ,#$synopsis)
+                   (#f ,#$synopsis)))))))))
     (inputs
      (list freetype libx11 libxft libxinerama))
     (home-page "https://dwm.suckless.org/")
-    (synopsis "Dynamic window manager")
     (description
      "dwm is a dynamic window manager for X.  It manages windows in tiled,
 monocle and floating layouts.  All of the layouts can be applied dynamically,
@@ -285,25 +283,27 @@ optimising the environment for the application in use and the task performed.")
 (define-public dmenu
   (package
     (name "dmenu")
-    (version "5.3")
+    (version "5.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dl.suckless.org/tools/dmenu-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0pvr6da1v7hmbnacpgxcxv1sakg1nckmw347xhwrhx1dzpk573qs"))))
+                "0lyldkxshbgh7alz7a50l167pk1d4lcb2rhhhvz81aj710mcxflg"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" %output)
-             (string-append "FREETYPEINC="
-                            (assoc-ref %build-inputs "freetype")
-                            "/include/freetype2"))
-       #:phases
-       (modify-phases %standard-phases (delete 'configure))))
+     (list
+      #:tests? #f                      ; no tests
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         (string-append "PREFIX=" #$output)
+         (string-append "FREETYPEINC="
+                        #$(this-package-input "freetype")
+                        "/include/freetype2"))
+      #:phases
+      #~(modify-phases %standard-phases (delete 'configure))))
     (inputs
      (list freetype libxft libx11 libxinerama))
     (home-page "https://tools.suckless.org/dmenu/")
@@ -369,31 +369,31 @@ numbers of user-defined menu items efficiently.")
 (define-public st
   (package
     (name "st")
-    (version "0.9.2")
+    (version "0.9.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://dl.suckless.org/st/st-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0js9z5kn8hmpxzfmb2g6zsy28zkpg88j3wih5wixc89b8x7ms8bb"))))
+        (base32 "16v4dsjrsh5jwah38ygg8808zc536szwxj1qxm6kswgdrnmzxncy"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "TERMINFO="
-                            (assoc-ref %outputs "out")
-                            "/share/terminfo")
-             (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))
+     (list
+      #:tests? #f                      ;no tests
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         (string-append "TERMINFO=" #$output "/share/terminfo")
+         (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))
     (inputs
-     `(("libx11" ,libx11)
-       ("libxft" ,libxft)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)))
+     (list libx11
+           libxft
+           fontconfig
+           freetype))
     (native-inputs
      (list ncurses ;provides tic program
            pkg-config))
@@ -505,27 +505,27 @@ Vim bindings and Xresource compatibility.")
         (base32 "0mrj0kp01bwrgrn4v298g81h6zyq64ijsg790di68nm21f985rbj"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         ;; Use the right file name for dmenu and xprop.
-         (add-before 'build 'set-dmenu-and-xprop-file-name
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "config.def.h"
-               (("dmenu") (search-input-file inputs "/bin/dmenu"))
-               (("xprop") (search-input-file inputs "/bin/xprop")))
-             #t)))))
+     (list
+      #:tests? #f                      ; no tests
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          ;; Use the right file name for dmenu and xprop.
+          (add-before 'build 'set-dmenu-and-xprop-file-name
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "config.def.h"
+                (("dmenu") (search-input-file inputs "/bin/dmenu"))
+                (("xprop") (search-input-file inputs "/bin/xprop"))))))))
     (inputs
-     `(("dmenu" ,dmenu)
-       ("gcr" ,gcr-3)
-       ("glib-networking" ,glib-networking)
-       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
-       ("webkitgtk" ,webkitgtk-with-libsoup2)
-       ("xprop" ,xprop)))
+     (list dmenu
+           gcr-3
+           glib-networking
+           gsettings-desktop-schemas
+           webkitgtk-with-libsoup2
+           xprop))
     (native-inputs
      (list pkg-config))
     (home-page "https://surf.suckless.org/")
@@ -551,30 +551,31 @@ point surf to another URI by setting its XProperties.")
                 "0cxysz5lp25mgww73jl0mgip68x7iyvialyzdbriyaff269xxwvv"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (delete 'configure) ;no configuration
-                  (add-before 'build 'patch-farbfeld
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      (substitute* "config.def.h"
-                        (("2ff") (search-input-file inputs "/bin/2ff")))))
-                  (add-after 'install 'install-doc
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out"))
-                             (doc (string-append out "/share/doc/" ,name "-"
-                                                 ,(package-version this-package))))
-                        (install-file "README.md" doc)))))
-       #:tests? #f                                ;no test suite
-       #:make-flags
-       (let ((pkg-config (lambda (flag)
-                           (string-append "$(shell pkg-config " flag " "
-                                          "xft fontconfig x11 libpng)"))))
-         (list (string-append "CC="
-                              ,(cc-for-target))
-               (string-append "PREFIX=" %output)
-               (string-append "INCS=-I. "
-                              (pkg-config "--cflags"))
-               (string-append "LIBS="
-                              (pkg-config "--libs") " -lm")))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ;no configuration
+          (add-before 'build 'patch-farbfeld
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "config.def.h"
+                (("2ff") (search-input-file inputs "/bin/2ff")))))
+          (add-after 'install 'install-doc
+            (lambda _
+              (install-file "README.md"
+                            (string-append
+                             #$output "/share/doc/"
+                             #$name
+                             "-"
+                             #$(package-version this-package))))))
+      #:tests? #f                                ;no test suite
+      #:make-flags
+      #~(let ((pkg-config (lambda (flag)
+                            (string-append "$(shell pkg-config " flag " "
+                                           "xft fontconfig x11 libpng)"))))
+          (list (string-append "CC=" #$(cc-for-target))
+                (string-append "PREFIX=" #$output)
+                (string-append "INCS=-I. " (pkg-config "--cflags"))
+                (string-append "LIBS=" (pkg-config "--libs") " -lm")))))
     (native-inputs (list pkg-config))
     (inputs (list farbfeld libpng libx11 libxft fontconfig))
     (synopsis "Plain-text presentation tool")
@@ -1247,10 +1248,10 @@ pipe and compress.")
          (sha256
           (base32 "1c6ahxw0qz0703my28k2z0kgi0am5bp5d02l4rgyphgvjk1jfv8h"))))
       (arguments
-       `(#:cargo-inputs
-         (("rust-chrono" ,rust-chrono-0.4))
+       `(#:install-source? #f
          #:tests? #f)) ; There are no tests.
       (build-system cargo-build-system)
+      (inputs (cargo-inputs 'snafu))
       (home-page "https://github.com/jsbmg/snafu")
       (synopsis "Status text for DWM window manager")
       (description "@code{snafu} provides status text for DWM's builtin bar.  It

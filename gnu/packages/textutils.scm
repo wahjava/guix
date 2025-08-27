@@ -5,7 +5,7 @@
 ;;; Copyright © 2015 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Jelle Licht <jlicht@fsfe.org>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2016, 2018, 2019, 2020, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2018, 2019, 2020, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Nikita <nikita@n0.is>
 ;;; Copyright © 2016, 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2017 Eric Bavier <bavier@member.fsf.org>
@@ -34,6 +34,7 @@
 ;;; Copyright © 2024-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 John Khoo <johnkhootf@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -79,7 +80,9 @@
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages julia)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -95,7 +98,8 @@
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
-  #:use-module (gnu packages xorg))
+  #:use-module (gnu packages xorg)
+  #:use-module (srfi srfi-1))
 
 (define-public dos2unix
   (package
@@ -172,109 +176,98 @@ an encoding detection library, and enca, a command line frontend, integrating
 libenca and several charset conversion libraries and tools.")
     (license license:gpl2)))
 
+;; Newer utf8proc depends on julia for tests.  Since julia also depends on
+;; utf8proc, a dependency cycle is created.  This bootstrap variant of utf8proc
+;; disables tests.
+(define-public utf8proc-bootstrap
+  (hidden-package
+   (package
+     (name "utf8proc-bootstrap")
+     (version "2.10.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/JuliaStrings/utf8proc")
+              (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1n1k67x39sk8xnza4w1xkbgbvgb1g7w2a7j2qrqzqaw1lyilqsy2"))))
+     (build-system gnu-build-system)
+     (arguments
+      (list #:tests? #f                 ;To break dependency cycle.
+            #:make-flags
+            #~(list (string-append "CC=" #$(cc-for-target))
+                    (string-append "prefix=" #$output))
+            #:phases
+            #~(modify-phases %standard-phases
+                ;; No configure script.
+                (delete 'configure))))
+     (home-page "https://juliastrings.github.io/utf8proc/")
+     (synopsis "C library for processing UTF-8 Unicode data")
+     (description
+      "@code{utf8proc} is a small C library that provides Unicode normalization,
+case-folding, and other operations for data in the UTF-8 encoding.")
+     (license license:expat))))
+
 (define-public utf8proc
   (package
+    (inherit utf8proc-bootstrap)
     (name "utf8proc")
-    (version "2.5.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/JuliaStrings/utf8proc")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1xlkazhdnja4lksn5c9nf4bln5gjqa35a8gwlam5r0728w0h83qq"))))
-    (build-system gnu-build-system)
     (native-inputs
-     (let ((UNICODE_VERSION "13.0.0"))  ; defined in data/Makefile
-       ;; Test data that is otherwise downloaded with curl.
-       `(("NormalizationTest.txt"
-          ,(origin
-             (method url-fetch)
-             (uri (string-append "https://www.unicode.org/Public/"
-                                 UNICODE_VERSION "/ucd/NormalizationTest.txt"))
-             (sha256
-              (base32 "07g0ya4f6zfzvpp24ccxkb2yq568kh83gls85rjl950nv5fya3nn"))))
-         ("GraphemeBreakTest.txt"
-          ,(origin
-             (method url-fetch)
-             (uri (string-append "https://www.unicode.org/Public/"
-                                 UNICODE_VERSION
-                                 "/ucd/auxiliary/GraphemeBreakTest.txt"))
-             (sha256
-              (base32 "07f8rrvcsq4pibdz6zxggxy8w7zjjqyw2ggclqlhalyv45yv7prj"))))
-
-         ;; For tests.
-         ("perl" ,perl))))
+     (let ((UNICODE_VERSION "16.0.0"))  ; defined in data/Makefile
+       ;; Only if the tests will be run should these be added.
+       (if (and (%current-system)
+                (supported-package? julia))
+           ;; Test data that is otherwise downloaded with curl.
+           (list (origin
+                   (method url-fetch)
+                   (uri (string-append
+                         "https://www.unicode.org/Public/"
+                         UNICODE_VERSION "/ucd/NormalizationTest.txt"))
+                   (sha256
+                    (base32
+                     "1cffwlxgn6sawxb627xqaw3shnnfxq0v7cbgsld5w1z7aca9f4fq")))
+                 (origin
+                   (method url-fetch)
+                   (uri (string-append
+                         "https://www.unicode.org/Public/"
+                         UNICODE_VERSION "/ucd/auxiliary/GraphemeBreakTest.txt"))
+                   (sha256
+                    (base32
+                     "1d9w6vdfxakjpp38qjvhgvbl2qx0zv5655ph54dhdb3hs9a96azf")))
+                 (origin
+                   (method url-fetch)
+                   (uri (string-append
+                         "https://www.unicode.org/Public/"
+                         UNICODE_VERSION "/ucd/DerivedCoreProperties.txt"))
+                   (sha256
+                    (base32
+                     "1gfsq4vdmzi803i2s8ih7mm4fgs907kvkg88kvv9fi4my9hm3lrr")))
+                 ;; For tests.
+                 julia
+                 perl
+                 ;; TODO Move to ruby@3 on the next rebuild cycle.
+                 ruby-2.7)
+           '())))
     (arguments
-     `(#:make-flags (list ,(string-append "CC=" (cc-for-target))
-                          (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'check 'check-data
-           (lambda* (#:key ,@(if (%current-target-system)
-                                 '(native-inputs)
-                                 '())
-                     inputs #:allow-other-keys)
-             (for-each (lambda (i)
-                         (copy-file (assoc-ref ,@(if (%current-target-system)
-                                                     '((or native-inputs inputs))
-                                                     '(inputs)) i)
-                                    (string-append "data/" i)))
-                       '("NormalizationTest.txt" "GraphemeBreakTest.txt"))
-             (substitute* "data/GraphemeBreakTest.txt"
-               (("÷") "/")
-               (("×") "+"))
-             #t)))))
-    (home-page "https://juliastrings.github.io/utf8proc/")
-    (synopsis "C library for processing UTF-8 Unicode data")
-    (description "utf8proc is a small C library that provides Unicode
-normalization, case-folding, and other operations for data in the UTF-8
-encoding, supporting Unicode version 9.0.0.")
-    (license license:expat)))
-
-(define-public utf8proc-2.7.0
-  (package
-    (inherit utf8proc)
-    (name "utf8proc")
-    (version "2.7.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/JuliaStrings/utf8proc")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1wrsmnaigal94gc3xbzdrrm080zjhihjfdla5admllq2w5dladjj"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments utf8proc)
-       ((#:phases phases)
-        `(modify-phases ,phases
-           (replace 'check-data
-             (lambda* (#:key inputs native-inputs #:allow-other-keys)
-               (display native-inputs)
-               (for-each (lambda (i)
-                           (copy-file (assoc-ref (or native-inputs inputs) i)
-                                      (string-append "data/" i)))
-                         '("NormalizationTest.txt" "GraphemeBreakTest.txt"
-                           "DerivedCoreProperties.txt"))))))))
-    (native-inputs
-     (append
-      (package-native-inputs utf8proc)
-      (let ((UNICODE_VERSION "14.0.0"))
-        `(("DerivedCoreProperties.txt"
-           ,(origin
-              (method url-fetch)
-              (uri (string-append "https://www.unicode.org/Public/"
-                                  UNICODE_VERSION "/ucd/DerivedCoreProperties.txt"))
-              (sha256
-               (base32 "1g77s8g9443dd92f82pbkim7rk51s7xdwa3mxpzb1lcw8ryxvvg3"))))
-          ;; For tests
-          ;; TODO Move to ruby@3 on the next rebuild cycle.
-          ("ruby" ,ruby-2.7)))))))
+     (if (this-package-native-input "julia")
+         (strip-keyword-arguments
+          '(#:tests?)
+          (substitute-keyword-arguments (package-arguments utf8proc-bootstrap)
+            ((#:phases phases '%standard-phases)
+             #~(modify-phases #$phases
+                 (add-before 'check 'check-data
+                   (lambda* (#:key inputs native-inputs #:allow-other-keys)
+                     (for-each (lambda (i)
+                                 (copy-file (assoc-ref (or native-inputs inputs) i)
+                                            (string-append "data/" i)))
+                               '("NormalizationTest.txt" "GraphemeBreakTest.txt"
+                                 "DerivedCoreProperties.txt"))))))))
+          (substitute-keyword-arguments (package-arguments utf8proc-bootstrap)
+            ((#:tests? _ #t) #f))))
+    (properties
+     (alist-delete 'hidden? (package-properties utf8proc-bootstrap)))))
 
 (define-public libconfuse
   (package
@@ -506,9 +499,23 @@ useful when it is desired to reformat numbers.
         (base32 "0z4ibnd2zzya489vl84cfh82bmdwdhf0isf1myqwrs3s9s0vqyyn"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:configure-flags #~(list "--disable-dependency-tracking")
+     (list #:configure-flags
+           #~(list "--disable-dependency-tracking"
+                   "CFLAGS=-g -O2 -Wno-error=implicit-int")
            #:phases
            #~(modify-phases %standard-phases
+               (add-before 'build 'gcc14
+                 (lambda _
+                   (substitute* "uniname.c"
+                     (("#include <unistd.h>" all)
+                       (string-append all "\n#include <ctype.h>")))
+                   (substitute* "unifuzz.c"
+                     (("#include <unistd.h>" all)
+                       (string-append all "\n#include <time.h>"))
+                     (("^Emit") "void Emit"))
+                   (substitute* "putu8.c"
+                     (("void" all)
+                       (string-append "#include <stdio.h>\n" all)))))
                (add-after 'build 'fix-paths
                  (lambda* (#:key outputs inputs #:allow-other-keys)
                    (let ((out (assoc-ref outputs "out"))
@@ -1388,6 +1395,7 @@ formats (e.g. Bibtex, RIS, etc.) using a common XML intermediate.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/benhoyt/goawk"
       #:phases
@@ -1449,6 +1457,7 @@ reading and writing CSV and TSV files.")
     (arguments
      ;; Required to locate the install script properly.
      `(#:out-of-source? #f
+       #:tests? #f
        #:parallel-build? #f             ;occasionally failed.
        #:imported-modules
        (,@%cmake-build-system-modules
@@ -1600,7 +1609,7 @@ of a Unix terminal to HTML code.")
 (define-public vale
   (package
     (name "vale")
-    (version "3.9.5")
+    (version "3.11.2")
     (source
      (origin
        (method git-fetch)
@@ -1608,7 +1617,7 @@ of a Unix terminal to HTML code.")
              (url "https://github.com/errata-ai/vale")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "119iiyh164rkj7jlghr2j1kbhc8k1bvfhsfvd972zs092fg7dh4p"))
+        (base32 "04xgya706ljnbb7kh3kip0p9z67hpw55p7vfa0bl1nnd0is4q07g"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments
@@ -1636,7 +1645,8 @@ of a Unix terminal to HTML code.")
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list go-github-com-adrg-strutil
+     (list go-github-com-adrg-frontmatter
+           go-github-com-adrg-strutil
            go-github-com-adrg-xdg
            go-github-com-bmatcuk-doublestar-v4
            go-github-com-d5-tengo-v2
@@ -1649,14 +1659,13 @@ of a Unix terminal to HTML code.")
            go-github-com-masterminds-sprig-v3
            go-github-com-mitchellh-mapstructure
            go-github-com-niklasfasching-go-org
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-otiai10-copy
            go-github-com-pelletier-go-toml-v2
            go-github-com-pterm-pterm
            go-github-com-remeh-sizedwaitgroup
            go-github-com-smacker-go-tree-sitter
            go-github-com-spf13-pflag
-           go-github-com-stretchr-testify
            go-github-com-tomwright-dasel-v2
            go-github-com-yuin-goldmark
            go-golang-org-x-exp

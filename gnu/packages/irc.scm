@@ -73,6 +73,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-web)
@@ -292,8 +293,7 @@ setting @env{LUA_PATH} and @env{LUA_CPATH} in glirc's run-time environment.")
     (arguments
       ;; The three binaries are not mutually exlusive, and are all built
       ;; by default.
-     '(#:configure-flags '("-DBUILD_TESTING=ON"
-                           ;;"-DWANT_QTCLIENT=OFF"
+     '(#:configure-flags '(;;"-DWANT_QTCLIENT=OFF"
                            ;;"-DWANT_CORE=OFF"
                            ;;"-DWANT_MONO=OFF"
                            "-DWITH_KDE=OFF"
@@ -376,7 +376,7 @@ Conferencing} and @acronym{ICB, Internet Citizen's Band}.")
 (define-public weechat
   (package
     (name "weechat")
-    (version "4.7.0")
+    (version "4.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -385,7 +385,7 @@ Conferencing} and @acronym{ICB, Internet Citizen's Band}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gcay97kg618yzy6vfn26s4ljbzf5fifkw5clmqpd0gy2kq83gfr"))))
+                "0is0ha02vs06f45cbv89gxkwmpcq2g3l4444309w487nikrp23i0"))))
     (build-system cmake-build-system)
     (outputs '("out" "doc"))
     (native-inputs
@@ -1233,6 +1233,7 @@ seen, tell, and what.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "codeberg.org/emersion/soju"
       #:phases

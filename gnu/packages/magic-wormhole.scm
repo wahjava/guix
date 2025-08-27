@@ -4,6 +4,7 @@
 ;;; Copyright © 2024, 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 TakeV <takev@disroot.org>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,6 +30,7 @@
   #:use-module (guix packages)
   #:use-module (gnu packages check)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
@@ -37,22 +39,14 @@
 (define-public magic-wormhole-mailbox-server
   (package
     (name "magic-wormhole-mailbox-server")
-    (version "0.4.1")
+    (version "0.5.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "magic-wormhole-mailbox-server" version))
        (sha256
         (base32
-         "1yw8i8jv5iv1kkz1aqimskw7fpichjn6ww0fq0czbalwj290bw8s"))))
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-read-mode-in-setup.py
-            (lambda _
-              (substitute* "setup.py"
-                (("'rU'") "'r'")))))))
+         "18cc00dfmri648psx6kzqlbmhvax0h1gbnw1frjh8ci9f8va01x0"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-mock
@@ -64,9 +58,7 @@
            python-autobahn
            python-idna
            python-service-identity
-           python-six
-           python-treq
-           python-twisted))
+           python-treq))
     (home-page "https://github.com/magic-wormhole/magic-wormhole-mailbox-server")
     (synopsis "Magic-Wormhole central mailbox server")
     (description
@@ -79,14 +71,14 @@ connection, or through a transit-relay.")
 (define-public magic-wormhole-transit-relay
   (package
     (name "magic-wormhole-transit-relay")
-    (version "0.2.1")
+    (version "0.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "magic-wormhole-transit-relay" version))
        (sha256
         (base32
-         "0ppsx2s1ysikns1h053x67z2zmficbn3y3kf52bzzslhd2s02j6b"))))
+         "134yh50xyrr2jrws3w4q1gy660l0wnswj78ifxn2c48vl9fq6bci"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -98,14 +90,21 @@ connection, or through a transit-relay.")
                      (docs (string-append out "/share/doc/magic-wormhole-transit-relay")))
                 (for-each (lambda (file)
                             (install-file file docs))
-                          (find-files "docs/"))))))))
+                          (find-files "docs/")))))
+          (add-before 'check 'fix-test
+            (lambda _
+              ;; Fix for failing test (test_buffer_fills).
+              (substitute* "src/wormhole_transit_relay/test/test_backpressure.py"
+                (("reactor\\.spawnProcess\\(proto, exe, args\\)")
+                 "reactor.spawnProcess(proto, exe, args, None)")))))))
     (native-inputs
      (list python-mock
            python-pytest
            python-setuptools
            python-wheel))
     (propagated-inputs
-     (list python-twisted))
+     ;; python-service-identity should be propagated from python-twisted.
+     (list python-autobahn python-service-identity python-twisted))
     (home-page "https://github.com/magic-wormhole/magic-wormhole-transit-relay")
     (synopsis "Magic-Wormhole relay server")
     (description
@@ -119,19 +118,20 @@ together, allowing them to pretend they have a direct connection.")
 (define-public magic-wormhole
   (package
     (name "magic-wormhole")
-    (version "0.16.0")
+    (version "0.19.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "magic-wormhole" version))
+       (uri (pypi-uri "magic_wormhole" version))
        (sha256
         (base32
-         "1jcldlyj6bdd9bb39r77cd9ra6cllqijc9lhs6kaggcdi53c3rhl"))))
+         "0wbwz5kzqgr4352xbp08z8syg9cl8dkqy8rsa3y4rzq9ry5agd5j"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; One test fails with error: twisted.trial.unittest.FailTest: 1 != 0
-      #:test-flags #~(list "-k" "not test_log_other_errors")
+      #:test-flags #~(list "-k" (string-append
+                                 "not test_receive_send"
+                                 " and not test_receive_receive"))
       #:phases
       #~(modify-phases %standard-phases
           ;; XXX I can't figure out how to build the docs properly.
@@ -143,6 +143,7 @@ together, allowing them to pretend they have a direct connection.")
     (native-inputs
      (list python-mock
            python-pytest
+           python-pytest-twisted
            python-setuptools
            python-wheel
            magic-wormhole-mailbox-server
@@ -150,12 +151,13 @@ together, allowing them to pretend they have a direct connection.")
     (propagated-inputs
      (list python-attrs
            python-autobahn
+           python-automat
            python-click
-           python-hkdf
            python-humanize
            python-iterable-io
            python-noiseprotocol
            python-pynacl
+           python-qrcode
            python-spake2
            python-tqdm
            python-twisted

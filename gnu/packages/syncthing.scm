@@ -65,12 +65,12 @@
     (outputs '("out" "utils"))
     (arguments
      (list
+      #:go go-1.23
        #:modules '((srfi srfi-26) ; for cut
                    (guix build utils)
                    (guix build go-build-system))
        #:import-path "github.com/syncthing/syncthing"
        ;; Check 'go.mod' in the source distribution for the required version of Go.
-       #:go go-1.23
        ;; We don't need to install the source code for end-user applications.
        #:install-source? #f
        #:phases
@@ -184,7 +184,9 @@ Protocol.")
              (lambda* (#:key outputs #:allow-other-keys)
                (let ((out (assoc-ref outputs "out")))
                  (wrap-program (string-append out "/bin/syncthing-gtk")
-                   `("GI_TYPELIB_PATH" ":" prefix
+                   `("GUIX_GDK_PIXBUF_MODULE_FILES" ":" suffix
+                     (,(getenv "GUIX_GDK_PIXBUF_MODULE_FILES")))
+                   `("GI_TYPELIB_PATH" ":" suffix
                      (,(getenv "GI_TYPELIB_PATH"))))))))))
       (inputs
        (list bash-minimal

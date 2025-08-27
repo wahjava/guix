@@ -49,10 +49,21 @@
   #:use-module (gnu packages tls)
   #:use-module (srfi srfi-1))
 
+;; XXX: Starting from version 1.47.5, opencensus-proto is required.
+;; The package is already deprecated upstream, so it's probably not
+;; worth it spending time packaging it in Guix, just inject the source
+;; instead, to also avoid us a recursive git fetch.
+(define opencensus-proto-for-grpc-source
+  (origin
+    (method url-fetch)
+    (uri "https://github.com/census-instrumentation/opencensus-proto/archive/v0.3.0.tar.gz")
+    (sha256
+     (base32 "1c3jfl1zgjhhqyqii1wils2k05akkvrw50xmf0q0rs2r885kzqdp"))))
+
 (define-public grpc
   (package
     (name "grpc")
-    (version "1.34.0")
+    (version "1.52.2")
     (outputs '("out" "static"))
     (source (origin
               (method git-fetch)
@@ -62,7 +73,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fs407hnlnm0b8sncjwys9rc7ia5nb7wxrpx39nq3pzzfs1lv3vq"))))
+                "09165p6rh5xvcnnwnmy22lwdfchgjg39y02rwj6zg4rzfps8cb43"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -80,6 +91,11 @@
               "-DCMAKE_VERBOSE_MAKEFILE=ON")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'unpack-third-party
+            (lambda _
+              (mkdir-p "third_party/opencensus-proto/src")
+              (invoke "tar" "xvf" #+opencensus-proto-for-grpc-source
+                      "-C" "third_party/opencensus-proto/src")))
           (add-before 'configure 'configure-shared
             (lambda* (#:key configure-flags #:allow-other-keys)
               (mkdir "../build-shared")
@@ -124,24 +140,6 @@ tracing, health checking and authentication.  It is also applicable in last
 mile of distributed computing to connect devices, mobile applications and
 browsers to backend services.")
     (license license:asl2.0)))
-
-(define-public grpc-for-python-grpcio
-  (package
-    (inherit grpc)
-    (name "grpc")
-    (version "1.47.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/grpc/grpc")
-                    (commit (string-append "v" version))
-                    (recursive? #true)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1nl2d92f3576m69991d7gwyk1giavm04fagr612yjh90rni01ikw"))))
-    (inputs
-     (list abseil-cpp-20211102.0 c-ares/cmake openssl re2 zlib))))
 
 ;; Some packages require this older version.
 (define-public grpc-1.16.1
@@ -200,14 +198,13 @@ type information of gRPC.")
 (define-public python-grpcio
   (package
     (name "python-grpcio")
-    (version "1.47.0")
+    (version "1.52.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "grpcio" version))
        (sha256
-        (base32
-         "00gqhz0b1sqnfx6zy7h5z41b6mpsq57r1f3p95xradcvmdgskfsx"))
+        (base32 "1nsgm8q4yahzdab4m3irffdw9zklq4kb7f8hki1ayfgw54ysim55"))
        (modules '((guix build utils) (ice-9 ftw)))
        (snippet
         '(begin
@@ -252,7 +249,7 @@ type information of gRPC.")
               (substitute* '("setup.py" "src/python/grpcio/commands.py")
                 (("'cc'") "'gcc'")))))))
     (inputs
-     (list abseil-cpp-20211102.0 c-ares grpc-for-python-grpcio openssl re2 zlib))
+     (list abseil-cpp-cxxstd11 c-ares grpc openssl re2 zlib))
     (native-inputs
      (list python-cython python-setuptools python-wheel))
     (propagated-inputs
@@ -266,29 +263,32 @@ with the HTTP/2-based RPC framework gRPC.")
 (define-public python-grpcio-tools
   (package
     (name "python-grpcio-tools")
-    (version "1.47.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "grpcio-tools" version))
-              (modules '((guix build utils)))
-              (snippet
-               ;; This file is auto-generated.
-               '(delete-file "grpc_tools/_protoc_compiler.cpp"))
-              (sha256
-               (base32
-                "0g3xwv55lvf5w64zb44dipwqz7729cbqc7rib77ddqab91w56jzn"))))
-    (build-system python-build-system)
+    (version "1.52.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "grpcio-tools" version))
+       (modules '((guix build utils)))
+       (snippet
+        ;; This file is auto-generated.
+        '(delete-file "grpc_tools/_protoc_compiler.cpp"))
+       (sha256
+        (base32 "0m5xwhz3l0n3b1bzjncynwflnc5iyv4xrjq046ppcck4rpj9fgn0"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'configure
-                          (lambda _
-                            (setenv "GRPC_PYTHON_BUILD_WITH_CYTHON" "1"))))))
-    (native-inputs (list python-cython))
-    (propagated-inputs (list python-grpcio python-protobuf))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure
+            (lambda _
+              (setenv "GRPC_PYTHON_BUILD_WITH_CYTHON" "1"))))))
+    (native-inputs (list python-cython python-setuptools python-wheel))
+    (propagated-inputs (list python-grpcio python-protobuf-4))
     (home-page "https://grpc.io")
     (synopsis "Protobuf code generator for gRPC")
-    (description "The gRPC tools for Python provide a special plugin for
-generating server and client code from @file{.proto} service definitions.")
+    (description
+     "The gRPC tools for Python provide a special plugin for generating server
+and client code from @file{.proto} service definitions.")
     (license license:asl2.0)))
 
 (define-public apache-thrift

@@ -297,7 +297,7 @@ to @code{cabal repl}).")
 (define-public git-annex
   (package
     (name "git-annex")
-    (version "10.20250630")
+    (version "10.20250721")
     (source
      (origin
        ;; hackage release doesn't include everything needed for extra bits.
@@ -307,7 +307,7 @@ to @code{cabal repl}).")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1livig1x1a929qagisjx33pzmgv38d6fzf11bmy2jfpgvvlk9mfx"))))
+        (base32 "1a2g4z9fl90kyl7k6clmc61ma2njnljr4na6jbf04m43qnnr9s5a"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "git-annex")))
     (arguments
@@ -888,32 +888,20 @@ is programmed in Haskell.")
 (define-public scroll
   (package
     (name "scroll")
-    (version "1.20180421")
+    (version "1.20250228.2")
     (source
       (origin
         (method url-fetch)
         (uri (hackage-uri "scroll" version))
         (sha256
          (base32
-          "0apzrvf99rskj4dbmn57jjxrsf19j436s8a09m950df5aws3a0wj"))))
+          "1p1741zqsxg017d08ym1clzqcdlai487wb6q12m1q7dr6i8c0gfj"))))
     (build-system haskell-build-system)
-    (properties '((upstream-name . "scroll")))
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'touch-static-output
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; The Haskell build system adds a "static" output by
-             ;; default, and there is no way to override this until
-             ;; <https://issues.guix.gnu.org/41569> is fixed.  Without
-             ;; this phase, the daemon complains because we do not
-             ;; create the "static" output.
-             (with-output-to-file (assoc-ref outputs "static")
-               (lambda ()
-                 (display "static output not used\n")))
-             #t)))))
+    (properties '((upstream-name . "scroll")
+                  (updater-extra-inputs "ghc-base-compat")))
     (inputs
-     (list ghc-case-insensitive
+     (list ghc-base-compat
+           ghc-case-insensitive
            ghc-data-default
            ghc-ifelse
            ghc-monad-loops

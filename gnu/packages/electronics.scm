@@ -8,6 +8,9 @@
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
+;;; Copyright © 2018-2021 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,6 +30,7 @@
 (define-module (gnu packages electronics)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
@@ -45,12 +49,16 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages engineering)
   #:use-module (gnu packages embedded)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages fpga)
+  #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gd)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages libftdi)
@@ -74,7 +82,42 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages toolkits)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages xorg)
   #:use-module (gnu packages xml))
+
+(define-public camv-rnd
+  (package
+    (name "camv-rnd")
+    (version "1.1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/camv-rnd/"
+                           "releases/camv-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1dp1vj5rpxlddx40paa9i727c92is3bz6z6pa0y6dy2nsjcm86fs"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Viewer for electronic boards in CAM file formats")
+    (description
+     "@code{Camv-rnd} is a viewer for @acronym{PCB, Printed Circuit Board}
+supporting gerber, excellon and g-code.  It is part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
 
 (define-public comedilib
   (package
@@ -96,6 +139,44 @@ are implemented as a core Linux kernel module providing common functionality and
 individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
+
+(define librnd
+  (package
+    (name "librnd")
+    (version "4.3.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://www.repo.hu/projects/librnd/"
+                                  "releases/librnd-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "1qjv6gg9fb3rpvr1y9l5nbzz2xk2sa4nqz0dgwvds5hc1bmd97mf"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #false                   ;no check target
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The configure script doesn't tolerate most of our configure
+          ;; flags.
+          (replace 'configure
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs
+     (list gd glib glu gtk gtkglext libepoxy))
+    (native-inputs
+     (list pkg-config))
+    (home-page "http://repo.hu/projects/librnd/")
+    (synopsis "Two-dimensional CAD engine")
+    (description "This is a flexible, modular two-dimensional CAD engine
+@itemize
+@item with transparent multiple GUI toolkit support;
+@item a flexible, dynamic menu system;
+@item a flexible, dynamic configuration system; and
+@item support for user scripting in a dozen languages.
+@end itemize")
+    (license license:gpl2+)))
 
 (define-public libserialport
   (package
@@ -424,6 +505,37 @@ such as:
 @end itemize")
     (license license:expat)))
 
+(define-public pcb-rnd
+  (package
+    (name "pcb-rnd")
+    (version "3.1.7b")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://repo.hu/projects/pcb-rnd/"
+                                  "releases/pcb-rnd-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1djsa0w53l6nvhwv28rlhpva55ir9n3xdvjgnjj8fgvcmrqlzrsl"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/pcb-rnd/")
+    (synopsis "Modular layout editor")
+    (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
+editor, part of the RiNgDove EDA suite.")
+    (license license:gpl2+)))
+
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.
   (let ((commit "898329dddf6ce6463299973081f109d645b9c55f")
@@ -483,12 +595,12 @@ The following features are currently available:
 
 (define-public opensta
   ;; There are no releases, we use last commit.
-  (let ((commit "eb8d39a7dd81b5ca2582ad9bbce0fb6e094b3e0f")
+  (let ((commit "12f03395ec80d3593f4796b2a3cf5480e75735bd")
         (revision "0"))
     (package
       (name "opensta")
       ;; The version string is taken from the CMakeLists.txt.
-      (version (git-version "2.6.2" revision commit))
+      (version (git-version "2.7.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -497,20 +609,27 @@ The following features are currently available:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0bpc7fj4pd5713yny2vrh542jbag1kj20g0ji01c9scqb9av5qw5"))))
+          (base32 "1gka50p4wv2b49d8jbw5fs3qg7cppa8ynl3diqgdf8mqgskwapzf"))))
       (build-system cmake-build-system)
       (arguments
        (list
+        ;; Tests expect output sta binary inside source tree.
+        #:out-of-source? #f
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
               (lambda* (#:key tests? #:allow-other-keys)
                 (when tests?
-                  (invoke "../source/test/regression")))))
+                  (invoke "../test/regression"))))
+            (add-before 'build 'create-build-dir
+              (lambda _
+                (mkdir-p "./build")
+                (chdir "./build"))))
         #:configure-flags
         #~(list
            (string-append "-DCUDD_DIR=" #$(this-package-input "cudd"))
-           (string-append "-DBUILD_SHARED_LIBS=YES"))))
+           (string-append "-DBUILD_SHARED_LIBS=YES")
+           "-B./build")))
       (native-inputs (list bison flex swig))
       (inputs (list cudd eigen tcl tcllib zlib))
       (synopsis "Parallax Static Timing Analyzer")
@@ -754,7 +873,7 @@ design.")
 (define-public python-vsg
   (package
     (name "python-vsg")
-    (version "3.32.0")
+    (version "3.33.0")
     (source
      (origin
        (method git-fetch)
@@ -763,14 +882,20 @@ design.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ql96n291zm4j324q8fmlvy8xvrksb8v6fip0g0sw374z86hda53"))))
+        (base32 "1pnhha7dfika5jv1wrdwjkwrqaz22n0fb845wid5sy62gn549hmb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       ;; Tests are expensive and may introduce race condition on systems with
       ;; high (more than 16) threads count; limit parallel jobs to 8x.
-      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count))))
+      #~(list
+         "--numprocesses" (number->string (min 8 (parallel-job-count)))
+         ;; TODO: Remove in 3.34.0.
+         ;; "file" command on "utf-8_encoded.vhd" file fails to detect
+         ;; utf-8 formatting. See:
+         ;; https://github.com/jeremiah-c-leary/vhdl-style-guide/issues/1471
+         "-vv" "-k" "not test_utf_8")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'pathch-pytest-options
@@ -781,6 +906,8 @@ design.")
                 ((".*-n.*auto.*") "")))))))
     (native-inputs
      (list python-pytest
+           python-pytest-cov
+           python-pytest-html
            python-pytest-xdist
            python-setuptools
            python-wheel))
@@ -792,6 +919,116 @@ design.")
      "VSG lets you define a VHDL coding style and provides a command-line tool
 to enforce it.")
     (license license:gpl3+)))
+
+(define-public xschem
+  (package
+    (name "xschem")
+    (version "3.4.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/StefanSchippers/xschem")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0g9qrzm2mjd7nfg8iyc5az2bs8n5gjv1mrjjdja5vn1yjia7pvy9"))))
+    (native-inputs (list flex bison pkg-config))
+    (inputs (list gawk
+                  tcl
+                  tk
+                  libxpm
+                  cairo
+                  libxrender
+                  libxcb)) ; Last 3 are optional, but good to have.
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'setenv
+            (lambda* (#:key outputs #:allow-other-keys)
+              (setenv "CC" #$(cc-for-target))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (synopsis "Hierarchical schematic editor")
+    (description
+     "Xschem is an X11 schematic editor written in C and focused on
+hierarchical and parametric design.  It can generate VHDL, Verilog or Spice
+netlists from the drawn schematic, allowing the simulation of the circuit.")
+    (home-page "https://xschem.sourceforge.io/stefan/index.html")
+    (license license:gpl2+)))
+
+(define-public route-rnd
+  (package
+    (name "route-rnd")
+    (version "0.9.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/route-rnd/"
+                           "releases/route-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0fy3b48s72lpicyap3y6jr9fyvb2ri42jb0gqxk6s927a278bfhc"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Automatic routing for electronics boards")
+    (description
+     "@code{Route-rnd} is a generic external autorouter for @acronym{PCB,
+Printed Circuit Board} using tEDAx file format, part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
+
+(define-public sch-rnd
+  (package
+    (name "sch-rnd")
+    (version "1.0.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/sch-rnd/"
+                           "releases/sch-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "07a1ik0rpsa5cscg9l7i5rnipx76543s7cdnkg802747rral7yj5"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/sch-rnd/")
+    (synopsis "Scriptable editor of schematics for electronics boards")
+    (description
+     "@code{Sch-rnd} is a standalone and workflow agnostic schematics capture
+tool for @acronym{PCB, Printed Circuit Board}, part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
 
 (define-public sigrok-cli
   (package
@@ -848,7 +1085,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.55")
+    (version "0.56")
     (source
      (origin
        (method git-fetch)
@@ -857,7 +1094,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nxaijz7afpa1y8i4pbpadgv7kpz8rk02j42kxjpv117lxd3g9za"))))
+        (base32 "0w95svb9vgvfqbbvqaq6jkia5jldbai9l7r8nrx93wcfrm82r36x"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -865,7 +1102,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
       #:modules `((guix build gnu-build-system)
                   ((guix build python-build-system) #:prefix python:)
                   (guix build utils))
-      #:imported-modules `(,@%cmake-build-system-modules
+      #:imported-modules `(,@%default-gnu-imported-modules
                            (guix build python-build-system))
       #:make-flags #~(list (string-append "PREFIX=" #$output))
       #:phases

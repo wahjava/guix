@@ -45,6 +45,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages finance)
   #:use-module (gnu packages geo)
+  #:use-module (gnu packages gnupg)
   #:use-module (gnu packages mail)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages python)
@@ -58,7 +59,85 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages xml))
 
-(define-public python-django-4.2
+(define-public daphne
+  (package
+    (name "daphne")
+    (version "4.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "daphne" version))
+       (sha256
+        (base32 "1crircpk2g26y02q8xmxlyb5wh86hqr7q7aly7fpmnhz19q8x2az"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AssertionError("Could not find site-packages in sys.path")
+      ;; This test checks for the presence of fd_endpoint.py in the Pytest
+      ;; store path, but it is in Daphne's path.
+      #:test-flags #~(list "-k" "not test_fd_endpoint_plugin_installed")))
+    (propagated-inputs (list python-asgiref
+                             python-autobahn
+                             ;; Twisted plugins should be propagated from
+                             ;; python-twisted.
+                             python-pyopenssl ; twisted plugin
+                             python-service-identity ; twisted plugin
+                             python-twisted))
+    (native-inputs (list python-django
+                         python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/django/daphne")
+    (synopsis "Django ASGI (HTTP/WebSocket) server")
+    (description "Daphne is a HTTP, HTTP2 and WebSocket protocol server for
+@url{https://github.com/django/asgiref/blob/main/specs/asgi.rst,ASGI} and
+@url{https://github.com/django/asgiref/blob/main/specs/www.rst,ASGI-HTTP},
+developed to power Django Channels.
+
+It supports automatic negotiation of protocols; there's no need for URL
+prefixing to determine WebSocket endpoints versus HTTP endpoints.")
+    (license license:bsd-3)))
+
+(define-public python-channels
+  (package
+    (name "python-channels")
+    (version "4.2.2")
+    (source
+     (origin
+       (method git-fetch) ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/django/channels")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x7w29qpj2acrzf8hcgymsyr5gk3aj2wkbvlwcr01ygd6as8h7hz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-asgiref python-django))
+    ;; Channels develops and maintains Daphne but any other ASGI server can be
+    ;; used, so keep it in native-inputs for tests.
+    (native-inputs (list daphne
+                         python-async-timeout
+                         python-pytest
+                         python-pytest-asyncio
+                         python-pytest-django
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/django/channels")
+    (synopsis "Async, event-driven capabilities on Django")
+    (description
+     "Channels wraps Django's native asynchronous view support, allowing Django
+projects to handle not only HTTP, but protocols that require long-running
+connections too - WebSockets, MQTT, chatbots, amateur radio, and more.  It does
+this while preserving Django's synchronous nature, allowing you to choose how
+you write your code - synchronous, fully asynchronous, or a mixture of both.
+
+Channels also bundles this event-driven architecture with @emph{channel layers},
+a system that allows you to easily communicate between processes, and separate
+your project into different processes.")
+    (license license:bsd-3)))
+
+(define-public python-django
   (package
     (name "python-django")
     (version "4.2.16")
@@ -149,24 +228,6 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
     (properties `((cpe-name . "django")
                   ;; This CVE seems fixed since 4.2.1.
                   (lint-hidden-cve . ("CVE-2023-31047"))))))
-
-;; archivebox requires django>=3.1.3,<3.2
-(define-public python-django-3.1.14
-  (package
-    (inherit python-django-4.2)
-    (version "3.1.14")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "Django" version))
-              (sha256
-               (base32
-                "0ix3v2wlnplv78zxjrlw8z3hiap2d5mxvk0ny2fc65526shsb93j"))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-django-4.2)
-       ;; Django 4.0 deprecated pytz in favor of Pythons built-in zoneinfo.
-       (append python-pytz)))))
-
-(define-public python-django python-django-4.2)
 
 (define-public python-django-cache-url
   (package
@@ -741,17 +802,18 @@ example, explicit calls to callables from templates and better performance.")
 (define-public python-dj-database-url
   (package
     (name "python-dj-database-url")
-    (version "2.3.0")
+    (version "3.0.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "dj_database_url" version))
               (sha256
                (base32
-                "11w7532lq05c3wysbn7f5jf82yj0vjjmsi2ylkjmfsqq6kkfhlmf"))))
-    (build-system python-build-system)
+                "1y7ghizjni3imbmqh63mra8pcvqzr5q0hma1ijzwd3w8zcg9d549"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
-     (list python-django python-typing-extensions))
-    (home-page "https://github.com/kennethreitz/dj-database-url")
+     (list python-django))
+    (home-page "https://github.com/jazzband/dj-database-url")
     (synopsis "Use Database URLs in your Django Application")
     (description
       "This simple Django utility allows you to utilize the 12factor inspired
@@ -937,6 +999,38 @@ and Python type hints.  It is designed to be fast and easy to use thanks
 to asyncio and Pydantic.")
     (license license:expat)))
 
+(define-public python-django-htmx
+  (package
+    (name "python-django-htmx")
+    (version "1.23.2")
+    (source (origin
+              (method git-fetch) ; PyPI does not include settings.py for tests
+              (uri (git-reference
+                    (url "https://github.com/adamchainz/django-htmx")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0gr6zahrqvx8sjsy7wr1k7rgavz7bjx32kky4900gff70wrqbmvy"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                (invoke "django-admin" "test" "tests"
+                        "--pythonpath=.")))))))
+    (propagated-inputs (list python-asgiref python-django))
+    (native-inputs (list python-pytest python-setuptools-next python-wheel))
+    (home-page "https://django-htmx.readthedocs.io/en/latest/")
+    (synopsis "Extensions for using Django with htmx")
+    (description "This package provides a Django extension to work with
+@url{https://htmx.org/,htmx}.")
+    (license license:expat)))
+
 (define-public python-django-pipeline
   (package
     (name "python-django-pipeline")
@@ -981,6 +1075,39 @@ to asyncio and Pydantic.")
      "Pipeline is an asset packaging library for Django, providing both CSS
 and JavaScript concatenation and compression, built-in JavaScript template
 support, and optional data-URI image and font embedding.")
+    (license license:expat)))
+
+(define-public python-django-cors-headers
+  (package
+    (name "python-django-cors-headers")
+    (version "4.7.0")
+    (source (origin
+              (method git-fetch) ; PyPI does not include settings.py for tests
+              (uri (git-reference
+                    (url "https://github.com/adamchainz/django-cors-headers")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0j5h31wfndkva5a6m6zw67yq3sbndl0zq9w4w3v7xx15dd84g9y4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                (invoke "django-admin" "test" "tests"
+                        "--pythonpath=.")))))))
+    (propagated-inputs (list python-asgiref python-django))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/adamchainz/django-cors-headers")
+    (synopsis "Django application for handling headers required for CORS")
+    (description
+     "@code{django-cors-headers} is a Django application for handling the
+server headers required for Cross-Origin Resource Sharing (CORS).")
     (license license:expat)))
 
 (define-public python-django-redis
@@ -1489,6 +1616,53 @@ CSS in a Django templates into cacheable static files by using the compress
 template tag.")
     (license license:expat)))
 
+(define-public python-django-dbbackup
+  (package
+    (name "python-django-dbbackup")
+    (version "4.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_dbbackup" version))
+       (sha256
+        (base32 "1p66xs6c2sw1l2zlskpa64zslyawlpgv0vn2l86g4rxizp6chj9m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; To write a .env file.
+              (setenv "HOME" "/tmp")
+              ;; 'env' command is not available in the build environment.
+              (substitute* "dbbackup/tests/test_connectors/test_base.py"
+                (("def test_run_command_with_parent_env")
+                 "def _test_run_command_with_parent_env"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "dbbackup.tests.settings")
+                (invoke "django-admin" "test" "dbbackup/tests"
+                        "--pythonpath=.")))))))
+    (native-inputs (list gnupg
+                         python-dotenv
+                         python-gnupg
+                         python-pytest
+                         python-pytz
+                         python-setuptools
+                         python-testfixtures
+                         python-tzdata
+                         python-wheel))
+    (propagated-inputs (list python-django))
+    (home-page "https://github.com/Archmonger/django-dbbackup")
+    (synopsis "Backup and restore a Django project database and media")
+    (description
+     "This Django application provides management commands to help backup and
+restore your project database and media files with various storages such as
+Amazon S3, Dropbox, local file storage or any Django storage.")
+    (license license:bsd-3)))
+
 (define-public python-django-override-storage
   (package
     (name "python-django-override-storage")
@@ -1518,6 +1692,52 @@ template tag.")
      "This project provides tools to help reduce the side effects of using
 FileFields during tests.")
     (license license:expat)))
+
+(define-public python-django-storages
+  (package
+    (name "python-django-storages")
+    (version "1.14.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_storages" version))
+       (sha256
+        (base32 "1ja1jgh7alypsb46ncbc6acsxxw771hf51yfqz4rmxhl8a7ww9bs"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'delete-some-tests
+                     (lambda _
+                        (delete-file
+                         ;; python-google-cloud-storage broken in the CI
+                         "tests/test_gcloud.py")
+                        (delete-file
+                         ;; python-moto can't find 'mock_s3'
+                         "tests/test_s3.py")
+                       (substitute* "tests/test_utils.py"
+                         ;; This test depends on a file which is likely
+                         ;; unavailble in PyPI (FileNotFoundError).
+                         (("def test_with_string_file_detect_encoding")
+                          "def _test_with_string_file_detect_encoding"))))
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                         (invoke "django-admin" "test" "tests"
+                                 "--pythonpath=.")))))))
+    (propagated-inputs (list python-django))
+    (native-inputs (list python-azure-storage-blob ; azure backend
+                         python-dropbox ; dropbox backend
+                         python-paramiko ; sftp backend
+                         python-pytest
+                         python-setuptools python-wheel))
+    (home-page "https://django-storages.readthedocs.io/en/latest/")
+    (synopsis "Support for many storage backends in Django")
+    (description
+     "@code{django-storages} is a project to provide a variety of storage
+backends in a single library.")
+    (license license:bsd-3)))
 
 (define-public python-django-auth-ldap
   (package
@@ -1682,6 +1902,27 @@ Django's filtering system in ORM).")
     (description "This form field allows users to provide SVG images for
 models that use Django's standard @code{ImageField}, in addition to the
 image files already supported by it.")
+    (license license:expat)))
+
+(define-public python-django-environ
+  (package
+    (name "python-django-environ")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_environ" version))
+       (sha256
+        (base32 "06h4g50qy1h77b4n28xbyzl2wvsblzs9qi63d7kvvm9x8n8whz92"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://django-environ.readthedocs.io/")
+    (synopsis "Configure Django project using environment variables")
+    (description
+     "This Django package allows you to utilize 12factor inspired environment
+variables to configure your Django application.")
     (license license:expat)))
 
 (define-public python-django-cleanup

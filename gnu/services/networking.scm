@@ -187,6 +187,7 @@
             tor-configuration-socks-socket-type
             tor-configuration-control-socket-path
             tor-configuration-transport-plugins
+            tor-configuration-auto-start
             tor-onion-service-configuration
             tor-onion-service-configuration?
             tor-onion-service-configuration-name
@@ -1171,7 +1172,9 @@ applications in communication.  It is used by Jami, for example.")))
   (control-socket?  tor-configuration-control-socket-path
                     (default #f))
   (transport-plugins tor-configuration-transport-plugins
-                    (default '())))
+                     (default '()))
+  (auto-start?      tor-configuration-auto-start
+                    (default #t)))
 
 (define %tor-accounts
   ;; User account and groups for Tor.
@@ -1196,8 +1199,8 @@ Onion Service.")
    alist
    "Association list of port to address mappings.  The following example:
 @lisp
-'((22 . \"127.0.0.1:22\")
-  (80 . \"127.0.0.1:8080\"))
+'((22 \"127.0.0.1:22\")
+  (80 \"127.0.0.1:8080\"))
 @end lisp
 maps ports 22 and 80 of the Onion Service to the local ports 22 and 8080."))
 
@@ -1284,6 +1287,7 @@ HiddenServicePort ~a ~a~%"
   "Return a <shepherd-service> running Tor."
   (let* ((torrc (tor-configuration->torrc config))
          (transport-plugins (tor-configuration-transport-plugins config))
+         (auto-start? (tor-configuration-auto-start config))
          (tor   (least-authority-wrapper
                  (file-append (tor-configuration-tor config) "/bin/tor")
                  #:name "tor"
@@ -1320,6 +1324,7 @@ HiddenServicePort ~a ~a~%"
            (start #~(make-forkexec-constructor
                      (list #$tor "-f" #$torrc)
                      #:user "tor" #:group "tor"))
+           (auto-start? auto-start?)
            (stop #~(make-kill-destructor))
            (actions (list (shepherd-configuration-action torrc)))
            (documentation "Run the Tor anonymous network overlay.")))))
@@ -1390,8 +1395,8 @@ networking daemon.")))
 @var{mapping}.  @var{mapping} is a list of port/host tuples, such as:
 
 @example
- '((22 . \"127.0.0.1:22\")
-   (80 . \"127.0.0.1:8080\"))
+ '((22 \"127.0.0.1:22\")
+   (80 \"127.0.0.1:8080\"))
 @end example
 
 In this example, port 22 of the hidden service is mapped to local port 22, and

@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
-;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2015, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016-2022, 2024 Efraim Flashner <efraim@flashner.co.il>
@@ -11,7 +11,7 @@
 ;;; Copyright © 2016–2023 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2020, 2024 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 okapi <okapi@firemail.cc>
-;;; Copyright © 2018, 2020, 2022-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2018, 2020, 2022-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2018, 2019, 2022 Marius Bakke <marius@gnu.org>
@@ -50,11 +50,13 @@
 ;;; Copyright © 2024 mio <stigma@disroot.org>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2024 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Kjartan Oli Agustsson <kjartanoli@outlook.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -87,8 +89,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-audio)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages documentation)
@@ -1169,7 +1169,7 @@ engineers, musicians, soundtrack editors and composers.")
 (define-public audacity
   (package
     (name "audacity")
-    (version "3.7.3")
+    (version "3.7.4")
     (source
      (origin
        (method git-fetch)
@@ -1178,7 +1178,7 @@ engineers, musicians, soundtrack editors and composers.")
              (commit (string-append "Audacity-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mryrjw76jz16hmqd161frkld75yhy9cxlpykwk08p078mqxnylg"))
+        (base32 "184hak52p00qid0i581gky7076fl5rjxwqly0fw7ix8yi6j8li4h"))
        (patches (search-patches "audacity-ffmpeg-fallback.patch"))
        (modules '((guix build utils)))
        (snippet
@@ -1577,14 +1577,13 @@ plugins are provided.")
     (build-system cargo-build-system)
     (arguments
      (list
-      #:cargo-inputs `(("rust-biquad" ,rust-biquad-0.4)
-                       ("rust-lv2" ,rust-lv2-0.6))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'install
             (lambda* (#:key outputs #:allow-other-keys)
               (setenv "LIBDIR" (string-append (assoc-ref outputs "out") "/lib"))
               (invoke "make" "install"))))))
+    (inputs (cargo-inputs 'bankstown-lv2))
     (home-page "https://github.com/chadmed/bankstown")
     (synopsis "Barebones, fast LV2 bass enhancement plugin.")
     (description
@@ -1772,6 +1771,11 @@ generators of mostly elementary and occasionally exotic nature.")
                               (string-append #$output:doc "/share/doc/")))))
           (add-after 'install-manual 'chdir
             (lambda _ (chdir "Plugin")))
+          (add-after 'chdir 'fix-includes
+            (lambda _
+              (substitute* "modules/JUCE/modules/juce_core/juce_core.h"
+                (("#define JUCE_CORE_H_INCLUDED" all)
+                 (string-append all "\n#include <utility>")))))
           (replace 'check
             (lambda* (#:key tests? build-type #:allow-other-keys)
               (when tests?
@@ -1918,7 +1922,7 @@ synthesis.")
 (define-public snapcast
   (package
     (name "snapcast")
-    (version "0.29.0")
+    (version "0.32.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1927,21 +1931,21 @@ synthesis.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1960xp54vsndj9vvc03kx9kg9phdchdgrfghhvcp2b0nfq2qcqqm"))))
+                "06hllji1621f29g6ymbysi1vkndjsrwj63f5ph30f6kvv3c8sqx4"))))
     (build-system cmake-build-system)
-    (arguments
-     '(#:tests? #f))                    ; no included tests
+    (arguments '(#:tests? #f))                    ;no included tests
     (inputs
-     (list boost
-           libvorbis
-           soxr
-           alsa-lib
+     (list alsa-lib
            avahi
-           pulseaudio
+           boost
+           expat
            flac
-           opus))
-    (native-inputs
-     (list pkg-config))
+           libvorbis
+           openssl
+           opus
+           pulseaudio
+           soxr))
+    (native-inputs (list pkg-config))
     (home-page "https://github.com/badaix/snapcast")
     (synopsis "Synchronous multiroom audio player")
     (description
@@ -2157,11 +2161,14 @@ object library.")
        (sha256
         (base32 "1lgasyk8j4cl9178vci1dph63nks3cgwhf8y1d04z9dc8gg15dyn"))))
     (build-system cmake-build-system)
+    (arguments
+     '(#:configure-flags '("-DBUILD_STATIC_LIBRARY=ON"))) ; required to build tests
     (native-inputs
      (list bison flex gettext-minimal zlib))
     (inputs
      (list alsa-lib
            boost
+           cunit
            jack-1
            ladspa
            liblo
@@ -2841,6 +2848,11 @@ partial release of the General MIDI sound set.")
               (string-append "--ldflags=-Wl,-rpath=" #$output "/lib"))
            #:phases
            '(modify-phases %standard-phases
+              (add-after 'unpack 'fix-includes
+                (lambda _
+                  (substitute* "src/LV2/DSP/gx_common.h"
+                    (("#include <cstdlib>" all)
+                     (string-append all "\n#include <cstdint>")))))
               (add-after 'unpack 'python3.11-compatibility
                 (lambda _
                   (substitute* "wscript"
@@ -3459,16 +3471,28 @@ provided by Pipewire.")
 (define-public python-pyaudio
   (package
     (name "python-pyaudio")
-    (version "0.2.12")
+    (version "0.2.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "PyAudio" version))
        (sha256
-        (base32 "17pvc27pn2xbisbq7nibhidyw8h2kyms7g2xbyx7nlxwfbdzbpam"))))
-    (build-system python-build-system)
-    (inputs
-     (list portaudio))
+        (base32 "11rgpnahh2kr3x4plr0r7kpccmbplm35cj669wglv6dlg4wgzpvq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Most tests require access to devices.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (setenv "PYTHONPATH" (string-append (getcwd) "/tests"))
+                (apply invoke "python" test-flags)))))))
+    (native-inputs
+     (list python-numpy python-setuptools python-wheel))
+    (inputs (list portaudio))
     (home-page "https://people.csail.mit.edu/hubert/pyaudio/")
     (synopsis "Bindings for PortAudio v19")
     (description "This package provides bindings for PortAudio v19, the
@@ -3513,18 +3537,18 @@ player-like clients.")
     (version "0.10.0")
     (source (origin
              (method url-fetch)
-             (uri (string-append "http://das.nasophon.de/download/pyliblo-"
+             (uri (string-append "https://das.nasophon.de/download/pyliblo-"
                                  version ".tar.gz"))
              (sha256
               (base32
                "13vry6xhxm7adnbyj28w1kpwrh0kf7nw83cz1yq74wl21faz2rzw"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments `(#:tests? #f)) ;no tests
     (native-inputs
-     (list python-cython))
+     (list python-cython python-setuptools python-wheel))
     (inputs
      (list liblo))
-    (home-page "http://das.nasophon.de/pyliblo/")
+    (home-page "https://das.nasophon.de/pyliblo/")
     (synopsis "Python bindings for liblo")
     (description
      "Pyliblo is a Python wrapper for the liblo Open Sound Control (OSC)
@@ -3561,14 +3585,14 @@ included are the command line utilities @code{send_osc} and @code{dump_osc}.")
 (define-public python-soundfile
   (package
     (name "python-soundfile")
-    (version "0.13.0")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "soundfile" version))
        (sha256
         (base32
-         "0mc3g5l9fzj57m62zrwwz0w86cbihpna3mikgh8kpmz7ppc9jcz8"))))
+         "0nqf7z2wrb70vppjv5729565h0p3azgl6nqa10bp6a9h3smqvimj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3658,6 +3682,52 @@ one-dimensional sample-rate conversion library.")
     (description "This package provides a python API to read and write MIDI
 files.")
     (license license:expat)))
+
+(define-public python-wavefile
+  (package
+    (name "python-wavefile")
+    (version "1.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wavefile" version))
+       (sha256
+        (base32 "120r003xy0cv6a4d4cjxv140im007klgkvzfgc57m70rcbnggi7p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Assertion fail to compare files.
+                    (list "not test_allFormats"
+                          "test_commonFormats"
+                          "test_majorFormats"
+                          "test_subtypeFormats")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-libsndfile-path
+            (lambda _
+              (substitute* "wavefile/libsndfile.py"
+                (("'libsndfile")
+                 (string-append "'" #$(this-package-input "libsndfile")
+                                "/lib/libsndfile"))))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools-next))
+    (inputs
+     (list libsndfile
+           portaudio))
+    (propagated-inputs
+     (list python-numpy
+           python-pyaudio))
+    (home-page "https://github.com/vokimon/python-wavefile")
+    (synopsis "Pythonic audio file reader and writer")
+    (description
+     "This package provides pythonic libsndfile wrapper to read and write audio
+files.")
+    (license license:gpl3+)))
 
 (define-public audio-to-midi
   (package
@@ -3998,8 +4068,10 @@ buffers, and audio capture.")
               (patches (search-patches "alure-dumb-2.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ;no tests
-       #:configure-flags '("-DMODPLUG=ON")))
+     (list
+      #:cmake cmake-3.25
+      #:tests? #f ;no tests
+      #:configure-flags #~(list "-DMODPLUG=ON")))
     (native-inputs (list pkg-config))
     (inputs (list dumb
                   flac
@@ -4210,6 +4282,9 @@ link REQUIRED)"))))))
               "-DFORTIFY=ON"
               "-DLIBSCSYNTH=ON"
               "-DSC_EL=OFF")      ;scel is packaged individually as emacs-scel
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           ;; HOME must be defined otherwise supercollider throws a "ERROR:
@@ -4237,6 +4312,7 @@ link REQUIRED)"))))))
             (lambda _
               (system "Xvfb &")
               (setenv "DISPLAY" ":0")))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-before 'install 'install-ide
             (lambda _
               (let* ((ide #$output:ide)
@@ -4282,14 +4358,14 @@ using Guix System.")
 (define-public libshout-idjc
   (package
     (name "libshout-idjc")
-    (version "2.4.6")
+    (version "2.4.6-r2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/libshoutidjc.idjc.p"
                            "/libshout-idjc-" version ".tar.gz"))
        (sha256
-        (base32 "1cgbym1qms408l4anc0imlcf091yk9kic4s9n7zcri3xzbi8lv1z"))))
+        (base32 "0cmvvkixx771mgap266yiji87kgv5bnqbj2y1j20r1d4adk9zy98"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -4320,7 +4396,6 @@ using Guix System.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next
       #:build-type "Release"
       ;; The build system uses CMake modules features that are only available
       ;; when using Ninja.
@@ -4582,6 +4657,11 @@ for loudness normalisation.")
                             (assoc-ref %outputs "out") "/etc/timidity"))
        #:phases
        (modify-phases %standard-phases
+         (add-after 'configure 'fix-config.h
+           (lambda _
+             (substitute* "config.h"
+               (("/\\* #undef STDC_HEADERS \\*/")
+                "#define STDC_HEADERS 1"))))
          (add-after 'install 'install-config
            (lambda _
              (let ((out (string-append (assoc-ref %outputs "out")
@@ -4824,21 +4904,18 @@ encode and decode wavpack files.")
       (license license:gpl3+))))
 
 (define-public libmixed
-  ;; Release is much outdated.
-  (let ((commit "9b2668e0d85175b0e92864cfbf1b9e58f77c92e0")
-        (revision "1"))
     (package
       (name "libmixed")
-      (version (git-version "2.0" revision commit))
+      (version "2.4.0")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/Shirakumo/libmixed")
-               (commit commit)))
+               (commit version)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ql2h0hh4jl96sc9i6mk1d6qq261bvsfapinvzr9gx3lpzycpfb7"))))
+          (base32 "0g9z8mzrdp1j4w4dv6z2xkgknip6m6384n953y20wdvhs71gia1v"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -4866,7 +4943,7 @@ in audio/video/games.  It can serve as a base architecture for complex DSP
 systems.")
       (license (list license:bsd-2 ; libsamplerate
                      license:gpl2 ; spiralfft
-                     license:zlib)))))
+                     license:zlib))))
 
 (define-public libmodplug
   (package
@@ -4893,15 +4970,18 @@ surround and reverb.")
 (define-public libxmp
   (package
     (name "libxmp")
-    (version "4.4.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/libxmp/" version "/"
-                                  name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1kycz4jsyvmf7ny9227b497wc7y5ligydi6fvvldmkf8hk63ad9m"))))
+    (version "4.6.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libxmp/libxmp")
+             (commit (string-append "libxmp-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mb54n2cqr8wvq02x9v8vdanvn01bhy0j1pyq2n3iykfnpjx4f2m"))))
     (build-system gnu-build-system)
+    (native-inputs (list autoconf))
     (home-page "https://xmp.sourceforge.net/")
     (synopsis "Module player library")
     (description
@@ -4913,19 +4993,19 @@ Scream Tracker 3 (S3M), Fast Tracker II (XM), and Impulse Tracker (IT).")
 (define-public xmp
   (package
     (name "xmp")
-    (version "4.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/xmp/" version "/"
-                                  name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "17i8fc7x7yn3z1x963xp9iv108gxfakxmdgmpv3mlm438w3n3g8x"))))
+    (version "4.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libxmp/xmp-cli")
+             (commit (string-append "xmp-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c015v8r91g5nspfn6lldkw76dg3xjyg3x6s2sbiw6b3n7bf8znk"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libxmp pulseaudio))
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list libxmp pulseaudio))
     (home-page "https://xmp.sourceforge.net/")
     (synopsis "Extended module player")
     (description
@@ -6399,16 +6479,16 @@ workstations as well as consumer software such as music players.")
 (define-public redkite
   (package
     (name "redkite")
-    (version "1.3.1")                     ;marked unmaintained as of Oct. 2021
+    (version "2.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/free-sm/redkite")
+             (url "https://github.com/quamplex/redkite")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1zb2k2a4m7z2ravqrjn8fq8lic20wbr2m8kja3p3113jsk7j9zvd"))))
+        (base32 "1xn7vnv7zszy0f1ynxd7qn0131w0gmk3rp3my4xjh143dhck4q4b"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ;no tests included
@@ -6416,19 +6496,19 @@ workstations as well as consumer software such as music players.")
      (list cairo))
     (native-inputs
      (list pkg-config))
-    (synopsis "Small GUI toolkit")
+    (synopsis "Lightweight graphics widget toolkit for embedded GUI")
     (description "Redkite is a small GUI toolkit developed in C++17 and
 inspired from other well known GUI toolkits such as Qt and GTK.  It is
 minimal on purpose and is intended to be statically linked to applications,
 therefore satisfying any requirements they may have to be self contained,
 as is the case with audio plugins.")
-    (home-page "https://gitlab.com/geontime/redkite")
+    (home-page "https://github.com/quamplex/redkite")
     (license license:gpl3+)))
 
 (define-public carla
   (package
     (name "carla")
-    (version "2.4.1")
+    (version "2.5.10")
     (source
      (origin
        (method git-fetch)
@@ -6438,7 +6518,7 @@ as is the case with audio plugins.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01ngkmfcxyg1bb4qmfvlkkjbx4lx62akxqhizl8zmqnhfcy4p9bx"))))
+        (base32 "1p7nvydnmg5l457w3089bwj1a5z509ydlpwvf19k86i348a1lm6v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no "check" target
@@ -6455,11 +6535,10 @@ as is the case with audio plugins.")
                  (lambda _
                    (chmod (string-append #$output "/share/carla/carla") #o555)))
                (add-after 'install 'wrap-executables
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (wrap-script (string-append #$output "/bin/carla")
-                                #:guile (search-input-file inputs "bin/guile")
-                                `("GUIX_PYTHONPATH" ":" prefix
-                                  (,(getenv "GUIX_PYTHONPATH")))))))))
+                 (lambda _
+                   (wrap-program (string-append #$output "/bin/carla")
+                     `("GUIX_PYTHONPATH" ":" prefix
+                       (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
      (list alsa-lib
            ffmpeg
@@ -6478,10 +6557,7 @@ as is the case with audio plugins.")
            ;; (ModuleNotFoundError: No module named 'PyQt5')
            python-wrapper
            qtbase-5
-           zlib
-
-           ;; For WRAP-SCRIPT above.
-           guile-2.2))
+           zlib))
     (native-inputs
      (list pkg-config))
     (home-page "https://kx.studio/Applications:Carla")
@@ -7417,7 +7493,7 @@ verifies checksums.")
 (define-public easyeffects
   (package
     (name "easyeffects")
-    (version "7.2.3")
+    (version "7.2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7425,11 +7501,10 @@ verifies checksums.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "0vr21d12vbyvw3l1h4dx44fk1vk7ns7l8ynclchw5flhsd58yg3d"))))
+               (base32 "0k4l77hsmifqsw00mr28575b5fmhvskawjf7h4pmyj6ffbbinwy3"))))
     (build-system meson-build-system)
     (native-inputs
      (list `(,glib "bin") ;for glib-compile-resources
-           gcc-12 ; fails to build with gcc-11
            gettext-minimal
            itstool
            pkg-config))

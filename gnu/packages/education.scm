@@ -47,6 +47,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-web)
@@ -113,6 +114,7 @@
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/xalanq/cf-tool"
       #:phases
@@ -127,7 +129,7 @@
            go-github-com-fatih-color
            go-github-com-k0kubun-go-ansi
            go-github-com-mitchellh-go-homedir
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-puerkitobio-goquery
            go-github-com-sergi-go-diff
            go-github-com-shirou-gopsutil
@@ -240,8 +242,7 @@ of categories with some of the activities available in that category.
                    (setenv "DISPLAY" ":1")
                    ;; The test suite wants to write to /homeless-shelter
                    (setenv "HOME" (getcwd)))))
-           #:configure-flags #~(list "-DQML_BOX2D_MODULE=disabled"
-                                     "-DBUILD_TESTING=TRUE")))
+           #:configure-flags #~(list "-DQML_BOX2D_MODULE=disabled")))
     (native-inputs
      (list extra-cmake-modules
            gettext-minimal
@@ -335,7 +336,7 @@ frequently used words in American English.")
 (define-public tipp10
   (package
     (name "tipp10")
-    (version "3.3.0")
+    (version "3.3.4")
     (source (origin
               (method git-fetch)
               ;; Use the community maintained Qt 6 fork of the project, as the
@@ -347,7 +348,7 @@ frequently used words in American English.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "138xf55csnq53mlkhj50g9bacay8kxz6p9vnzd7jyv6rq1xch5nq"))))
+                "1a6swdzf15jrqafwzv7grkdcl4a4nhpm8b8lh6br0djxkzqzx45b"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase    ;qtbase 6
                      #:tests? #f))      ;packages has no tests
@@ -514,6 +515,9 @@ specialized device.")
     (arguments
      (list
       #:tests? #f                       ;no tests
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-initial-values
@@ -534,7 +538,7 @@ specialized device.")
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "OpenBoard.pro"
                 (("/usr/include/quazip5")
-                 (search-input-directory inputs "/include/QuaZip-Qt5-1.4/quazip"))
+                 (search-input-directory inputs "/include/QuaZip-Qt5-1.5/quazip"))
                 (("-lquazip5")
                  "-lquazip1-qt5")
                 (("/usr/include/poppler")
@@ -542,6 +546,7 @@ specialized device.")
           (replace 'configure
             (lambda _
               (invoke "qmake" "OpenBoard.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (replace 'install
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((share (string-append #$output "/share"))
@@ -692,6 +697,7 @@ language and very flexible regarding to new or unknown keyboard layouts.")
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list qtdeclarative-5))
+    (arguments (list #:tests? #f))
     (home-page "https://invent.kde.org/libraries/kqtquickcharts")
     (synopsis "QtQuick plugin to render beautiful and interactive charts")
     (description
@@ -736,6 +742,7 @@ charts.")
            qtquickcontrols2-5
            qtx11extras
            qtxmlpatterns-5))
+    (arguments (list #:tests? #f))
     (home-page "https://edu.kde.org/ktouch/")
     (synopsis "Touch typing tutor")
     (description
@@ -1018,7 +1025,9 @@ floating through space.")
         (string-append "ftp://ftp.sra.co.jp/pub/misc/eb/eb-" version ".tar.bz2"))
        (sha256
         (base32
-         "0psbdzirazfnn02hp3gsx7xxss9f1brv4ywp6a15ihvggjki1rxb"))))
+         "0psbdzirazfnn02hp3gsx7xxss9f1brv4ywp6a15ihvggjki1rxb"))
+       (patches
+        (search-patches "libeb-gcc-14.patch"))))
     (build-system gnu-build-system)
     (native-inputs ; Required for building docs
      (list perl))
@@ -1105,7 +1114,7 @@ machine, and more.")
 (define-public exercism
   (package
     (name "exercism")
-    (version "3.5.5")
+    (version "3.5.7")
     (source
      (origin
        (method git-fetch)
@@ -1114,11 +1123,12 @@ machine, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a53caqrxv0rhg79md97vnzcbr9gnz3mzjkk7xyafc3h456b4gsz"))
+        (base32 "1w1md548janc16svdqij6bya5r6rayl13760jmsx28ws8yv2wjqf"))
        (patches (search-patches "exercism-disable-self-update.patch"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/exercism/cli/exercism"
       #:unpack-path "github.com/exercism/cli"
@@ -1126,6 +1136,13 @@ machine, and more.")
       #:test-subdirs #~(list "../../...")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-xdg-open
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* "browser/open.go"
+                  (("xdg-open")
+                   (string-append #$(this-package-input "xdg-utils")
+                                  "/bin/xdg-open"))))))
           (add-after 'install 'install-completions
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((exercism (string-append #$output "/bin/exercism"))
@@ -1158,6 +1175,8 @@ machine, and more.")
            go-github-com-stretchr-testify
            go-golang-org-x-net
            go-golang-org-x-text))
+    (inputs
+     (list xdg-utils))
     (home-page "https://exercism.org/")
     (synopsis "Mentored learning for programming languages")
     (description

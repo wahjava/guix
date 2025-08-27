@@ -147,8 +147,17 @@
           (base32 "0i6jhrdswr1wglyb9h39idpz5v9z13yhidvlbj34vxpyngrkhlvs"))))
       (build-system cmake-build-system)
       (arguments
-       `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")
-         #:test-target "test_all"))
+       (list
+        #:configure-flags #~'("-DBUILD_SHARED_LIBS=ON")
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:rest args)
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:test-target "test_all" args))))))
       (home-page "https://github.com/quiet/libfec")
       (synopsis "Forward error correction algorithms library")
       (description
@@ -175,12 +184,15 @@ useful in modems implemented with @dfn{digital signal processing} (DSP).")
       (build-system cmake-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'build 'build-libfec-compatibility-layer
               (lambda _
                 (invoke "make" "shim")))
+            (replace 'check (assoc-ref gnu:%standard-phases 'check))
             (add-after 'install 'delete-static-libraries
               (lambda _
                 (delete-file (string-append #$output "/lib/libcorrect.a"))
@@ -614,20 +626,18 @@ controls for certain tuners which may be paired with an audio device.")
       (license license:expat))))
 
 (define-public soapybladerf
-  (let ((commit "85f6dc554ed4c618304d99395b19c4e1523675b0")
-        (revision "1"))
     (package
       (name "soapybladerf")
-      (version (git-version "0.4.1" revision commit))
+      (version "0.4.2")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/pothosware/SoapyBladeRF")
-               (commit commit)))
+               (commit (string-append "soapy-bladerf-" version))))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "05c5mv1b55jv7dcr740hv4b3gplfaqryflfvprhlkm7bycr8pp16"))))
+          (base32 "1jhhqslpn9kpif9znsdxc9zwlz7hhlzk87lpcg9m4xl2x2xy454n"))))
       (build-system cmake-build-system)
       (inputs (list bladerf soapysdr))
       (arguments (list #:tests? #f))  ; No test suite
@@ -635,7 +645,7 @@ controls for certain tuners which may be paired with an audio device.")
       (synopsis "SoapySDR BladeRF module")
       (description "This package provides BladeRF devices support to the
 SoapySDR library.")
-      (license license:lgpl2.1+))))
+      (license license:lgpl2.1+)))
 
 (define-public soapyhackrf
   ;; Some fixes are not yet in a tagged release.
@@ -1099,7 +1109,8 @@ environment.")
            spdlog
            volk))
     (arguments
-     (list #:modules '((guix build cmake-build-system)
+     (list #:tests? #f
+           #:modules '((guix build cmake-build-system)
                        ((guix build python-build-system) #:prefix python:)
                        (guix build utils))
            #:imported-modules `(,@%cmake-build-system-modules
@@ -1232,6 +1243,7 @@ DMR, NXDN, P25, etc.")
          (sha256
           (base32 "12p193ngcs65nd3lynry119nhv40mikamqkw37wdln7lawx3nw7p"))))
       (build-system cmake-build-system)
+      (arguments (list #:tests? #f))
       (native-inputs
        (list doxygen
              pkg-config
@@ -1590,7 +1602,14 @@ you must extend 'udev-service-type' with this package.  E.g.:
                                                     "/lib/udev/rules.d")
                                      "-DBLADERF_GROUP=dialout"
                                      "-DBUILD_DOCUMENTATION=ON")
-           #:tests? #f)) ; No test suite
+           #:tests? #f ; No test suite
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'gcc-14
+                 (lambda _
+                   (substitute* "host/utilities/bladeRF-fsk/c/src/fir_filter.c"
+                     (("calloc\\(sizeof\\(struct complex_sample\\), chunk_size\\)")
+                      "calloc(1 * sizeof(struct complex_sample), chunk_size)")))))))
     (home-page "https://www.nuand.com/")
     (synopsis "User-space library and utilities for BladeRF SDR")
     (description
@@ -1648,34 +1667,6 @@ myriad of radios and rotators available to amateur radio and communications
 users.")
     (home-page "https://hamlib.github.io/")
     (license (list license:gpl2+ license:lgpl2.1+))))
-
-(define wsjtx-hamlib
-  ;; Fork of hamlib with custom patches used by wsjtx.
-  (package
-    (inherit hamlib)
-    (name "wsjtx-hamlib")
-    (version "2.5.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.code.sf.net/u/bsomervi/hamlib.git")
-             (commit (string-append "wsjtx-" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1bgf7bz2280739a7ip7lvpns0i7x6svryxfmsp32cff2dr146lz3"))))
-    (native-inputs
-     `(("autoconf" ,autoconf)
-       ("automake" ,automake)
-       ("libtool" ,libtool)
-       ("texinfo" ,texinfo)
-       ,@(package-native-inputs hamlib)))
-    (arguments
-     `(#:configure-flags '("--disable-static"
-                           "--with-lua-binding"
-                           "--with-python-binding"
-                           "--with-tcl-binding"
-                           "--with-xml-support")))))
 
 (define-public jtdx-hamlib
   ;; Fork of hamlib with custom patches used by jtdx.
@@ -1890,10 +1881,7 @@ focused on DXing and being shaped by community of DXers.JTDX")
                 (("set \\(ENV\\{PKG_CONFIG_PATH\\}.*\\)")
                  "set (__pc_path $ENV{PKG_CONFIG_PATH})
   list (APPEND __pc_path \"${__hamlib_pc_path}\")
-  set (ENV{PKG_CONFIG_PATH} \"${__pc_path}\")"))
-              (substitute* "HamlibTransceiver.hpp"
-                (("#ifdef JS8_USE_LEGACY_HAMLIB")
-                 "#if 1"))))
+  set (ENV{PKG_CONFIG_PATH} \"${__pc_path}\")"))))
           (delete 'check)
           (add-after 'install 'check
             (lambda* (#:key tests? #:allow-other-keys)
@@ -1909,11 +1897,11 @@ focused on DXing and being shaped by community of DXers.JTDX")
      (list boost
            fftw
            fftwf
+           hamlib
            libusb
            qtbase-5
            qtmultimedia-5
-           qtserialport-5
-           wsjtx-hamlib))
+           qtserialport-5))
     (home-page "http://js8call.com/")
     (synopsis "Weak-signal ham radio communication program")
     (description
@@ -2062,7 +2050,7 @@ gain and standing wave ratio.")
 (define-public dump1090
   (package
     (name "dump1090")
-    (version "8.2")
+    (version "10.2")
     (source
      (origin
        (method git-fetch)
@@ -2071,12 +2059,17 @@ gain and standing wave ratio.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16ylywy2fdwf5kqr8kgl9lbzy1zwx4ckj9y122k3h86pfkswljs9"))))
+        (base32 "0dc1f18n1xlamdhxg96db6cm6kp04cqzxb36qmd141d0rca7qcli"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Remove FPGA firmware binary.
+           (delete-file-recursively "bladerf")))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
     (inputs
-     (list bladerf hackrf libusb ncurses rtl-sdr))
+     (list bladerf hackrf libusb ncurses rtl-sdr soapysdr))
     (arguments
      (list
       #:test-target "test"
@@ -2269,13 +2262,19 @@ NanoVNA vector network analyzers.")
            qtbase-5
            v4l-utils))
     (arguments
-     `(#:tests? #f  ; No test suite.
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX=" (assoc-ref outputs "out"))))))))
+     (list
+      #:tests? #f  ; No test suite.
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX=" (assoc-ref outputs "out")))))
+                (replace 'build (assoc-ref gnu:%standard-phases 'build))
+                (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "http://users.telenet.be/on4qz/qsstv/")
     (synopsis "Program for receiving and transmitting SSTV and HAMDRM")
     (description
@@ -2432,7 +2431,8 @@ intended for people who want to learn receiving and sending morse code.")
           (base32 "1lhsmyhljqa6apzbysqar56wpfcdvs3pq9ia1mshqd6d3hz74s78"))))
       (build-system cmake-build-system)
       (arguments
-       (list #:configure-flags #~(list "-DGGMORSE_SUPPORT_SDL2=OFF")
+       (list #:tests? #f
+             #:configure-flags #~(list "-DGGMORSE_SUPPORT_SDL2=OFF")
              #:phases #~(modify-phases %standard-phases
                           (add-after 'unpack 'disable-imgui-build
                             (lambda _
@@ -2630,34 +2630,40 @@ sinks and sources.")
            speexdsp
            zlib))
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "dream.pro"
-               (("target\\.path = /usr/bin")
-                (string-append "target.path = "
-                               (assoc-ref outputs "out") "/bin"))
-               (("documentation\\.path = /usr/share/man/man1")
-                (string-append "documentation.path = "
-                               (assoc-ref outputs "out")
-                               "/share/man/man1"))
-               (("/usr/include/pulse")
-                (search-input-directory inputs "/include/pulse"))
-               (("/usr/include/sndfile\\.h")
-                (search-input-file inputs "/include/sndfile.h"))
-               (("/usr/include/opus")
-                (search-input-directory inputs "/include/opus"))
-               (("/usr/include/speex")
-                (search-input-directory inputs "/include/speex"))
-               (("/usr/include/qwt")
-                (search-input-directory inputs "/include/qwt"))
-               (("\\$\\$OUT_PWD/include/neaacdec\\.h")
-                (search-input-file inputs "/include/neaacdec.h")))))
-         (replace 'configure
-           (lambda _
-             (invoke "qmake"))))))
+     (list
+      #:tests? #f
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "dream.pro"
+                (("target\\.path = /usr/bin")
+                 (string-append "target.path = "
+                                (assoc-ref outputs "out") "/bin"))
+                (("documentation\\.path = /usr/share/man/man1")
+                 (string-append "documentation.path = "
+                                (assoc-ref outputs "out")
+                                "/share/man/man1"))
+                (("/usr/include/pulse")
+                 (search-input-directory inputs "/include/pulse"))
+                (("/usr/include/sndfile\\.h")
+                 (search-input-file inputs "/include/sndfile.h"))
+                (("/usr/include/opus")
+                 (search-input-directory inputs "/include/opus"))
+                (("/usr/include/speex")
+                 (search-input-directory inputs "/include/speex"))
+                (("/usr/include/qwt")
+                 (search-input-directory inputs "/include/qwt"))
+                (("\\$\\$OUT_PWD/include/neaacdec\\.h")
+                 (search-input-file inputs "/include/neaacdec.h")))))
+          (replace 'configure
+            (lambda _
+              (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "https://sourceforge.net/projects/drm/")
     (synopsis "Digital Radio Mondiale receiver")
     (description
@@ -2806,7 +2812,7 @@ based devices in packet mode over a serial link.")
 (define-public cm256cc
   (package
     (name "cm256cc")
-    (version "1.1.0")
+    (version "1.1.1")
     (source
      (origin
        (method git-fetch)
@@ -2815,7 +2821,7 @@ based devices in packet mode over a serial link.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n9v7g6d370263bgqrjv38s9aq5953rzy7jvd8i30xq6aram9djg"))))
+        (base32 "07gx6yb17m9kd885qpf98cryn1acp546qg80c0rncy3hic0hd6pf"))))
     (build-system cmake-build-system)
     (arguments
      ;; Disable some SIMD features for reproducibility.
@@ -3117,6 +3123,7 @@ various hardware.")
        (sha256
         (base32 "11v5idwvfi9w60qg4fgqgvm7ahmb0ys4j094qv4c93r92kd9d3f9"))))
     (build-system qt-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -3145,6 +3152,9 @@ software-defined radio receivers.")
     (arguments
      (list
       #:tests? #f  ; No test suite.
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-paths
@@ -3169,7 +3179,9 @@ software-defined radio receivers.")
               (chdir "build")
               (invoke "qmake"
                       (string-append "PREFIX=" #$output)
-                      "../wfview.pro"))))))
+                      "../wfview.pro")))
+           (replace 'build (assoc-ref gnu:%standard-phases 'build))
+           (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list eigen
            eudev
@@ -3415,7 +3427,7 @@ instruction sets.")
 (define-public gnss-sdr
   (package
     (name "gnss-sdr")
-    (version "0.0.19")
+    (version "0.0.20")
     (source
      (origin
        (method git-fetch)
@@ -3424,7 +3436,7 @@ instruction sets.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0l1hqfqh8ffgy6nxqdk390vmnmhv66x7m8323mz2izczqc5acy1p"))))
+        (base32 "197y1jz6a5481qbf92wkfdz2zk00028hybgn05pf8nawhwizq2wi"))))
     (build-system cmake-build-system)
     (native-inputs
      `(("googletest-source" ,(package-source googletest))
@@ -3467,6 +3479,7 @@ instruction sets.")
                             (assoc-ref %build-inputs "glog"))
              (string-append "-DGTEST_DIR="
                             (assoc-ref %build-inputs "googletest-source")))
+       #:tests? #f ; FIXME: fails with "No tests were found" error
        #:phases
        (modify-phases %standard-phases
          (add-before 'check 'set-home

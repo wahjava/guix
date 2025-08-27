@@ -443,11 +443,18 @@ already exists.  Lookup team IDs among CURRENT-TEAMS."
 
 
 
+(define-team ai
+  (team 'ai
+        #:name "Artificial Intelligence"
+        #:description "Packages related to AI, ML and LLM."
+        #:scope (list "gnu/packages/machine-learning.scm")))
+
 (define-team audio
   (team 'audio
         #:name "Audio team"
         #:description "Audio related packages."
         #:scope (list "gnu/packages/audio.scm"
+                      "gnu/packages/fluidplug.scm"
                       "gnu/packages/xiph.scm")))
 
 (define-team bootstrap
@@ -573,6 +580,13 @@ already exists.  Lookup team IDs among CURRENT-TEAMS."
                       "guix/build/utils.scm"
                       "guix/build-system/gnu.scm")))
 
+(define-team debian
+  (team 'debian
+        #:name "Debian team"
+        #:description
+        "Packages related to Debian and Debian derivatives."
+        #:scope (list "gnu/packages/debian.scm")))
+
 (define-team documentation
   (team 'documentation
         #:name "Documentation"
@@ -681,6 +695,16 @@ the haskell-build-system."
                       "tests/guix-home.sh"
                       "tests/home-import.scm"
                       "tests/home-services.scm")))
+
+(define-team hpc
+  (team 'hpc
+        #:name "Hpc team"
+        #:description "High performance computing related packages."
+        #:scope (list "gnu/packages/mpi.scm"
+                      "gnu/packages/rocm.scm"
+                      "gnu/packages/sycl.scm"
+                      "gnu/packages/tbb.scm"
+                      "gnu/packages/vulkan.scm")))
 
 (define-team hurd
   (team 'hurd
@@ -893,12 +917,12 @@ importer."
   (team 'rust
         #:name "Rust"
         #:scope (list (make-regexp* "^gnu/packages/(crates|rust)(-.+|)\\.scm$")
-                      "gnu/packages/c2rust.scm"
                       "gnu/packages/sequoia.scm"
                       "guix/build/cargo-build-system.scm"
                       "guix/build/cargo-utils.scm"
                       "guix/build-system/cargo.scm"
                       "guix/import/crate.scm"
+                      "guix/import/crate/cargo-lock.scm"
                       "guix/scripts/import/crate.scm"
                       "tests/crate.scm")))
 
@@ -950,11 +974,13 @@ packages (e.g. Astronomy, Chemistry, Math, Physics etc.)"
                       "gnu/packages/openldap.scm"
                       "gnu/packages/openstack.scm"
                       "gnu/packages/prometheus.scm"
+                      "gnu/packages/rdesktop.scm"
                       "gnu/packages/selinux.scm"
                       "gnu/packages/storage.scm"
                       "gnu/packages/task-runners.scm"
                       "gnu/packages/terraform.scm"
-                      "gnu/packages/virtualization.scm")))
+                      "gnu/packages/virtualization.scm"
+                      "gnu/packages/vnc.scm")))
 
 (define-team telephony
   (team 'telephony
@@ -1130,7 +1156,7 @@ the \"texlive\" importer."
 (define-member (person "Vagrant Cascadian"
                        "vagrant@debian.org"
                        "vagrantc")
-  embedded)
+  debian embedded)
 
 (define-member (person "Vagrant Cascadian"        ;XXX: duplicate
                        "vagrant@reproducible-builds.org"
@@ -1230,7 +1256,7 @@ the \"texlive\" importer."
 (define-member (person "Cayetano Santos"
                        "csantosb@inventati.org"
                        "csantosb")
-  emacs electronics)
+  ai emacs electronics hpc)
 
 (define-member (person "Greg Hogan"
                        "code@greghogan.com"
@@ -1274,6 +1300,11 @@ the \"texlive\" importer."
                        "yelninei@tutamail.com"
                        "Yelninei")
   hurd)
+
+(define-member (person "Giacomo Leidi"
+                       "goodoldpaul@autistici.org"
+                       "fishinthecalculator")
+  audio)
 
 
 (define (find-team name)

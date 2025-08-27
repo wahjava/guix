@@ -4,7 +4,7 @@
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
-;;; Copyright © 2018, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2018, 2021-2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020, 2021, 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
@@ -251,6 +251,20 @@ Included are implementations of:
 @item AsyncGenerator
 @end enumerate\n")
     (license license:psfl)))
+
+(define-public python-typing-extensions-next
+  (package
+    (inherit python-typing-extensions)
+    (version "4.15.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "typing_extensions" version))
+       (sha256
+        (base32 "0rhlhs28jndgp9fghdhidn6g7xiwx8vvihxbxhlgl4ncfg8lishc"))))
+    (native-inputs
+     (modify-inputs (package-native-inputs python-typing-extensions)
+       (replace "python-flit-core" python-flit-core-next)))))
 
 
 ;;;
@@ -827,6 +841,30 @@ has features such as:
 @item Responsive CLI, ~2-3x faster than equivalent tools.
 @end itemize")
     (license license:expat)))
+
+(define-public python-hatch-docstring-description
+  (package
+    (name "python-hatch-docstring-description")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hatch_docstring_description" version))
+       (sha256
+        (base32 "1qwa8m4yswn0bkc5xzq30xsaca578axl5ig2r6mkcdxsfg196pdi"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;avoid extra test dependencies
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling))
+    (propagated-inputs
+     (list python-hatchling))
+    (home-page "https://github.com/flying-sheep/hatch-docstring-description")
+    (synopsis "Derive PyPI package description from Python package docstring ")
+    (description
+     "This package provides a Hatchling plugin to read the description from the
+package docstring.")
+    (license license:gpl3+)))
 
 (define-public python-hatch-fancy-pypi-readme
   (package

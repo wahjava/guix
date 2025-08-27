@@ -4,7 +4,7 @@
 ;;; Copyright © 2016 Nikita <nikita@n0.is>
 ;;; Copyright © 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2017, 2018 Nikolai Merinov <nikolai.merinov@member.fsf.org>
-;;; Copyright © 2017, 2019-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2019-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2019 Ivan Petkov <ivanppetkov@gmail.com>
@@ -121,16 +121,20 @@
        (inherit (package-source base-rust))
        (uri (rust-uri version))
        (sha256 (base32 checksum))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments base-rust)
+       ((#:disallowed-references _ '())
+        (list base-rust))))
     (native-inputs
-     (alist-replace "cargo-bootstrap" (list base-rust "cargo")
-                    (alist-replace "rustc-bootstrap" (list base-rust)
-                                   (package-native-inputs base-rust))))))
+     (modify-inputs (package-native-inputs base-rust)
+       (replace "rustc-bootstrap" base-rust)
+       (replace "cargo-bootstrap" (list base-rust "cargo"))))))
 
 ;;; Note: mrustc's only purpose is to be able to bootstap Rust; it's designed
 ;;; to be used in source form.
-(define %mrustc-commit "5e01a76097265f4bb27b18885b9af3f2778180f9")
+(define %mrustc-commit "06b87d1af49d2db3bd850fdee8888055dd540dd1")
 (define %mrustc-source
-  (let* ((version "0.11.0")
+  (let* ((version "0.11.2")
          (commit %mrustc-commit)
          (revision "1")
          (name "mrustc"))
@@ -141,7 +145,7 @@
             (commit %mrustc-commit)))
       (file-name (git-file-name name (git-version version revision commit)))
       (sha256
-       (base32 "1yyjfl1z6d5r9sv7zl90kqyjw1lqd2cqzwh2syi7yvrpslhihrhy"))
+       (base32 "1m6ya3d653b5z0ygvr4y8hay1445gww9s8vyk8h0jdi42zkhzqkf"))
       (patches (search-patches "mrustc-patches.patch"))
       (modules '((guix build utils)))
       (snippet
@@ -151,13 +155,15 @@
           (substitute* (find-files "." "Makefile")
             (("LINKFLAGS := -g") "LINKFLAGS :=")
             (("-g ") ""))
-          ;; Don't use the vendored openssl sources.
           (substitute* "minicargo.mk"
+            ;; Don't assume tarball with gzip compression.
+            (("-xzf") "-xf")
+            ;; Don't use the vendored openssl sources.
             (("--features vendored-openssl") "")))))))
 
-;;; Rust 1.54 is special in that it is built with mrustc, which shortens the
-;;; bootstrap path.
-(define-public rust-bootstrap
+;;; The rust-bootstrap packages are special in that they are built with mrustc,
+;;; which shortens the bootstrap path.
+(define-public rust-bootstrap-1.54
   (package
     (name "rust")
     (version "1.54.0")
@@ -339,6 +345,185 @@ safety and thread safety guarantees.")
     ;; Dual licensed.
     (license (list license:asl2.0 license:expat))))
 
+(define-public rust-bootstrap-1.74
+  (package
+    (name "rust")
+    (version "1.74.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rust-uri version))
+       (sha256 (base32 "0j8hrwjjjjf7spy0hy7gami96swhfzr6kandfzzdri91qd5mhaw8"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           (for-each delete-file-recursively
+                     '("src/llvm-project"
+                       "vendor/openssl-src/openssl"
+                       "vendor/tikv-jemalloc-sys/jemalloc"))
+           ;; Remove vendored dynamically linked libraries.
+           ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+           ;; Also remove the bundled (mostly Windows) libraries.
+           (for-each delete-file
+                     (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+           ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+           (substitute* "vendor/tempfile/Cargo.toml"
+             (("features = \\[\"fs\"" all)
+              (string-append all ", \"use-libc\"")))))
+       ;; Rust 1.70 adds the rustix library which depends on the vendored
+       ;; fd-lock crate.  The fd-lock crate uses Outline assembly which expects
+       ;; a precompiled static library.  Enabling the "cc" feature tells the
+       ;; build.rs script to compile the assembly files instead of searching
+       ;; for a precompiled library.
+       (patches (search-patches "rust-1.70-fix-rustix-build.patch"))))
+    (outputs '("out" "cargo"))
+    (properties '((hidden? . #t)
+                  (timeout . 129600)          ;36 hours
+                  (max-silent-time . 18000))) ;5 hours (for riscv64)
+    (build-system gnu-build-system)
+    (inputs
+     (list bash-minimal
+           llvm-17
+           openssl
+           zlib))
+    (native-inputs
+     (list pkg-config %mrustc-source))
+    (arguments
+     (list
+      #:imported-modules %cargo-utils-modules ;for `generate-all-checksums'
+      #:modules '((guix build cargo-utils)
+                  (guix build utils)
+                  (guix build gnu-build-system))
+      #:test-target "test"
+      ;; Rust's own .so library files are not found in any RUNPATH, but
+      ;; that doesn't seem to cause issues.
+      #:validate-runpath? #f
+      #:make-flags
+      #~(let ((source #$(package-source this-package)))
+          (list (string-append "RUSTC_TARGET="
+                               #$(platform-rust-target
+                                  (lookup-platform-by-target-or-system
+                                   (or (%current-target-system)
+                                       (%current-system)))))
+                (string-append "RUSTC_VERSION=" #$version)
+                (string-append "MRUSTC_TARGET_VER="
+                               #$(version-major+minor version))
+                (string-append "RUSTC_SRC_TARBALL=" source)
+                "OUTDIR_SUF="))       ;do not add version suffix to output dir
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source inputs #:allow-other-keys)
+              ((assoc-ref %standard-phases 'unpack)
+               #:source #$(this-package-native-input
+                           (origin-file-name %mrustc-source)))))
+          (add-after 'unpack 'patch-makefiles
+            ;; This disables building the (unbundled) LLVM.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* '("minicargo.mk"
+                             "run_rustc/Makefile")
+                ;; Use the system-provided LLVM.
+                (("LLVM_CONFIG [:|?]= .*")
+                 (string-append "LLVM_CONFIG := "
+                                (search-input-file inputs "/bin/llvm-config") "\n")))
+              (substitute* "Makefile"
+                ;; Patch date and git obtained version information.
+                ((" -D VERSION_GIT_FULLHASH=.*")
+                 (string-append
+                  " -D VERSION_GIT_FULLHASH=\\\"" #$%mrustc-commit "\\\""
+                  " -D VERSION_GIT_BRANCH=\\\"master\\\""
+                  " -D VERSION_GIT_SHORTHASH=\\\""
+                  #$(string-take %mrustc-commit 7) "\\\""
+                  " -D VERSION_BUILDTIME="
+                  "\"\\\"Thu, 01 Jan 1970 00:00:01 +0000\\\"\""
+                  " -D VERSION_GIT_ISDIRTY=0\n")))
+              (substitute* '("run_rustc/Makefile"
+                             "run_rustc/rustc_proxy.sh")
+                ;; Patch the shebang of a generated wrapper for rustc
+                (("#!/bin/sh")
+                 (string-append "#!" (which "sh"))))))
+          (add-before 'configure 'configure-cargo-home
+            (lambda _
+              (let ((cargo-home (string-append (getcwd) "/.cargo")))
+                (mkdir-p cargo-home)
+                (setenv "CARGO_HOME" cargo-home))))
+          (replace 'configure
+            (lambda _
+              (setenv "CC" "gcc")
+              (setenv "CXX" "g++")
+              ;; The Guix LLVM package installs only shared libraries.
+              (setenv "LLVM_LINK_SHARED" "1")
+              ;; rustc still insists on having 'cc' on PATH in some places
+              ;; (e.g. when building the 'test' library crate).
+              (mkdir-p "/tmp/bin")
+              (symlink (which "gcc") "/tmp/bin/cc")
+              (setenv "PATH" (string-append "/tmp/bin:" (getenv "PATH")))))
+          (delete 'patch-generated-file-shebangs)
+          (replace 'build
+            (lambda* (#:key make-flags parallel-build? #:allow-other-keys)
+              (let ((job-count (if parallel-build?
+                                   (parallel-job-count)
+                                   1)))
+                ;; Adapted from:
+                ;; https://github.com/dtolnay/bootstrap/blob/master/build-1.54.0.sh.
+                ;; Use PARLEVEL since both minicargo and mrustc use it
+                ;; to set the level of parallelism.
+                (setenv "PARLEVEL" (number->string job-count))
+                (display "Building mrustc...\n")
+                (apply invoke "make" make-flags)
+
+                ;; This doesn't seem to build anything, but it
+                ;; sets additional minicargo flags.
+                (display "Building RUSTCSRC...\n")
+                (apply invoke "make" "RUSTCSRC" make-flags)
+
+                ;; This probably doesn't need to be called explicitly.
+                (display "Building LIBS...\n")
+                (apply invoke "make" "-f" "minicargo.mk" "LIBS" make-flags)
+
+                (display "Building rustc...\n")
+                (apply invoke "make" "-f" "minicargo.mk" "output/rustc"
+                       make-flags)
+
+                (display "Building cargo...\n")
+                (apply invoke "make" "-f" "minicargo.mk" "output/cargo"
+                       make-flags)
+
+                ;; This one isn't listed in the build script.
+                (display "Rebuilding stdlib with rustc...\n")
+                (apply invoke "make" "-C" "run_rustc" make-flags))))
+          (replace 'install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (cargo (assoc-ref outputs "cargo"))
+                     (bin (string-append out "/bin"))
+                     (rustc (string-append bin "/rustc"))
+                     (cargo-bin (string-append cargo "/bin"))
+                     (lib (string-append out "/lib"))
+                     (system-lib-prefix
+                      (string-append lib "/rustlib/"
+                                     #$(platform-rust-target
+                                        (lookup-platform-by-target-or-system
+                                         (or (%current-target-system)
+                                             (%current-system)))) "/lib")))
+                (mkdir-p (dirname rustc))
+                (copy-file "run_rustc/output/prefix/bin/rustc_binary" rustc)
+                (wrap-program rustc
+                  `("LD_LIBRARY_PATH" = (,system-lib-prefix)))
+                (mkdir-p lib)
+                (copy-recursively "run_rustc/output/prefix/lib" lib)
+                (install-file "run_rustc/output/prefix/bin/cargo" cargo-bin)))))))
+    (synopsis "Compiler for the Rust programming language")
+    (description "Rust is a systems programming language that provides memory
+safety and thread safety guarantees.")
+    (home-page "https://github.com/thepowersgang/mrustc")
+
+    ;; List of systems where rust-bootstrap is explicitly known to build:
+    (supported-systems '("x86_64-linux"))
+
+    ;; Dual licensed.
+    (license (list license:asl2.0 license:expat))))
+
 (define-public rust-1.55
   (package
     (name "rust")
@@ -488,8 +673,8 @@ ar = \"" binutils "/bin/ar" "\"
     (native-inputs
      `(("pkg-config" ,pkg-config)
        ("python" ,python-minimal-wrapper)
-       ("rustc-bootstrap" ,rust-bootstrap)
-       ("cargo-bootstrap" ,rust-bootstrap "cargo")))
+       ("rustc-bootstrap" ,rust-bootstrap-1.54)
+       ("cargo-bootstrap" ,rust-bootstrap-1.54 "cargo")))
     (inputs
      `(("bash" ,bash-minimal)
        ("llvm" ,llvm-13)
@@ -901,16 +1086,37 @@ safety and thread safety guarantees.")
       (source
        (origin
          (inherit (package-source base-rust))
-         (patches '()))))))
+         (patches '())))
+      (arguments
+       (if (supported-package? rust-bootstrap-1.74)
+           (substitute-keyword-arguments (package-arguments base-rust)
+             ((#:phases phases)
+              `(modify-phases ,phases
+                 (add-after 'unpack 'add-cc-shim-to-path
+                   (lambda _
+                     (mkdir-p "/tmp/bin")
+                     (symlink (which "gcc") "/tmp/bin/cc")
+                     (setenv "PATH" (string-append "/tmp/bin:" (getenv "PATH"))))))))
+           (package-arguments base-rust)))
+      (native-inputs
+       (if (supported-package? rust-bootstrap-1.74)
+           (modify-inputs (package-native-inputs base-rust)
+             (replace "cargo-bootstrap" (list rust-bootstrap-1.74 "cargo"))
+             (replace "rustc-bootstrap" rust-bootstrap-1.74))
+           (package-native-inputs base-rust)))
+      (inputs (modify-inputs (package-inputs base-rust)
+                (replace "llvm" llvm-17))))))
 
 (define-public rust-1.76
   (let ((base-rust (rust-bootstrapped-package rust-1.75 "1.76.0"
                     "08f06shp6l72qrv5fwg1is7yzr6kwj8av0l9h5k243bz781zyp4y")))
     (package
       (inherit base-rust)
-      ;; Need llvm >= 16.0
-      (inputs (modify-inputs (package-inputs base-rust)
-                             (replace "llvm" llvm-17))))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base-rust)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (delete 'add-cc-shim-to-path))))))))
 
 (define-public rust-1.77
   (let ((base-rust (rust-bootstrapped-package rust-1.76 "1.77.1"
@@ -1040,6 +1246,195 @@ safety and thread safety guarantees.")
                     (string-append name "\"" ,%cargo-reference-hash "\"")))
                  (generate-all-checksums "vendor"))))))))))
 
+(define-public rust-1.83
+  (let ((base-rust (rust-bootstrapped-package rust-1.82 "1.83.0"
+                    "0vhwhk4cbyppnz0lcazfjyddyz811fgvadfxswldicpashxpfbbj")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/gcc"
+                         "src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2"
+                         "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
+                         "vendor/jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.28.2+1.1.1w/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.10.1/Cargo.toml"
+                            "vendor/tempfile-3.13.0/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\"")))))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base-rust)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (add-after 'configure 'use-system-llvm
+               (lambda _
+                 (substitute* "config.toml"
+                   (("\\[llvm\\]") "[llvm]\ndownload-ci-llvm = false")
+                   (("\\[rust\\]") "[rust]\ndownload-rustc = false"))))))))
+      ;; Need llvm >= 18.0
+      (inputs (modify-inputs (package-inputs base-rust)
+                             (replace "llvm" llvm-19))))))
+
+(define-public rust-1.84
+  (rust-bootstrapped-package rust-1.83 "1.84.1"
+   "0xdk3g1xq33fy4m7q6l38ba9ydxbanccyb0vczvlk998jvababsy"))
+
+(define-public rust-1.85
+  (let ((base-rust
+         (rust-bootstrapped-package rust-1.84 "1.85.1"
+                                    "12i3jkxrc2bbd2d423q7krwkbc39wlwkjacsimx7b61m1359aa8g")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2"
+                         "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.28.2+1.1.1w/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.10.1/Cargo.toml"
+                            "vendor/tempfile-3.14.0/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\""))))))))))
+
+(define-public rust-1.86
+  (let ((base-rust
+         (rust-bootstrapped-package rust-1.85 "1.86.0"
+          "107d3vbmwhn4b71gzr1kv31jwwyld7dxj9yj8jh00ygndll2fah2")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2"
+                         "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.17.0+1.1.1m/openssl"
+                         "vendor/openssl-src-111.28.2+1.1.1w/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.14.0/Cargo.toml"
+                            "vendor/tempfile-3.15.0/Cargo.toml"
+                            "vendor/tempfile-3.16.0/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\"")))))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base-rust)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (add-after 'use-system-llvm 'disable-lld-wrapper
+               (lambda _
+                 (substitute* "config.toml"
+                   (("\\[rust\\]") "[rust]\nlld = false")))))))))))
+
+(define-public rust-1.87
+  (let ((base-rust
+         (rust-bootstrapped-package rust-1.86 "1.87.0"
+          "0xlfzl24qhs4vlwn7d2hd2zkg6k2y1lgq03rx2j2sndy57yvk6ql")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2"
+                         "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.17.0+1.1.1m/openssl"
+                         "vendor/openssl-src-300.4.2+3.4.1/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.14.0/Cargo.toml"
+                            "vendor/tempfile-3.15.0/Cargo.toml"
+                            "vendor/tempfile-3.17.1/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\"")))))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments base-rust)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (replace 'build
+               ;; Just building stage 1 no longer builds cargo.
+               (lambda* (#:key parallel-build? #:allow-other-keys)
+                 (let ((job-spec (string-append
+                                   "-j" (if parallel-build?
+                                          (number->string (parallel-job-count))
+                                          "1"))))
+                   (invoke "./x.py" job-spec "build" "--stage=2"
+                           "library/std"
+                           "src/tools/cargo")))))))))))
+
+(define-public rust-1.88
+  (let ((base-rust
+         (rust-bootstrapped-package rust-1.87 "1.88.0"
+          "1gngrxjfqiyybyamzn8s4rfbhk7jss1vrmnijg8y72l46i2595rs")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2"
+                         "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.17.0+1.1.1m/openssl"
+                         "vendor/openssl-src-300.4.2+3.4.1/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.14.0/Cargo.toml"
+                            "vendor/tempfile-3.17.1/Cargo.toml"
+                            "vendor/tempfile-3.19.0/Cargo.toml"
+                            "vendor/tempfile-3.19.1/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\""))))))))))
 
 (define (make-ignore-test-list strs)
   "Function to make creating a list to ignore tests a bit easier."
@@ -1055,12 +1450,13 @@ safety and thread safety guarantees.")
 ;;; Here we take the latest included Rust, make it public, and re-enable tests
 ;;; and extra components such as rustfmt.
 (define-public rust
-  (let ((base-rust rust-1.82))
+  (let ((base-rust rust-1.85))
     (package
       (inherit base-rust)
       (properties (append
                     (alist-delete 'hidden? (package-properties base-rust))
-                    (clang-compiler-cpu-architectures "17")))
+                    ;; Keep in sync with the llvm used to build rust.
+                    (clang-compiler-cpu-architectures "19")))
       (outputs (cons* "rust-src" "tools" (package-outputs base-rust)))
       (source
        (origin
@@ -1069,19 +1465,20 @@ safety and thread safety guarantees.")
           '(begin
              (for-each delete-file-recursively
                        '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.3.2/jemalloc"
                          "vendor/jemalloc-sys-0.5.3+5.3.0-patched/jemalloc"
-                         "vendor/jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
                          "vendor/openssl-src-111.17.0+1.1.1m/openssl"
                          "vendor/openssl-src-111.28.2+1.1.1w/openssl"
                          "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/tikv-jemalloc-sys-0.6.0+5.3.0-1-ge13ca993e8ccb9ba9847cc330696e02839f328f7/jemalloc"
                          ;; These are referenced by the cargo output
                          ;; so we unbundle them.
                          "vendor/curl-sys-0.4.52+curl-7.81.0/curl"
                          "vendor/curl-sys-0.4.74+curl-8.9.0/curl"
+                         "vendor/curl-sys-0.4.78+curl-8.11.0/curl"
                          "vendor/libffi-sys-2.3.0/libffi"
                          "vendor/libz-sys-1.1.3/src/zlib"
-                         "vendor/libz-sys-1.1.18/src/zlib"
-                         "vendor/libz-sys-1.1.19/src/zlib"))
+                         "vendor/libz-sys-1.1.20/src/zlib"))
              ;; Use the packaged nghttp2
              (for-each
               (lambda (ver)
@@ -1110,9 +1507,8 @@ safety and thread safety guarantees.")
                      (string-append all ", \"use-libc\"")))))
               '("3.3.0"
                 "3.4.0"
-                "3.7.1"
                 "3.10.1"
-                "3.12.0"))))))
+                "3.14.0"))))))
       (arguments
        (substitute-keyword-arguments
          (strip-keyword-arguments '(#:tests?)
@@ -1137,7 +1533,8 @@ safety and thread safety guarantees.")
                (lambda _
                  (substitute* "src/tools/cargo/tests/testsuite/git.rs"
                    ,@(make-ignore-test-list
-                      '("fn fetch_downloads_with_git2_first_")))
+                      '("fn fetch_downloads_with_git2_first_"
+                        "fn corrupted_checkout_with_cli")))
                  (substitute* "src/tools/cargo/tests/testsuite/build.rs"
                    ,@(make-ignore-test-list
                       '("fn build_with_symlink_to_path_dependency_with_build_script_in_git")))
@@ -1195,40 +1592,62 @@ safety and thread safety guarantees.")
                              ,@(make-ignore-test-list
                                  '("fn multiple_shared"
                                    "fn multiple_download"
-                                   "fn download_then_mutate")))
+                                   "fn download_then_mutate"
+                                   "fn mutate_err_is_atomic")))
                            (substitute* "global_cache_tracker.rs"
                              ,@(make-ignore-test-list
-                                 '("fn package_cache_lock_during_build")))))))
+                                 '("fn package_cache_lock_during_build"))))
+                         (with-directory-excursion "src/tools/clippy/tests"
+                           ;; `"vectorcall"` is not a supported ABI for the current target
+                           (delete-file "ui/missing_const_for_fn/could_be_const.rs")
+                           (substitute* "missing-test-files.rs"
+                             ,@(make-ignore-test-list
+                                '("fn test_missing_tests")))))))
                    `())
-             (add-after 'unpack 'disable-tests-broken-on-aarch64
-               (lambda _
-                 (with-directory-excursion "src/tools/cargo/tests/testsuite/"
-                   (substitute* "build_script_extra_link_arg.rs"
-                     ,@(make-ignore-test-list
-                        '("fn build_script_extra_link_arg_bin_single")))
-                   (substitute* "build_script.rs"
-                     ,@(make-ignore-test-list
-                        '("fn env_test")))
-                   (substitute* "collisions.rs"
-                     ,@(make-ignore-test-list
-                        '("fn collision_doc_profile_split")))
-                   (substitute* "concurrent.rs"
-                     ,@(make-ignore-test-list
-                        '("fn no_deadlock_with_git_dependencies")))
-                   (substitute* "features2.rs"
-                     ,@(make-ignore-test-list
-                        '("fn dep_with_optional_host_deps_activated"))))))
+             ,@(if (target-aarch64?)
+                   ;; Keep this phase separate so it can be adjusted without needing
+                   ;; to adjust the skipped tests on other architectures.
+                   `((add-after 'unpack 'disable-tests-broken-on-aarch64
+                       (lambda _
+                         (with-directory-excursion "src/tools/cargo/tests/testsuite"
+                           (substitute* "build_script_extra_link_arg.rs"
+                             ,@(make-ignore-test-list
+                                '("fn build_script_extra_link_arg_bin_single")))
+                           (substitute* "build_script.rs"
+                             ,@(make-ignore-test-list
+                                '("fn env_test")))
+                           (substitute* "cache_lock.rs"
+                             ,@(make-ignore-test-list
+                                '("fn download_then_mutate")))
+                           (substitute* "collisions.rs"
+                             ,@(make-ignore-test-list
+                                '("fn collision_doc_profile_split")))
+                           (substitute* "concurrent.rs"
+                             ,@(make-ignore-test-list
+                                '("fn no_deadlock_with_git_dependencies")))
+                           (substitute* "features2.rs"
+                             ,@(make-ignore-test-list
+                                '("fn dep_with_optional_host_deps_activated"))))
+                         (with-directory-excursion "src/tools/clippy/tests"
+                           ;; `"vectorcall"` is not a supported ABI for the current target
+                           (delete-file "ui/missing_const_for_fn/could_be_const.rs")
+                           (substitute* "missing-test-files.rs"
+                             ,@(make-ignore-test-list
+                                '("fn test_missing_tests")))))))
+                   `())
              (add-after 'unpack 'disable-tests-requiring-crates.io
                (lambda _
-                 (substitute* "src/tools/cargo/tests/testsuite/install.rs"
-                   ,@(make-ignore-test-list
-                      '("fn install_global_cargo_config")))
-                 (substitute* "src/tools/cargo/tests/testsuite/cargo_info/within_ws_with_alternative_registry/mod.rs"
-                   ,@(make-ignore-test-list
-                      '("fn case")))
-                 (substitute* "src/tools/cargo/tests/testsuite/package.rs"
-                   ,@(make-ignore-test-list
-                      '("fn workspace_with_local_deps_index_mismatch")))))
+                 (with-directory-excursion "src/tools/cargo/tests/testsuite"
+                   (substitute* "install.rs"
+                     ,@(make-ignore-test-list
+                        '("fn install_global_cargo_config")))
+                   (substitute* '("cargo_add/normalize_name_path_existing/mod.rs"
+                                  "cargo_info/within_ws_with_alternative_registry/mod.rs")
+                     ,@(make-ignore-test-list
+                        '("fn case")))
+                   (substitute* "package.rs"
+                     ,@(make-ignore-test-list
+                        '("fn workspace_with_local_deps_index_mismatch"))))))
              (add-after 'unpack 'disable-miscellaneous-broken-tests
                (lambda _
                  (substitute* "src/tools/cargo/tests/testsuite/check_cfg.rs"
@@ -1297,7 +1716,7 @@ safety and thread safety guarantees.")
                ;; different outputs while reusing the shared libraries.
                (lambda* (#:key outputs #:allow-other-keys)
                  (let ((out (assoc-ref outputs "out")))
-                   (substitute* "src/bootstrap/src/core/builder.rs"
+                   (substitute* "src/bootstrap/src/core/builder/cargo.rs"
                      ((" = rpath.*" all)
                       (string-append all
                                      "                "
@@ -1336,7 +1755,9 @@ safety and thread safety guarantees.")
                            "src/tools/cargo"
                            "src/tools/clippy"
                            "src/tools/rust-analyzer"
-                           "src/tools/rustfmt"))))
+                           "src/tools/rustfmt"
+                           ;; Needed by rust-analyzer and editor plugins
+                           "src/tools/rust-analyzer/crates/proc-macro-srv-cli"))))
              (replace 'check
                ;; Phase overridden to also test more tools.
                (lambda* (#:key tests? parallel-build? #:allow-other-keys)
@@ -1355,6 +1776,15 @@ safety and thread safety guarantees.")
                ;; Phase overridden to also install more tools.
                (lambda* (#:key outputs #:allow-other-keys)
                  (invoke "./x.py" "install")
+                 ;; This one doesn't have an install target so
+                 ;; we need to install manually.
+                 (install-file (string-append
+                                 "build/"
+                                 ,(platform-rust-target
+                                    (lookup-platform-by-system
+                                      (%current-system)))
+                                 "/stage1-tools-bin/rust-analyzer-proc-macro-srv")
+                               (string-append (assoc-ref outputs "out") "/libexec"))
                  (substitute* "config.toml"
                    ;; Adjust the prefix to the 'cargo' output.
                    (("prefix = \"[^\"]*\"")
@@ -1367,19 +1797,36 @@ safety and thread safety guarantees.")
                  (invoke "./x.py" "install" "clippy")
                  (invoke "./x.py" "install" "rust-analyzer")
                  (invoke "./x.py" "install" "rustfmt")))
+             (add-before 'patch-cargo-checksums 'save-old-library-manifest
+               (lambda _
+                 (copy-file "library/Cargo.lock" ".old-library-manifest")))
              (add-after 'install 'install-rust-src
                (lambda* (#:key outputs #:allow-other-keys)
                  (let ((out (assoc-ref outputs "rust-src"))
                        (dest "/lib/rustlib/src/rust"))
                    (mkdir-p (string-append out dest))
                    (copy-recursively "library" (string-append out dest "/library"))
+                   ;; rust-analyzer needs the original checksums; otherwise
+                   ;; it fails to cargo manifest in the stdlib, and then
+                   ;; analysis/inference involving stdlib structs doesn't work.
+                   ;;
+                   ;; For example, in the following trivial program:
+                   ;;
+                   ;; fn main() {
+                   ;;     let x = Vec::<usize>::new();
+                   ;; }
+                   ;;
+                   ;; rust-analyzer since version 1.82 can't infer
+                   ;; the type of x unless the following line is present.
+                   (copy-file ".old-library-manifest"
+                              (string-append out dest "/library/Cargo.lock"))
                    (copy-recursively "src" (string-append out dest "/src")))))
-             (add-after 'install 'remove-uninstall-script
-               (lambda* (#:key outputs #:allow-other-keys)
-                 ;; This script has no use on Guix
-                 ;; and it retains a reference to the host's bash.
-                 (delete-file (string-append (assoc-ref outputs "out")
-                                             "/lib/rustlib/uninstall.sh"))))
+             (add-before 'install 'remove-uninstall-script
+               (lambda _
+                 ;; Don't install the uninstall script.  It has no use
+                 ;; on Guix and it retains a reference to the host's bash.
+                 (substitute* "src/tools/rust-installer/install-template.sh"
+                   (("install_uninstaller \"") "# install_uninstaller \""))))
              (add-after 'install-rust-src 'wrap-rust-analyzer
                (lambda* (#:key outputs #:allow-other-keys)
                  (let ((bin (string-append (assoc-ref outputs "tools") "/bin")))
@@ -1400,7 +1847,7 @@ exec -a \"$0\" \"~a\" \"$@\""
                       (prepend curl libffi `(,nghttp2 "lib") zlib)))
       (native-inputs (cons*
                       ;; Keep in sync with the llvm used to build rust.
-                      `("clang-source" ,(package-source clang-runtime-17))
+                      `("clang-source" ,(package-source clang-runtime-19))
                       ;; Add test inputs.
                       `("gdb" ,gdb/pinned)
                       `("procps" ,procps)
