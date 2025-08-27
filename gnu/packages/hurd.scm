@@ -25,7 +25,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages hurd)
-  #:use-module ((guix licenses) #:hide (zlib))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix packages)
   #:use-module (gnu packages)
@@ -88,7 +88,7 @@
       (synopsis "GNU Mach kernel headers")
       (description
        "Headers of the GNU Mach kernel.")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public mig
   (package
@@ -129,7 +129,7 @@ You need this tool to compile the GNU Mach and GNU Hurd distributions,
 and to compile the GNU C library for the Hurd.  Also, you will need it
 for other software in the GNU system that uses Mach-based inter-process
 communication.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public hurd-headers
   (let ((revision "4")
@@ -191,7 +191,7 @@ communication.")
       (description
        "This package provides C headers of the GNU Hurd, used to build the GNU C
 Library and other user programs.")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public hurd-minimal
   (package (inherit hurd-headers)
@@ -215,7 +215,7 @@ Library and other user programs.")
      "This package provides libshouldbeinlibc, libihash, libstore, libports,
 libiohelp, libfshelp, libtrivfs, and libmachdev, needed to build the GNU C
 Library, Parted and netdde for GNU/Hurd.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public libirqhelp
   (package (inherit hurd-headers)
@@ -234,7 +234,7 @@ Library, Parted and netdde for GNU/Hurd.")
     (description
      "This package provides libirqhelp, a GNU Hurd helper library to handle
 @acronym{IRQs, interrupt requests} in user space.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public hurd-core-headers
   (package
@@ -625,7 +625,7 @@ exec ${system}/rc \"$@\"
 augmentation of standard Unix kernels.  It is a collection of protocols for
 system interaction (file systems, networks, authentication), and servers
 implementing them.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public netdde
   (let ((commit "c0ef248dc7c5ccc1273e2a796f3ece30c5b645df")
@@ -737,7 +737,7 @@ implementing them.")
 in userland processes thanks to the DDE layer.")
       ;; Some drivers are dually licensed with the options being GPLv2 or one
       ;; of MPL/Expat/BSD-3 (dependent on the driver).
-      (license gpl2))))
+      (license license:gpl2))))
 
 (define-public rumpkernel
   (let ((commit "2aad456903b2dc2232fa18c7f286cea6d77b570f")
