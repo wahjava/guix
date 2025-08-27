@@ -30,7 +30,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gettext)
-  #:use-module ((guix licenses) #:select (gpl2+ gpl3+ bsd-3))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix gexp)
@@ -147,7 +147,7 @@ with the means to create message catalogs, and a runtime library to load
 translated messages from the catalogs.  Nearly all GNU packages use Gettext.")
     (properties `((upstream-name . "gettext")
                   (cpe-name . "gettext")))
-    (license gpl3+)))                             ;some files are under GPLv2+
+    (license license:gpl3+)))                             ;some files are under GPLv2+
 
 (define-public gettext-minimal-0.21
   (package/inherit gettext-minimal
@@ -227,7 +227,7 @@ translated messages from the catalogs.  Nearly all GNU packages use Gettext.")
 to programs that produce output to a console or terminal emulator window.  It
 allows applications to emit text annotated with styling information, such as
 color, font attributes (weight, posture), or underlining.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public mdpo
   (package
@@ -260,7 +260,7 @@ color, font attributes (weight, posture), or underlining.")
     (description
      "The mdpo utility creates pofiles, the format stabilished by GNU Gettext,
 from Markdown files.")
-    (license bsd-3)))
+    (license license:bsd-3)))
 
 (define-public po4a
   (package
@@ -327,7 +327,7 @@ from Markdown files.")
      "The po4a (PO for anything) project goal is to ease translations (and
 more interestingly, the maintenance of translations) using gettext tools on
 areas where they were not expected like documentation.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public po4a-minimal
   (package/inherit po4a
