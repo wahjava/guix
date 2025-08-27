@@ -20,11 +20,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ratpoison)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix build-system gnu)
-  #:use-module ((guix licenses) #:select (gpl2+))
   #:use-module (gnu packages)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages perl)
@@ -104,4 +104,4 @@ your precious screen real estate.
 All interaction with the window manager is done through keystrokes.
 Ratpoison has a prefix map to minimize the key clobbering that
 cripples Emacs and other quality pieces of software.")
-    (license gpl2+)))
+    (license license:gpl2+)))
