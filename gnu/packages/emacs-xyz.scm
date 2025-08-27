@@ -33470,7 +33470,7 @@ GUI and terminal, and requires a nerd font installed on your system.")
       (license license:gpl3+))))
 
 (define-public emacs-all-the-icons
-  (let ((commit "4778632b29c8c8d2b7cd9ce69535d0be01d846f9")
+  (let ((commit "facbde4a7be292bf9490932cbe403b443273f45d")
         (revision "0"))
     (package
       (name "emacs-all-the-icons")
@@ -33485,7 +33485,7 @@ GUI and terminal, and requires a nerd font installed on your system.")
          (patches
           (search-patches "emacs-all-the-icons-remove-duplicate-rs.patch"))
          (sha256
-          (base32 "0lwgvgnqf7vihglm0c5bwsxbl4x7f641289cji5s7jwy2dbsqk7g"))))
+          (base32 "02cbnfz6jk03fhb5xpix774lrvsv3nrqx26x52gzxmb5p37vava5"))))
       (build-system emacs-build-system)
       (arguments
        (list
