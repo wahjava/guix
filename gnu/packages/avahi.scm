@@ -22,7 +22,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages avahi)
-  #:use-module ((guix licenses) #:select (lgpl2.1+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -117,7 +117,7 @@
      "Avahi is a system which facilitates service discovery on a local
 network.  It is an implementation of the mDNS (for \"Multicast DNS\") and
 DNS-SD (for \"DNS-Based Service Discovery\") protocols.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public nss-mdns
   (package
@@ -143,4 +143,4 @@ DNS-SD (for \"DNS-Based Service Discovery\") protocols.")
 (@dfn{NSS}) that resolves host names via multicast DNS (@dfn{mDNS}).  It is
 most often used in home and other small networks without a local name server,
 to resolve host names in the @samp{.local} top-level domain.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
