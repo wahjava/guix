@@ -36582,7 +36582,7 @@ based on diff output.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "11wkrfn4hcyparfimm6l1daysp1gnb0dj41f7j980axbpa3nzg6v"))))
+           "03j6yll5vg97y7wy4vdb4d4hs2ci2f3sp5rks85g3sbmi5aacw47"))))
       (build-system emacs-build-system)
       (propagated-inputs
        (list emacs-all-the-icons))
