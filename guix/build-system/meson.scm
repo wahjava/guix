@@ -27,6 +27,7 @@
   #:use-module (guix monads)
   #:use-module (guix search-paths)
   #:use-module (guix build-system)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix packages)
@@ -129,6 +130,7 @@ TRIPLET."
 (define %meson-build-system-modules
   ;; Build-side modules imported by default.
   `((guix build meson-build-system)
+    ,@%cargo-build-system-modules
     ;; The modules from glib-or-gtk contains the modules from gnu-build-system,
     ;; so there is no need to import that too.
     ,@%glib-or-gtk-build-system-modules))
