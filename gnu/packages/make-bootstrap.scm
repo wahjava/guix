@@ -24,11 +24,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages make-bootstrap)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix memoization)
-  #:use-module ((guix licenses) #:select (gpl3+))
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system gnu)
   #:use-module ((gnu packages) #:select (search-patch search-patches))
@@ -351,7 +351,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
     (synopsis "Statically-linked bootstrap binaries")
     (description
      "Binaries used to bootstrap the distribution.")
-    (license gpl3+)
+    (license license:gpl3+)
     (home-page #f)))
 
 (define %linux-libre-headers-stripped
@@ -865,6 +865,6 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
     (synopsis "Tarballs containing all the bootstrap binaries")
     (description synopsis)
     (home-page #f)
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 ;;; make-bootstrap.scm ends here
