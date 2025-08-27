@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fcitx)
-  #:use-module ((guix licenses) #:select (gpl2+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system glib-or-gtk)
@@ -92,5 +92,5 @@ a combination of redundant information sources.  It computes probabilities for
 words which are most likely to be entered next by merging predictions generated
 by the different predictive algorithms.")
     (home-page "https://presage.sourceforge.io/")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
