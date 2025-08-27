@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fvwm)
-  #:use-module ((guix licenses) #:select (gpl2+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
@@ -80,4 +80,4 @@
      "FVWM is an extremely powerful ICCCM-compliant multiple virtual desktop
 window manager for the X Window system.")
     (home-page "https://www.fvwm.org/")
-    (license gpl2+)))
+    (license license:gpl2+)))
