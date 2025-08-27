@@ -23,7 +23,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages fltk)
-  #:use-module ((guix licenses) #:select (lgpl2.0 lgpl2.0+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages compression)
@@ -98,7 +98,7 @@ without the bloat.  It supports 3D graphics via OpenGL and its built-in GLUT
 emulation.  FLTK is designed to be small and modular enough to be statically
 linked, but works fine as a shared library.  FLTK also includes an excellent
 UI builder called FLUID that can be used to create applications in minutes.")
-    (license lgpl2.0))) ; plus certain additional permissions
+    (license license:lgpl2.0))) ; plus certain additional permissions
 
 (define-public fltk
   (package
@@ -160,4 +160,4 @@ UI builder called FLUID that can be used to create applications in minutes.")
 library, adding improved graphics rendering via Cairo, a streamlined and
 enhanced widget set, and other features designed to improve the appearance and
 performance of the Non applications.")
-    (license lgpl2.0+))) ; plus certain additional permissions
+    (license license:lgpl2.0+))) ; plus certain additional permissions
