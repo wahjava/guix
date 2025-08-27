@@ -25,6 +25,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gdb)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages cross-base)
@@ -41,7 +42,6 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (guix download)
   #:use-module (guix gexp)
-  #:use-module ((guix licenses) #:select (gpl3+))
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix build-system gnu)
@@ -157,7 +157,7 @@ doing while it runs or what it was doing just before a crash.  It allows you
 to specify the runtime conditions, to define breakpoints, and to change how
 the program is running to try to fix bugs.  It can be used to debug programs
 written in C, C++, Ada, Objective-C, Pascal and more.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public gdb/pinned
   ;; This is the fixed version that packages depend on.  Update it rarely
