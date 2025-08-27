@@ -22,7 +22,7 @@
 ;;; Copyright © 2024 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Arnaud Lechevallier <arnaud.lechevallier@free.fr>
-;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2024-2025 Alvin Hsu <aurtzy@gmail.com>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -73,6 +73,7 @@
   #:use-module (guix hg-download)
   #:use-module (gnu packages cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
@@ -337,17 +338,21 @@ also known as DXTn or DXTC) for Mesa.")
            libxxf86vm
            xorgproto))
     (inputs
-     (list elfutils                   ;libelf required for r600 when using llvm
-           expat
-           (force libva-without-mesa)
-           libxml2
-           libxrandr
-           libxvmc
-           llvm-for-mesa
-           vulkan-loader
-           wayland
-           wayland-protocols
-           `(,zstd "lib")))
+     (cons* elfutils                   ;libelf required for r600 when using llvm
+            expat
+            (force libva-without-mesa)
+            libxml2
+            libxrandr
+            libxvmc
+            llvm-for-mesa
+            vulkan-loader
+            wayland
+            wayland-protocols
+            `(,zstd "lib")
+            (if (target-x86-64?)
+                ;; NVK dependencies
+                (cargo-inputs 'mesa)
+                '())))
     (native-inputs
      (append
       (list bison
@@ -507,41 +512,6 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
                       (("'lp_test_arit', ") ""))))
                  (_
                   '((display "No tests to disable on this architecture.\n"))))))
-         #$@(if (target-x86-64?)
-                #~((add-after 'unpack 'patch-subproject-sources
-                     (lambda _
-                       ;; Patch each relevant subproject source URL in wrapfiles to
-                       ;; use the store, which avoids an attempt to download them
-                       ;; mid-build.
-                       (for-each
-                        (match-lambda
-                          ((name source)
-                           (let ((wrap-file (string-append
-                                             "subprojects/" name ".wrap"))
-                                 (subproject-dest (string-append
-                                                   "subprojects/" name))
-                                 (overlay-dir (string-append
-                                               "subprojects/packagefiles/" name)))
-                             (mkdir-p subproject-dest)
-                             (invoke "tar" "xf" source "-C" subproject-dest
-                                     "--strip-components=1")
-                             ;; Normally when the patch_directory wrap file property
-                             ;; is specified, meson automatically copies from
-                             ;; packagefiles, but this is not the case here (only
-                             ;; happens when downloading source?) so we manually copy
-                             ;; overlay-dir to subproject-dest.
-                             (when (file-exists? overlay-dir)
-                               (copy-recursively overlay-dir subproject-dest))
-                             (call-with-output-file wrap-file
-                               (lambda (port)
-                                 (format port "[wrap-file]
-directory = ~a
-"
-                                         name))))))
-                        '#+(module-ref (resolve-interface
-                                        '(gnu packages rust-crates))
-                                       'mesa-cargo-inputs)))))
-                #~())
          (add-after 'unpack 'set-home-directory
            ;; Build tries to use a shader cache (non-fatal error).
            (lambda _ (setenv "HOME" "/tmp")))
