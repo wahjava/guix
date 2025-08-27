@@ -36,10 +36,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages cdrom)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix packages)
-  #:use-module ((guix licenses) #:select (lgpl2.1+ gpl2 gpl2+ gpl3+ cddl1.0))
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
@@ -115,7 +115,7 @@ Libcddb supports both the custom CDDB protocol and tunnelling the query and
 read operations over plain HTTP.  It is also possible to use an HTTP proxy
 server.  If you want to speed things up, you can make use of the built-in
 caching facility provided by the library.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public libcdio
   (package
@@ -148,7 +148,7 @@ device-dependent properties of CD-ROM or the specific details of CD image
 formats.  It includes pycdio, a Python interface to libcdio, and
 libcdio-paranoia, a library providing jitter-free and error-free audio
 extraction from CDs.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public libcdio-paranoia
   (package
@@ -169,7 +169,7 @@ extraction from CDs.")
     (description
      "libcdio-paranoia is an implementation of CD paranoia libraries based on
 libcdio.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 ;; Xorriso is used by Guix for creating ISO images. If you change this package,
 ;; please make sure the Guix functionality still works by running some related
@@ -237,7 +237,7 @@ session-wise manipulation of them.  It features a formatter and burner for
 CD, DVD and BD.  It can operate on existing ISO images or it can create new
 ones.  xorriso can then be used to copy files directly into or out of ISO
 files.")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public bchunk
   (package
@@ -268,7 +268,7 @@ files.")
     (synopsis "Bin/cue to ISO image converter")
     (description "@command{cdrecord} converts a CD image in a \".bin / .cue\"
 format (sometimes \".raw / .cue\") to a set of .iso and .cdr tracks.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public cdparanoia
   (package
@@ -332,7 +332,7 @@ proprietary CDROM drive makes are supported; cdparanoia can determine if the
 target drive is CDDA capable.  In addition to simple reading, cdparanoia adds
 extra-robust data verification, synchronization, error handling and scratch
 reconstruction capability.")
-    (license gpl2))) ; libraries under lgpl2.1
+    (license license:gpl2))) ; libraries under lgpl2.1
 
 (define-public cdrdao
   (package
@@ -378,7 +378,7 @@ based on a textual description of the contents.  This mode writes the complete
 disc – lead-in, one or more tracks, and lead-out – in a single step and is
 commonly used with audio CDs.  @code{cdrdao} can also handle the bin/cue
 format, commonly used for VCDs or disks with subchannel data.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public cdrtools
   (package
@@ -451,7 +451,8 @@ images.")
    (home-page "https://cdrtools.sourceforge.net/private/cdrecord.html")
 
    ;; mkisofs is GPL, the other programs are CDDL.
-   (license (list cddl1.0 gpl2))))
+   (license (list license:cddl1.0
+                  license:gpl2))))
 
 (define-public dvd+rw-tools
   (package
@@ -501,7 +502,7 @@ images.")
 @command{growisofs}, is a collection of DVD and Blu-ray Disc burning tools.
 It requires another program, such as @command{mkisofs}, @command{genisoimage},
 or @command{xorrisofs} to create ISO 9660 images.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public dvdisaster
   (package
@@ -582,7 +583,7 @@ data is either added to the medium or kept in separate error correction
 files.  Dvdisaster works at the image level so that the recovery does not
 depend on the file system of the medium.  The maximum error correction
 capacity is user-selectable.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public dvdstyler
   (package
@@ -653,7 +654,7 @@ designed menus.  It can be used to create professional-looking DVD's with
 custom buttons, backgrounds and animations, from within a user-friendly
 graphical interface.")
     (home-page "https://www.dvdstyler.org")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public libcue
   (package
@@ -678,7 +679,7 @@ graphical interface.")
     (description "Libcue is a C library to parse so-called @dfn{cue sheets}
 which contain meta-data for CD/DVD tracks.  It provides an API to manipulate
 the data.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public cd-discid
   (package
@@ -710,7 +711,7 @@ the data.")
     (description
      "cd-discid is a command-line tool to retrieve CDDB discid information
 from an audio CD.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public abcde
   (package
@@ -773,7 +774,7 @@ from an audio CD.")
      "abcde is a front-end command-line utility (actually, a shell script)
 that grabs tracks off a CD, encodes them to Ogg/Vorbis, MP3, FLAC, Ogg/Speex
 and/or MPP/MP+ (Musepack) format, and tags them, all in one go.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public geteltorito
   (let ((commit "d6c7ba03c3c4c5bc4cb68e3602c9427b0912f16f")
@@ -816,7 +817,7 @@ for bootable CD-ROMs.
 
 Image data is written to standard output by default and all other
 information is written to standard error.")
-      (license gpl2+))))
+      (license license:gpl2+))))
 
 (define-public asunder
   (package
@@ -875,7 +876,7 @@ tracks as WAV, MP3, Ogg Vorbis, FLAC, Opus, Wavpack, and Musepack.  It can use
 CDDB to name and tag each track automatically, and it allows for each track to
 be by a different artist.  Asunder can encode to multiple formats in one
 session, and it can create M3U playlists.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public ripit
   (package
@@ -916,7 +917,7 @@ session, and it can create M3U playlists.")
                               "http://www.suwald.com/ripit/about.php"))
     (synopsis "Command-line program to extract audio CDs")
     (description "RipIT is used to extract audio from CDs.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public ccd2cue
   (package
@@ -940,7 +941,7 @@ is well-supported by free software.  These files are commonly
 distributed with CD images and are used to describe how tracks are
 laid out on the image.")
     (home-page "https://www.gnu.org/software/ccd2cue/")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public libburn
   (package
@@ -962,7 +963,7 @@ laid out on the image.")
      "Libburn is a library for reading and writing optical discs.
 Supported media are: CD-R, CD-RW, DVD-RAM, DVD+RW, DVD+R, DVD+R/DL,
 DVD-RW, DVD-R, DVD-R/DL, BD-R, and BD-RE.")
-    (license gpl2)))
+    (license license:gpl2)))
 
 (define-public libisofs
   (package
@@ -990,7 +991,7 @@ It can read metadata of ISO 9660 filesystems, manipulate them, and use them
 to produce new complete file system images or add-on images to be appended
 to the read file system image.
 Supported extensions to ISO 9660 are Rock Ridge, Joliet, AAIP, zisofs.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public libudfread
   (package
@@ -1014,7 +1015,7 @@ Supported extensions to ISO 9660 are Rock Ridge, Joliet, AAIP, zisofs.")
 Disk Format} is a file system mostly used for DVDs and other optical media.
 It supports read-only media (DVD/CD-R) and rewritable media that wears out
 (DVD/CD-RW).")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public cdrkit-libre
   (package
@@ -1060,7 +1061,7 @@ It supports read-only media (DVD/CD-R) and rewritable media that wears out
     (description "Cdrkit is a suite of programs for recording CDs and DVDs,
 blanking CD-RW media, creating ISO-9660 file system images, extracting audio
 CD data, and more.  It's mostly compatible with @code{cdrtools}.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public libmirage
   (package
@@ -1088,7 +1089,7 @@ CD data, and more.  It's mostly compatible with @code{cdrtools}.")
 following formats: B6T, C2D, CCD, CDI, CIF, CUE, ISO, MDS, MDX, NRG, TOC.  It
 is written in C and based on GLib.  Its aim is to provide uniform access to
 the data stored in various image formats.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public cdemu-daemon
   (package
@@ -1114,7 +1115,7 @@ the data stored in various image formats.")
     (synopsis "CD/DVD-ROM device emulator")
     (description "CDemu is a software suite designed to emulate an optical
 drive and disc (including CD-ROMs and DVD-ROMs).")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public cdemu-client
   (package
@@ -1156,4 +1157,4 @@ CDEmu daemon.
 It provides a way to perform the key tasks related to controlling the CDEmu
 daemon, such as loading and unloading devices, displaying devices' status and
 retrieving/setting devices' debug masks.")
-    (license gpl2+)))
+    (license license:gpl2+)))
