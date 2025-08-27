@@ -23,7 +23,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages w3m)
-  #:use-module ((guix licenses) #:select (x11-style))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages compression)
@@ -88,8 +88,8 @@
 @code{less}.  With w3m you can browse web pages through a terminal emulator
 window.  Moreover, w3m can be used as a text formatting tool which
 typesets HTML into plain text.")
-    (license (x11-style "file://doc/README"
-                        "See 'doc/README' in the distribution."))))
+    (license (license:x11-style "file://doc/README"
+                                "See 'doc/README' in the distribution."))))
 
 ;; Used in the test suite of xdg-utils
 (define-public w3m-for-tests
