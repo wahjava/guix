@@ -24,6 +24,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages mes)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages cross-base)
@@ -37,7 +38,6 @@
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module (guix licenses)
   #:use-module (guix packages)
   #:use-module (guix utils))
 
@@ -71,7 +71,8 @@ pretty-printers using SXML trees as an intermediate representation, a decent C
 parser and an `FFI Helper' tool to help create Guile Scheme bindings for C-based
 libraries.  It also provides (partially implemented) compilers based on these
 parsers to allow execution with Guile as extension languages.")
-    (license (list gpl3+ lgpl3+))))
+    (license (list license:gpl3+
+                   license:lgpl3+))))
 
 (define-public nyacc-1.00.2
   ;; The source of this package is used for bootstrapping in
@@ -201,7 +202,7 @@ GNU/Linux distributions.  It consists of a mutual self-hosting Scheme
 interpreter in C and a Nyacc-based C compiler in Scheme and is compatible with
 Guile.")
     (home-page "https://www.gnu.org/software/mes/")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public mescc-tools
   (package
@@ -232,7 +233,7 @@ bootstrapping process.  It consists of the M1 macro assembler, the hex2
 linker, the blood-elf symbol table generator, the kaem shell, exec_enable and
 get_machine.")
     (home-page "https://savannah.nongnu.org/projects/mescc-tools")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
 (define-public m2-planet
   (package
@@ -267,5 +268,5 @@ also has an implementation in the M1 macro assembly language.  M2-Planet is
 built as Phase-5 of the full source bootstrapping process and is capable of
 building GNU Mes.")
     (home-page "https://github.com/oriansj/m2-planet")
-    (license gpl3+)))
+    (license license:gpl3+)))
 
