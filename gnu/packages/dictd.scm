@@ -17,9 +17,9 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages dictd)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix gexp)
-  #:use-module ((guix licenses) #:select (gpl2+))
   #:use-module (guix download)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
@@ -63,7 +63,7 @@ wide range of programming problems.
 The memory management routines are especially helpful for improving the
 performance of memory-intensive applications.")
     (home-page "https://sourceforge.net/projects/dict/")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public dictd
   (package
@@ -105,4 +105,4 @@ This package provides a client @command{dict} and a server program
 @command{dictfmt} to convert various dictionary formats into
 dictionaries that can be served by @command{dictd} or Dico.")
     (home-page "https://sourceforge.net/projects/dict/")
-    (license gpl2+)))
+    (license license:gpl2+)))
