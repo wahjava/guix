@@ -1090,16 +1090,19 @@ however, pgpdump produces more detailed and easier to understand output.")
     (license license:bsd-3)))
 
 (define-public gpa
+  (let ((commit "45fc64a4ac9f73457bf610ce76cca087c0d0d09a")
+        (revision "0"))
   (package
     (name "gpa")
-    (version "0.11.0")
+    (version (git-version "0.11.0" revision commit))
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnupg/gpa/"
-                                  name "-" version ".tar.bz2"))
+              (method git-fetch)
+              (uri (git-reference
+                   (url "git://git.gnupg.org/gnupg.git")
+                   (commit commit)))
               (sha256
                (base32
-                "1k1kvxffyb4nm83yp3mnx9bfmcciwb7vfw8c3xscnh85yxdzma16"))))
+                "1zbkvk4zadd3zpdcgw7pv4wlfvs94pk6z1f2gc9ibfdb335x0ml9"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -1110,7 +1113,8 @@ however, pgpdump produces more detailed and easier to understand output.")
                    (gnupg (assoc-ref inputs "gnupg")))
                (wrap-program (string-append out "/bin/gpa")
                  `("PATH" ":" prefix (,(string-append gnupg "/bin"))))))))))
-    (native-inputs (list pkg-config))
+    (native-inputs (list pkg-config autoconf automake gettext-minimal
+                         (list glib "bin"))) ;; for glib-genmarshal
     (inputs
      (list bash-minimal
            gnupg
@@ -1124,7 +1128,7 @@ however, pgpdump produces more detailed and easier to understand output.")
      "GPA, the GNU Privacy Assistant, is a graphical user interface for
 @uref{https://gnupg.org, GnuPG}.  It can be used to encrypt, decrypt, and sign
 files, to verify signatures, and to manage the private and public keys.")
-    (license license:gpl3+)))
+    (license license:gpl3+))))
 
 (define-public parcimonie
   (package
