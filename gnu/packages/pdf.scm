@@ -1107,6 +1107,36 @@ which is a viewer, renderer, and toolkit for files in PDF, XPS, OpenXPS, CBZ,
 EPUB and FB2 (e-books) format.")
     (license license:agpl3)))
 
+(define-public pdf-tocgen
+  (package
+    (name "pdf-tocgen")
+    (version "1.3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Krasjet/pdf.tocgen")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sqqnrw6zw2awcf9g6v66fm9nnrv2xm3l5ql1liq9skilkjkgkx3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))                ; no tests
+    (native-inputs (list python-poetry-core))
+    (home-page "https://krasjet.com/voice/pdf.tocgen/")
+    (synopsis "Automatically generate table of contents for pdf files")
+    (description "pdf.tocgen is a set of command-line tools for automatically
+extracting and generating the table of contents (ToC) of a PDF file. It uses
+the embedded font attributes and position of headings to deduce the basic
+outline of a PDF file.
+
+It works best for PDF files produced from a TeX document, but it's designed to
+work with any software-generated PDF files (i.e. you shouldn't expect it to
+work with scanned PDFs). Some examples include troff/groff, Adobe InDesign,
+LibreOffice Writer, and probably more.")
+    (license license:gpl3)))
+
 (define-public qpdf
   (package
     (name "qpdf")
