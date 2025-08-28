@@ -1051,6 +1051,62 @@ line tools for batch rendering @command{pdfdraw}, rewriting files
 Noto Sans, Space Mono and Ubuntu families.")
     (license license:silofl1.1)))
 
+(define-public python-pymupdf
+  (package
+    (name "python-pymupdf")
+    (version "1.26.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pymupdf/PyMuPDF")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0qi063hcla7b3x0n4mpbrwib2rrgqww9vz6k820ppkpgbrqr4g3g"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f ;; these tests are deprecated
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'configure-libraries
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (setenv "PYMUPDF_INCLUDES"
+                           (format #f
+                                   "~a/include/freetype2:~a/include/mupdf:~a/include"
+                                   (assoc-ref inputs "freetype")
+                                   (assoc-ref inputs "mupdf")
+                                   (assoc-ref inputs "mupdf")))
+                   (setenv "PYMUPDF_SETUP_MUPDF_BUILD" "")
+                   (setenv "PYMUPDF_MUPDF_LIB"
+                           (format #f "~a/lib"
+                                   (assoc-ref inputs "mupdf")))
+                   (setenv "PYMUPDF_SETUP_MUPDF_REBUILD" "0")
+                   (setenv "PYMUPDF_SETUP_MUPDF_OVERWRITE_CONFIG" "0,")
+                   (setenv "PYMUPDF_SETUP_IMPLEMENTATIONS" "a")
+                   (setenv "CC" #$(cc-for-target))
+                   (setenv "CXX" #$(cxx-for-target)))))))
+    (inputs (list freetype
+                  gumbo-parser
+                  harfbuzz
+                  jbig2dec
+                  libjpeg-turbo
+                  openjpeg
+                  freetype))
+    (propagated-inputs (list mupdf
+                             python-fonttools
+                             python-pillow
+                             python-pymupdf-fonts))
+    (native-inputs (list python-setuptools
+                         swig-next))
+    (home-page "https://github.com/pymupdf/PyMuPDF")
+    (synopsis "Python bindings for the PDF toolkit and renderer MuPDF")
+    (description "PyMuPDF is a set of @code{python} bindings for @code{mupdf},
+which is a viewer, renderer, and toolkit for files in PDF, XPS, OpenXPS, CBZ,
+EPUB and FB2 (e-books) format.")
+    (license license:agpl3)))
+
 (define-public qpdf
   (package
     (name "qpdf")
