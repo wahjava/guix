@@ -7295,6 +7295,33 @@ with more precise location control.")
       (home-page "https://github.com/fuxialexander/org-pdftools/")
       (license license:gpl3+))))
 
+(define-public emacs-doc-toc
+  (package
+    (name "emacs-doc-toc")
+    (version "1.02")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/dalanicolai/doc-tools-toc")
+                    (commit "4a179fbacd7bc9efbd6cfcdc8772d42935e6de29")))
+              (sha256
+               (base32
+                "10w0gybhmx9g7qs5kmg7gsz156kndwzzpfhyb7l0p1cghgqii7l4"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list fntsample                    ; for pdfoutline
+           pdf-tocgen
+           poppler
+           tesseract))
+    (home-page "https://github.com/dalanicolai/doc-tools-toc")
+    (synopsis "Manage outlines/table of contents of pdf and djvu documents")
+    (description "This package provides a multistep process to infer or
+manually enter an outline for a given pdf or djvu document and to add it to
+said document, or to edit a pre-existing outline.  Outlines can be created
+manually, automatically generated from a textual table of contents, or
+generated from typesetting metadata.")
+    (license license:gpl3+)))
+
 (define-public emacs-sage-shell-mode
   (let ((commit "4291700e981a2105d55fa56382ba25046d3d268d")
         (revision "1"))
