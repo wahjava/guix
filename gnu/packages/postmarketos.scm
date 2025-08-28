@@ -30,67 +30,66 @@
   #:use-module (guix build-system pyproject)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
-  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module ((guix licenses)
+                #:prefix license:)
   #:use-module (guix packages)
   #:use-module (ice-9 match))
 
 (define-public pmbootstrap
   (package
     (name "pmbootstrap")
-    (version "3.4.0")
+    (version "3.5.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-              (url (string-append "https://gitlab.postmarketos.org/"
-                                  "postmarketOS/pmbootstrap.git"))
-              (commit version)))
+             (url (string-append "https://gitlab.postmarketos.org/"
+                                 "postmarketOS/pmbootstrap.git"))
+             (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16naj8ykipbrs2a93zaxci1wl045cc9jn7rq8sy76d1rqlqb9mmw"))))
+        (base32 "1jvfcp5j9zqvc5zpdvd8l47x2s9lf93vfj1j4hpf11mlqdac6k3y"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-       #:modules '((guix build pyproject-build-system)
-                   (guix build utils)
-                   (ice-9 match))
-       #:phases #~(modify-phases %standard-phases
-                    (add-after 'unpack 'set-sudo
-                      (lambda _
-                        (substitute* "pmb/config/sudo.py"
-                          (("sudo\"") "/run/privileged/bin/sudo\""))))
-                    (add-after 'wrap 'wrap-required-programs
-                      (lambda* (#:key inputs outputs #:allow-other-keys)
-                        (wrap-program (string-append #$output
-                                                     "/bin/pmbootstrap")
-                          '("PATH" ":" prefix
-                            #$(map (match-lambda
-                                     ((input directory)
-                                      (file-append (this-package-input input)
-                                                   "/" directory)))
-                                   '(("bash-minimal"      "bin")
-                                     ("coreutils-minimal" "bin")
-                                     ("git-minimal"       "bin")
-                                     ("multipath-tools"   "sbin")
-                                     ("openssl"           "bin")
-                                     ("procps"            "bin")
-                                     ("tar"               "bin")
-                                     ("util-linux"        "bin")
-                                     ("util-linux"        "sbin"))))))))
-       ;; The first two tests require a pmaports git repository in the workdir.
-       #:test-flags #~(list (string-append "--deselect=test/core/test_pkgrepo"
-                                           ".py::test_pkgrepo_pmaports")
-                            (string-append "--deselect=test/parse/test_bootimg"
-                                           ".py::test_bootimg")
-                            ;; RuntimeError: No package repositories specified?
-                            (string-append "--deselect=test/parse/"
-                                           "test_deviceinfo.py::"
-                                           "test_random_valid_deviceinfos"))))
-    (native-inputs (list mkbootimg
-                         python-pytest
-                         python-setuptools
-                         python-wheel
-                         util-linux)) ; for losetup
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 match))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-sudo
+            (lambda _
+              (substitute* "pmb/config/sudo.py"
+                (("sudo\"")
+                 "/run/privileged/bin/sudo\""))))
+          (add-after 'wrap 'wrap-required-programs
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-program (string-append #$output "/bin/pmbootstrap")
+                '("PATH" ":" prefix
+                  #$(map (match-lambda
+                           ((input directory)
+                            (file-append (this-package-input input) "/"
+                                         directory)))
+                         '(("bash-minimal" "bin")
+                           ("coreutils-minimal" "bin")
+                           ("git-minimal" "bin")
+                           ("multipath-tools" "sbin")
+                           ("openssl" "bin")
+                           ("procps" "bin")
+                           ("tar" "bin")
+                           ("util-linux" "bin")
+                           ("util-linux" "sbin"))))))))
+      ;; The first two tests require a pmaports git repository in the workdir.
+      #:test-flags
+      #~(list (string-append "--deselect=test/core/test_pkgrepo"
+                             ".py::test_pkgrepo_pmaports")
+              (string-append "--deselect=test/parse/test_bootimg"
+                             ".py::test_bootimg")
+              ;; RuntimeError: No package repositories specified?
+              (string-append "--deselect=test/parse/" "test_deviceinfo.py::"
+                             "test_random_valid_deviceinfos"))))
+    (native-inputs (list mkbootimg python-pytest python-setuptools
+                         python-wheel util-linux)) ;for losetup
     (inputs (list bash-minimal
                   coreutils-minimal
                   git-minimal
