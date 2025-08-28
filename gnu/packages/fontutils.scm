@@ -2063,6 +2063,7 @@ work well with other GTK desktop environments.")
        ("freetype" ,freetype)
        ("glib" ,glib)
        ("pango" ,pango)
+       ("perl" ,perl) ;; needed for pdfoutline
        ("perl-pdf-api2" ,perl-pdf-api2)
        ("perl-libintl-perl" ,perl-libintl-perl)
        ("unicode-blocks"
@@ -2079,7 +2080,10 @@ work well with other GTK desktop environments.")
     (synopsis "PDF and PostScript font samples generator")
     (description "This package provides a tool that can be used to make font
 samples that show coverage of the font and are similar in appearance to
-Unicode Charts.  It was developed for use with DejaVu Fonts project.")
+Unicode Charts.  It was developed for use with DejaVu Fonts project.
+
+This package also includes the `pdfoutline' script, which can be used
+to modify outlines (machine-readable tables of contents) in PDF files.")
     (license license:gpl3+)))
 
 (define-public libraqm
