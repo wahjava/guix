@@ -194,7 +194,7 @@ read/write Bit Map Font (BMF) into text, JSON and XML.")
               (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://github.com/Shinmera/3b-bmfont/")
+                      (url "https://codeberg.org/shinmera/3b-bmfont")
                       (commit commit)))
                 (file-name (git-file-name "3b-bmfont2" version))
                 (sha256
@@ -301,7 +301,7 @@ vectors and streams.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-math")
+               (url "https://codeberg.org/shinmera/3d-math")
                (commit commit)))
          (file-name (git-file-name "cl-3d-math" version))
          (sha256
@@ -338,7 +338,7 @@ compatible, and adds new functionality.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-matrices")
+               (url "https://codeberg.org/shinmera/3d-matrices")
                (commit commit)))
          (file-name (git-file-name "cl-3d-matrices" version))
          (sha256
@@ -375,7 +375,7 @@ operations in 3D space.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-quaternions")
+               (url "https://codeberg.org/shinmera/3d-quaternions")
                (commit commit)))
          (file-name (git-file-name "cl-3d-quaternions" version))
          (sha256
@@ -455,7 +455,7 @@ lookup, particularly suited for games.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-transforms")
+               (url "https://codeberg.org/shinmera/3d-transforms")
                (commit commit)))
          (file-name (git-file-name "cl-3d-transforms" version))
          (sha256
@@ -500,7 +500,7 @@ alternative 4x4 matrix representation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/3d-vectors")
+               (url "https://codeberg.org/shinmera/3d-vectors")
                (commit commit)))
          (file-name (git-file-name "cl-3d-vectors" version))
          (sha256
@@ -1537,7 +1537,7 @@ Common Lisp arrays and performing numerical calculations with them.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/array-utils")
+           (url "https://codeberg.org/shinmera/array-utils")
            (commit commit)))
          (file-name (git-file-name "cl-array-utils" version))
          (sha256
@@ -1934,7 +1934,7 @@ synchronization latency.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/atomics")
+               (url "https://codeberg.org/shinmera/atomics")
                (commit commit)))
          (file-name (git-file-name "cl-atomics" version))
          (sha256
@@ -3756,7 +3756,7 @@ the format used by the popular compression tool bzip2.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/chirp")
+               (url "https://codeberg.org/shinmera/chirp")
                (commit commit)))
          (file-name (git-file-name "chirp" version))
          (sha256
@@ -4181,7 +4181,7 @@ operating on them.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-all")
+               (url "https://codeberg.org/shinmera/cl-all")
                (commit commit)))
          (file-name (git-file-name "cl-all" version))
          (sha256
@@ -4199,7 +4199,7 @@ operating on them.")
                  outputs
                  #:entry-program '((cl-all:toplevel arguments))
                  #:compress? #t))))))
-      (home-page "https://github.com/Shinmera/cl-all")
+      (home-page "https://codeberg.org/shinmera/cl-all")
       (synopsis "Evaluate Common Lisp expressions in multiple implementations")
       (description "@samp{cl-all} is a library and script for evaluating Common
 Lisp expressions in multiple implementations.")
@@ -8201,7 +8201,7 @@ Common Lisp with support of other audio formats available on GNU/Linux systems:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-modio/")
+               (url "https://codeberg.org/shinmera/cl-modio")
                (commit commit)))
          (sha256
           (base32 "0hz87v81pi8kr2c7az30czpdf7v757lkzlsmdcc59p94pipca7m9"))
@@ -9999,7 +9999,7 @@ Development into CL+SSL was done by David Lichteblau.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/cl-steamworks/")
+               (url "https://codeberg.org/shinmera/cl-steamworks")
                (commit commit)))
          (sha256
           (base32 "1fzj3rlqw1kwdlmh0ga0y71p2n1adflcamzx4yp9kga552c1db5j"))
@@ -12215,7 +12215,7 @@ interfaces as well as a functional and an object oriented interface.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/clss")
+           (url "https://codeberg.org/shinmera/clss")
            (commit commit)))
          (sha256
           (base32 "1033dchpanhcgxl5qfhr80aw9adbp9bvllhzvvy5p9mrfnidd1fv"))
@@ -12226,7 +12226,7 @@ interfaces as well as a functional and an object oriented interface.")
       (synopsis "DOM tree searching engine based on CSS selectors")
       (description "CLSS is a DOM traversal engine based on CSS
 selectors.  It makes use of the Plump-DOM and is used by lQuery.")
-      (home-page "https://github.com/Shinmera/clss")
+      (home-page "https://codeberg.org/shinmera/clss")
       (license license:zlib))))
 
 (define-public cl-clss
@@ -12699,7 +12699,7 @@ collecting values easier.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/colored/")
+               (url "https://codeberg.org/shinmera/colored")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -13351,7 +13351,7 @@ the ncurses terminal library.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/crypto-shortcuts")
+               (url "https://codeberg.org/shinmera/crypto-shortcuts")
                (commit commit)))
          (file-name (git-file-name "crypto-shortcuts" version))
          (sha256
@@ -14003,7 +14003,7 @@ them as strings.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/deeds")
+               (url "https://codeberg.org/shinmera/deeds")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -14012,7 +14012,7 @@ them as strings.")
       (inputs
        (list sbcl-bordeaux-threads sbcl-closer-mop sbcl-form-fiddle
              sbcl-lambda-fiddle))
-      (home-page "https://github.com/Shinmera/deeds")
+      (home-page "https://codeberg.org/shinmera/deeds")
       (synopsis "Extensible Event Delivery System")
       (description
        "@code{deeds} allows for efficient event delivery to multiple handlers
@@ -14034,7 +14034,7 @@ with a complex event filtering system.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/definitions/")
+               (url "https://codeberg.org/shinmera/definitions")
                (commit commit)))
          (file-name (git-file-name "cl-definitions" version))
          (sha256
@@ -14205,7 +14205,7 @@ replacement, which is called @code{*let}).")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/deploy")
+               (url "https://codeberg.org/shinmera/deploy")
                (commit commit)))
          (file-name (git-file-name "deploy" version))
          (sha256
@@ -14239,7 +14239,7 @@ applications with foreign library dependencies that run some kind of GUI.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/depot/")
+               (url "https://codeberg.org/shinmera/depot")
                (commit commit)))
          (sha256
           (base32 "1v42pirdwbxy8l8i9a2jmbpri8a62vh0r4vm25xwaak0y4gr71va"))
@@ -14424,7 +14424,7 @@ diffs, \"context\" format diffs, and \"vdelta\" format binary diffs.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/dissect")
+               (url "https://codeberg.org/shinmera/dissect")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -14546,7 +14546,7 @@ Django with a syntax similar to Python Jinja2.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/dns-client")
+               (url "https://codeberg.org/shinmera/dns-client")
                (commit commit)))
          (file-name (git-file-name "cl-dns-client" version))
          (sha256
@@ -14612,7 +14612,7 @@ decoding functions for URLs.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/documentation-utils")
+           (url "https://codeberg.org/shinmera/documentation-utils")
            (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -16062,7 +16062,7 @@ parser/composer.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/feeder")
+               (url "https://codeberg.org/shinmera/feeder")
                (commit commit)))
          (file-name (git-file-name "feeder" version))
          (sha256
@@ -16129,7 +16129,7 @@ given the Common Lisp implementation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/file-attributes/")
+               (url "https://codeberg.org/shinmera/file-attributes")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -16196,7 +16196,7 @@ avoids many of the pitfalls of pathnames.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/file-notify")
+               (url "https://codeberg.org/shinmera/file-notify")
                (commit commit)))
          (file-name (git-file-name "cl-file-notify" version))
          (sha256
@@ -16206,7 +16206,7 @@ avoids many of the pitfalls of pathnames.")
        (list sbcl-cffi
              sbcl-documentation-utils
              sbcl-trivial-features))
-      (home-page "https://github.com/Shinmera/file-notify")
+      (home-page "https://codeberg.org/shinmera/file-notify")
       (synopsis "Get notifications for file accesses and changes")
       (description
        "File-Notify is a Common Lisp library for getting notifications for file
@@ -16229,7 +16229,7 @@ accesses and changes.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/file-select")
+               (url "https://codeberg.org/shinmera/file-select")
                (commit commit)))
          (file-name (git-file-name "file-select" version))
          (sha256
@@ -16265,7 +16265,7 @@ directly.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/filesystem-utils/")
+               (url "https://codeberg.org/shinmera/filesystem-utils")
                (commit commit)))
          (file-name (git-file-name "cl-filesystem-utils" version))
          (sha256
@@ -16396,7 +16396,7 @@ the @command{flamegraph.pl} script, which is available in the Guix package
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/flare")
+               (url "https://codeberg.org/shinmera/flare")
                (commit commit)))
          (file-name (git-file-name "flare" version))
          (sha256
@@ -16513,7 +16513,7 @@ a sequence (or chain) of such elements.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/float-features")
+               (url "https://codeberg.org/shinmera/float-features")
                (commit commit)))
          (file-name (git-file-name "float-features" version))
          (sha256
@@ -16523,7 +16523,7 @@ a sequence (or chain) of such elements.")
       (description
        "Portability library for IEEE float features that are not
 covered by the Common Lisp standard.")
-      (home-page "https://github.com/Shinmera/float-features")
+      (home-page "https://codeberg.org/shinmera/float-features")
       (license license:zlib)
       (inputs
        `(("documentation-utils" ,sbcl-documentation-utils)))
@@ -16549,7 +16549,7 @@ covered by the Common Lisp standard.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/flow")
+               (url "https://codeberg.org/shinmera/flow")
                (commit commit)))
          (file-name (git-file-name "flow" version))
          (sha256
@@ -16721,7 +16721,7 @@ time, etc.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/font-discovery")
+               (url "https://codeberg.org/shinmera/font-discovery")
                (commit commit)))
          (file-name (git-file-name "font-discovery" version))
          (sha256
@@ -16753,7 +16753,7 @@ aren't already directly available on the system.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/for")
+               (url "https://codeberg.org/shinmera/for")
                (commit commit)))
          (file-name (git-file-name "cl-for" version))
          (sha256
@@ -16789,7 +16789,7 @@ require code-walking and is easier to extend.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/forge/")
+               (url "https://codeberg.org/shinmera/forge")
                (commit commit)))
          (sha256
           (base32 "006vi2ihrn28pzrwa8b7axmv98bdaxzx7lacnh9pbacbjg3b7hb0"))
@@ -16831,7 +16831,7 @@ for the specific kind of project you're building to get the full picture.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/form-fiddle")
+           (url "https://codeberg.org/shinmera/form-fiddle")
            (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -19929,13 +19929,13 @@ performance and simplicity in mind.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/lambda-fiddle")
+               (url "https://codeberg.org/shinmera/lambda-fiddle")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
           (base32 "1zarj1pqjqmk95kdx1axkgpwy2wq3canczk7f9z5hvaw5an6gand"))))
       (build-system asdf-build-system/sbcl)
-      (home-page "https://github.com/Shinmera/lambda-fiddle")
+      (home-page "https://codeberg.org/shinmera/lambda-fiddle")
       (synopsis "Collection of utilities to process lambda-lists")
       (description "This collection of utilities is useful in contexts where
 you want a macro that uses lambda-lists in some fashion but need more precise
@@ -19960,7 +19960,7 @@ processing.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/language-codes")
+               (url "https://codeberg.org/shinmera/language-codes")
                (commit commit)))
          (file-name (git-file-name name commit))
          (sha256
@@ -20039,7 +20039,7 @@ text.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/LASS")
+           (url "https://codeberg.org/shinmera/LASS")
            (commit commit)))
          (file-name (git-file-name "cl-lass" version))
          (sha256
@@ -20111,7 +20111,7 @@ LASS files.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/legit")
+               (url "https://codeberg.org/shinmera/legit")
                (commit commit)))
          (file-name (git-file-name "cl-legit" version))
          (sha256
@@ -21085,7 +21085,7 @@ Lisp, featuring:
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/lquery")
+           (url "https://codeberg.org/shinmera/lquery")
            (commit commit)))
          (sha256
           (base32 "0520mcpxc2d6fdm8z61arpgd2z38kan7cf06qs373n5r64rakz6w"))
@@ -21102,7 +21102,7 @@ functions.  It uses Plump and CLSS as DOM and selector engines.  The
 main idea behind lQuery is to provide a simple interface for crawling
 and modifying HTML sites, as well as to allow for an alternative
 approach to templating.")
-      (home-page "https://github.com/Shinmera/lquery")
+      (home-page "https://codeberg.org/shinmera/lquery")
       (license license:zlib))))
 
 (define-public cl-lquery
@@ -21326,7 +21326,7 @@ compression/decompression using bindings to the lzlib C library.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/machine-state")
+               (url "https://codeberg.org/shinmera/machine-state")
                (commit commit)))
          (file-name (git-file-name "cl-machine-state" version))
          (sha256
@@ -21972,7 +21972,7 @@ RFC 1321 by R. Rivest, published April 1992.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/messagebox")
+               (url "https://codeberg.org/shinmera/messagebox")
                (commit commit)))
          (file-name (git-file-name "messagebox" version))
          (sha256
@@ -22455,7 +22455,7 @@ various string metrics in Common Lisp:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/mmap")
+               (url "https://codeberg.org/shinmera/mmap")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -22528,7 +22528,7 @@ place.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/modularize")
+               (url "https://codeberg.org/shinmera/modularize")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -22564,7 +22564,7 @@ tie modules together in functionality, hook into each other and so on.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/modularize-hooks")
+               (url "https://codeberg.org/shinmera/modularize-hooks")
                (commit commit)))
          (file-name (git-file-name "modularize-hooks" version))
          (sha256
@@ -22596,7 +22596,7 @@ define and trigger hooks, which other modules can hook on to.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/modularize-interfaces")
+               (url "https://codeberg.org/shinmera/modularize-interfaces")
                (commit commit)))
          (file-name (git-file-name "modularize-interfaces" version))
          (sha256
@@ -22889,7 +22889,7 @@ for Common Lisp.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/multilang-documentation")
+               (url "https://codeberg.org/shinmera/multilang-documentation")
                (commit commit)))
          (file-name (git-file-name name commit))
          (sha256
@@ -24075,7 +24075,7 @@ expressions.")
        (origin
          (method git-fetch)
          (uri (git-reference
-                (url "https://github.com/Shinmera/open-with")
+                (url "https://codeberg.org/shinmera/open-with")
                 (commit commit)))
          (file-name (git-file-name "cl-open-with" version))
          (sha256
@@ -24844,7 +24844,7 @@ variable portably in Common Lisp.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/pathname-utils")
+               (url "https://codeberg.org/shinmera/pathname-utils")
                (commit commit)))
          (file-name (git-file-name "cl-pathname-utils" version))
          (sha256
@@ -25131,7 +25131,7 @@ for Common Lisp.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/piping/")
+               (url "https://codeberg.org/shinmera/piping")
                (commit commit)))
          (file-name (git-file-name "piping" version))
          (sha256
@@ -25163,7 +25163,7 @@ for Common Lisp.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/plump")
+           (url "https://codeberg.org/shinmera/plump")
            (commit commit)))
          (file-name (git-file-name "cl-plump" version))
          (sha256
@@ -25202,7 +25202,7 @@ your own classes.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/plump-sexp")
+           (url "https://codeberg.org/shinmera/plump-sexp")
            (commit commit)))
          (file-name (git-file-name "cl-plump-sexp" version))
          (sha256
@@ -25215,7 +25215,7 @@ your own classes.")
       (description
        "The Plump-SEXP library is a backend for Plump which can convert
 between S-expressions and the Plump DOM.")
-      (home-page "https://github.com/Shinmera/plump-sexp")
+      (home-page "https://codeberg.org/shinmera/plump-sexp")
       (license license:zlib))))
 
 (define-public cl-plump-sexp
@@ -26039,7 +26039,7 @@ pattern-matching-like, but a char-by-char procedural parser.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/promise")
+               (url "https://codeberg.org/shinmera/promise")
                (commit commit)))
          (file-name (git-file-name "cl-promise" version))
          (sha256
@@ -26818,7 +26818,7 @@ sequence.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/random-state")
+               (url "https://codeberg.org/shinmera/random-state")
                (commit commit)))
          (file-name (git-file-name "cl-random-state" version))
          (sha256
@@ -27655,7 +27655,7 @@ can coexist and interoperate with other extensions to as CLIM and Iterate.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/sdf")
+               (url "https://codeberg.org/shinmera/sdf")
                (commit commit)))
          (file-name (git-file-name "sdf" version))
          (sha256
@@ -27670,7 +27670,7 @@ can coexist and interoperate with other extensions to as CLIM and Iterate.")
              sbcl-pathname-utils))
       (arguments
        `(#:asd-systems '("sdf" "sdf/bmfont")))
-      (home-page "https://github.com/Shinmera/sdf")
+      (home-page "https://codeberg.org/shinmera/sdf")
       (synopsis "Signed distance font atlas generator")
       (description
        "This library generates
@@ -28381,7 +28381,7 @@ using advisors.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/simple-inferiors")
+               (url "https://codeberg.org/shinmera/simple-inferiors")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -28578,7 +28578,7 @@ on top of Hunchentoot.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/simple-tasks")
+               (url "https://codeberg.org/shinmera/simple-tasks")
                (commit commit)))
          (file-name (git-file-name "simple-tasks" version))
          (sha256
@@ -29409,7 +29409,7 @@ empty object).")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/staple/")
+               (url "https://codeberg.org/shinmera/staple")
                (commit commit)))
          (sha256
           (base32 "0qf0if7py3n4rszg25lcavpsqikfz6k5dvcmh5q67y8x5r12i5m7"))
@@ -30005,13 +30005,13 @@ and camel-case rules.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/system-load")
+               (url "https://codeberg.org/shinmera/system-load")
                (commit commit)))
          (file-name (git-file-name "cl-system-load" version))
          (sha256
           (base32 "08d8kr8j5l2m8p69f47iklxhna394vx9mrys0sgplf5f2bqb7xcv"))))
       (build-system asdf-build-system/sbcl)
-      (home-page "https://github.com/Shinmera/system-load")
+      (home-page "https://codeberg.org/shinmera/system-load")
       (synopsis "Access system's CPU and memory usage from Common Lisp")
       (description
        "System-Load is a Common Lisp library for accessing the system's CPU and
@@ -30033,7 +30033,7 @@ memory usage.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/system-locale/")
+               (url "https://codeberg.org/shinmera/system-locale")
                (commit commit)))
          (file-name (git-file-name name commit))
          (sha256
@@ -30410,7 +30410,7 @@ determine the cost of certain actions on a given platform and implementation.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/tooter")
+               (url "https://codeberg.org/shinmera/tooter")
                (commit commit)))
          (file-name (git-file-name "cl-tooter" version))
          (sha256
@@ -30875,13 +30875,13 @@ a simple-array ensuring that the resulting array is still a simple-array.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/trivial-arguments")
+               (url "https://codeberg.org/shinmera/trivial-arguments")
                (commit commit)))
          (file-name (git-file-name "trivial-arguments" version))
          (sha256
           (base32 "02vaqfavhj8jqxnr68nnzvzshm8jbgcy6m9lvyv4daa6f7ihqf88"))))
       (build-system asdf-build-system/sbcl)
-      (home-page "https://github.com/Shinmera/trivial-arguments")
+      (home-page "https://codeberg.org/shinmera/trivial-arguments")
       (synopsis "Common Lisp library to retrieve a function's lambda-list")
       (description
        "This is a simple library to retrieve the argument list of a function.")
@@ -30984,7 +30984,7 @@ information.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/trivial-benchmark/")
+               (url "https://codeberg.org/shinmera/trivial-benchmark")
                (commit commit)))
          (file-name (git-file-name "cl-trivial-benchmark" version))
          (sha256
@@ -31268,7 +31268,7 @@ It provides four readtables.  The default one lets you write strings like this:
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/trivial-extensible-sequences")
+               (url "https://codeberg.org/shinmera/trivial-extensible-sequences")
                (commit commit)))
          (file-name (git-file-name "cl-trivial-extensible-sequences" version))
          (sha256
@@ -31445,7 +31445,7 @@ thin compatibility layer for gray streams.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/trivial-indent")
+           (url "https://codeberg.org/shinmera/trivial-indent")
            (commit commit)))
          (file-name (git-file-name "cl-trivial-indent" version))
          (sha256
@@ -31511,7 +31511,7 @@ implementation specific equivalent.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/trivial-main-thread")
+               (url "https://codeberg.org/shinmera/trivial-main-thread")
                (commit commit)))
          (file-name (git-file-name "trivial-main-thread" version))
          (sha256
@@ -31543,7 +31543,7 @@ implementation, for example drawing calls of GUI applications.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/trivial-mimes")
+               (url "https://codeberg.org/shinmera/trivial-mimes")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
@@ -32198,7 +32198,7 @@ the elements in compound type specifier, e.g. @code{dimensions} in
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/type-templates")
+               (url "https://codeberg.org/shinmera/type-templates")
                (commit commit)))
          (file-name (git-file-name "cl-type-templates" version))
          (sha256
@@ -32275,7 +32275,7 @@ reasoning about types, but without consing.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/uax-14")
+               (url "https://codeberg.org/shinmera/uax-14")
                (commit commit)))
          (file-name (git-file-name "uax-14" version))
          (sha256
@@ -32358,7 +32358,7 @@ RFC7564.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/ubiquitous")
+               (url "https://codeberg.org/shinmera/ubiquitous")
                (commit commit)))
          (file-name (git-file-name "ubiquitous" version))
          (sha256
@@ -32845,7 +32845,7 @@ algorithms.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/verbose/")
+               (url "https://codeberg.org/shinmera/verbose")
                (commit commit)))
          (file-name (git-file-name "verbose" version))
          (sha256
@@ -33745,7 +33745,7 @@ reading and writing.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/Shinmera/zippy/")
+               (url "https://codeberg.org/shinmera/zippy")
                (commit commit)))
          (sha256
           (base32 "16cvyyf2nzd9r3fcy4w6d5wh8n3x833wldmrxmnzd3k2xrkhzfl9"))
