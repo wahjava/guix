@@ -31985,11 +31985,13 @@ in said buffer using sxiv.")
       (build-system emacs-build-system)
       (arguments
        (list
-        ;; XXX: tests fail with "emacs: standard input is not a tty"
+        ;; XXX: tests fail miserably, why?
         #:tests? #f
-        #:test-command #~(list "emacs" "-Q" "-L" "."
+        #:test-command #~(list "env" "srcdir=."
+                               "emacs" "--batch" "-Q"
+                               "-L" "."
                                "-l" "test/regression-tests.el"
-                               "-f" "ert-run-tests-batch")))
+                               "-f" "ert-run-tests-batch-and-exit")))
       (native-inputs (list emacs-async))
       (propagated-inputs (list mu))
       (home-page "https://github.com/rougier/mu4e-dashboard")
