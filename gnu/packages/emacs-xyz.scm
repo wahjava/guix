@@ -33083,7 +33083,7 @@ News homepage.")
 (define-public emacs-tokei
   (package
     (name "emacs-tokei")
-    (version "0.2")
+    (version "0.2.1")
     (source
      (origin
        (method git-fetch)
@@ -33093,7 +33093,7 @@ News homepage.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0gcjlcfxd4bg123gjf7d0vfvfd6zpd0da8svynglca1qhp77jkx1"))))
+         "0x9ayvd8fvgnyp2zgck3dnhs2ib3lrcwbgcdypzq6mhzfs1a2651"))))
     (build-system emacs-build-system)
     (arguments
      (list
