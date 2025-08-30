@@ -26464,21 +26464,21 @@ close, copy, cut, paste, undo, redo.")
     ;; The emacs package version does not match the password-store version,
     ;; even though it is part of the same repository.  When updating, look at
     ;; the version declared in password-store.el.
-    (version "2.3.2")
+    (version "2.3.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://git.zx2c4.com/password-store")
-             (commit "b5e965a838bb68c1227caa2cdd874ba496f10149")))
+             (commit "3ca13cd8882cae4083c1c478858adbf2e82dd037")))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0hb5zm7hdp7vmqk39a9s1iyncx4swmwfq30dnnzkjk2y08lnb7ac"))))
+         "1fap54sc72h3phwj43hs8847pcvs5iykxjnzagb1ws8i4zn7ma8q"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      #:test-command #~(list "make" "test")
+      #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'extract-el-file
