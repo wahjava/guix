@@ -26678,18 +26678,31 @@ match and total match information in the mode-line in various search modes.")
 (define-public emacs-pg
   (package
     (name "emacs-pg")
-    (version "0.54")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference (url "https://github.com/emarsden/pg-el")
-                                  (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0q7s0f1clqr57pifs0wz7kcws0i1gb824c0glrdpmjagax87w28v"))))
+    (version "0.58")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/emarsden/pg-el")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1vzd3wj9nwhnp2whxfy6z6zfig3hr1vm4d0zgzaz1zjwicqiznjn"))))
     (build-system emacs-build-system)
+    (arguments
+     (list
+      #:test-command
+      #~(apply list "emacs" "-Q" "--batch" "-l" "pg.el"
+               (append
+                (apply append
+                       (map
+                        (lambda (file)
+                          (list "-l" file))
+                        (find-files "test" "\\.el")))
+                (list "-f" "ert-run-tests-batch-and-exit")))))
     (propagated-inputs (list emacs-peg))
-    (home-page "https://github.com/emarsden/pg-el")
+    (home-page "https://emarsden.github.io/pg-el/")
     (synopsis "Emacs Lisp interface for PostgreSQL")
     (description
      "This module lets you access the PostgreSQL object-relational DBMS from
@@ -26697,7 +26710,7 @@ Emacs, using its socket-level frontend/backend protocol.  The module is
 capable of automatic type coercions from a range of SQL types to the
 equivalent Emacs Lisp type.  This is a low level API, and won't be useful to
 end users.")
-    (license license:gpl2+)))
+    (license license:gpl3+)))
 
 (define-public emacs-pgmacs
   (package
