@@ -42166,7 +42166,7 @@ go directly to where they belong.")
 (define-public emacs-org-roam
   (package
     (name "emacs-org-roam")
-    (version "2.3.0")
+    (version "2.3.1")
     (source
      (origin
        (method git-fetch)
@@ -42175,7 +42175,7 @@ go directly to where they belong.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00ijpvsghak5d9p703gnyaksfbniwj062qids0m8xkvvxbzqsdda"))))
+        (base32 "0cl0f50din00hj541iskl5mxr8ijaf5pnpy6z7zvsam8l4gj8f73"))))
     (build-system emacs-build-system)
     (arguments
      (list
