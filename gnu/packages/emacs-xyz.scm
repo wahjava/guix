@@ -26771,7 +26771,7 @@ unstructured, meant for quick @code{JavaScript} experiments.")
 (define-public emacs-emacsql
   (package
     (name "emacs-emacsql")
-    (version "4.3.0")
+    (version "4.3.1")
     (source
      (origin
        (method git-fetch)
@@ -26780,7 +26780,7 @@ unstructured, meant for quick @code{JavaScript} experiments.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bjw4qbm254r51kgl0bg4scblk998p0y3m140k5lmrdb7k4pnxq2"))))
+        (base32 "0khnln4p4d8fcwx02zp3j6x002x2ik0hs0jxf17xif9b8p2rri3c"))))
     (build-system emacs-build-system)
     (arguments
      (list
