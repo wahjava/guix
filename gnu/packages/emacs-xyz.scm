@@ -32198,7 +32198,7 @@ accept and reject GitHub pull requests.")
 (define-public emacs-pr-review
   (package
     (name "emacs-pr-review")
-    (version "0.1.0")
+    (version "0.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -32207,7 +32207,7 @@ accept and reject GitHub pull requests.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1cm92263jqvq2lg378xqi8ikbqw98lxjpsl29sja2xg2wf6p7gml"))))
+                "0ryf2jk54iqg7q494qdghg2pkhw8ky3s53dpj55871x6p2m1387r"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-magit emacs-ghub emacs-markdown-mode))
     (synopsis "Review GitHub Pull Requests")
