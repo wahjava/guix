@@ -26856,7 +26856,7 @@ match your personal coding style.")
 (define-public emacs-epkg
   (package
     (name "emacs-epkg")
-    (version "4.0.5")
+    (version "4.0.7")
     (source
      (origin
        (method git-fetch)
@@ -26865,21 +26865,21 @@ match your personal coding style.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a6zw1z318ip4vnqfgv99b2knbm3qq6ji7spqq9g5w3lls40aqvx"))))
+        (base32 "1a4a56whm2m576mm2pzvvhnf2jkix8dg73wamgj8gn2m8b1591i3"))))
     (build-system emacs-build-system)
     (arguments
-     `(#:lisp-directory "lisp"
-       #:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'install 'make-info
-           ;; Documentation is located in "docs/".
-           (lambda* (#:key outputs #:allow-other-keys)
-             (with-directory-excursion "../docs"
-               (invoke "makeinfo" "-o" "epkg.info" "epkg.texi")
-               (let ((info (string-append (assoc-ref outputs "out")
-                                          "/share/info")))
-                 (install-file "epkg.info" info))))))))
+     (list
+      #:lisp-directory "lisp"
+      #:tests? #f                      ; no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'make-info
+            ;; Documentation is located in "docs/".
+            (lambda _
+              (with-directory-excursion "../docs"
+                (invoke "make" "info")
+                (install-file "epkg.info"
+                              (string-append #$output "/share/info"))))))))
     (native-inputs
      (list texinfo))
     (propagated-inputs
