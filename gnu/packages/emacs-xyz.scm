@@ -25552,7 +25552,7 @@ lookup to YAML Mode.  You could enable the mode with @code{(add-hook
 (define-public emacs-polymode-ansible
   (package
     (name "emacs-polymode-ansible")
-    (version "0.5.1")
+    (version "0.5.2")
     (source
      (origin
        (method git-fetch)
@@ -25561,7 +25561,7 @@ lookup to YAML Mode.  You could enable the mode with @code{(add-hook
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17c0c2gsxw892hq1acxsvl3i1cgpwfkk76hszcr9ydw566478972"))))
+        (base32 "1n313pmaifldqsdlvzvwv51fyr06fymhfilzl5z3l15wax7nqfxs"))))
     (build-system emacs-build-system)
     (arguments
      (list
