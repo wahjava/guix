@@ -35987,17 +35987,17 @@ real search.")
 (define-public emacs-notmuch-addr
   (package
     (name "emacs-notmuch-addr")
-    (version "1.1.0")
+    (version "1.1.1")
     (home-page "https://github.com/tarsius/notmuch-addr")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url home-page)
-             (commit "7dde87a44b6576eb736cb6a3b69df6b9946c5ecc")))
+             (commit "v1.1.1")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xr78yw679swbl1bcwhk5k6qj1l9zr9nyl34ry2bpdryi370zkkp"))))
+        (base32 "0z3445wnh0zjfwixzq0cqf0a0mzgpdgq6c5b6h6b4vfh9qwd5ra2"))))
     (build-system emacs-build-system)
     (arguments
      (list #:test-command
