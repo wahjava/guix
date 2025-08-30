@@ -35731,7 +35731,7 @@ utilities.")
 (define-public emacs-treemacs-nerd-icons
   (package
     (name "emacs-treemacs-nerd-icons")
-    (version "0.0.1-1")
+    (version "0.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -35740,7 +35740,7 @@ utilities.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15mfxaimbwv87nxsna83wcslmpzyclx8n09kzwmchy97ri2xl67h"))))
+                "1xphhxdibjhp27z2lj1nxlxf7cfm8vpi44fr01fk9krqy9vaz0q0"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-nerd-icons emacs-treemacs))
     (synopsis "emacs-treemacs-nerd-icons")
