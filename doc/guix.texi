@@ -8698,7 +8698,8 @@ The example below denotes a version of gnu-standards to fetch:
 @section Defining Package Variants
 
 @cindex customizing packages
-@cindex variants, of packages
+@cindex package variants
+@cindex variants, of package
 One of the nice things with Guix is that, given a package definition,
 you can easily @emph{derive} variants of that package---for a different
 upstream version, with different dependencies, different compilation
@@ -13476,7 +13477,8 @@ the parsed command-line options.
 @node Package Transformation Options
 @subsection Package Transformation Options
 
-@cindex package variants
+@cindex package tranformation
+@cindex package variants, transformation
 Another set of command-line options supported by @command{guix build}
 and also @command{guix package} are @dfn{package transformation
 options}.  These are options that make it possible to define @dfn{package
