@@ -5032,7 +5032,7 @@ PyTorch.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'cmake-patches
-            (lambda* (#:key inputs #:allow-other-keys)
+            (lambda* (#:key inputs outputs #:allow-other-keys)
               (substitute* "cmake/Dependencies.cmake"
                 (("#POCKETFFT_INCLUDE_DIR")
                  (string-append
@@ -5041,8 +5041,7 @@ PyTorch.")
                  (string-append
                   #$(this-package-input "fp16") "/include"))
                 (("#CONCURRENTQUEUE_INCLUDE_DIR")
-                 (dirname (search-input-file inputs
-                                           "include/concurrentqueue/concurrentqueue.h")))
+                 (search-input-directory inputs "include/concurrentqueue"))
                 ;; Disable opentelemetry
                 ((".*(add_library|target_include_directories).*opentelemetry.*")
                  ""))
@@ -5051,9 +5050,11 @@ PyTorch.")
               ;; Fix Python install directory
               (substitute* "caffe2/CMakeLists.txt"
                 (("\\$\\{Python_SITELIB\\}")
-                 (string-append #$output "/lib/python"
-                                #$(version-major+minor (package-version python))
-                                "/site-packages")))))
+                 (site-packages inputs outputs)))
+              ;; Ensure httplib::httplib is defined when used.
+              (substitute* "cmake/Caffe2Config.cmake.in"
+                (("include *\\(.*Caffe2Targets\\.cmake.*\\)" all)
+                 (string-append "find_package(httplib REQUIRED)\n" all)))))
           ;; This entry point is broken, because it refers to a module that is
           ;; (intentionally) not installed
           ;; (https://github.com/pytorch/pytorch/pull/134729), which causes
@@ -5207,9 +5208,8 @@ PyTorch.")
                           (find-files python-site
                                       "(^test_cpp_rpc|_test)$")))))
           (add-after 'install2 'remove-caffe2-onnx-scripts
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (bin (string-append out "/bin")))
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
                 ;; Remove 'convert-caffe2-to-onnx' and
                 ;; 'convert-onnx-to-caffe2': they seem to be
                 ;; deprecated and they cause a failure of the
@@ -5221,7 +5221,7 @@ PyTorch.")
                 (for-each delete-file
                           (find-files bin "^convert-.*caffe2"))
 
-                (substitute* (find-files out "^entry_points\\.txt$")
+                (substitute* (find-files #$output "^entry_points\\.txt$")
                   (("^convert-.*" all)
                    (string-append "# " all "\n")))))))
 
