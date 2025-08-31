@@ -712,7 +712,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/xfig.scm				\
   %D%/packages/xiph.scm				\
   %D%/packages/xml.scm				\
-  %D%/packages/xnee.scm				\
   %D%/packages/xdisorg.scm			\
   %D%/packages/xorg.scm				\
   %D%/packages/xfce.scm				\
