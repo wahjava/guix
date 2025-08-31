@@ -2168,6 +2168,29 @@ systems.  This encompasses:
 @end itemize")
     (license license:gpl2+)))
 
+(define-public kissfft
+  (package
+    (name "kissfft")
+    (version "131.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mborgerding/kissfft")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        "1yfws5bn4kh62yk6hdyp9h9775l6iz7wsfisbn58jap6b56s8j5s")))
+    (build-system cmake-build-system)
+    (inputs (list fftw libpng))
+    (native-inputs (list pkg-config python-wrapper python-numpy-2 googletest))
+    (home-page "https://github.com/mborgerding/kissfft")
+    (synopsis "Simple @acronym{FFT, Fast Fourier Transform} library")
+    (description
+     "Kiss FFT is a mixed-radix Fast Fourier Transform based up on the
+principle, 'Keep It Simple, Stupid.'")
+    (license license:bsd-3)))
+
 (define-public clac
   (package
     (name "clac")
