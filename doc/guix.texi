@@ -47882,7 +47882,8 @@ however, an error will be thrown.
 
 @deftp {Data Type} machine-ssh-configuration
 This is the data type representing the SSH client parameters for a machine
-with an @code{environment} of @code{managed-host-environment-type}.
+with an @code{environment} of @code{managed-host-environment-type}, which are
+provided by the @code{(gnu machine ssh)} module.
 
 @table @asis
 @item @code{host-name}
