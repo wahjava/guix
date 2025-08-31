@@ -129,7 +129,7 @@ Copyright @copyright{} 2024 Matthew Trzcinski@*
 Copyright @copyright{} 2024 Richard Sent@*
 Copyright @copyright{} 2024 Dariqq@*
 Copyright @copyright{} 2024 Denis 'GNUtoo' Carikli@*
-Copyright @copyright{} 2024 Fabio Natali@*
+Copyright @copyright{} 2024-2025 Fabio Natali@*
 Copyright @copyright{} 2024 Arnaud Daby-Seesaram@*
 Copyright @copyright{} 2024-2025 Nigko Yerden@*
 Copyright @copyright{} 2024 Troy Figiel@*
@@ -30859,16 +30859,16 @@ Password which the component will use to log in.
 Hostname of the component.
 @end deftypevr
 
-@end deftypevr
-
-@deftypevr {@code{prosody-configuration} parameter} non-negative-integer-list component-ports
+@deftypevr {@code{ext-component-configuration} parameter} non-negative-integer-list component-ports
 Port(s) Prosody listens on for component connections.
 Defaults to @samp{'(5347)}.
 @end deftypevr
 
-@deftypevr {@code{prosody-configuration} parameter} string component-interface
+@deftypevr {@code{ext-component-configuration} parameter} string component-interface
 Interface Prosody listens on for component connections.
 Defaults to @samp{"127.0.0.1"}.
+@end deftypevr
+
 @end deftypevr
 
 @deftypevr {@code{prosody-configuration} parameter} maybe-raw-content raw-content
