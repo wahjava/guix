@@ -1,0 +1,13 @@
+diff --git a/device/kmsg.c b/device/kmsg.c
+index e5b518e6..4efa0046 100644
+--- a/device/kmsg.c
++++ b/device/kmsg.c
+@@ -31,7 +31,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+ #include <device/kmsg.h>
+ 
+ 
+-#define KMSGBUFSIZE	(4096)  /* XXX */
++#define KMSGBUFSIZE	(8192)  /* XXX */
+ 
+ /* Simple array for buffering messages */
+ static char kmsg_buffer[KMSGBUFSIZE];
