@@ -1,0 +1,30 @@
+From a632f784548f910522e13b7cdb683249b27712bd Mon Sep 17 00:00:00 2001
+From: Yelninei <yelninei@tutamail.com>
+Date: Fri, 29 Aug 2025 22:03:31 +0200
+Subject: streamio: Handle device_read_reply_inband getting D_WOULD_BLOCK
+
+We do not want to consider this a real error, and not an EOF either.
+---
+ trans/streamio.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/trans/streamio.c b/trans/streamio.c
+index e42ff908..c6e7229e 100644
+--- a/trans/streamio.c
++++ b/trans/streamio.c
+@@ -1049,9 +1049,11 @@ device_read_reply_inband (mach_port_t reply, kern_return_t errorcode,
+ 
+   input_pending = 0;
+   err = errorcode;
++  if (err == D_WOULD_BLOCK)
++    err = 0;
+   if (!err)
+     {
+-      if (datalen == 0)
++      if (datalen == 0 && errorcode != D_WOULD_BLOCK)
+ 	{
+ 	  eof = 1;
+ 	  dev_close ();
+-- 
+cgit v1.2.3
+

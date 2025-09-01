@@ -342,7 +342,8 @@ Hurd-minimal package which are needed for both glibc and GCC.")
               (patches (search-patches "hurd-refcounts-assert.patch"
                                        "hurd-rumpdisk-no-hd.patch"
                                        "hurd-startup.patch"
-                                       "hurd-socket-activation.patch"))))
+                                       "hurd-socket-activation.patch"
+                                       "hurd-streamio-nonblock.patch"))))
     (version (package-version hurd-headers))
     (arguments
      `(#:tests? #f                      ;no "check" target
