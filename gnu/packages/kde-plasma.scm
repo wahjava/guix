@@ -1895,6 +1895,7 @@ on top of Baloo.")
                              milou
                              ocean-sound-theme
                              oxygen-sounds
+                             packagekit ;for discover
                              partitionmanager
                              plasma5support ;required by sddm breeze theme
                              plasma-browser-integration
