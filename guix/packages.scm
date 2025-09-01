@@ -670,7 +670,13 @@ Texinfo.  Otherwise, return the string."
     ((? package? package)
      (list (package-name package) package))
     (((? package? package) output)                ;XXX: ugly?
-     (list (package-name package) package output))
+     (let ((label (if (string=? output "out")
+                      (package-name package)
+                      (string-append (package-name package)
+                                     ":" output))))
+       (list label
+             package
+             output)))
     ((? gexp-input?)       ;XXX: misplaced because 'native?' field is ignored?
      (let ((obj    (gexp-input-thing input))
            (output (gexp-input-output input)))

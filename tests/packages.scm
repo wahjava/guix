@@ -2178,6 +2178,10 @@
       ((("coreutils" input "debug"))
        input))))
 
+(test-eq "add-input-label, use package output for labels"
+  `("coreutils:debug" ,coreutils "debug")
+  ((@@ (guix packages) add-input-label) `(,coreutils "debug")))
+
 (test-end "packages")
 
 ;;; Local Variables:
