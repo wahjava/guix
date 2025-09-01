@@ -939,7 +939,7 @@ and others.")
 (define-public qucsator-rf
   (package
     (name "qucsator-rf")
-    (version "1.0.6")                   ;required by qucs-s, keep in sync
+    (version "1.0.7")                   ;required by qucs-s, keep in sync
     (source
      (origin
        (method git-fetch)
@@ -949,7 +949,7 @@ and others.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0fx0kzj6hn0094jnvn6b1zqwjnkmd79xdr0zdyz5lmsyixlmxmvk"))))
+         "1qyih418r0jcrpk1ja4p7v9v5iqvri8iszg7s3vaf1d2agwblzb4"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1308,7 +1308,7 @@ Emacs).")
 (define-public kicad
   (package
     (name "kicad")
-    (version "9.0.3")
+    (version "9.0.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1316,7 +1316,7 @@ Emacs).")
                     (commit version)))
               (sha256
                (base32
-                "19rij2hz79rsmikdbygxzll2l7im5qi3i6phz4sdiagkc5k8b3rb"))
+                "0736hhf8rs4g8cyhy3xyamyr4iszlvf18a1hwfpcv6qxy0hcbdcv"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -1425,7 +1425,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "186nmy222m2k8snwk5i2f9igamflj9avfnhv5ksrbhx5wyrx7fy2"))))
+                "00cnras41sp5kpvaqqymygis08q5kmsix18bi8hlhhw6yk525vnp"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_FORMATS=html")
@@ -1456,7 +1456,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0r9aimyrv7p4ykqnwb9ac3fd0dv11zmv2ll6qkmm5s875s35hhfl"))))
+                "0qm1zq8bq6r7l1pssb9isnm5a03kixf5p3x7670ap4xwligdn3wg"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no tests exist
@@ -1485,7 +1485,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ysnj0973y05nn016hxrghccfv65cas772i369xflay0sns8anqf"))))
+                "15kdg661pq79npwb4j28hllqrvwygsz5rblzbdishiikysrba8wl"))))
     (synopsis "Official KiCad footprint libraries")
     (description "This package contains the official KiCad footprint libraries.")))
 
@@ -1502,7 +1502,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0njv4y31k62qhcx0xxcl94p34jgna8z4bs3hwjwzjfmp7ddl2dyx"))))
+                "0ngf0k5f0a073k5v4q78zk6gj6xjjxzbb6551qf9k9wy8bsmgr2k"))))
     (synopsis "Official KiCad 3D model libraries")
     (description "This package contains the official KiCad 3D model libraries.")))
 
@@ -2285,22 +2285,20 @@ bootloader in Espressif ESP8266 & ESP32 series chips.")
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; tests require git and network access
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'mklibdir
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (mkdir-p (string-append (assoc-ref outputs "out") "/lib"))
-             #t)))
-       #:configure-flags
-       (list "--with-openssl"
-             "--with-rpath"
-             "--with-syscapstone"
-             "--with-sysmagic"
-             "--with-syszip"
-             "--with-sysxxhash")
-       #:make-flags
-       (list "CC=gcc")))
+     (list
+      #:tests? #f                      ; tests require git and network access
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'mklibdir
+            (lambda _ (mkdir-p (string-append #$output "/lib")))))
+      #:configure-flags
+      #~(list "--with-openssl"
+              "--with-rpath"
+              "--with-syscapstone"
+              "--with-sysmagic"
+              "--with-syszip"
+              "--with-sysxxhash")
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))))
     ;; TODO: Add gmp and libzip and make the build system actually find them.
     (inputs
      (list capstone libuv openssl zip))
@@ -2636,111 +2634,6 @@ parallel computing platforms.  It also supports serial execution.")
      `(("trilinos" ,trilinos-parallel-xyce)
        ,@(alist-delete "trilinos"
                        (package-inputs xyce-serial))))))
-
-(define-public freehdl
-  (package
-    (name "freehdl")
-    (version "0.0.8")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://downloads.sourceforge.net/qucs/freehdl-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "117dqs0d4pcgbzvr3jn5ppra7n7x2m6c161ywh6laa934pw7h2bz"))
-              (patches
-               (list (origin
-                       ;; Fix build with GCC 7.  Patch taken from Arch Linux:
-                       ;; https://github.com/archlinux/svntogit-community/tree/packages/freehdl/trunk
-                       (method url-fetch)
-                       (uri (string-append "https://raw.githubusercontent.com"
-                                           "/archlinux/svntogit-community"
-                                           "/3bb90d64dfe6883e26083cd1fa96226d0d59175a"
-                                           "/trunk/build-fix.patch"))
-                       (file-name "freehdl-c++-namespace.patch")
-                       (sha256
-                        (base32
-                         "09df3c70rx81rnhlhry1wpdhji274nx9jb74rfprk06l4739zm08")))))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'patch-pkg-config
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-config"
-               (("pkg-config")
-                (search-input-file inputs "/bin/pkg-config"))
-               (("cat")
-                (search-input-file inputs "/bin/cat")))))
-         (add-after 'patch-pkg-config 'setenv
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CXX" (search-input-file inputs "/bin/g++"))
-             (setenv "SYSTEM_LIBTOOL"
-                     (search-input-file inputs "/bin/libtool"))))
-         (add-after 'setenv 'patch-gvhdl
-           (lambda _
-             (substitute* "v2cc/gvhdl.in"
-               (("--mode=link") "--mode=link --tag=CXX")
-               (("-lm") "-lm FREEHDL/lib/freehdl/libieee.la"))))
-         (add-after 'patch-gvhdl 'patch-freehdl-gennodes
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl/freehdl-gennodes.in"
-               (("guile")
-                (search-input-file inputs "/bin/guile"))
-               (("\\(debug") ";(debug")
-               (("\\(@ ") "(apply-emit")
-               (("\\(@@ ") "(apply-mini-format"))))
-         (add-after 'configure 'patch-freehdl-pc
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "freehdl.pc"
-               (("=g\\+\\+")
-                (string-append "=" (assoc-ref inputs "gcc-toolchain")
-                               "/bin/g++"))
-               (("=libtool")
-                (string-append "=" (assoc-ref inputs "libtool")
-                               "/bin/libtool")))))
-         (add-after 'install 'make-wrapper
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               ;; 'gvhdl' invokes the C compiler directly, so hard-code its
-               ;; file name.
-               (wrap-program (string-append out "/bin/gvhdl")
-                 `("CPLUS_INCLUDE_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/include")))
-                 `("LIBRARY_PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/lib")))
-                 `("PATH" ":" prefix
-                   (,(string-append (assoc-ref inputs "gcc-toolchain")
-                                    "/bin")
-                    ,(string-append (assoc-ref inputs "coreutils")
-                                    "/bin"))))
-               (wrap-program (string-append out "/bin/freehdl-config")
-                 `("PKG_CONFIG_PATH" ":" prefix
-                   (,(string-append out "/lib/pkgconfig"))))))))))
-    (inputs
-     (list bash-minimal
-           coreutils
-
-           ;; Lazily resolve the gcc-toolchain to avoid a circular dependency.
-           (module-ref (resolve-interface '(gnu packages commencement))
-                       'gcc-toolchain)
-
-           guile-2.2
-           perl
-           pkg-config
-           libtool))
-    (native-inputs
-     `(("pkg-config-native" ,pkg-config)
-       ("libtool-native" ,libtool)))
-    (home-page "http://www.freehdl.seul.org/")
-    (synopsis "VHDL simulator")
-    (description
-     "FreeHDL is a compiler/simulator suite for the hardware description language VHDL.
-  VHDL'93 as well as VHDL'87 standards are supported.")
-    (license (list license:gpl2+
-                   license:lgpl2.0+)))) ; freehdl's libraries
 
 (define-public librepcb
   (package
@@ -3228,7 +3121,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.7.0")
+    (version "1.8.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -3236,7 +3129,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "148bfdbh0y69f5xhxb49jqvc6gabk0n4i0fl1j5f3fnm9vaypyis"))
+                "0hzgqsj2jnbimb8klijak44bhm7f3lnxvppaddgq1zxr063sj0y1"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy
@@ -3446,9 +3339,9 @@ models in the STL and OFF file formats.")
       (license license:gpl2+))))
 
 (define-public pythonscad
-  (let ((commit "e2641ca1a208a9a54a034a8818a9774ad4d5867c")
+  (let ((commit "e1d49035b8dd4cac187a03f04dd9de9d61972cbf")
         (version "0.0.0")
-        (revision "0"))
+        (revision "1"))
     (package
       (inherit openscad)
       (name "pythonscad")
@@ -3464,7 +3357,7 @@ models in the STL and OFF file formats.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "1i6yajamdrha2kpgyhn7jn6dv35qmgq0zsqv8cdzdqg5142v66ay"))
+          (base32 "1q0ib5iz4l2vpi8208fghgwcfb0n7a0ypm1ch860dl0zd1p4zljz"))
          (modules '((guix build utils)))
          (snippet #~(begin
                       ;; Delete all unbundled libraries to replace them with
@@ -3477,13 +3370,23 @@ models in the STL and OFF file formats.")
          (file-name (git-file-name name version))))
       (arguments
        (substitute-keyword-arguments (package-arguments openscad)
-         ((#:configure-flags flags
-           '())
-          #~(append #$flags
-                    (list "-DENABLE_LIBFIVE=ON" "-DUSE_BUILTIN_LIBFIVE=OFF"
-                          (string-append "-DPYTHON_VERSION="
-                                         #$(version-major+minor
-                                            (package-version python))))))
+         ((#:configure-flags flags)
+          #~(begin
+              (use-modules (srfi srfi-1))
+              (append 
+               (remove (lambda (flag)
+                         (or (string-prefix? "-DOPENSCAD_VERSION=" flag)
+                             (string-prefix? "-DOPENSCAD_COMMIT=" flag)))
+                       #$flags)
+               (list "-DENABLE_LIBFIVE=ON"
+                     "-DUSE_BUILTIN_LIBFIVE=OFF"
+                     (string-append "-DOPENSCAD_VERSION="
+                                    #$version)
+                     (string-append "-DOPENSCAD_COMMIT="
+                                    #$commit)
+                     (string-append "-DPYTHON_VERSION="
+                                    #$(version-major+minor
+                                       (package-version python)))))))
          ((#:phases phases)
           #~(modify-phases #$phases
               (replace 'patch-source
@@ -3602,7 +3505,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
 (define-public freecad
   (package
     (name "freecad")
-    (version "1.0.1")
+    (version "1.0.2")
     (source
      (origin
        (method git-fetch)
@@ -3611,7 +3514,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0p3pa4w1xj7sgqk9vxdri8l3hbx0a8iz2pwn8gwjqlhc62z4hrg8"))
+        (base32 "1zyz473fzrz9h073wp4k65qq4bkhqsp245nsv6nv186sl78l99xa"))
        (modules '((guix build utils)))
        (snippet
         '(begin

@@ -39,7 +39,7 @@
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2023 Kyle Andrews <kyle@posteo.net>
 ;;; Copyright © 2024 Marco Baggio <guix@mawumag.com>
-;;; Copyright © 2024, 2025 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024, 2025 Spencer King <spencer.king@wustl.edu>
 ;;; Copyright © 2024-2025 Tor-björn Claesson <tclaesson@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -15563,6 +15563,30 @@ link (lines and ribbons), and text (gene) label.  All functions require only R
 graphics packages that comes with the base installation.")
     (license license:gpl2+)))
 
+(define-public r-circstats
+  (package
+    (name "r-circstats")
+    (version "0.2-6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "CircStats" version))
+       (sha256
+        (base32 "07bg4zrs2iqh0pmi44pybi8hlvnxwcaa5zpg85rmf55kflxxkzlf"))))
+    (properties `((upstream-name . "CircStats")))
+    (build-system r-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (propagated-inputs (list r-boot r-mass))
+    (home-page "https://cran.r-project.org/package=CircStats")
+    (synopsis
+     "Circular Statistics, from \"Topics in Circular Statistics\" (2001)")
+    (description
+     "Circular Statistics, from \"Topics in Circular Statistics\" (2001) S. Rao
+Jammalamadaka and A. @code{SenGupta}, World Scientific.")
+    (license license:gpl2)))
+
 (define-public r-ctrdata
   (package
     (name "r-ctrdata")
@@ -28722,7 +28746,7 @@ package works as intended.")
      `((upstream-name . "gitcreds")
        (updater-extra-native-inputs . ("r-mockery" "r-codetools"))))
     (build-system r-build-system)
-    (inputs (list git-minimal))
+    (inputs (list git-minimal/pinned))
     (native-inputs (list r-codetools r-knitr r-mockery r-testthat))
     (home-page "https://github.com/r-lib/gitcreds")
     (synopsis "Query git credentials from R")
@@ -28836,7 +28860,7 @@ terminals that do not support Unicode.")
              ;; This is necessary because git looks for $HOME/.gitconfig
              (setenv "HOME" "/tmp"))))))
     (inputs
-     (list git-minimal))
+     (list git-minimal/pinned))
     (propagated-inputs
      (list r-askpass r-curl r-jsonlite r-openssl r-sys))
     (native-inputs
@@ -37779,14 +37803,14 @@ colored by the number of neighboring points.  This is useful to visualize the
 (define-public r-arrow
   (package
     (name "r-arrow")
-    (version "20.0.0.2")
+    (version "21.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "arrow" version))
        (sha256
         (base32
-         "19xnz3df1r9n01dbsf05xkw6q5w8vipzkkb5bpx7jlcp38jnp8zn"))))
+         "1ipwcgzbzr5xb1ff0ikwxdfhbniqdjmvi4505cmb0divg9p50946"))))
     (properties
      `((upstream-name . "arrow")
        (updater-ignored-native-inputs . ("r-duckdb"))
@@ -53413,21 +53437,40 @@ the @code{raster} package that is suitable for extracting raster values using
 (define-public r-stringfish
   (package
     (name "r-stringfish")
-    (version "0.16.0")
+    (version "0.17.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "stringfish" version))
        (sha256
         (base32
-         "14vrg6mkwwgw1klgpvjn7936yfxav55rainz71xjjih2j21vq21n"))))
+         "0x6nad21q7shsl7wjzldb6si7j09dyxksrpq29cxphh79d0ga2ly"))))
     (properties
      '((upstream-name . "stringfish")
        (updater-extra-inputs . ("pcre2"))))
     (build-system r-build-system)
-    ;; Tests require r-qs, which depends on this package.
-    (arguments (list #:tests? #false))
-    (inputs (list pcre2))
+    (arguments
+     (list
+      ;; Tests require r-qs, which depends on this package.
+      #:tests? #false
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-system-tbb
+            (lambda _
+              (setenv "TBB_ROOT" #$(this-package-input "tbb"))))
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display (string-append
+                              "CXXFLAGS=-g -O2"
+                              " -Wno-error=changes-meaning\n"))))))))))
+    (inputs (list pcre2 tbb-2020))
     (propagated-inputs
      (list r-rcpp r-rcppparallel))
     (native-inputs

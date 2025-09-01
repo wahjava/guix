@@ -72,7 +72,6 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
-  #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tor)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xdisorg)
@@ -116,16 +115,16 @@ Firefox locales.")
 
 ;; We copy the official build id, which is defined at
 ;; tor-browser-build/rbm.conf (browser_release_date).
-(define %torbrowser-build-date "20250722101758")
+(define %torbrowser-build-date "20250818110000")
 
 ;; To find the last version, look at https://www.torproject.org/download/.
-(define %torbrowser-version "14.5.5")
+(define %torbrowser-version "14.5.6")
 
 ;; To find the last Firefox version, browse
 ;; https://archive.torproject.org/tor-package-archive/torbrowser/<%torbrowser-version>
 ;; There should be only one archive that starts with
 ;; "src-firefox-tor-browser-".
-(define %torbrowser-firefox-version "128.13.0esr-14.5-1-build2")
+(define %torbrowser-firefox-version "128.14.0esr-14.5-1-build2")
 
 ;; See tor-browser-build/rbm.conf for the list.
 (define %torbrowser-locales (list "ar" "be" "bg" "ca" "cs" "da" "de" "el" "es-ES" "fa"
@@ -140,11 +139,11 @@ Firefox locales.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "8600afeb12fdae895c37618e1386c1a1ac2f5308")))
+          (commit "9896e5765c90c763b97135fdda00a08cf08dbddd")))
     (file-name "translation-base-browser")
     (sha256
      (base32
-      "1l190sqpbldnsrwqv8y3fbf7l3bf54b17bajswkaqpsgyci2wicy"))))
+      "06638lii8yx8smb192629i5zjp3aly80zvyd3hix12iivcvndqg4"))))
 
 ;; See tor-browser-build/projects/translation/config.
 (define torbrowser-translation-specific
@@ -152,11 +151,11 @@ Firefox locales.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "9fe8a13ee4c69f91cd545dc3c575ca8f4851d58e")))
+          (commit "a58fb6a60d4d1328b7cffcc1e6ded5673f5e4360")))
     (file-name "translation-tor-browser")
     (sha256
      (base32
-      "0n3wa1snadhr574rf01kqg18vh66hzv1h7lhwkdps7q9qj7mpgim"))))
+      "0qb0fjxinsd34pfgjzgpf6ry2wssc191yzxncvwrhi1bjlgjw73r"))))
 
 (define torbrowser-assets
   ;; This is a prebuilt Torbrowser from which we take the assets we need.
@@ -172,7 +171,7 @@ Firefox locales.")
          version "/tor-browser-linux-x86_64-" version ".tar.xz"))
        (sha256
         (base32
-         "0gdzd3gm0qs7ypzdrcdqz6byp5lc9byvb3m4xj3sgdd44j0s34dc"))))
+         "1hk4hbs7hc5j6f6fiqgik0087b0yvwl54f6rm4jig2wg41cc44hr"))))
     (arguments
      (list
       #:install-plan
@@ -213,7 +212,7 @@ Browser.")
          ".tar.xz"))
        (sha256
         (base32
-         "1pm0fi816hzafgv0z52h3n3x355hwjlxgzz89lpzncz9idf9lsqy"))))
+         "16hkibrlzgp430m045w13yl5ixxccyxlqk9qmzsgg0c5wkys6si4"))))
     (build-system mozilla-build-system)
     (inputs
      (list lyrebird
@@ -226,11 +225,9 @@ Browser.")
            gdk-pixbuf
            glib
            gtk+
-           ;; UNBUNDLE-ME! graphite2
            cairo
            pango
            freetype
-           ;; UNBUNDLE-ME! harfbuzz
            libcanberra
            libgnome
            libjpeg-turbo
@@ -254,9 +251,8 @@ Browser.")
            hunspell
            libnotify
            nspr
-           nss-rapid  ; requires v. 3.101, so nss won't cut it for now.
+           nss
            shared-mime-info
-           sqlite
            eudev
            unzip
            zip
@@ -352,12 +348,9 @@ Browser.")
          "--with-system-icu"
          "--with-system-nspr"
          "--with-system-nss"
+         "--with-system-ffi"
 
-         ;; UNBUNDLE-ME! "--with-system-harfbuzz"
-         ;; UNBUNDLE-ME! "--with-system-graphite2"
          "--enable-system-pixman"
-         "--enable-system-ffi"
-         ;; UNBUNDLE-ME! "--enable-system-sqlite"
          )
 
       #:imported-modules %cargo-utils-modules ;for `generate-all-checksums'
@@ -411,10 +404,7 @@ Browser.")
                           "media/libvpx"
                           ;; UNBUNDLE-ME! "media/libtremor"
                           "media/libwebp"
-                          ;; UNBUNDLE-ME! "gfx/harfbuzz"
-                          ;; UNBUNDLE-ME! "gfx/graphite2"
                           "js/src/ctypes/libffi"
-                          ;; UNBUNDLE-ME! "db/sqlite3"
                           ;; 800Mo of unused tests.
                           "testing/web-platform"
                           ))))
@@ -424,30 +414,6 @@ Browser.")
               (substitute* "dom/media/platforms/ffmpeg/FFmpegRuntimeLinker.cpp"
                 (("libavcodec\\.so")
                  (search-input-file inputs "lib/libavcodec.so")))))
-          (add-after 'fix-ffmpeg-runtime-linker 'build-sandbox-whitelist
-            (lambda* (#:key inputs #:allow-other-keys)
-              (define (runpath-of lib)
-                (call-with-input-file lib
-                  (compose elf-dynamic-info-runpath
-                           elf-dynamic-info
-                           parse-elf
-                           get-bytevector-all)))
-              (define (runpaths-of-input label)
-                (let* ((dir (string-append (assoc-ref inputs label) "/lib"))
-                       (libs (find-files dir "\\.so$")))
-                  (append-map runpath-of libs)))
-              ;; Populate the sandbox read-path whitelist as needed by ffmpeg.
-              (let* ((whitelist
-                      (map (cut string-append <> "/")
-                           (delete-duplicates
-                            `(,(string-append (assoc-ref inputs "shared-mime-info")
-                                              "/share/mime")
-                              ,@(append-map runpaths-of-input
-                                            '("mesa" "ffmpeg"))))))
-                     (whitelist-string (string-join whitelist ",")))
-                (with-output-to-file "whitelist.txt"
-                  (lambda ()
-                    (display whitelist-string))))))
           (add-after 'patch-source-shebangs 'patch-cargo-checksums
             (lambda _
               (use-modules (guix build cargo-utils))
@@ -754,10 +720,6 @@ Browser.")
                     ;; Default is 5.
                     (format #t "pref(~s, ~a);~%"
                             "extensions.enabledScopes" "13")
-                    (format #t "pref(~s, ~s);~%"
-                            "security.sandbox.content.read_path_whitelist"
-                            (call-with-input-file "whitelist.txt"
-                              get-string-all))
                     ;; Add-ons pannel (see settings.js in Icecat source).
                     (format #t "pref(~s, ~s);~%"
                             "extensions.getAddons.search.browseURL"
@@ -828,17 +790,17 @@ attacks on the privacy of Tor users.")
 
 ;; We copy the official build id, which can be found there:
 ;; https://cdn.mullvad.net/browser/update_responses/update_1/release.
-(define %mullvadbrowser-build-date "20250722101758")
+(define %mullvadbrowser-build-date "20250818110000")
 
 ;; To find the last version, look at
 ;; https://mullvad.net/en/download/browser/linux.
-(define %mullvadbrowser-version "14.5.5")
+(define %mullvadbrowser-version "14.5.6")
 
 ;; To find the last Firefox version, browse
 ;; https://archive.torproject.org/tor-package-archive/mullvadbrowser/<%mullvadbrowser-version>
 ;; There should be only one archive that starts with
 ;; "src-firefox-mullvad-browser-".
-(define %mullvadbrowser-firefox-version "128.13.0esr-14.5-1-build1")
+(define %mullvadbrowser-firefox-version "128.14.0esr-14.5-1-build2")
 
 ;; See tor-browser-build/projects/translation/config.
 (define mullvadbrowser-translation-base
@@ -846,11 +808,11 @@ attacks on the privacy of Tor users.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "8600afeb12fdae895c37618e1386c1a1ac2f5308")))
+          (commit "9896e5765c90c763b97135fdda00a08cf08dbddd")))
     (file-name "translation-base-browser")
     (sha256
      (base32
-      "1l190sqpbldnsrwqv8y3fbf7l3bf54b17bajswkaqpsgyci2wicy"))))
+      "06638lii8yx8smb192629i5zjp3aly80zvyd3hix12iivcvndqg4"))))
 
 ;; See tor-browser-build/projects/translation/config.
 (define mullvadbrowser-translation-specific
@@ -878,7 +840,7 @@ attacks on the privacy of Tor users.")
          version "/mullvad-browser-linux-x86_64-" version ".tar.xz"))
        (sha256
         (base32
-         "1z5g5l3bikpl2vlps641fpm2lps672ci0vx002blvssn55iv22iz"))))
+         "08wkx9f5l03la6ny1f0igxcmffrw80pl7i7c8lrh5095wnsxwim1"))))
     (arguments
      (list
       #:install-plan
@@ -921,7 +883,7 @@ Mullvad Browser.")
          %mullvadbrowser-firefox-version ".tar.xz"))
        (sha256
         (base32
-         "1d8zs5mziig1vs385rqr8xmxyklf9aqbsk3lmqxc0p2ldgq6ygll"))))
+         "0djqmq1hw6mf8ww2yb3yga7hyqz9ims083sh5m0xi0yc9l4clmfg"))))
     (arguments
      (substitute-keyword-arguments (package-arguments mullvadbrowser-base)
        ((#:phases phases)

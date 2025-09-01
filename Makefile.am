@@ -298,6 +298,7 @@ MODULES =					\
   guix/import/cpan.scm				\
   guix/import/cran.scm				\
   guix/import/crate.scm				\
+  guix/import/crate/cargo-lock.scm		\
   guix/import/egg.scm   			\
   guix/import/elm.scm				\
   guix/import/elpa.scm   			\
@@ -452,11 +453,6 @@ AUX_FILES =						\
   gnu/packages/aux-files/linux-libre/6.15-i686.conf	\
   gnu/packages/aux-files/linux-libre/6.15-riscv.conf	\
   gnu/packages/aux-files/linux-libre/6.15-x86_64.conf	\
-  gnu/packages/aux-files/linux-libre/6.14-arm.conf	\
-  gnu/packages/aux-files/linux-libre/6.14-arm64.conf	\
-  gnu/packages/aux-files/linux-libre/6.14-i686.conf	\
-  gnu/packages/aux-files/linux-libre/6.14-riscv.conf	\
-  gnu/packages/aux-files/linux-libre/6.14-x86_64.conf	\
   gnu/packages/aux-files/linux-libre/6.12-arm.conf	\
   gnu/packages/aux-files/linux-libre/6.12-arm64.conf	\
   gnu/packages/aux-files/linux-libre/6.12-i686.conf	\

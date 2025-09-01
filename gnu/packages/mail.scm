@@ -113,6 +113,7 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -1228,6 +1229,12 @@ and corrections.  It is based on a Bayesian filter.")
         #:tests? #f
         #:phases
         #~(modify-phases %standard-phases
+            ;; See: https://github.com/OfflineIMAP/offlineimap3/pull/205.
+            (add-after 'unpack 'fix-issue-205
+              (lambda _
+                (substitute* "offlineimap/localeval.py"
+                  (("import importlib.util\n")
+                   "import importlib.util\nimport importlib.machinery\n"))))
             (add-after 'build 'build-documentation
               (lambda _
                 (substitute* "docs/Makefile"
@@ -1888,7 +1895,17 @@ MailCore 2.")
                 "09b89wg63hg502hsz592cd2h87wdprb1dq1k1y07n89hym2q56d6"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f))
+     (list
+       #:tests? #f
+       #:configure-flags
+         #~(list "CFLAGS=-g -O2 -DSTDC_HEADERS")
+       #:phases
+         #~(modify-phases %standard-phases
+           (add-before 'configure 'fix-includes
+             (lambda _
+               (substitute* "config.h"
+                 (("#include <stdlib.h>" all)
+                  (string-append all "\n#include <unistd.h>"))))))))
     (synopsis "Portrait image compressor")
     (description "This package takes your 48x48x1 portrait image and
 compresses it.")
@@ -2667,22 +2684,24 @@ format and headers.")
     (license license:perl-license)))
 
 (define-public libesmtp
+  (let ((commit "335ee8d2fa5cb7d30db7b818ec05563ad139ee2f")
+        (revision "0"))
   (package
     (name "libesmtp")
-    (version "1.1.0")
+    (version (git-version "1.1.0" revision commit))
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/libesmtp/libESMTP")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1bhh8hlsl9597x0bnfl563k2c09b61qnkb9mfyqcmzlq63m1zw5y"))))
+      (method git-fetch)
+      (uri (git-reference
+            (url "https://github.com/libesmtp/libESMTP")
+            (commit commit)))
+      (file-name (git-file-name name version))
+      (sha256
+       (base32 "1b6s6xyap9g4irw6wl9rhkvjjn7cc5q7xkxx5z0r1x1ab6fxn6p0"))))
     (build-system meson-build-system)
     (propagated-inputs
      (list openssl))
-    (home-page "http://www.stafford.uklinux.net/libesmtp/")
+    (home-page "https://libesmtp.github.io/")
     (synopsis "Library for sending mail via remote hosts using SMTP")
     (description
      "libESMTP is an @acronym{SMTP, Simple Mail Transfer Protocol} client that
@@ -2698,7 +2717,7 @@ transparently handles many SMTP extensions including authentication,
 @acronym{TLS, Transport-Level Security}, and PIPELINING for performance.  Even
 without a pipelining server, libESMTP offers much better performance than would
 be expected from a simple client.")
-    (license (list license:lgpl2.1+ license:gpl2+))))
+    (license (list license:lgpl2.1+ license:gpl2+)))))
 
 (define-public esmtp
   (package
@@ -4719,23 +4738,23 @@ and Conformance}
         (uri (pypi-uri "dkimpy" version))
         (sha256
          (base32 "088iz5cqjqh4c7141d94pvn13bh25aizqlrifwv6fs5g16zj094s"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-source-shebangs 'patch-more-source
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((openssl (assoc-ref inputs "openssl")))
-               (substitute* "dkim/dknewkey.py"
-                 (("/usr/bin/openssl") (string-append openssl "/bin/openssl"))))
-             #t))
-         (replace 'check
-           (lambda _
-             (invoke "python" "test.py"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'patch-source-shebangs 'patch-more-source
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "dkim/dknewkey.py"
+                (("/usr/bin/openssl")
+                 (search-input-file inputs "bin/openssl")))))
+          (replace 'check
+            (lambda _
+              (invoke "python" "test.py"))))))
     (propagated-inputs
      (list python-dnspython))
     (native-inputs
-     (list python-authres python-pynacl))
+     (list python-authres python-pynacl python-setuptools python-wheel))
     (inputs
      (list openssl))
     (home-page "https://launchpad.net/dkimpy")
@@ -4830,7 +4849,7 @@ on RFC 3501 and original @code{imaplib} module.")
 (define-public rspamd
   (package
     (name "rspamd")
-    (version "3.6")
+    (version "3.12.1")
     (source
      (origin
        (method git-fetch)
@@ -4838,16 +4857,26 @@ on RFC 3501 and original @code{imaplib} module.")
              (url "https://github.com/rspamd/rspamd")
              (commit version)))
        (sha256
-        (base32 "1ra18c3wczbdqrg9p69k04smjskjkdpxcfff9ff4yi7pmqjaxr8s"))
+        (base32 "0li75dqqy0irrvv2jddmll2adf15cywif982ijj034hldg9162bc"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags '("-DENABLE_LUAJIT=ON"
-                           "-DLOCAL_CONFDIR=/etc/rspamd")))
+     (list #:configure-flags #~(list "-DENABLE_LUAJIT=ON"
+                                     "-DLOCAL_CONFDIR=/etc/rspamd")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "make" "run-test"
+                             "-j" (number->string (parallel-job-count)))))))))
     (inputs
      (list file
            glib
            icu4c
+           libarchive
+           libbfd
+           libiberty
            libsodium
            luajit
            openssl

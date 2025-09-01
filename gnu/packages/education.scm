@@ -47,6 +47,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-web)
@@ -113,6 +114,7 @@
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/xalanq/cf-tool"
       #:phases
@@ -127,7 +129,7 @@
            go-github-com-fatih-color
            go-github-com-k0kubun-go-ansi
            go-github-com-mitchellh-go-homedir
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-puerkitobio-goquery
            go-github-com-sergi-go-diff
            go-github-com-shirou-gopsutil
@@ -334,7 +336,7 @@ frequently used words in American English.")
 (define-public tipp10
   (package
     (name "tipp10")
-    (version "3.3.0")
+    (version "3.3.4")
     (source (origin
               (method git-fetch)
               ;; Use the community maintained Qt 6 fork of the project, as the
@@ -346,7 +348,7 @@ frequently used words in American English.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "138xf55csnq53mlkhj50g9bacay8kxz6p9vnzd7jyv6rq1xch5nq"))))
+                "1a6swdzf15jrqafwzv7grkdcl4a4nhpm8b8lh6br0djxkzqzx45b"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase    ;qtbase 6
                      #:tests? #f))      ;packages has no tests
@@ -536,7 +538,7 @@ specialized device.")
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "OpenBoard.pro"
                 (("/usr/include/quazip5")
-                 (search-input-directory inputs "/include/QuaZip-Qt5-1.4/quazip"))
+                 (search-input-directory inputs "/include/QuaZip-Qt5-1.5/quazip"))
                 (("-lquazip5")
                  "-lquazip1-qt5")
                 (("/usr/include/poppler")
@@ -1112,7 +1114,7 @@ machine, and more.")
 (define-public exercism
   (package
     (name "exercism")
-    (version "3.5.5")
+    (version "3.5.7")
     (source
      (origin
        (method git-fetch)
@@ -1121,11 +1123,12 @@ machine, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a53caqrxv0rhg79md97vnzcbr9gnz3mzjkk7xyafc3h456b4gsz"))
+        (base32 "1w1md548janc16svdqij6bya5r6rayl13760jmsx28ws8yv2wjqf"))
        (patches (search-patches "exercism-disable-self-update.patch"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/exercism/cli/exercism"
       #:unpack-path "github.com/exercism/cli"
@@ -1133,6 +1136,13 @@ machine, and more.")
       #:test-subdirs #~(list "../../...")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-xdg-open
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* "browser/open.go"
+                  (("xdg-open")
+                   (string-append #$(this-package-input "xdg-utils")
+                                  "/bin/xdg-open"))))))
           (add-after 'install 'install-completions
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((exercism (string-append #$output "/bin/exercism"))
@@ -1165,6 +1175,8 @@ machine, and more.")
            go-github-com-stretchr-testify
            go-golang-org-x-net
            go-golang-org-x-text))
+    (inputs
+     (list xdg-utils))
     (home-page "https://exercism.org/")
     (synopsis "Mentored learning for programming languages")
     (description

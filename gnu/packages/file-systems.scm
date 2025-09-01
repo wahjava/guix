@@ -65,7 +65,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
@@ -81,6 +80,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
@@ -474,6 +474,7 @@ is corrupted you'll lose the affected file(s) but not the whole back-up.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/google/fscrypt"
       #:install-source? #f
       #:test-flags
@@ -604,7 +605,7 @@ significantly increases the risk of irreversible data loss!")
 (define-public gocryptfs
   (package
     (name "gocryptfs")
-    (version "2.5.1")
+    (version "2.5.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -613,10 +614,11 @@ significantly increases the risk of irreversible data loss!")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ai30h56qvp31a3rl72biwx8w9blmi7va7d1bflmxbp41zhl6dn9"))))
+                "1glzq6syid1ws3wc9fk16z3vmphvgaf8dwr8hrg4s02bqqqhlcll"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:install-source? #f
       #:import-path "github.com/rfjakob/gocryptfs"
       #:build-flags
@@ -767,29 +769,6 @@ from a mounted file system.")
       ;; even in Rust crates, creating ludicrous and totally bogus dependencies
       ;; such as the Android SDK.  Put our crates elsewhere.
       #:vendor-dir "../guix-vendor"
-      #:cargo-inputs
-      `(("rust-aho-corasick" ,rust-aho-corasick-1)
-        ("rust-anstream" ,rust-anstream-0.6)
-        ("rust-anstyle" ,rust-anstyle-1)
-        ("rust-anstyle-parse" ,rust-anstyle-parse-0.2)
-        ("rust-anyhow" ,rust-anyhow-1)
-        ("rust-autocfg" ,rust-autocfg-1)
-        ("rust-bitfield" ,rust-bitfield-0.14)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-clap-complete" ,rust-clap-complete-4)
-        ("rust-either" ,rust-either-1)
-        ("rust-errno" ,rust-errno-0.2)
-        ("rust-env-logger" ,rust-env-logger-0.10)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-log" ,rust-log-0.4)
-        ("rust-memoffset" ,rust-memoffset-0.8)
-        ("rust-owo-colors" ,rust-owo-colors-4)
-        ("rust-rustix" ,rust-rustix-0.38)
-        ("rust-strum" ,rust-strum-0.26)
-        ("rust-strum-macros" ,rust-strum-macros-0.26)
-        ("rust-udev" ,rust-udev-0.7)
-        ("rust-uuid" ,rust-uuid-1)
-        ("rust-zeroize" ,rust-zeroize-1))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'build
@@ -815,17 +794,18 @@ from a mounted file system.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list clang
-           eudev
-           keyutils
-           libaio
-           libscrypt
-           libsodium
-           liburcu
-           `(,util-linux "lib")         ;libblkid
-           lz4
-           zlib
-           `(,zstd "lib")))
+     (cons* clang
+            eudev
+            keyutils
+            libaio
+            libscrypt
+            libsodium
+            liburcu
+            `(,util-linux "lib")        ;libblkid
+            lz4
+            zlib
+            `(,zstd "lib")
+            (cargo-inputs 'bcachefs-tools)))
     (home-page "https://bcachefs.org/")
     (synopsis "Tools to create and manage bcachefs file systems")
     (description
@@ -2206,8 +2186,8 @@ memory-efficient.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "github.com/oniony/TMSU"
-      #:unpack-path "github.com/oniony/TMSU"
       #:install-source? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -2493,38 +2473,59 @@ filtering and ordering functionality.
     (license license:gpl3+)))
 
 (define-public watcher
-  (package
-    (name "watcher")
-    (version "0.13.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/e-dant/watcher")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1ikcdskb3z3wggxb12vi0y3rng2hcswl0fpk6sjqqlz34nvwijcr"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:configure-flags
-           #~(list "-DBUILD_TESTING=ON"
-                   ;; This is needed to find 'snitch' from the system.
-                   "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS")
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (setenv "PATH" (string-append (getcwd) ":" (getenv "PATH")))
-                   (substitute* "../source/tool/test/.ctx"
-                     (("../../out")
-                      "../../../build")
-                     (("which") "command -v"))
-                   (invoke "../source/tool/test/all"))))))
-    (native-inputs (list jq snitch))
-    (home-page "https://github.com/e-dant/watcher")
-    (synopsis "File system watcher program and library")
-    (description "Watcher may be used as a library or a program that can be
+  (let ((commit "0aff9ee86f0b62f17d7b0105cae6304ef1bcfbb2")
+        (revision "0"))
+    (package
+      (name "watcher")
+      (version (git-version "0.13.6" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/e-dant/watcher")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "10bwdqnhgpsk2w60331npspkqjvdgb0jh2by89g8d3hwfjibk3p4"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; The test suite is currently flaky
+        ;; (see: https://github.com/e-dant/watcher/issues/85).
+        #:tests? #f
+        #:configure-flags
+        #~(list "-DBUILD_TESTING=ON"
+                ;; This is needed to find 'snitch' from the system.
+                "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-.pc-files-prefix
+              ;; There are some issues with the new .pc files (see:
+              ;; <https://github.com/e-dant/watcher/issues/82>).
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  (("\"\\$\\{CMAKE_INSTALL_LIBDIR}\"")
+                   "\"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\"")
+                  (("\\$\\{CMAKE_INSTALL_INCLUDEDIR}/wtr")
+                   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/wtr"))
+                (substitute* "watcher.pc.in"
+                  (("@PC_WATCHER_PREFIX@")
+                   #$output))
+                (substitute* "watcher-c/watcher-c.pc.in"
+                  (("@PC_LIBWATCHER_C_PREFIX@")
+                   #$output))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (setenv "PATH" (string-append (getcwd) ":" (getenv "PATH")))
+                  (substitute* "../source/tool/test/.ctx"
+                    (("../../out")
+                     "../../../build"))
+                  (invoke "../source/tool/test/all")))))))
+      (native-inputs (list jq snitch))
+      (home-page "https://github.com/e-dant/watcher")
+      (synopsis "File system watcher program and library")
+      (description "Watcher may be used as a library or a program that can be
 used to efficiently watch a file system for changes.  This package provides
 the following components:
 @table @asis
@@ -2537,4 +2538,4 @@ Command-line interface (CLI)
 @item @command{tw}
 Minimal, more human-readable CLI variant
 @end table")
-    (license license:expat)))
+      (license license:expat))))

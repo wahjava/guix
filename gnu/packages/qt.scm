@@ -78,7 +78,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
@@ -128,6 +127,7 @@
   #:use-module (gnu packages kde)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages rust-sources)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
@@ -779,6 +779,7 @@ developers using C++ or QML, a CSS & JavaScript like language.")
               (patches
                (search-patches "qtbase-moc-ignore-gcc-macro.patch"
                                "qtbase-absolute-runpath.patch"
+                               "qtbase-fix-thread-test.patch"
                                "qtbase-qmake-use-libname.patch"
                                "qtbase-qmlimportscanner-qml-import-path.patch"
                                "qtbase-qmake-fix-includedir.patch"))))
@@ -899,16 +900,6 @@ tst_qt_cmake_create.cpp"
                     "dirs.append(\""
                     #$(this-package-input "shared-mime-info") "/share/mime"
                     "\");\n" all)))))
-            #$@(if (target-aarch64?)
-                   ;; backport of 2bce75a6b53cccbf9c813581b64eea87f3ab55fc,
-                   ;; which makes flaky tst_qthread less flaky.
-                   #~((add-after 'patch-more-paths 'patch-aarch64-tests
-                      (lambda _
-                        (invoke
-                         "patch" "-p1" "-i"
-                         #$(local-file
-                            (search-patch "qtbase-fix-thread-test.patch"))))))
-                 #~())
             (delete 'do-not-capture-python) ;move after patch-source-shebangs
             (add-after 'patch-source-shebangs 'do-not-capture-python
               (lambda _
@@ -1309,7 +1300,12 @@ HostData=lib/qt5"
                 "0i4cgcvhngq716009r4yjn1ma67vpr4cj2ks13yxba4iy1966yjp"))))
     (propagated-inputs (list))
     (native-inputs (list perl))
-    (inputs (list mesa qtbase vulkan-headers zlib libxkbcommon))
+    (inputs (list libxkbcommon
+                  mesa
+                  qtbase
+                  qtdeclarative
+                  vulkan-headers
+                  zlib))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4615,6 +4611,7 @@ top of the PyQt bindings for Qt.  PyQt-builder is used to build PyQt itself.")
      (list python-pyqt
            python-pyqt-6
            python-pyside-2
+           python-pyside-6
            python-pytest
            python-pytest-cov
            python-pytest-qt

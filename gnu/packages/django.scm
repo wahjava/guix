@@ -12,6 +12,7 @@
 ;;; Copyright © 2022 Pradana Aumars <paumars@courrier.dev>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2025 jgart <jgart@dismail.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -137,7 +138,7 @@ a system that allows you to easily communicate between processes, and separate
 your project into different processes.")
     (license license:bsd-3)))
 
-(define-public python-django-4.2
+(define-public python-django
   (package
     (name "python-django")
     (version "4.2.16")
@@ -228,24 +229,6 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
     (properties `((cpe-name . "django")
                   ;; This CVE seems fixed since 4.2.1.
                   (lint-hidden-cve . ("CVE-2023-31047"))))))
-
-;; archivebox requires django>=3.1.3,<3.2
-(define-public python-django-3.1.14
-  (package
-    (inherit python-django-4.2)
-    (version "3.1.14")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "Django" version))
-              (sha256
-               (base32
-                "0ix3v2wlnplv78zxjrlw8z3hiap2d5mxvk0ny2fc65526shsb93j"))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-django-4.2)
-       ;; Django 4.0 deprecated pytz in favor of Pythons built-in zoneinfo.
-       (append python-pytz)))))
-
-(define-public python-django python-django-4.2)
 
 (define-public python-django-cache-url
   (package
@@ -1941,6 +1924,35 @@ image files already supported by it.")
     (description
      "This Django package allows you to utilize 12factor inspired environment
 variables to configure your Django application.")
+    (license license:expat)))
+
+(define-public python-django-widget-tweaks
+  (package
+    (name "python-django-widget-tweaks")
+    (version "1.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django-widget-tweaks" version))
+       (sha256
+        (base32 "1ir9qrygb0bsi53sqxs7052i5gpbzz3h8j3m5j94x6dv3rl8088w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "django" "test"
+                        "--settings=tests.settings")))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-django))
+    (home-page "https://github.com/jazzband/django-widget-tweaks")
+    (synopsis "Tweak the form field rendering in Django templates")
+    (description
+     "This package provides a way to tweak the form field rendering in
+templates and not in python-level form definitions.")
     (license license:expat)))
 
 (define-public python-django-cleanup

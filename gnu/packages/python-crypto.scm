@@ -57,10 +57,8 @@
   #:use-module (guix build-system python)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-tls)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages kerberos)
   #:use-module (gnu packages libffi)
@@ -75,6 +73,7 @@
   #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages time)
@@ -341,6 +340,7 @@ production use.  Include this module and use its backends at your own risk.")
     (build-system cargo-build-system)
     (arguments
      (list
+      #:install-source? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'install 'build-python-module
@@ -388,14 +388,8 @@ exclude =
                                          "/site-packages")))
                 (mkdir-p site)
                 (copy-file "target/release/libblake3.so"
-                           (string-append site "/blake3.so"))))))
-      #:cargo-inputs
-      `(("rust-blake3" ,rust-blake3-1)
-        ("rust-hex" ,rust-hex-0.4)
-        ("rust-parking-lot" ,rust-parking-lot-0.11)
-        ("rust-pyo3" ,rust-pyo3-0.15)
-        ("rust-rayon" ,rust-rayon-1))))
-    (inputs (list rust-blake3-1))
+                           (string-append site "/blake3.so"))))))))
+    (inputs (cargo-inputs 'python-blake3))
     (native-inputs
      (list python-wrapper
            python-pypa-build
@@ -538,59 +532,50 @@ is used by the Requests library to verify HTTPS requests.")
                            (find-files "." "Cargo\\.lock$"))
                  (substitute* "pyproject.toml"
                    (("locked = true") "offline = true"))))))
-    (build-system cargo-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
-      #:modules '((guix build cargo-build-system)
-                  ((guix build pyproject-build-system) #:prefix py:)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build pyproject-build-system)
                   (guix build utils))
-      #:cargo-inputs
-      (list rust-asn1-0.20
-            rust-cc-1
-            rust-cfg-if-1
-            rust-foreign-types-0.3
-            rust-foreign-types-shared-0.1
-            rust-once-cell-1
-            rust-openssl-0.10
-            rust-openssl-sys-0.9
-            rust-pem-3
-            rust-pyo3-0.23
-            rust-self-cell-1)
-      #:install-source? #false
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'configure 'dont-vendor-self
-            (lambda* (#:key vendor-dir #:allow-other-keys)
-              ;; Don't keep the whole tarball in the vendor directory
-              (delete-file-recursively
-               (string-append vendor-dir "/cryptography-" #$version ".tar.zst"))))
-          (replace 'build
-            (assoc-ref py:%standard-phases 'build))
-          (delete 'check)
-          (add-after 'install 'check
-            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-              (when tests?
-                (py:add-installed-pythonpath inputs outputs)
-                (invoke "python" "-m" "pytest" "tests"))))
-          (replace 'install
-            (assoc-ref py:%standard-phases 'install)))))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums)))))))
     (native-inputs
-     (list python-certifi
-           python-cffi
-           python-click
-           python-cryptography-vectors
-           python-mypy
-           python-pretend
-           python-pytest
-           python-pytest-benchmark
-           python-pytest-cov
-           python-pytest-randomly
-           python-pytest-xdist
-           python-setuptools
-           python-wheel))
-    (inputs (list maturin openssl python-wrapper))
+     (append
+      (list python-certifi
+            python-cffi
+            python-click
+            python-cryptography-vectors
+            python-mypy
+            python-pretend
+            python-pytest
+            python-pytest-benchmark
+            python-pytest-cov
+            python-pytest-randomly
+            python-pytest-xdist
+            python-setuptools
+            python-wheel
+            rust
+            `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs
+     (cons* maturin openssl (cargo-inputs 'python-cryptography)))
     (propagated-inputs (list python-cffi))
     (home-page "https://github.com/pyca/cryptography")
     (synopsis "Cryptographic recipes and primitives for Python")
@@ -917,23 +902,24 @@ Python.")
 (define-public python-josepy
   (package
     (name "python-josepy")
-    (version "1.13.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "josepy" version))
-              (sha256
-               (base32
-                "1jaxqyp53paks2z8zyzr50gqvzfxbar7r2qf98kqak4aizrxlcc9"))))
-    (build-system python-build-system)
-    (arguments
-     ;; TODO: some test dependencies are missing (see pyproject.toml).
-     '(#:tests? #f))
-    (propagated-inputs
-     (list python-cryptography python-pyopenssl))
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/certbot/josepy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zplnfrmc4nps9lgl3fz434ja7lmi9v8waydflzvpi75kf5fqxc1"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core python-pytest))
+    (propagated-inputs (list python-cryptography))
     (home-page "https://github.com/certbot/josepy")
     (synopsis "JOSE protocol implementation in Python")
-    (description "This package provides a Python implementation of the JOSE
-protocol (Javascript Object Signing and Encryption).")
+    (description
+     "This package provides a Python implementation of the JOSE protocol
+(Javascript Object Signing and Encryption).")
     (license license:asl2.0)))
 
 (define pycryptodome-unbundle-tomcrypt-snippet

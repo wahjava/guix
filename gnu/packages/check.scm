@@ -80,10 +80,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -264,47 +261,19 @@ like Jasmine or Mocha.")
 (define-public cargo-nextest
   (package
     (name "cargo-nextest")
-    (version "0.9.87")
+    (version "0.9.97")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "cargo-nextest" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "02aq4wmrnwlm2amjqpwv0k58mw5kbwkxgj2z1d6qydxfrrm50k1d"))))
+        (base32 "0j55sqr3fnhsk5b9n2jwy6g1h605qgrhwpxlsx789k8b3yhhnfyz"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
-       (("rust-camino" ,rust-camino-1)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-clap" ,rust-clap-4)
-        ("rust-color-eyre" ,rust-color-eyre-0.6)
-        ("rust-dialoguer" ,rust-dialoguer-0.11)
-        ("rust-duct" ,rust-duct-0.13)
-        ("rust-enable-ansi-support" ,rust-enable-ansi-support-0.2)
-        ("rust-guppy" ,rust-guppy-0.17)
-        ("rust-itertools" ,rust-itertools-0.13)
-        ("rust-miette" ,rust-miette-7)
-        ("rust-nextest-filtering" ,rust-nextest-filtering-0.12)
-        ("rust-nextest-metadata" ,rust-nextest-metadata-0.12)
-        ("rust-nextest-runner" ,rust-nextest-runner-0.70)
-        ("rust-nextest-workspace-hack" ,rust-nextest-workspace-hack-0.1)
-        ("rust-once-cell" ,rust-once-cell-1)
-        ("rust-owo-colors" ,rust-owo-colors-4)
-        ("rust-pathdiff" ,rust-pathdiff-0.2)
-        ("rust-quick-junit" ,rust-quick-junit-0.5)
-        ("rust-semver" ,rust-semver-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-shell-words" ,rust-shell-words-1)
-        ("rust-supports-color" ,rust-supports-color-3)
-        ("rust-supports-unicode" ,rust-supports-unicode-3)
-        ("rust-swrite" ,rust-swrite-0.1)
-        ("rust-thiserror" ,rust-thiserror-2)
-        ("rust-tracing" ,rust-tracing-0.1)
-        ("rust-tracing-subscriber" ,rust-tracing-subscriber-0.3))
-       #:cargo-development-inputs
-       (("rust-camino-tempfile" ,rust-camino-tempfile-1))))
-    (inputs (list pkg-config zlib (list zstd "lib")))
+     `(#:install-source? #f))
+    (inputs
+     (cons* pkg-config zlib `(,zstd "lib") (cargo-inputs 'cargo-nextest)))
     (home-page "https://github.com/nextest-rs/nextest")
     (synopsis "next-generation test runner for Rust")
     (description
@@ -415,7 +384,7 @@ source code editors and IDEs.")
     (native-inputs
      (list go-github-com-docopt-docopt-go
            go-github-com-go-ini-ini
-           go-github-com-olekukonko-tablewriter
+           go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-stretchr-testify
            go-md2man))
     (home-page "https://github.com/mrtazz/checkmake")
@@ -1216,7 +1185,7 @@ similar to unit tests.")
 (define-public gotestsum
   (package
     (name "gotestsum")
-    (version "1.12.0")
+    (version "1.12.2")
     (source
      (origin
        (method git-fetch)
@@ -1225,7 +1194,7 @@ similar to unit tests.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fx92jh6ay4rk1ljbgp9b2m4fafqwy0a19q7lhdabgb1j8dvgxvs"))))
+        (base32 "02q251j5kf2874vnvmbfc0ncnwssq459s8mf9f50cymqkpqbx0lp"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1235,6 +1204,9 @@ similar to unit tests.")
               (string-join
                (list "TestE2E_IgnoresWarnings"
                      "TestE2E_MaxFails_EndTestRun"
+                     "TestE2E_RerunFails/first_run_has_errors,_abort_rerun"
+                     "TestE2E_RerunFails/reruns_continues_to_fail"
+                     "TestE2E_RerunFails/reruns_until_success"
                      "TestScanTestOutput_TestTimeoutPanicRace/panic-race-2")
                "|"))
       ;; Run just unit test, integration tests from "testjson" require: run
@@ -2234,26 +2206,24 @@ side-effects (such as setting environment variables).")
 (define-public python-scripttest
   (package
     (name "python-scripttest")
-    (version "1.3")
+    (version "2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "scripttest" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pypa/scripttest")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0f4w84k8ck82syys7yg9maz93mqzc8p5ymis941x034v44jzq74m"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest))
-    (arguments
-     ;; Tests not shipped with PyPI archive, and require TLS CA cert.
-     (list #:tests? #f))
-    (home-page (string-append "https://web.archive.org/web/20161029233413/"
-                              "http://pythonpaste.org/scripttest/"))
+        (base32 "07cyrh4yp8497radz8cx7la2p8yr78r77xm62hh77hcs1migznaf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/pypa/scripttest")
     (synopsis "Python library to test command-line scripts")
-    (description "Scripttest is a Python helper library for testing
-interactive command-line applications.  With it you can run a script in a
-subprocess and see the output as well as any file modifications.")
+    (description
+     "Scripttest is a Python helper library for testing interactive
+command-line applications.  With it you can run a script in a subprocess and
+see the output as well as any file modifications.")
     (license license:expat)))
 
 (define-public python-testtools-bootstrap
@@ -2775,16 +2745,18 @@ across test runs.")
 (define-public python-pytest-sugar
   (package
     (name "python-pytest-sugar")
-    (version "0.9.3")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-sugar" version))
        (sha256
-        (base32 "1i0hv3h49zvl62jbiyjag84carbrp3zprqzxffdr291nxavvac0n"))))
-    (build-system python-build-system)
+        (base32 "02kc4y0ry4y9lp63kjq9p7yvbjijfxn1fcn6wx6c1c7mb0rfh8k4"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-packaging python-pytest python-termcolor))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://pivotfinland.com/pytest-sugar/")
     (synopsis "Plugin for pytest that changes the default look and feel")
     (description
@@ -2902,32 +2874,23 @@ failures.")
   (package
     (name "python-pytest-freezegun")
     (version "0.4.2")
-    (source (origin
-              ;; The test suite is not included in the PyPI archive.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/ktosiek/pytest-freezegun")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ktosiek/pytest-freezegun")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10c4pbh03b4s1q8cjd75lr0fvyf9id0zmdk29566qqsmaz28npas"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-freezegun python-pytest))
-    (native-inputs (list unzip))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/ktosiek/pytest-freezegun")
     (synopsis "Pytest plugin to freeze time in test fixtures")
-    (description "The @code{pytest-freezegun} plugin wraps tests and fixtures
-with @code{freeze_time}, which controls (i.e., freeze) the time seen
-by the test.")
+    (description
+     "The @code{pytest-freezegun} plugin wraps tests and fixtures with
+@code{freeze_time}, which controls (i.e., freeze) the time seen by the test.")
     (license license:expat)))
 
 (define-public python-pytest-mypy
@@ -3209,26 +3172,6 @@ all on a minimally sized program.  It's highly configurable and handle
 pragmas to control it from within your code.  Additionally, it is
 possible to write plugins to add your own checks.")
     (license license:gpl2+)))
-
-(define-public python-pytest-capturelog
-  (package
-    (name "python-pytest-capturelog")
-    (version "0.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-capturelog" version ".tar.gz"))
-       (sha256
-        (base32
-         "038049nyjl7di59ycnxvc9nydivc5m8np3hqq84j2iirkccdbs5n"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://bitbucket.org/memedough/pytest-capturelog/overview")
-    (synopsis "Pytest plugin to catch log messages")
-    (description
-     "Python-pytest-catchlog is a pytest plugin to catch log messages.")
-    (license license:expat)))
 
 (define-public python-nosexcover
   (package
@@ -3561,7 +3504,7 @@ allowing you to declaratively define \"match\" rules.")
     ;; Upstream is informed to provide man/info for the project, see
     ;; <https://github.com/toml-lang/toml-test/issues/163>.
     (name "toml-test")
-    (version "1.5.0")
+    (version "1.6.0")
     (source
      (origin
        (method git-fetch)
@@ -3570,7 +3513,7 @@ allowing you to declaratively define \"match\" rules.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "188xcsxgn20pjnddfn3mvx7wak030xdgkhxkhjiijfap37gbv6df"))))
+        (base32 "1b6lfamh673a4x509cacr6qr1xvf82562cpqn9ygrgnd81469qcc"))))
     (build-system go-build-system)
     (arguments
      (list

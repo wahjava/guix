@@ -15,7 +15,7 @@
 ;;; Copyright © 2019 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2020, 2021 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2020, 2021, 2025 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2020 divoplade <d@divoplade.fr>
 ;;; Copyright © 2020, 2021, 2022 pukkamustard <pukkamustard@posteo.net>
 ;;; Copyright © 2021 aecepoglu <aecepoglu@fastmail.fm>
@@ -3485,14 +3485,14 @@ encoded in a resizable array.")
 (define-public ocaml-luv
   (package
     (name "ocaml-luv")
-    (version "0.5.12")
+    (version "0.5.14")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/aantron/luv/releases/download/"
                                   version "/luv-" version ".tar.gz"))
               (sha256
                (base32
-                "1h2n9iij4mh60sy3g437p1xwqyqpyw72fgh4417d8j9ahq46m7vn"))
+                "16dfv8gzpqdcqpcil5pd7a44vp64hw35q94fipcwsxl81jjv80cf"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5698,7 +5698,7 @@ long and size_t whose sizes depend on the host platform.")
 (define-public ocaml-ctypes
   (package
    (name "ocaml-ctypes")
-   (version "0.20.1")
+   (version "0.23.0")
    (home-page "https://github.com/ocamllabs/ocaml-ctypes")
    (source (origin
              (method git-fetch)
@@ -5708,8 +5708,9 @@ long and size_t whose sizes depend on the host platform.")
              (file-name (git-file-name name version))
              (sha256
               (base32
-               "0ilzq9qzvwv9rc08cc9wchsx636zp870i7qvqmbigaa2qb812m0z"))))
-   (build-system ocaml-build-system)
+               "16dxz2r070vlrkbqhza0c5y6izxpjn080vqmxj47i919wfqd75vx"))
+             (patches (search-patches "ocaml-ctypes-test-oo.patch"))))
+   (build-system dune-build-system)
    (arguments
     `(#:phases
       (modify-phases %standard-phases
@@ -5804,7 +5805,7 @@ OCaml projects that contain C stubs.")
 (define-public ocaml-tsdl
   (package
     (name "ocaml-tsdl")
-    (version "0.9.9")
+    (version "1.1.0")
     (home-page "https://erratique.ch/software/tsdl")
     (source (origin
               (method url-fetch)
@@ -5813,7 +5814,7 @@ OCaml projects that contain C stubs.")
               (file-name (string-append name "-" version ".tar.gz"))
               (sha256
                (base32
-                "1m565jgfanijjzp64c1rylahkpmrrb03ywj202j49n06nvwp788s"))))
+                "0fw78qby010ai8apgwc66ary6zm3a5nw57228i44vccypav3xpk4"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:build-flags '("build")

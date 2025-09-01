@@ -4175,7 +4175,7 @@ asynchronously and at a user-defined speed.")
 (define-public chess
   (package
     (name "chess")
-    (version "6.2.11")
+    (version "6.3.0")
     (source
      (origin
        (method url-fetch)
@@ -4183,7 +4183,7 @@ asynchronously and at a user-defined speed.")
                            ".tar.gz"))
        (sha256
         (base32
-         "1gg9764ld7skn7jps9pma6x8zqf9nka1cf5nryq197f6lpp404fq"))))
+         "0fm27h1xv56v1g1zq0cd9wlchvfw8iwmsgj4nyaxcalc171bwdqb"))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
@@ -5345,7 +5345,7 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.18.3")
+    (version "1.18.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5354,7 +5354,7 @@ falling, themeable graphics and sounds, and replays.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0habv0whb0y0r52sjln7yin1nfm3vjjxqlavm7jarcrg2s3v743k"))))
+                "16mrdpz1yq12ppnrmm4yv768zmh08qjdxh892pzc5i17n7xkmpy4"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;no test target
@@ -12475,80 +12475,6 @@ game.")  ;thanks to Debian for description
      "With PokerTH you can play the Texas holdem poker game, either against
 computer opponents or against real players online.")
     (license license:agpl3+)))
-
-(define-public xblackjack
-  (package
-    (name "xblackjack")
-    (version "2.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.ibiblio.org/pub/X11/contrib/games/"
-                           "xblackjack-" version ".tar.gz"))
-       (sha256
-        (base32 "05h93rya7zwnx2l58f0a7wkjadymkj4y77clcr2hryhrhhy1vwjx"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((imake (assoc-ref inputs "imake"))
-                   (out (assoc-ref outputs "out")))
-               (substitute* "Imakefile"
-                 (("EXTRA_LIBRARIES = -lXm \\$\\(DEPLIBS\\) -lbsd")
-                  "EXTRA_LIBRARIES = -lXm -lXt -lXmu -lXext -lX11")
-                 (("^#define NonStandardInstallTargets NO")
-                  "#define NonStandardInstallTargets YES")
-                 (("BINDIR = /usr/local/bin")
-                  (string-append "BINDIR = " out "/bin"))
-                 (("MANDIR = /usr/local/man/cat1")
-                  (string-append "MANDIR = " out "/share/man/man1"))
-                 (("XAPPLOADDIR = /usr/local/lib/app-defaults")
-                  (string-append "XAPPLOADDIR = " out "/lib/X11/app-defaults")))
-
-               (invoke "xmkmf")  ; Generate Makefile.
-               (substitute* "Makefile"
-                 ((imake) out)
-                 (("ETCX11DIR = /etc/X11")
-                  (string-append "ETCX11DIR = " out "/etc/X11"))
-                 ;; Fix incorrect argument given to gcc. Error message:
-                 ;; "gcc: error: DefaultGcc2AMD64Opt: No such file or directory"
-                 (("CDEBUGFLAGS = [^\n]*") ""))
-
-               ;; Fix header paths.
-               (substitute* '("Draw.c"
-                              "Strategy.c")
-                 (("^#include <X11/Xm/Xm.h>")
-                  "#include <Xm/Xm.h>"))
-               (substitute* "Strategy.c"
-                 (("^#include <X11/Xm/Label.h>")
-                  "#include <Xm/Label.h>"))
-
-               ;; Fix compilation errors.
-               (substitute* "Table.c"
-                 (("/\\* focus_moved_proc \\*/\tXtInheritFocusMovedProc,") "")
-                 (("_XmMoveObject\\(\\(RectObj\\) w, rx, ry\\);")
-                  "_XmMoveObject(w, rx, ry);")
-                 (("_XmResizeObject\\(\\(RectObj\\) managed->locs[i].w, nw, nh,")
-                  "_XmResizeObject(managed->locs[i].w, nw, nh,")))))
-         (add-after 'install 'install-man-pages
-           (lambda _
-             (invoke "make" "install.man"))))
-       #:tests? #f))  ; No check target.
-    (inputs
-     (list lesstif libx11 libxext libxmu libxt))
-    (native-inputs
-     (list imake))
-    (home-page "https://www.ibiblio.org/pub/X11/contrib/games/")
-    (synopsis "X11/Motif blackjack game")
-    (description
-     "Xblackjack is a MOTIF/OLIT based tool constructed to get you ready for
-the casino.  It was inspired by a book called \"Beat the Dealer\" by Edward
-O. Thorp, Ph.D. of UCLA.  A number of important statistics are maintained
-for display, and used by the program to implement Thorp's \"Complete Point
-System\" (high-low system).")
-    (license (license:x11-style "" "See file headers."))))
 
 (define-public xevil
   ;; This game is old.  Use a maintained fork that builds with modern toolchains

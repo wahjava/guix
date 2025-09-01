@@ -35,6 +35,7 @@
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Mark Walker <mark.damon.walker@gmail.com>
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -63,7 +64,6 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages digest)
@@ -82,6 +82,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-graphics)
   #:use-module (gnu packages python-web)
@@ -253,28 +254,36 @@ possibility to differentiate functions that contain matrix functions as
 (define-public python-anndata
   (package
     (name "python-anndata")
-    (version "0.11.1")
+    (version "0.12.1")
     (source
      (origin
        ;; The tarball from PyPi doesn't include tests.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/theislab/anndata")
-             (commit version)))
+              (url "https://github.com/theislab/anndata")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0skmjjvxk5gdsx6fkplszff92jsb4l45j23c6mhq1vdi3wqhqhcw"))))
+        (base32 "1pwqy1pxsiqf13kfshcbqah1a92x4044s6jyr94488ngpqkr275z"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-k" #$(string-append
-                      ;; This one test seemingly freezes
-                      "not test_read_lazy_h5_cluster"
-                      ;; Fails with a numpy deprecation warning
-                      ;; but not an actual failure
-                      " and not test_read_write_X"))
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; XXX: AttributeError: module 'pyarrow.lib' has no attribute
+              ;; 'PyExtensionType
+              "--ignore=tests/test_awkward.py"
+              "-k" (string-join
+                    ;; TypeError: read_text() takes from 1 to 2 positional
+                    ;; arguments but 4 were given
+                    (list "not test_read_csv"
+                          ;; TypeError: _fix_co_filename() argument 2 must be
+                          ;; str, not PosixPath
+                          "test_hints"
+                          ;; Failed: DID NOT WARN. No warnings of type (<class
+                          ;; 'FutureWarning'>,) were emitted.
+                          "test_readloom_deprecations")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           ;; Doctests require scanpy from (gnu packages bioinformatics)
@@ -293,15 +302,14 @@ possibility to differentiate functions that contain matrix functions as
               (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
     (propagated-inputs
      (list python-array-api-compat
-           python-exceptiongroup ;only for Python <3.11
            python-h5py
            python-importlib-metadata
+           python-legacy-api-wrap
            python-natsort
-           python-numcodecs
            python-packaging
            python-pandas
-           python-scipy
            python-scikit-learn
+           python-scipy
            python-setuptools ; For pkg_resources.
            python-zarr))
     (native-inputs
@@ -309,17 +317,14 @@ possibility to differentiate functions that contain matrix functions as
            python-boltons
            python-dask
            python-distributed
-           python-hatchling
            python-hatch-vcs
+           python-hatchling
            python-joblib
            python-loompy
            python-matplotlib
            python-pytest
            python-pytest-mock
-           python-pytest-doctestplus
            python-pytest-xdist
-           python-toml
-           python-flit
            python-setuptools-scm))
     (home-page "https://github.com/theislab/anndata")
     (synopsis "Annotated data for data analysis pipelines")
@@ -538,26 +543,10 @@ written in C.")
             (assoc-ref py:%standard-phases 'build))
           (add-after 'build-python-module 'install-python-module
             (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      `(("rust-amd" ,rust-amd-0.2)
-        ("rust-blas" ,rust-blas-0.22)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-derive-builder" ,rust-derive-builder-0.11)
-        ("rust-enum-dispatch" ,rust-enum-dispatch-0.3) ;0.3.8
-        ("rust-itertools" ,rust-itertools-0.11)
-        ("rust-lapack" ,rust-lapack-0.19)
-        ("rust-lazy-static" ,rust-lazy-static-1) ;1.4
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-num-derive" ,rust-num-derive-0.2)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-pyo3" ,rust-pyo3-0.20)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-thiserror" ,rust-thiserror-1))
       #:features '(list "python")
       #:install-source? #false))
     (inputs
-     (list maturin))
+     (cons maturin (cargo-inputs 'python-clarabel)))
     (native-inputs
      (list python-wrapper))
     (propagated-inputs (list python-numpy python-scipy))
@@ -1540,6 +1529,32 @@ Features:
 @end itemize")
     (license license:bsd-2)))
 
+(define-public python-legendkit
+  (package
+    (name "python-legendkit")
+    (version "0.3.6")
+    (source
+     (origin
+       (method git-fetch)       ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/Marsilea-viz/legendkit")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03xdhh95w4zydwa4ahp3gyfa6i60c9s5arfcj366knckb1bnpnn9"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-matplotlib))
+    (home-page "https://github.com/Marsilea-viz/legendki")
+    (synopsis "Legend creation and manipulation for matplotlib")
+    (description
+     "This package implements a functionality to create and manipulate plot
+legends for @code{matplotlib}.")
+    (license license:expat)))
+
 (define-public python-libneuroml
   (package
     (name "python-libneuroml")
@@ -1571,6 +1586,39 @@ Features:
      "This package provides a Python library for working with NeuroML descriptions of
 neuronal models")
     (license license:bsd-3)))
+
+(define-public python-marsilea
+  (package
+    (name "python-marsilea")
+    (version "0.5.4")
+    (source
+     (origin
+       (method git-fetch)       ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/Marsilea-viz/marsilea")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09pyfx0gn46ypsp991d3n4a4xx6zlbpss078lw6yywnhl834v2i0"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-legendkit
+           python-matplotlib
+           python-numpy
+           python-pandas
+           python-platformdirs
+           python-scipy
+           python-seaborn))
+    (home-page "https://github.com/Marsilea-viz/marsilea")
+    (synopsis "Declarative creation of composable visualizations")
+    (description
+     "Marsilea is a Python library for creating composable visualizations in a
+declarative way.  It is built on top of Matplotlib and provides a high-level
+API for you to puzzle different visualizations together like logo.")
+    (license license:expat)))
 
 (define-public python-meshzoo
   (package
@@ -2857,19 +2905,57 @@ swarm algorithm.")
     (license license:expat)))
 
 (define-public python-scikit-optimize
+  ;; XXX: The project might be not maintained, see
+  ;; <https://github.com/holgern/scikit-optimize/issues/6>.
   (package
     (name "python-scikit-optimize")
     (version "0.10.2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/holgern/scikit-optimize")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0pc6avzxz8l32km5jvv3maih0a5x2akxybvxl2hdg04qz2l0kz8b"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/holgern/scikit-optimize")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pc6avzxz8l32km5jvv3maih0a5x2akxybvxl2hdg04qz2l0kz8b"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; tests: 398 passed, 1 skipped, 179 warnings
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              "-k" (string-join
+                    ;; XXX: As the project is not actively maintained, review
+                    ;; failing test when a fresh release is available.
+                    (list "not test_acq_optimizer"
+                          "test_acq_optimizer_with_time_api"
+                          "test_categorical_init_vals"
+                          "test_consistent_x_iter_dimensions"
+                          "test_early_stopping_delta_x"
+                          "test_early_stopping_delta_x_empty_result_object"
+                          "test_early_stopping_delta_y"
+                          "test_early_stopping_delta_y_with_x0"
+                          "test_exhaust_initial_calls"
+                          "test_fixed_random_states"
+                          "test_init_points_and_models"
+                          "test_init_vals"
+                          "test_init_vals_and_models"
+                          "test_minimizer_api"
+                          "test_minimizer_api_random_only"
+                          "test_minimizer_space_constraint"
+                          "test_minimizer_with_space"
+                          "test_mixed_spaces"
+                          "test_optimizer_base_estimator_string_smoke"
+                          "test_optimizer_base_estimator_string_smoke_njobs"
+                          "test_per_second_api"
+                          "test_repeated_x"
+                          "test_tree_based_minimize")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-xdist
+           python-setuptools-next))
     (propagated-inputs
      (list python-joblib
            python-matplotlib
@@ -2877,14 +2963,13 @@ swarm algorithm.")
            python-pyaml
            python-scikit-learn
            python-scipy))
-    (native-inputs
-     (list python-pytest python-setuptools python-wheel))
     (home-page "https://scikit-optimize.github.io/")
     (synopsis "Sequential model-based optimization toolbox")
-    (description "Scikit-Optimize, or @code{skopt}, is a simple and efficient
-library to minimize (very) expensive and noisy black-box functions.  It
-implements several methods for sequential model-based optimization.
-@code{skopt} aims to be accessible and easy to use in many contexts.")
+    (description
+     "Scikit-Optimize, or @code{skopt}, is a simple and efficient library to
+minimize (very) expensive and noisy black-box functions.  It implements
+several methods for sequential model-based optimization.  @code{skopt} aims to
+be accessible and easy to use in many contexts.")
     (license license:bsd-3)))
 
 (define-public python-scikit-surprise
@@ -4294,6 +4379,61 @@ docs dependency in support of other libraries.")
 units.  It defines the @code{unyt.array.unyt_array} and
 @code{unyt.array.unyt_quantity} classes (subclasses of NumPy’s ndarray class)
 for handling arrays and scalars with units,respectively")
+    (license license:bsd-3)))
+
+(define-public python-uproot
+  (package
+    (name "python-uproot")
+    (version "5.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "uproot" version))
+       (sha256
+        (base32 "024k5kjwcd2nw5hfxhpl0x9p5aq0qrg0nlh9v24vr39rcqadh52a"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; conftest.py is not required and it imports modules we do not use.
+         "--noconftest"
+         ;; There is no easy way to skip tests that require the network, so
+         ;; just run a handful of tests that pass.
+         "tests/test_0351_write_TList.py"
+         "tests/test_0352_write_THashList.py"
+         "tests/test_0439_check_awkward_before_numpy.py"
+         "tests/test_0976_path_object_split.py"
+         "tests/test_1198_coalesce.py"
+         "tests/test_1264_write_NumPy_array_of_strings.py"
+         "tests/test_1318_dont_compare_big_endian_in_awkward.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              ;; Version is determined dynamically from .git.
+              (substitute* "pyproject.toml"
+                (("\\[project\\]")
+                 (string-append "[project]" "\n" "version = \""
+                                #$version "\""))
+                (("\"version\"") "")))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-pytest
+           python-pytest-timeout
+           python-setuptools))
+    (propagated-inputs
+     (list python-awkward
+           python-cramjam
+           python-fsspec
+           python-numpy
+           python-packaging
+           python-xxhash))
+    (home-page "https://uproot.readthedocs.io")
+    (synopsis "ROOT I/O in Python using NumPy")
+    (description
+     "Uproot is a Python library for reading and writing ROOT files.  It uses
+NumPy and does not depend on C++ ROOT.")
     (license license:bsd-3)))
 
 (define-public python-upsetplot

@@ -3,7 +3,7 @@
 ;;; Copyright © 2013-2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014-2025 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
-;;; Copyright © 2016-2019, 2021, 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2019, 2021, 2024, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2017, 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2017, 2018 Nikita <nikita@n0.is>
@@ -695,9 +695,9 @@ variable defined below.  It requires guile-json to be installed."
     "sco" "si" "sk" "skr" "sl" "son" "sq" "sr" "sv-SE" "szl" "ta" "te"
     "tg" "th" "tl" "tr" "trs" "uk" "ur" "uz" "vi" "xh" "zh-CN" "zh-TW"))
 
-(define %icecat-base-version "128.13.0")
+(define %icecat-base-version "128.14.0")
 (define %icecat-version (string-append %icecat-base-version "-gnu1"))
-(define %icecat-build-id "20250722000000") ;must be of the form YYYYMMDDhhmmss
+(define %icecat-build-id "20250819000000") ;must be of the form YYYYMMDDhhmmss
 
 ;; 'icecat-source' is a "computed" origin that generates an IceCat tarball
 ;; from the corresponding upstream Firefox ESR tarball, using the 'makeicecat'
@@ -717,9 +717,9 @@ variable defined below.  It requires guile-json to be installed."
                   "firefox-" upstream-firefox-version ".source.tar.xz"))
             (sha256
              (base32
-              "1x22a1ihnpsmcmj1ljx586rh8kgm996qbncgyr7z3rgsmslx1am4"))))
+              "0lwsn1y988naxs9031sbzsh9b0x7c6zmpf89y4pv477l55ifzfck"))))
 
-         (gnuzilla-commit "b73acfe395ea849fcd15c9886a7f4631f2b6f82b")
+         (gnuzilla-commit "ba161be3de71bb556be951ac4dbb81c807f68770")
          (gnuzilla-source
           (origin
             (method git-fetch)
@@ -730,7 +730,7 @@ variable defined below.  It requires guile-json to be installed."
                                       (string-take gnuzilla-commit 8)))
             (sha256
              (base32
-              "06zm63vs1m8c3xh4jw75ffah6anf1xxqgqn3hl3gqw5g486ncir1"))))
+              "0gcpwxjz407lgjg8p3mgaij10xy1p6j3sbij46mi8h18d4q1iagg"))))
 
          ;; 'search-patch' returns either a valid file name or #f, so wrap it
          ;; in 'assume-valid-file-name' to avoid 'local-file' warnings.
@@ -931,8 +931,8 @@ variable defined below.  It requires guile-json to be installed."
       rust
       `(,rust "cargo")
       rust-cbindgen
-      llvm-17
-      clang-17
+      llvm-20
+      clang-20
       perl
       node-lts
       python-wrapper
@@ -1678,10 +1678,18 @@ ca495991b7852b855"))
                      (eudev-lib (string-append eudev "/lib"))
                      ;; For the integration of native notifications (same reason as icecat)
                      (libnotify #$(this-package-input "libnotify"))
-                     (libnotify-lib (string-append libnotify "/lib")))
+                     (libnotify-lib (string-append libnotify "/lib"))
+                     (mesa #$(this-package-input "mesa"))
+                     (mesa-lib (string-append mesa "/lib"))
+                     (pciutils #$(this-package-input "pciutils"))
+                     (pciutils-lib (string-append pciutils "/lib"))
+                     (libva #$(this-package-input "libva"))
+                     (libva-lib (string-append libva "/lib")))
                 (wrap-program (car (find-files lib "^icedove$"))
                   `("XDG_DATA_DIRS" prefix (,gtk-share))
-                  `("LD_LIBRARY_PATH" prefix (,pulseaudio-lib ,eudev-lib ,libnotify-lib ,gpgme-lib)))))))))
+                  `("LD_LIBRARY_PATH" prefix
+                    (,pulseaudio-lib ,eudev-lib ,libnotify-lib ,gpgme-lib
+                     ,mesa-lib ,libva-lib ,pciutils-lib)))))))))
     (inputs
      (list alsa-lib
            bash-minimal
@@ -1712,11 +1720,13 @@ ca495991b7852b855"))
            libxinerama
            libxscrnsaver
            libxt
+           libva
            mesa
            mit-krb5
            nspr
            nss
            pango
+           pciutils
            pixman
            pulseaudio
            sqlite

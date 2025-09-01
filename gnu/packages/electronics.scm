@@ -85,6 +85,40 @@
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages xml))
 
+(define-public camv-rnd
+  (package
+    (name "camv-rnd")
+    (version "1.1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/camv-rnd/"
+                           "releases/camv-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1dp1vj5rpxlddx40paa9i727c92is3bz6z6pa0y6dy2nsjcm86fs"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Viewer for electronic boards in CAM file formats")
+    (description
+     "@code{Camv-rnd} is a viewer for @acronym{PCB, Printed Circuit Board}
+supporting gerber, excellon and g-code.  It is part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
+
 (define-public comedilib
   (package
     (name "comedilib")
@@ -106,7 +140,7 @@ individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
 
-(define-public librnd
+(define librnd
   (package
     (name "librnd")
     (version "4.3.2")
@@ -182,39 +216,40 @@ to take care of the OS-specific details when writing software that uses serial p
          (file-name (git-file-name name version))))
       (outputs '("out" "doc"))
       (arguments
-       `(#:tests? #f                      ; tests need USB access
-         #:phases
-         (modify-phases %standard-phases
-           (add-before 'configure 'change-udev-group
-             (lambda _
-               (substitute* (find-files "contrib" "\\.rules$")
-                 (("plugdev") "dialout"))))
-           (add-after 'build 'build-doc
-             (lambda _
-               (invoke "doxygen")))
-           (add-after 'install 'install-doc
-             (lambda* (#:key outputs #:allow-other-keys)
-               (copy-recursively "doxy/html-api"
-                                 (string-append (assoc-ref outputs "doc")
-                                                "/share/doc/libsigrok"))))
-           (add-after 'install-doc 'install-udev-rules
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out   (assoc-ref outputs "out"))
-                      (rules (string-append out "/lib/udev/rules.d/")))
-                 (for-each (lambda (file)
-                             (install-file file rules))
-                           (find-files "contrib" "\\.rules$")))))
-           (add-after 'install-udev-rules 'install-fw
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((fx2lafw (assoc-ref inputs "sigrok-firmware-fx2lafw"))
-                      (out (assoc-ref outputs "out"))
-                      (dir-suffix "/share/sigrok-firmware/")
-                      (input-dir (string-append fx2lafw dir-suffix))
-                      (output-dir (string-append out dir-suffix)))
-                 (for-each
-                  (lambda (file)
-                    (install-file file output-dir))
-                  (find-files input-dir "."))))))))
+       (list
+        #:tests? #f                      ; tests need USB access
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'configure 'change-udev-group
+              (lambda _
+                (substitute* (find-files "contrib" "\\.rules$")
+                  (("plugdev") "dialout"))))
+            (add-after 'build 'build-doc
+              (lambda _
+                (invoke "doxygen")))
+            (add-after 'install 'install-doc
+              (lambda _
+                (copy-recursively
+                 "doxy/html-api"
+                 (string-append #$output:doc "/share/doc/libsigrok"))))
+            (add-after 'install-doc 'install-udev-rules
+              (lambda _
+                (for-each
+                 (lambda (file)
+                   (install-file
+                    file
+                    (string-append #$output "/lib/udev/rules.d/")))
+                          (find-files "contrib" "\\.rules$"))))
+            (add-after 'install-udev-rules 'install-fw
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((fx2lafw (assoc-ref inputs "sigrok-firmware-fx2lafw"))
+                       (dir-suffix "/share/sigrok-firmware/")
+                       (input-dir (string-append fx2lafw dir-suffix))
+                       (output-dir (string-append #$output dir-suffix)))
+                  (for-each
+                   (lambda (file)
+                     (install-file file output-dir))
+                   (find-files input-dir "."))))))))
       (native-inputs
        (list autoconf automake doxygen graphviz libtool
              sigrok-firmware-fx2lafw pkg-config))
@@ -255,18 +290,18 @@ supported devices, as well as input/output file format support.")
                   "11l8vnf2khqbaqas7cfnq3f8q5w7am6nbkkd5mqj5kpb3ya2avb9"))))
       (outputs '("out" "doc"))
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'build 'build-doc
-             (lambda _
-               (invoke "doxygen")
-               #t))
-           (add-after 'install 'install-doc
-             (lambda* (#:key outputs #:allow-other-keys)
-               (copy-recursively "doxy/html-api"
-                                 (string-append (assoc-ref outputs "doc")
-                                                "/share/doc/libsigrokdecode"))
-               #t)))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'build 'build-doc
+              (lambda _
+                (invoke "doxygen")))
+            (add-after 'install 'install-doc
+              (lambda _
+                (copy-recursively
+                 "doxy/html-api"
+                 (string-append #$output:doc
+                                "/share/doc/libsigrokdecode")))))))
       (native-inputs
        (list check doxygen graphviz pkg-config automake autoconf libtool))
       ;; libsigrokdecode.pc lists "python" in Requires.private, and "glib" in
@@ -561,12 +596,12 @@ The following features are currently available:
 
 (define-public opensta
   ;; There are no releases, we use last commit.
-  (let ((commit "eb8d39a7dd81b5ca2582ad9bbce0fb6e094b3e0f")
+  (let ((commit "12f03395ec80d3593f4796b2a3cf5480e75735bd")
         (revision "0"))
     (package
       (name "opensta")
       ;; The version string is taken from the CMakeLists.txt.
-      (version (git-version "2.6.2" revision commit))
+      (version (git-version "2.7.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -575,20 +610,27 @@ The following features are currently available:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0bpc7fj4pd5713yny2vrh542jbag1kj20g0ji01c9scqb9av5qw5"))))
+          (base32 "1gka50p4wv2b49d8jbw5fs3qg7cppa8ynl3diqgdf8mqgskwapzf"))))
       (build-system cmake-build-system)
       (arguments
        (list
+        ;; Tests expect output sta binary inside source tree.
+        #:out-of-source? #f
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
               (lambda* (#:key tests? #:allow-other-keys)
                 (when tests?
-                  (invoke "../source/test/regression")))))
+                  (invoke "../test/regression"))))
+            (add-before 'build 'create-build-dir
+              (lambda _
+                (mkdir-p "./build")
+                (chdir "./build"))))
         #:configure-flags
         #~(list
            (string-append "-DCUDD_DIR=" #$(this-package-input "cudd"))
-           (string-append "-DBUILD_SHARED_LIBS=YES"))))
+           (string-append "-DBUILD_SHARED_LIBS=YES")
+           "-B./build")))
       (native-inputs (list bison flex swig))
       (inputs (list cudd eigen tcl tcllib zlib))
       (synopsis "Parallax Static Timing Analyzer")
@@ -603,28 +645,29 @@ formats.")
   (package
     (name "pulseview")
     (version "0.4.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://sigrok.org/download/source/pulseview/pulseview-"
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "1jxbpz1h3m1mgrxw74rnihj8vawgqdpf6c33cqqbyd8v7rxgfhph"))
-              (patches (search-patches "pulseview-qt515-compat.patch"
-                                       "pulseview-glib-2.68.patch"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://sigrok.org/download/source/pulseview/pulseview-"
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "1jxbpz1h3m1mgrxw74rnihj8vawgqdpf6c33cqqbyd8v7rxgfhph"))
+       (patches (search-patches "pulseview-qt515-compat.patch"
+                                "pulseview-glib-2.68.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ;format_time_minutes_test is failing
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'remove-empty-doc-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (with-directory-excursion (string-append out "/share")
-                 ;; Use RMDIR to never risk silently deleting files.
-                 (rmdir "doc/pulseview")
-                 (rmdir "doc"))))))))
+     (list
+      #:tests? #f ;format_time_minutes_test is failing
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'remove-empty-doc-directory
+            (lambda _
+              (with-directory-excursion (string-append #$output "/share")
+                ;; Use RMDIR to never risk silently deleting files.
+                (rmdir "doc/pulseview")
+                (rmdir "doc")))))))
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
@@ -637,8 +680,8 @@ formats.")
            qtsvg-5))
     (home-page "https://www.sigrok.org/wiki/PulseView")
     (synopsis "Qt based logic analyzer, oscilloscope and MSO GUI for sigrok")
-    (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO GUI
-for sigrok.")
+    (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO
+GUI for sigrok.")
     (license license:gpl3+)))
 
 (define-public python-cocotb
@@ -832,7 +875,7 @@ design.")
 (define-public python-vsg
   (package
     (name "python-vsg")
-    (version "3.32.0")
+    (version "3.33.0")
     (source
      (origin
        (method git-fetch)
@@ -841,14 +884,20 @@ design.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ql96n291zm4j324q8fmlvy8xvrksb8v6fip0g0sw374z86hda53"))))
+        (base32 "1pnhha7dfika5jv1wrdwjkwrqaz22n0fb845wid5sy62gn549hmb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       ;; Tests are expensive and may introduce race condition on systems with
       ;; high (more than 16) threads count; limit parallel jobs to 8x.
-      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count))))
+      #~(list
+         "--numprocesses" (number->string (min 8 (parallel-job-count)))
+         ;; TODO: Remove in 3.34.0.
+         ;; "file" command on "utf-8_encoded.vhd" file fails to detect
+         ;; utf-8 formatting. See:
+         ;; https://github.com/jeremiah-c-leary/vhdl-style-guide/issues/1471
+         "-vv" "-k" "not test_utf_8")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'pathch-pytest-options
@@ -859,6 +908,8 @@ design.")
                 ((".*-n.*auto.*") "")))))))
     (native-inputs
      (list python-pytest
+           python-pytest-cov
+           python-pytest-html
            python-pytest-xdist
            python-setuptools
            python-wheel))
@@ -910,6 +961,75 @@ to enforce it.")
 hierarchical and parametric design.  It can generate VHDL, Verilog or Spice
 netlists from the drawn schematic, allowing the simulation of the circuit.")
     (home-page "https://xschem.sourceforge.io/stefan/index.html")
+    (license license:gpl2+)))
+
+(define-public route-rnd
+  (package
+    (name "route-rnd")
+    (version "0.9.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/route-rnd/"
+                           "releases/route-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0fy3b48s72lpicyap3y6jr9fyvb2ri42jb0gqxk6s927a278bfhc"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/route-rnd/")
+    (synopsis "Automatic routing for electronics boards")
+    (description
+     "@code{Route-rnd} is a generic external autorouter for @acronym{PCB,
+Printed Circuit Board} using tEDAx file format, part of the RiNgDove EDA
+suite.")
+    (license license:gpl2+)))
+
+(define-public sch-rnd
+  (package
+    (name "sch-rnd")
+    (version "1.0.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://repo.hu/projects/sch-rnd/"
+                           "releases/sch-rnd-" version ".tar.gz"))
+       (sha256
+        (base32
+         "07a1ik0rpsa5cscg9l7i5rnipx76543s7cdnkg802747rral7yj5"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/sch-rnd/")
+    (synopsis "Scriptable editor of schematics for electronics boards")
+    (description
+     "@code{Sch-rnd} is a standalone and workflow agnostic schematics capture
+tool for @acronym{PCB, Printed Circuit Board}, part of the RiNgDove EDA
+suite.")
     (license license:gpl2+)))
 
 (define-public sigrok-cli
@@ -967,7 +1087,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.55")
+    (version "0.56")
     (source
      (origin
        (method git-fetch)
@@ -976,7 +1096,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nxaijz7afpa1y8i4pbpadgv7kpz8rk02j42kxjpv117lxd3g9za"))))
+        (base32 "0w95svb9vgvfqbbvqaq6jkia5jldbai9l7r8nrx93wcfrm82r36x"))))
     (build-system gnu-build-system)
     (arguments
      (list

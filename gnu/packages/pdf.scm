@@ -324,19 +324,19 @@ information.")
 (define-public flyer-composer
   (package
     (name "flyer-composer")
-    (version "1.0rc2")
+    (version "1.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "flyer-composer" version))
+       (uri (pypi-uri "flyer_composer" version))
        (sha256
-        (base32 "17igqb5dlcgcq4nimjw6cf9qgz6a728zdx1d0rr90r2z0llcchsv"))))
-    (build-system python-build-system)
+        (base32 "1874vmz606155w9xm3r4q9xziva1mai1kyqhjg5hnndpwl09xgv5"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f ;; TODO
        #:phases
        (modify-phases %standard-phases
-         (add-after 'install 'wrap-executable
+         (add-after 'wrap 'wrap-gui
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
                     (qtbase (assoc-ref inputs "qtbase"))
@@ -346,12 +346,9 @@ information.")
                    (,(string-append qtbase "/lib/qt5/plugins")))
                  `("QT_QPA_PLATFORM_PLUGIN_PATH" ":" =
                    (,(string-append qtbase "/lib/qt5/plugins/platforms"))))))))))
-    (inputs
-     (list bash-minimal
-           python-poppler-qt5
-           python-pypdf2
-           python-pyqt
-           qtbase-5))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-pypdf))
+    (inputs (list bash-minimal python-poppler-qt5 python-pyqt qtbase-5))
     (home-page "http://crazy-compilers.com/flyer-composer")
     (synopsis "Rearrange PDF pages to print as flyers on one sheet")
     (description "@command{flyer-composer} can be used to prepare one- or
@@ -379,8 +376,7 @@ This package contains both the command line tool and the gui too.")
              (substitute* "setup.cfg"
                (("^\\s+flyer-composer-gui\\s*=.*") ""))
              #t)))))
-    (inputs
-     `(("python-pypdf2" ,python-pypdf2)))
+    (inputs (list)) ; clear the gui inputs
     (description "@command{flyer-composer} can be used to prepare one- or
 two-sided flyers for printing on one sheet of paper.
 
@@ -1466,7 +1462,7 @@ converter using the Poppler and Cairo libraries.")
 (define-public python-pypdf
   (package
     (name "python-pypdf")
-    (version "5.1.0")
+    (version "6.0.0")
     (source
      (origin
        (method git-fetch)
@@ -1475,7 +1471,7 @@ converter using the Poppler and Cairo libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dl3nmvsk43s2v6a5cwwvfwpyvhsl9wcrdnqbzjsp50zqibi23pz"))))
+        (base32 "0p0650ya5f84d7khf34an9qpyww6yxnsdhgbppxfy3bg3qkx3s7g"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1491,6 +1487,7 @@ converter using the Poppler and Cairo libraries.")
                     " and not "))))
     (native-inputs
      (list python-flit
+           python-flit-core-next
            python-pytest
            python-pytest-socket
            python-pytest-timeout
@@ -1606,18 +1603,18 @@ PDF Arranger was formerly known as PDF-Shuffler.")
 (define-public pdfposter
   (package
     (name "pdfposter")
-    (version "0.7.post1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pdftools.pdfposter" version))
-              (sha256
-               (base32
-                "0c1avpbr9q53yzq5ar2x485rmp9d0l3z27aham32bg7gplzd7w0j"))))
-    (build-system python-build-system)
+    (version "0.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pdfposter" version))
+       (sha256
+        (base32 "0vhg43svzxr6ppcy888xg1hzjqfxbx5cc4qi77n4pvrqfan19633"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))  ; test-suite not included in source archive
-    (inputs
-     (list python-pypdf2))
+     `(#:tests? #f)) ;test-suite not included in source archive
+    (native-inputs (list python-setuptools python-wheel))
+    (inputs (list python-pypdf))
     (home-page "https://pythonhosted.org/pdftools.pdfposter/")
     (synopsis "Scale and tile PDF images/pages to print on multiple pages")
     (description "@command{pdfposter} can be used to create a large poster by

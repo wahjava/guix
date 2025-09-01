@@ -8,7 +8,7 @@
 ;;; Copyright © 2017 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2017, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017, 2018, 2020, 2024, 2025 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2018, 2019, 2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2020 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2020 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
@@ -640,7 +640,7 @@ of a package, and INPUT-NAMES, a list of package specifications such as
     (map (lambda (input)
            (make-warning
             package
-            (G_ "'~a' should probably switched for its minimal variant")
+            (G_ "'~a' should probably be switched for its minimal variant")
             (list input)
             #:field 'inputs))
          (package-input-intersection (package-direct-inputs package)
@@ -693,7 +693,7 @@ or \"bash-minimal\" is not in its inputs. 'wrap-script' is not supported."
                                        input-names)))
   (define (check-procedure-body body)
     (match body
-      ;; Explicitely setting an interpreter is acceptable.
+      ;; Explicitly setting an interpreter is acceptable.
       (('wrap-program _ '#:sh . _) '())
       (('wrap-program _ . _)
        (list (report-wrap-program-error package 'wrap-program)))
@@ -1520,7 +1520,7 @@ password, provided REF's URI is HTTP or HTTPS."
     (filter lint-warning?
             (map (cut try store <>) (package-supported-systems package))))
 
-  ;; For backwards compatability, don't rely on store being set
+  ;; For backwards compatibility, don't rely on store being set
   (or (and=> store check-with-store)
       (with-store store
         (check-with-store store))))
@@ -2112,7 +2112,7 @@ them for PACKAGE."
      (check       check-input-labels))
    (lint-checker
      (name        'wrapper-inputs)
-     (description "Make sure 'wrap-program' can finds its interpreter.")
+     (description "Make sure 'wrap-program' can find its interpreter.")
      (check       check-wrapper-inputs))
    (lint-checker
      (name        'license)

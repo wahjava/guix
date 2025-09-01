@@ -27,11 +27,15 @@
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
   #:use-module (guix build json)
   #:use-module ((guix build utils) #:hide (delete))
+  #:use-module (ice-9 binary-ports)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
+  #:use-module (ice-9 regex)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 textual-ports)
+  #:use-module (ice-9 threads)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:export (%standard-phases
@@ -58,23 +62,40 @@
          (bin-dep? (lambda (dep) (find bin? (get-kinds dep)))))
     (find bin-dep? (manifest-targets))))
 
-(define (crate-src? path)
+(define (cargo-package? dir)
+  "Check if directory DIR contains a single package, or a Cargo workspace with
+root package."
+  (let ((manifest-file (in-vicinity dir "Cargo.toml")))
+    (and (file-exists? manifest-file)
+         (string-contains
+          (call-with-input-file manifest-file get-string-all)
+          "[package]"))))
+
+(define* (crate-src? path #:key source)
   "Check if PATH refers to a crate source, namely a gzipped tarball with a
 Cargo.toml file present at its root."
-    (and (not (directory-exists? path)) ; not a tarball
-         ;; First we print out all file names within the tarball to see if it
-         ;; looks like the source of a crate. However, the tarball will include
-         ;; an extra path component which we would like to ignore (since we're
-         ;; interested in checking if a Cargo.toml exists at the root of the
-         ;; archive, but not nested anywhere else). We do this by cutting up
-         ;; each output line and only looking at the second component. We then
-         ;; check if it matches Cargo.toml exactly and short circuit if it does.
-         (apply invoke (list "sh" "-c"
-                             (string-append "tar -tf " path
-                                            " | cut -d/ -f2"
-                                            " | grep -q '^Cargo.toml$'")))))
+  (and (not (string=? path source))     ;Exclude self.
+       (if (directory-exists? path)
+           ;; The build system only handles sources containing single crate.
+           ;; Workspaces should be packaged into crates (via 'package phase)
+           ;; and used in inputs.
+           (cargo-package? path)
+           (and (not (string-suffix? "py" path)) ;sanity-check.py
+                ;; First we print out all file names within the tarball to see
+                ;; if it looks like the source of a crate. However, the tarball
+                ;; will include an extra path component which we would like to
+                ;; ignore (since we're interested in checking if a Cargo.toml
+                ;; exists at the root of the archive, but not nested anywhere
+                ;; else). We do this by cutting up each output line and only
+                ;; looking at the second component. We then check if it matches
+                ;; Cargo.toml exactly and short circuit if it does.
+                (invoke "sh" "-c"
+                        (string-append "tar -tf " path
+                                       " | cut -d/ -f2"
+                                       " | grep -q '^Cargo.toml$'"))))))
 
-(define* (unpack-rust-crates #:key inputs vendor-dir #:allow-other-keys)
+(define* (unpack-rust-crates #:key inputs (vendor-dir "guix-vendor")
+                             #:allow-other-keys)
   (define (inputs->rust-inputs inputs)
     "Filter using the label part from INPUTS."
     (filter (lambda (input)
@@ -111,16 +132,34 @@ Cargo.toml file present at its root."
 (define (rust-package? name)
   (string-prefix? "rust-" name))
 
-(define* (check-for-pregenerated-files #:rest _)
+(define* (check-for-pregenerated-files #:key parallel-build? #:allow-other-keys)
   "Check the source code for files which are known to generally be bundled
 libraries or executables."
-  (let ((pregenerated-files (find-files "." "\\.(a|dll|dylib|exe|lib)$")))
-    (when (not (null-list? pregenerated-files))
-      (error "Possible pre-generated files found:" pregenerated-files))))
+  (format #t "Searching for binary files...~%")
+  (let ((known-pattern (make-regexp "\\.(a|dll|dylib|exe|lib)$"))
+        (empty-file?
+         (lambda (file stat)
+           (let ((size (stat:size stat)))
+             (or (zero? size)
+                 (and (eqv? 1 size)
+                      (eqv? #\newline
+                            (call-with-ascii-input-file file read-char))))))))
+    (n-par-for-each
+     (if parallel-build?
+         (parallel-job-count)
+         1)
+     (lambda (file)
+       ;; Print out binary files.
+       (false-if-exception (invoke "grep" "-IL" "." file))
+       ;; Warn about known pre-generated files.
+       ;; Not failing here for compatibility with existing packages.
+       (when (regexp-exec known-pattern file)
+         (format #t "error: Possible pre-generated file found: ~a~%" file)))
+     (find-files "." (negate empty-file?)))))
 
-(define* (configure #:key inputs
+(define* (configure #:key source inputs native-inputs
                     target system
-                    cargo-target
+                    (cargo-target #f)
                     (vendor-dir "guix-vendor")
                     #:allow-other-keys)
   "Vendor Cargo.toml dependencies as guix inputs."
@@ -135,25 +174,36 @@ libraries or executables."
       ((name . path)
        (let* ((basepath (strip-store-file-name path))
               (crate-dir (string-append vendor-dir "/" basepath)))
-         (and (crate-src? path)
+         (and (crate-src? path #:source source)
               ;; Gracefully handle duplicate inputs
               (not (file-exists? crate-dir))
-              (mkdir-p crate-dir)
-              ;; Cargo crates are simply gzipped tarballs but with a .crate
-              ;; extension. We expand the source to a directory name we control
-              ;; so that we can generate any cargo checksums.
-              ;; The --strip-components argument is needed to prevent creating
-              ;; an extra directory within `crate-dir`.
-              (format #t "Unpacking ~a~%" name)
-              (invoke "tar" "xf" path "-C" crate-dir "--strip-components" "1")))))
+              (if (directory-exists? path)
+                  (copy-recursively path crate-dir)
+                  (begin
+                    (mkdir-p crate-dir)
+                    ;; Cargo crates are simply gzipped tarballs but with a
+                    ;; .crate extension. We expand the source to a directory
+                    ;; name we control so that we can generate any cargo
+                    ;; checksums.  The --strip-components argument is needed to
+                    ;; prevent creating an extra directory within `crate-dir`.
+                    (format #t "Unpacking ~a~%" name)
+                    (invoke "tar" "xf" path "-C" crate-dir
+                            "--strip-components" "1")))))))
     inputs)
 
   ;; For cross-building
   (when target
     (setenv "CARGO_BUILD_TARGET" cargo-target)
-    (setenv "RUSTFLAGS" (string-append
-                          (or (getenv "RUSTFLAGS") "")
-                          " --sysroot " (assoc-ref inputs "rust-sysroot")))
+    (setenv "RUSTFLAGS"
+            (string-append
+             (or (getenv "RUSTFLAGS") "")
+             " --sysroot "
+             (assoc-ref
+              (append inputs
+                      ;; Workaround for other build systems, as no interface
+                      ;; is available for target-inputs.
+                      (or native-inputs '()))
+              (string-append "rust-sysroot-for-" target))))
 
     (setenv "PKG_CONFIG" (string-append target "-pkg-config"))
 
@@ -205,14 +255,15 @@ directory = '" vendor-dir "'") port)
       (setenv "TARGET_PKG_CONFIG" (string-append target "-pkg-config")))
     (setenv "CC" (string-append (assoc-ref inputs "gcc") "/bin/gcc")))
 
+  (setenv "GETTEXT_SYSTEM" "1")
   (setenv "LIBGIT2_SYS_USE_PKG_CONFIG" "1")
+  (setenv "LIBSQLITE3_SYS_USE_PKG_CONFIG" "1")
   (setenv "LIBSSH2_SYS_USE_PKG_CONFIG" "1")
+  (setenv "RUSTONIG_SYSTEM_LIBONIG" "1")
   (setenv "SODIUM_USE_PKG_CONFIG" "1")
   (setenv "ZSTD_SYS_USE_PKG_CONFIG" "1")
   (when (assoc-ref inputs "openssl")
     (setenv "OPENSSL_DIR" (assoc-ref inputs "openssl")))
-  (when (assoc-ref inputs "gettext")
-    (setenv "GETTEXT_SYSTEM" (assoc-ref inputs "gettext")))
   (when (assoc-ref inputs "clang")
     (setenv "LIBCLANG_PATH"
             (string-append (assoc-ref inputs "clang") "/lib")))
@@ -239,14 +290,14 @@ directory = '" vendor-dir "'") port)
 
 (define* (build #:key
                 parallel-build?
-                skip-build?
+                (skip-build? #f)
                 (features '())
                 (cargo-build-flags '("--release"))
                 #:allow-other-keys)
   "Build a given Cargo package."
   (or skip-build?
       (apply invoke
-             `("cargo" "build"
+             `("cargo" "build" "--offline"
                ,@(if parallel-build?
                      (list "-j" (number->string (parallel-job-count)))
                      (list "-j" "1"))
@@ -264,7 +315,7 @@ directory = '" vendor-dir "'") port)
   "Run tests for a given Cargo package."
   (when tests?
     (apply invoke
-           `("cargo" "test"
+           `("cargo" "test" "--offline"
              ,@(if parallel-build?
                    (list "-j" (number->string (parallel-job-count)))
                    (list "-j" "1"))
@@ -279,13 +330,18 @@ directory = '" vendor-dir "'") port)
 
 (define* (package #:key
                   source
-                  skip-build?
-                  install-source?
+                  (skip-build? #f)
+                  (install-source? #t)
+                  (cargo-package-crates '())
                   (cargo-package-flags '("--no-metadata" "--no-verify"))
+                  (vendor-dir "guix-vendor")
                   #:allow-other-keys)
   "Run 'cargo-package' for a given Cargo package."
   (if install-source?
-    (if skip-build?
+    ;; NOTE: Cargo workspace packaging support:
+    ;; #:install-source? #t + #:cargo-package-crates.
+    (if (and (null? cargo-package-crates)
+             skip-build?)
       (begin
         (install-file source "target/package")
         (with-directory-excursion "target/package"
@@ -303,7 +359,19 @@ directory = '" vendor-dir "'") port)
         ;;error: invalid inclusion of reserved file name Cargo.toml.orig in package source
         (when (file-exists? "Cargo.toml.orig")
           (delete-file "Cargo.toml.orig"))
-        (apply invoke `("cargo" "package" ,@cargo-package-flags))
+
+        (if (null? cargo-package-crates)
+            (apply invoke `("cargo" "package" "--offline" ,@cargo-package-flags))
+            (for-each
+             (lambda (pkg)
+               (apply invoke "cargo" "package" "--offline" "--package" pkg
+                      cargo-package-flags)
+               (for-each
+                (lambda (crate)
+                  (invoke "tar" "xzf" crate "-C" vendor-dir))
+                (find-files "target/package" "\\.crate$"))
+               (patch-cargo-checksums #:vendor-dir vendor-dir))
+             cargo-package-crates))
 
         ;; Then unpack the crate, reset the timestamp of all contained files, and
         ;; repack them.  This is necessary to ensure that they are reproducible.
@@ -338,9 +406,10 @@ directory = '" vendor-dir "'") port)
 (define* (install #:key
                   inputs
                   outputs
-                  skip-build?
-                  install-source?
-                  features
+                  (skip-build? #f)
+                  (install-source? #t)
+                  (features '())
+                  (cargo-install-paths '())
                   #:allow-other-keys)
   "Install a given Cargo package."
   (let* ((out      (assoc-ref outputs "out"))
@@ -355,9 +424,18 @@ directory = '" vendor-dir "'") port)
     ;; Only install crates which include binary targets,
     ;; otherwise cargo will raise an error.
     (or skip-build?
-        (not (has-executable-target?))
-        (invoke "cargo" "install" "--no-track" "--path" "." "--root" out
-                "--features" (string-join features)))
+        ;; NOTE: Cargo workspace installation support:
+        ;; #:skip-build? #f + #:cargo-install-paths.
+        (and (null? cargo-install-paths)
+             (not (has-executable-target?)))
+        (for-each
+         (lambda (path)
+           (invoke "cargo" "install" "--offline" "--no-track"
+                   "--path" path "--root" out
+                   "--features" (string-join features)))
+         (if (null? cargo-install-paths)
+             '(".")
+             cargo-install-paths)))
 
     (when install-source?
       ;; Install crate tarballs and unpacked sources for later use.
@@ -379,8 +457,8 @@ directory = '" vendor-dir "'") port)
     (replace 'check check)
     (replace 'install install)
     (add-after 'build 'package package)
-    (add-after 'unpack 'check-for-pregenerated-files check-for-pregenerated-files)
-    (add-after 'check-for-pregenerated-files 'unpack-rust-crates unpack-rust-crates)
+    (add-after 'unpack 'unpack-rust-crates unpack-rust-crates)
+    (add-after 'configure 'check-for-pregenerated-files check-for-pregenerated-files)
     (add-after 'patch-generated-file-shebangs 'patch-cargo-checksums patch-cargo-checksums)))
 
 (define* (cargo-build #:key inputs (phases %standard-phases)

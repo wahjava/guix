@@ -42,8 +42,6 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-compression)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages check)
   #:use-module (gnu packages maths)
@@ -54,6 +52,7 @@
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages sphinx))
 
@@ -168,7 +167,6 @@ to access its data, so it can be used as a drop-in replacement.")
            python-coverage
            python-coveralls
            python-hypothesis
-           python-pyannotate
            python-pytest
            python-pytest-cov
            python-setuptools
@@ -183,61 +181,52 @@ were a single file.")
 (define-public python-cramjam
   (package
     (name "python-cramjam")
-    (version "2.7.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cramjam" version))
        (sha256
-        (base32 "1b69qlr0q7q3spa7zy55xc1dr5pjgsdavxx8ijhv2j60xqjbg7sp"))))
-    (build-system cargo-build-system)
+        (base32 "12kdwr313b8w8il4x1y9z366armd6lqv3hvpx4281bl4fd4ds8g8"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
-      #:modules '((guix build cargo-build-system)
-                  ((guix build pyproject-build-system)
-                   #:prefix py:)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build pyproject-build-system)
                   (guix build utils))
       #:phases #~(modify-phases %standard-phases
-                   ;; We use Maturin to build the project.
-                   (replace 'build
-                     (assoc-ref py:%standard-phases
-                                'build))
-                   ;; Before being able to run Python tests, we need to
-                   ;; install the module and add it to PYTHONPATH.
-                   (delete 'install)
-                   (add-after 'build 'install
-                     (assoc-ref py:%standard-phases
-                                'install))
-                   (add-after 'install 'add-install-to-pythonpath
-                     (assoc-ref py:%standard-phases
-                                'add-install-to-pythonpath))
-                   ;; Finally run the tests. Only Python tests are provided.
-                   (replace 'check
-                     (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-                       (when tests?
-                         ;; Without the CI variable, tests are run in "local"
-                         ;; mode, which sets a deadline for hypothesis.  For a
-                         ;; deterministic build, we need to set CI.
-                         (setenv "CI" "1")
-                         (invoke "pytest" "-vv" "tests")))))
-      #:cargo-inputs `(("rust-brotli" ,rust-brotli-3)
-                       ("rust-bzip2" ,rust-bzip2-0.4)
-                       ("rust-flate2" ,rust-flate2-1)
-                       ("rust-lz4" ,rust-lz4-1)
-                       ("rust-pyo3" ,rust-pyo3-0.18)
-                       ("rust-snap" ,rust-snap-1)
-                       ("rust-zstd" ,rust-zstd-0.11))
-      #:install-source? #f))
-    (native-inputs (list maturin
-                         pkg-config
-                         python-pytest
-                         python-pytest-xdist
-                         python-numpy
-                         python-hypothesis
-                         python-wrapper))
-    (inputs (list `(,zstd "lib")))
+                   (add-after 'unpack 'prepare-cargo-build-system
+                     (lambda args
+                       (for-each
+                        (lambda (phase)
+                          (format #t "Running cargo phase: ~a~%" phase)
+                          (apply (assoc-ref cargo:%standard-phases phase)
+                                 #:cargo-target #$(cargo-triplet)
+                                 args))
+                        '(unpack-rust-crates
+                          configure
+                          check-for-pregenerated-files
+                          patch-cargo-checksums)))))))
+    (native-inputs
+     (append
+      (list maturin
+            pkg-config
+            python-pytest
+            python-pytest-xdist
+            python-numpy
+            python-hypothesis
+            rust
+            `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs
+     (cons* libdeflate
+            lz4
+            `(,zstd "lib")
+            (cargo-inputs 'python-cramjam)))
     (home-page "https://github.com/milesgranger/cramjam")
     (synopsis "Python bindings to compression algorithms in Rust")
     (description
@@ -394,8 +383,7 @@ library.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-importlib-metadata))
     (native-inputs
-     (list python-pyannotate
-           python-pytest
+     (list python-pytest
            python-setuptools-scm
            python-setuptools
            python-wheel))
@@ -524,6 +512,10 @@ several possible methods.")
         (base32
          "0lwniinfr3rb10n0c203a09vz06vxnnj637yqn8ipdlml89gj7kr"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore=tests/test_benchmark.py")))
     (propagated-inputs
      (list python-brotli
            python-brotlicffi
@@ -537,15 +529,12 @@ several possible methods.")
            python-pyzstd
            python-texttable))
     (native-inputs
-     (list python-coverage
-           python-setuptools
-           python-coveralls
+     (list python-setuptools
            python-libarchive-c
            python-py-cpuinfo
            python-pyannotate
            python-pytest
            python-pytest-benchmark
-           python-pytest-cov
            python-pytest-remotedata
            python-pytest-timeout
            python-setuptools-scm
@@ -560,29 +549,26 @@ Python.")
 (define-public python-lzo
   (package
     (name "python-lzo")
-    (version "1.14")
+    (version "1.15")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-lzo" version))
        (sha256
-        (base32 "0315nq6r39n51n8qqamb7xv0ib0qrh76q7g3a1977172mbndijw3"))))
-    (build-system python-build-system)
+        (base32 "0jbv6853p8flk65ks0nw37f6f5v0ryi6nhppv5fm3863ql0alym5"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-target "check"
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-setuppy
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "setup.py"
                 (("include_dirs.append\\(.*\\)")
-                 (string-append "include_dirs.append('"
-                                #$(this-package-input "lzo")
-                                "/include/lzo"
-                                "')"))))))))
-    (inputs
-     (list lzo))
+                 (format #f "include_dirs.append(~s)"
+                         (search-input-directory inputs "include/lzo")))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list lzo))
     (home-page "https://github.com/jd-boyd/python-lzo")
     (synopsis "Python bindings for the LZO data compression library")
     (description
@@ -638,9 +624,10 @@ the LZ4 frame format.")
        (method url-fetch)
        (uri (pypi-uri "lzstring" version))
        (sha256
-        (base32
-         "18ly9pppy2yspxzw7k1b23wk77k7m44rz2g0271bqgqrk3jn3yhs"))))
-    (build-system python-build-system)
+        (base32 "18ly9pppy2yspxzw7k1b23wk77k7m44rz2g0271bqgqrk3jn3yhs"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-future))
     (home-page "https://github.com/gkovacs/lz-string-python")
@@ -765,6 +752,28 @@ install: libbitshuffle.so
                #t))))))
     (inputs '())
     (native-inputs '())))
+
+(define-public python-uncompresspy
+  (package
+    (name "python-uncompresspy")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "uncompresspy" version))
+       (sha256
+        (base32 "1110dipshnijhq6dk5dxzxx3zpynm6dx5kcc430fw24b8xwlc9in"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests
+    (native-inputs
+     (list python-setuptools-next))
+    (home-page "https://github.com/kYwzor/uncompresspy")
+    (synopsis "Uncompressing LZW files in Python")
+    (description
+     "This package implement a pure Python module for uncompressing LZW
+files (.Z), such as the ones created by Unix's shell tool compress.")
+    (license license:bsd-3)))
 
 (define-public python-unix-ar
   (package
@@ -932,27 +941,16 @@ provided.")
         '(begin
            ;; Remove a bundled copy of the zstd sources.
            (delete-file-recursively "zstd")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
+      ;; XXX: This is ugly. TODO python-team:
+      ;; Migrate pyproject to (json) instead of (guix build json).
       #:configure-flags
-      #~(list "--dynamic-link-zstd")
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'build
-            ;; The python-build-system's phase doesn't honour configure-flags.
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (apply invoke "python" "./setup.py" "build"
-                     configure-flags)))
-          (replace 'check
-            ;; The python-build-system's phase doesn't honour configure-flags.
-            (lambda* (#:key tests? test-target configure-flags
-                      #:allow-other-keys)
-              (when tests?
-                (apply invoke "python" "./setup.py" test-target
-                       configure-flags)))))))
+      #~`(@ . (("--build-option" . "--dynamic-link-zstd")))))
     (inputs (list `(,zstd "lib")))
-    (home-page "https://github.com/animalize/pyzstd")
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/Rogdham/pyzstd")
     (synopsis "Zstandard bindings for Python")
     (description "This package provides Python bindings to the Zstandard (zstd)
 compression library.  The API is similar to Python's bz2/lzma/zlib module.")

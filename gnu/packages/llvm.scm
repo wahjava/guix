@@ -1024,276 +1024,9 @@ Library.")
 (define-public clang-toolchain-12
   (make-clang-toolchain clang-12 libomp-12))
 
-(define-public llvm-11
-  (package
-    (inherit llvm-12)
-    (version "11.1.0")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (llvm-uri "llvm" version))
-      (patches (search-patches "llvm-8-missing-include.patch"
-                               "llvm-10-missing-include.patch"))
-      (sha256
-       (base32
-        "199yq3a214avcbi4kk2q0ajriifkvsr0l2dkx3a666m033ihi1ff"))))))
-
-(define-public clang-runtime-11
-  (clang-runtime-from-llvm
-   llvm-11
-   "0x1j8ngf1zj63wlnns9vlibafq48qcm72p4jpaxkmkb4qw0grwfy"
-   '("clang-runtime-13-glibc-2.36-compat.patch")))
-
-(define-public clang-11
-  (clang-from-llvm llvm-11 clang-runtime-11
-                   "12sm91qx2m79cvj75a9aazf2x8xybjbd593dv6v7rxficpq8i0ha"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-11.0-libc-search-path.patch")
-                   #:tools-extra
-                   (origin
-                     (method url-fetch)
-                     (uri (llvm-uri "clang-tools-extra"
-                                    (package-version llvm-11)))
-                     (sha256
-                      (base32
-                       "18n1w1hkv931xzq02b34wglbv6zd6sd0r5kb8piwvag7klj7qw3n")))))
-
-(define-public libomp-11
-  (package
-    (inherit libomp-12)
-    (version (package-version llvm-11))
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "openmp" version))
-              (sha256
-               (base32
-                "0bh5cswgpc79awlq8j5i7hp355adaac7s6zaz0zwp6mkflxli1yi"))
-              (file-name (string-append "libomp-" version ".tar.xz"))))
-    (native-inputs
-     (modify-inputs (package-native-inputs libomp-12)
-       (replace "clang" clang-11)
-       (replace "llvm" llvm-11)))))
-
-(define-public clang-toolchain-11
-  (make-clang-toolchain clang-11 libomp-11))
-
-(define-public llvm-10
-  (package
-    (inherit llvm-11)
-    (version "10.0.1")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (llvm-uri "llvm" version))
-      (patches (search-patches "llvm-8-missing-include.patch"
-                               "llvm-10-missing-include.patch"))
-      (sha256
-       (base32
-        "1wydhbp9kyjp5y0rc627imxgkgqiv3dfirbqil9dgpnbaw5y7n65"))))
-    (native-inputs
-     `(("python" ,python-wrapper)
-       ("perl"   ,perl)
-       ;; In llvm-11 riscv64 support was added manually to config.guess.
-       ,@(if (target-riscv64?)
-           `(("config" ,config))
-           '())))))
-
-(define-public clang-runtime-10
-  (clang-runtime-from-llvm
-   llvm-10
-   "1yjqjri753w0fzmxcyz687nvd97sbc9rsqrxzpq720na47hwh3fr"
-   '("clang-runtime-13-glibc-2.36-compat.patch")))
-
-(define-public clang-10
-  (clang-from-llvm llvm-10 clang-runtime-10
-                   "091bvcny2lh32zy8f3m9viayyhb2zannrndni7325rl85cwgr6pr"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-10.0-libc-search-path.patch")
-                   #:tools-extra
-                   (origin
-                     (method url-fetch)
-                     (uri (llvm-uri "clang-tools-extra"
-                                    (package-version llvm-10)))
-                     (sha256
-                      (base32
-                       "06n1yp638rh24xdxv9v2df0qajxbjz4w59b7dd4ky36drwmpi4yh")))))
-
-(define-public libomp-10
-  (package
-    (inherit libomp-11)
-    (version (package-version llvm-10))
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "openmp" version))
-              (sha256
-               (base32
-                "0i4bn84lkpm5w3qkpvwm5z6jdj8fynp7d3bcasa1xyq4is6757yi"))
-              (file-name (string-append "libomp-" version ".tar.xz"))))
-    (native-inputs
-     (modify-inputs (package-native-inputs libomp-11)
-       (replace "clang" clang-10)
-       (replace "llvm" llvm-10)))))
-
-(define-public clang-toolchain-10
-  (make-clang-toolchain clang-10 libomp-10))
-
-(define-public llvm-9
-  (package
-    (inherit llvm-10)
-    (version "9.0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (llvm-uri "llvm" version))
-       (sha256
-        (base32
-         "16hwp3qa54c3a3v7h8nlw0fh5criqh0hlr1skybyk0cz70gyx880"))
-       (patches (search-patches
-                 "llvm-8-missing-include.patch"
-                 "llvm-9-fix-bitcast-miscompilation.patch"
-                 "llvm-9-fix-scev-miscompilation.patch"
-                 "llvm-9-fix-lpad-miscompilation.patch"))))
-    (arguments
-     (if (target-riscv64?)
-       (substitute-keyword-arguments (package-arguments llvm-10)
-         ((#:phases phases)
-          #~(modify-phases #$phases
-             (add-after 'unpack 'patch-dsymutil-link
-               (lambda _
-                 (substitute* "tools/dsymutil/CMakeLists.txt"
-                   (("endif\\(APPLE\\)")
-                    (string-append
-                      "endif(APPLE)\n\n"
-                      "if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES \"riscv64\")\n"
-                      "  target_link_libraries(dsymutil PRIVATE atomic)\n"
-                      "endif()"))))))))
-       (package-arguments llvm-10)))))
-
-(define-public clang-runtime-9
-  (clang-runtime-from-llvm
-   llvm-9
-   "0xwh79g3zggdabxgnd0bphry75asm1qz7mv3hcqihqwqr6aspgy2"
-   '("clang-runtime-9-libsanitizer-mode-field.patch"
-     "clang-runtime-9-glibc-2.36-compat.patch")))
-
-(define-public clang-9
-  (clang-from-llvm llvm-9 clang-runtime-9
-                   "0ls2h3iv4finqyflyhry21qhc9cm9ga7g1zq21020p065qmm2y2p"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-9.0-libc-search-path.patch")))
-
-(define-public libomp-9
-  (package
-    (inherit libomp-10)
-    (version (package-version llvm-9))
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "openmp" version))
-              (sha256
-               (base32
-                "1knafnpp0f7hylx8q20lkd6g1sf0flly572dayc5d5kghh7hd52w"))
-              (file-name (string-append "libomp-" version ".tar.xz"))))
-    (native-inputs
-     (modify-inputs (package-native-inputs libomp-10)
-       (replace "clang" clang-9)
-       (replace "llvm" llvm-9)))))
-
-(define-public clang-toolchain-9
-  (make-clang-toolchain clang-9 libomp-9))
-
-(define-public llvm-8
-  (package
-    (inherit llvm-9)
-    (version "8.0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "llvm" version))
-              (sha256
-               (base32
-                "1rvm5gqp5v8hfn17kqws3zhk94w4kxndal12bqa0y57p09nply24"))
-              (patches (search-patches "llvm-8-fix-build-with-gcc-10.patch"
-                                       "llvm-8-missing-include.patch"))))
-    (license license:ncsa)))
-
-(define-public clang-runtime-8
-  (clang-runtime-from-llvm
-   llvm-8
-   "0dqqf8f930l8gag4d9qjgn1n0pj0nbv2anviqqhdi1rkhas8z0hi"
-   '("clang-runtime-9-libsanitizer-mode-field.patch"
-     "clang-runtime-9-glibc-2.36-compat.patch")))
-
-(define-public clang-8
-  (clang-from-llvm llvm-8 clang-runtime-8
-                   "0ihnbdl058gvl2wdy45p5am55bq8ifx8m9mhcsgj9ax8yxlzvvvh"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-8.0-libc-search-path.patch")))
-
-(define-public libomp-8
-  (package
-    (inherit libomp-9)
-    (version (package-version llvm-8))
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "openmp" version))
-              (sha256
-               (base32
-                "0b3jlxhqbpyd1nqkpxjfggm5d9va5qpyf7d4i5y7n4a1mlydv19y"))
-              (file-name (string-append "libomp-" version ".tar.xz"))))
-    (native-inputs
-     (modify-inputs (package-native-inputs libomp-9)
-       (replace "clang" clang-8)
-       (replace "llvm" llvm-8)))
-    (license license:ncsa)))
-
-(define-public clang-toolchain-8
-  (make-clang-toolchain clang-8 libomp-8))
-
-(define-public llvm-7
-  (package
-    (inherit llvm-8)
-    (version "7.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "llvm" version))
-              (sha256
-               (base32
-                "0r1p5didv4rkgxyvbkyz671xddg6i3dxvbpsi1xxipkla0l9pk0v"))))))
-
-(define-public clang-runtime-7
-  (clang-runtime-from-llvm
-   llvm-7
-   "1n48p8gjarihkws0i2bay5w9bdwyxyxxbpwyng7ba58jb30dlyq5"
-   '("clang-runtime-9-libsanitizer-mode-field.patch"
-     "clang-runtime-9-glibc-2.36-compat.patch")))
-
-(define-public clang-7
-  (clang-from-llvm llvm-7 clang-runtime-7
-                   "0vc4i87qwxnw9lci4ayws9spakg0z6w5w670snj9f8g5m9rc8zg9"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-7.0-libc-search-path.patch")))
-
-(define-public libomp-7
-  (package
-    (inherit libomp-8)
-    (version (package-version llvm-7))
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "openmp" version))
-              (sha256
-               (base32
-                "1dg53wzsci2kra8lh1y0chh60h2l8h1by93br5spzvzlxshkmrqy"))
-              (file-name (string-append "libomp-" version ".tar.xz"))))
-    (native-inputs
-     (modify-inputs (package-native-inputs libomp-8)
-       (replace "clang" clang-7)
-       (replace "llvm" llvm-7)))))
-
-(define-public clang-toolchain-7
-  (make-clang-toolchain clang-7 libomp-7))
-
 (define-public llvm-6
   (package
-    (inherit llvm-7)
+    (inherit llvm-12)
     (version "6.0.1")
     (source (origin
               (method url-fetch)
@@ -1302,10 +1035,17 @@ Library.")
                (base32
                 "1qpls3vk85lydi5b4axl0809fv932qgsqgdgrk098567z4jc7mmn"))))
     (arguments
-     (substitute-keyword-arguments (package-arguments llvm-7)
+     (substitute-keyword-arguments (package-arguments llvm-12)
        ((#:phases phases)
         #~(modify-phases #$phases
-            (delete 'delete-failing-tests)))))))
+            (delete 'delete-failing-tests)))))
+    (native-inputs
+     `(("python" ,python-wrapper)
+       ("perl"   ,perl)
+       ;; In llvm-11 riscv64 support was added manually to config.guess.
+       ,@(if (target-riscv64?)
+           `(("config" ,config))
+           '())))))
 
 (define-public clang-runtime-6
   (clang-runtime-from-llvm
@@ -1322,7 +1062,7 @@ Library.")
 
 (define-public libomp-6
   (package
-    (inherit libomp-7)
+    (inherit libomp-12)
     (version (package-version llvm-6))
     (source (origin
               (method url-fetch)
@@ -1334,24 +1074,25 @@ Library.")
                 "0nhwfba9c351r16zgyjyfwdayr98nairky3c2f0b2lc360mwmbv6"))
               (file-name (string-append "libomp-" version ".tar.xz"))))
     (native-inputs
-     (modify-inputs (package-native-inputs libomp-7)
+     (modify-inputs (package-native-inputs libomp-12)
        (replace "clang" clang-6)
        (replace "llvm" llvm-6)))))
 
 (define-public clang-toolchain-6
   (make-clang-toolchain clang-6 libomp-6))
 
-(define-public llvm-3.9.1
+(define-public llvm-3.8
   (package (inherit llvm-6)
     (name "llvm")
-    (version "3.9.1")
+    (version "3.8.1")
     (source
      (origin
       (method url-fetch)
       (uri (llvm-uri "llvm" version))
       (sha256
        (base32
-        "1vi9sf7rx1q04wj479rsvxayb6z740iaz3qniwp266fgp5a07n8z"))))
+        "1ybmnid4pw2hxn12ax5qa5kl1ldfns0njg8533y3mzslvd5cx0kf"))
+      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))
     (outputs '("out"))
     (arguments
      (substitute-keyword-arguments (package-arguments llvm-6)
@@ -1367,50 +1108,8 @@ Library.")
                         (string-append (getcwd) "/lib"))))
             (delete 'install-opt-viewer)))))))
 
-(define-public clang-runtime-3.9.1
-  (clang-runtime-from-llvm
-   llvm-3.9.1
-   "16gc2gdmp5c800qvydrdhsp0bzb97s8wrakl6i8a4lgslnqnf2fk"
-   '("clang-runtime-3.9-libsanitizer-mode-field.patch"
-     "clang-runtime-asan-build-fixes.patch"
-     "clang-runtime-esan-build-fixes.patch"
-     "clang-3.5-libsanitizer-ustat-fix.patch")))
-
-(define-public clang-3.9.1
-  (clang-from-llvm llvm-3.9.1 clang-runtime-3.9.1
-                   "0qsyyb40iwifhhlx9a3drf8z6ni6zwyk3bvh0kx2gs6yjsxwxi76"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-3.8-libc-search-path.patch")))
-
-(define-public llvm-3.8
-  (package (inherit llvm-3.9.1)
-    (name "llvm")
-    (version "3.8.1")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (llvm-uri "llvm" version))
-      (sha256
-       (base32
-        "1ybmnid4pw2hxn12ax5qa5kl1ldfns0njg8533y3mzslvd5cx0kf"))
-      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))))
-
-(define-public clang-runtime-3.8
-  (clang-runtime-from-llvm
-   llvm-3.8
-   "0p0y85c7izndbpg2l816z7z7558axq11d5pwkm4h11sdw7d13w0d"
-   '("clang-runtime-asan-build-fixes.patch"
-     "clang-runtime-3.8-libsanitizer-mode-field.patch"
-     "clang-3.5-libsanitizer-ustat-fix.patch")))
-
-(define-public clang-3.8
-  (clang-from-llvm llvm-3.8 clang-runtime-3.8
-                   "1prc72xmkgx8wrzmrr337776676nhsp1qd3mw2bvb22bzdnq7lsc"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-3.8-libc-search-path.patch")))
-
 (define-public llvm-3.7
-  (package (inherit llvm-3.8)
+  (package (inherit llvm-6)
     (version "3.7.1")
     (source
      (origin
@@ -1419,7 +1118,21 @@ Library.")
        (sha256
         (base32
          "1masakdp9g2dan1yrazg7md5am2vacbkb3nahb3dchpc1knr8xxy"))
-      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))))
+      (patches (search-patches "llvm-3.x.1-fix-build-with-gcc.patch"))))
+    (outputs '("out"))
+    (arguments
+     (substitute-keyword-arguments (package-arguments llvm-6)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-before 'build 'shared-lib-workaround
+              ;; Even with CMAKE_SKIP_BUILD_RPATH=FALSE, llvm-tblgen
+              ;; doesn't seem to get the correct rpath to be able to run
+              ;; from the build directory.  Set LD_LIBRARY_PATH as a
+              ;; workaround.
+              (lambda _
+                (setenv "LD_LIBRARY_PATH"
+                        (string-append (getcwd) "/lib"))))
+            (delete 'install-opt-viewer)))))))
 
 (define-public clang-runtime-3.7
   (clang-runtime-from-llvm
@@ -1436,21 +1149,8 @@ Library.")
                    #:legacy-build-shared-libs? #t
                    #:patches '("clang-3.5-libc-search-path.patch")))
 
-(define-public llvm-3.6
-  (package (inherit llvm-3.7)
-    (version "3.6.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (llvm-uri "llvm" version))
-       (patches
-        (search-patches "llvm-3.6-fix-build-with-gcc-10.patch"))
-       (sha256
-        (base32
-         "153vcvj8gvgwakzr4j0kndc0b7wn91c2g1vy2vg24s6spxcc23gn"))))))
-
 (define-public llvm-3.5
-  (package (inherit llvm-3.6)
+  (package (inherit llvm-3.7)
     (version "3.5.2")
     (source
      (origin
@@ -1461,40 +1161,6 @@ Library.")
        (sha256
         (base32
          "0xf5q17kkxsrm2gsi93h4pwlv663kji73r2g4asb97klsmb626a4"))))))
-
-(define-public clang-runtime-3.5
-  (let ((runtime (clang-runtime-from-llvm
-                  llvm-3.5
-                  "1hsdnzzdr5kglz6fnv3lcsjs222zjsy14y8ax9dy6zqysanplbal"
-                  '("clang-runtime-asan-build-fixes.patch"
-                    "clang-runtime-3.5-libsanitizer-mode-field.patch"
-                    "clang-3.5-libsanitizer-ustat-fix.patch"))))
-    (package/inherit runtime
-      (arguments
-       (substitute-keyword-arguments (package-arguments runtime)
-         ((#:phases phases '%standard-phases)
-          `(modify-phases ,phases
-             ;; glibc no longer includes rpc/xdr.h, so we use the headers from
-             ;; libtirpc.
-             (add-after 'unpack 'find-rpc-includes
-               (lambda* (#:key inputs #:allow-other-keys)
-                 (setenv "CPATH"
-                         (string-append
-                          (search-input-directory inputs "/include/tirpc")
-                          ":" (or (getenv "CPATH") "")))
-                 (setenv "CPLUS_INCLUDE_PATH"
-                         (string-append
-                          (search-input-directory inputs "/include/tirpc")
-                          ":" (or (getenv "CPLUS_INCLUDE_PATH") "")))))))))
-      (inputs
-       `(("libtirpc" ,libtirpc)
-         ("llvm" ,llvm-3.5))))))
-
-(define-public clang-3.5
-  (clang-from-llvm llvm-3.5 clang-runtime-3.5
-                   "0846h8vn3zlc00jkmvrmy88gc6ql6014c02l4jv78fpvfigmgssg"
-                   #:legacy-build-shared-libs? #t
-                   #:patches '("clang-3.5-libc-search-path.patch")))
 
 (define-public llvm-16
   (make-llvm "16.0.6"))
@@ -1718,7 +1384,14 @@ Library.")
                 "-DBUILD_SHARED_LIBS:BOOL=TRUE"
                 "-DLLVM_VERSION_SUFFIX="))))
     (properties `((hidden? . #t)
-                  ,@(package-properties llvm-19)))))
+                  ,@(package-properties llvm-19)))
+    (home-page "https://github.com/ROCm/llvm-project")
+    (synopsis
+     (string-append (package-synopsis llvm-14) " (AMD fork)"))
+    (description
+     (string-append (package-description llvm-14) "
+
+This AMD fork includes AMD-specific additions."))))
 
 
 
@@ -1816,19 +1489,6 @@ components which highly leverage existing libraries in the larger LLVM Project."
                 "0qg3fgc7wj34hdkqn21y03zcmsdd01szhhm1hfki63iifrm3y2v9"))))
     (inputs (modify-inputs (package-inputs lld)
               (replace "llvm" llvm-12)))))
-
-(define-public lld-11
-  (package
-    (inherit lld-12)
-    (version "11.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (llvm-uri "lld" version))
-              (sha256
-               (base32
-                "077xyh7sij6mhp4dc4kdcmp9whrpz332fa12rwxnzp3wgd5bxrzg"))))
-    (inputs (modify-inputs (package-inputs lld)
-              (replace "llvm" llvm-11)))))
 
 (define-public lld-16
   (package
@@ -2255,12 +1915,6 @@ setup(name=\"clang\", version=\"~a\", packages=[\"clang\"])\n"
     (inputs (list clang))
     (synopsis "Python bindings to libclang")))
 
-(define-public python-clang-10
-  (clang-python-bindings clang-10))
-
-(define-public python-clang-11
-  (clang-python-bindings clang-11))
-
 (define-public python-clang-12
   (clang-python-bindings clang-12))
 
@@ -2388,6 +2042,7 @@ using @code{clang-rename}.")))
           "-DLLVM_OCAML_OUT_OF_TREE=TRUE"
           (string-append "-DLLVM_OCAML_INSTALL_PATH="
                          (assoc-ref %outputs "out") "/lib/ocaml/site-lib"))
+         #:tests? #f                    ;no tests
          #:phases
          (modify-phases %standard-phases
            (replace 'build
@@ -2407,9 +2062,6 @@ using @code{clang-rename}.")))
 LLVM."))))
 
 (define-public ocaml-llvm (make-ocaml-llvm llvm))
-(define-public ocaml-llvm-9 (make-ocaml-llvm llvm-9))
-(define-public ocaml-llvm-10 (make-ocaml-llvm llvm-10))
-(define-public ocaml-llvm-11 (make-ocaml-llvm llvm-11))
 
 (define-public wllvm
   (package

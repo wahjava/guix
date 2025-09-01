@@ -903,18 +903,34 @@ many input formats and provides a customisable Vi-style user interface.")
 (define-public denemo
   (package
     (name "denemo")
-    (version "2.6.0")
+    (version "2.6.44")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://gnu/denemo/denemo-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "git://git.git.savannah.gnu.org/denemo")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0pdmjij2635jbw2a24ivk1y4w0z58jbmq9vnz3qrfzw4d469grab"))))
+        (base32
+         "1vpaiw34f0h0z01r40ln00494l4dwmyc4cy00hz2xggp6pa4abqy"))))
     (build-system gnu-build-system)
     (arguments
      (list
+      #:configure-flags
+      #~(list (string-append
+               "CFLAGS="
+               (string-join (list "-Wno-error=incompatible-pointer-types"
+                                  "-Wno-error=implicit-function-declaration")
+                            " ")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'patch-autogen
+            (lambda _
+              (substitute* "autogen.sh"
+                (("/usr/share/aclocal")
+                 (string-append #$(this-package-native-input "automake")
+                                "/share/aclocal")))))
           (replace 'check
             (lambda* (#:key inputs tests? #:allow-other-keys)
               ;; Tests require to write $HOME.
@@ -938,8 +954,10 @@ many input formats and provides a customisable Vi-style user interface.")
                                   lilypond
                                   "\");")))))))))
     (native-inputs
-     (list diffutils
-           `(,glib "bin")               ; for gtester
+     (list autoconf
+           automake
+           diffutils
+           `(,glib "bin")             ; for gtester
            gtk-doc/stable
            intltool
            libtool
@@ -953,7 +971,7 @@ many input formats and provides a customisable Vi-style user interface.")
            glib
            gtk+
            gtksourceview-3
-           guile-2.0
+           guile-3.0
            (librsvg-for-system)
            libsndfile
            libxml2
@@ -3471,7 +3489,9 @@ instrument or MIDI file player.")
                     version "/zynaddsubfx-" version ".tar.bz2"))
               (sha256
                (base32
-                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))))
+                "1bkirvcg0lz1i7ypnz3dyh218yhrqpnijxs8n3wlgwbcixvn1lfb"))
+              (patches
+               (search-patches "zynaddsubfx-3.0.6-include-cstdint.patch"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -3499,7 +3519,7 @@ instrument or MIDI file player.")
     (native-inputs
      (list pkg-config
            ruby))
-    (home-page "https://zynaddsubfx.sf.net/")
+    (home-page "https://zynaddsubfx.sourceforge.io/")
     (synopsis "Software synthesizer")
     (description
      "ZynAddSubFX is a feature heavy realtime software synthesizer.  It offers
@@ -4205,17 +4225,22 @@ of tags.")
   (package
     (name "python-musicbrainzngs")
     (version "0.7.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "musicbrainzngs" version))
-              (sha256
-               (base32
-                "09z6k07pxncfgfc8clfmmxl2xqbd7h8x8bjzwr95hc0bzl00275b"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alastair/python-musicbrainzngs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05rv5wmasamwxkbs8v9lbp2js6y5hhqz6c58c2afz2b202yp932m"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://python-musicbrainzngs.readthedocs.org/")
     (synopsis "Python bindings for MusicBrainz NGS webservice")
-    (description "Musicbrainzngs implements Python bindings of the MusicBrainz
-web service.  This library can be used to retrieve music metadata from the
+    (description
+     "Musicbrainzngs implements Python bindings of the MusicBrainz web
+service.  This library can be used to retrieve music metadata from the
 MusicBrainz database.")
     ;; 'musicbrainzngs/compat.py' is ISC licensed.
     (license (list license:bsd-2 license:isc))))
@@ -4279,24 +4304,32 @@ websites such as Libre.fm.")
                 (sha256
                  (base32
                   "0j7qivaa04bpdz3anmgci5833dgiyfqqwq9fdrpl9m68b34gl773"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-requests eyed3 python-beautifulsoup4 youtube-dl))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:modules ((guix build python-build-system)
-                  (guix build utils)
-                  (srfi srfi-26))
-       #:phases (modify-phases %standard-phases
-                  (add-before 'build 'change-directory
-                    (lambda _
-                      (chdir "instantmusic-0.1") #t))
-                  (add-before 'install 'fix-file-permissions
-                    (lambda _
-                      ;; Fix some read-only files that would cause a build failure
-                      (for-each (cut chmod <> #o644)
-                                (find-files "instantmusic.egg-info"
-                                            "PKG-INFO|.*\\.txt"))
-                      #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'change-directory
+            (lambda _
+              (chdir "instantmusic-0.1")))
+          (add-before 'build 'patch-yt-dlp
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "bin/instantmusic"
+                (("youtube-dl")
+                 (search-input-file inputs "bin/yt-dlp")))
+              (substitute* "setup.py"
+                (("youtube-dl")
+                 "yt-dlp"))))
+          (add-before 'install 'fix-file-permissions
+            (lambda _
+              ;; Fix some read-only files that would cause a build failure
+              (for-each (lambda (file)
+                          (chmod file #o644))
+                        (find-files "instantmusic.egg-info"
+                                    "PKG-INFO|.*\\.txt")))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (inputs (list yt-dlp))
+    (propagated-inputs (list python-requests eyed3 python-beautifulsoup4))
     (home-page "https://github.com/yask123/Instant-Music-Downloader")
     (synopsis "Command-line program to download a song from YouTube")
     (description "InstantMusic downloads a song from YouTube in MP3 format.
@@ -4580,49 +4613,6 @@ with a number of bugfixes and changes to improve IT playback.")
 recording, overdubbing, multiplying, reversing and more.  It allows for
 multiple simultaneous multi-channel loops limited only by your computer's
 available memory.")
-    (license license:gpl2+)))
-
-(define-public moc
-  (package
-    (name "moc")
-    (version "2.5.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://ftp.daper.net/pub/soft/"
-                                  name "/stable/"
-                                  name "-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "026v977kwb0wbmlmf6mnik328plxg8wykfx9ryvqhirac0aq39pk"))))
-    (build-system gnu-build-system)
-    (inputs
-     (list alsa-lib
-           curl
-           faad2
-           ffmpeg-3.4
-           file
-           jack-1
-           libid3tag
-           libltdl
-           libmodplug
-           libmpcdec
-           libmad
-           libogg
-           libvorbis
-           ncurses
-           openssl
-           cyrus-sasl
-           speex
-           taglib
-           wavpack
-           zlib))
-    (native-inputs
-     (list pkg-config))
-    (synopsis "Console audio player designed to be powerful and easy to use")
-    (description
-     "Music on Console is a console audio player that supports many file
-formats, including most audio formats recognized by FFMpeg.")
-    (home-page "http://moc.daper.net")
     (license license:gpl2+)))
 
 (define-public midicsv
@@ -5247,6 +5237,12 @@ and more.  Full API documentation and examples are included.")
       #:configure-flags '(list "-DWANT_QT5=ON" "-DWANT_VST=OFF")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-carla-export
+            ;; Taken from NixOS package definition.
+            (lambda _
+              (substitute* "plugins/carlabase/carla.h"
+                (("CARLA_EXPORT")
+                 "CARLA_API_EXPORT"))))
           (add-after 'unpack 'unpack-rpmalloc
             (lambda* (#:key inputs #:allow-other-keys)
               (copy-recursively (assoc-ref inputs "rpmalloc")
@@ -7027,16 +7023,16 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
 (define-public geonkick
   (package
     (name "geonkick")
-    (version "2.7.0")
+    (version "3.6.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/iurie-sw/geonkick")
+             (url "https://codeberg.org/Geonkick-Synthesizer/geonkick")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w1mvqm46qdwldcl81svaykwii4wvx7mcr57kwvnj0iv2qrc891i"))))
+        (base32 "0817hsfvgri315aw0y06rzjcw96lhgxjc37rbxqagk3ciw0naj6n"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no tests included
@@ -7058,7 +7054,7 @@ ZaMultiComp, ZaMultiCompX2 and ZamSynth.")
     (description "Geonkick is a synthesizer that can synthesize elements
 of percussion such as kicks, snares, hit-hats, shakers, claps and sticks.
 It can also play and mix samples.")
-    (home-page "https://gitlab.com/iurie-sw/geonkick")
+    (home-page "https://geonkick.org")
     (license license:gpl3+)))
 
 (define-public mamba

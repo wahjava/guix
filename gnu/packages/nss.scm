@@ -1,12 +1,13 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013-2019, 2023 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2014, 2015, 2016, 2017, 2018, 2019, 2021 Mark H Weaver <mhw@netris.org>
+;;; Copyright © 2014-2021 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016-2019, 2021-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020, 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Jonathan Brielmaier <jonathan.brielmaier@web.de>
-;;; Copyright © 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,6 +26,7 @@
 
 (define-module (gnu packages nss)
   #:use-module (guix packages)
+  #:use-module ((guix search-paths) #:select ($SSL_CERT_DIR $SSL_CERT_FILE))
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -32,22 +34,25 @@
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system mozilla)
+  #:use-module (guix build-system trivial)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages sqlite)
-  #:use-module (gnu packages time))
+  #:use-module (gnu packages time)
+  #:use-module (gnu packages tls)
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26))
 
 (define-public nspr
   (package
     (name "nspr")
-    (version "4.35")
+    (version "4.36")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -55,7 +60,7 @@
                     version "/src/nspr-" version ".tar.gz"))
               (sha256
                (base32
-                "13xwda56yhp1w7v02qvlxvlqiniw8kr4g3fxlljmv6wnlmz2k8vy"))))
+                "15b83ipjxrmw0909l5qqz13pbarhp50d6i58vgjx4720y4bw7pjm"))))
     (build-system gnu-build-system)
     (inputs
      (list perl                         ;for 'compile-et.pl'
@@ -95,32 +100,6 @@ platform-neutral API for system level and libc-like functions.  It is used
 in the Mozilla clients.")
     (license license:mpl2.0)))
 
-(define-public nspr-4.36
-  (package
-    (inherit nspr)
-    (version "4.36")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v"
-                    version "/src/nspr-" version ".tar.gz"))
-              (sha256
-               (base32
-                "15b83ipjxrmw0909l5qqz13pbarhp50d6i58vgjx4720y4bw7pjm"))))))
-
-(define-public nspr-4.32
-  (package
-    (inherit nspr)
-    (version "4.32")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v"
-                   version "/src/nspr-" version ".tar.gz"))
-             (sha256
-              (base32
-               "0v3zds1id71j5a5si42a658fjz8nv2f6zp6w4gqrqmdr6ksz8sxv"))))))
-
 ;; nss should track ESRs, but currently doesn't.  3.102.1 is the current ESR.
 
 (define-public nss
@@ -129,7 +108,7 @@ in the Mozilla clients.")
     ;; IMPORTANT: Also update and test the nss-certs package, which duplicates
     ;; version and source to avoid a top-level variable reference & module
     ;; cycle.
-    (version "3.99")
+    (version "3.101.4")
     (source (origin
               (method url-fetch)
               (uri (let ((version-with-underscores
@@ -140,11 +119,12 @@ in the Mozilla clients.")
                       "nss-" version ".tar.gz")))
               (sha256
                (base32
-                "1g89ig40gfi1sp02gybvl2z818lawcnrqjzsws36cdva834c5maw"))
+                "1sqvh49qi9vq55sbg42c5n0kz6w6ni383hgiyhaym6drsmbzb86a"))
               ;; Create nss.pc and nss-config.
               (patches (search-patches "nss-3.56-pkgconfig.patch"
                                        "nss-getcwd-nonnull.patch"
-                                       "nss-increase-test-timeout.patch"))
+                                       "nss-increase-test-timeout.patch"
+                                       "nss-disable-broken-tests.patch"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -152,7 +132,7 @@ in the Mozilla clients.")
                   (delete-file-recursively "nss/lib/zlib")
                   (delete-file-recursively "nss/lib/sqlite")))))
     (build-system gnu-build-system)
-    (outputs '("out" "bin"))
+    (outputs '("out" "bin" "static"))   ;11 MiB of static archives
     (arguments
      (list
       #:make-flags
@@ -197,6 +177,13 @@ in the Mozilla clients.")
                         (target-ppc32?)))
       #:phases
       #~(modify-phases %standard-phases
+          ;; The "PayPalEE.cert" certificate expires every six months, leading
+          ;; to test failures:
+          ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=609734>.  To work
+          ;; around that, set the time to roughly the release date.
+          (add-after 'unpack 'set-release-date
+            (lambda _
+              (setenv "GUIX_NSS_RELEASE_DATE" "2025-02-05")))
           (replace 'configure
             (lambda _
               (setenv "CC" #$(cc-for-target))
@@ -237,34 +224,40 @@ in the Mozilla clients.")
                                 (("SOURCE_DIR=.*")
                                  (string-append "SOURCE_DIR=" (getcwd) "/nss\n")))))
 
-                    ;; The "PayPalEE.cert" certificate expires every six months,
-                    ;; leading to test failures:
-                    ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=609734>.  To
-                    ;; work around that, set the time to roughly the release date.
-                    (invoke #$(if (target-64bit?) "faketime" "datefudge")
-                            "2024-01-23" "./nss/tests/all.sh"))
+
+                    (let ((release-date (getenv "GUIX_NSS_RELEASE_DATE")))
+                      (when (string=? "" release-date)
+                        (raise-exception "`GUIX_NSS_RELEASE_DATE' unset"))
+                      (invoke #$(if (target-64bit?) "faketime" "datefudge")
+                              release-date "./nss/tests/all.sh")))
                   (format #t "test suite not run~%"))))
           (replace 'install
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (bin (string-append (assoc-ref outputs "bin") "/bin"))
-                     (inc (string-append out "/include/nss"))
-                     (lib (string-append out "/lib/nss"))
+            (lambda _
+              (let* ((inc (string-append #$output "/include/nss"))
+                     (lib (string-append #$output "/lib/nss"))
                      (obj (match (scandir "dist" (cut string-suffix? "OBJ" <>))
                             ((obj) (string-append "dist/" obj)))))
                 ;; Install nss-config to $out/bin.
                 (install-file (string-append obj "/bin/nss-config")
-                              (string-append out "/bin"))
+                              (string-append #$output "/bin"))
                 (delete-file (string-append obj "/bin/nss-config"))
                 ;; Install nss.pc to $out/lib/pkgconfig.
                 (install-file (string-append obj "/lib/pkgconfig/nss.pc")
-                              (string-append out "/lib/pkgconfig"))
+                              (string-append #$output "/lib/pkgconfig"))
                 (delete-file (string-append obj "/lib/pkgconfig/nss.pc"))
                 (rmdir (string-append obj "/lib/pkgconfig"))
                 ;; Install other files.
                 (copy-recursively "dist/public/nss" inc)
-                (copy-recursively (string-append obj "/bin") bin)
-                (copy-recursively (string-append obj "/lib") lib)))))))
+                (copy-recursively (string-append obj "/bin") #$output:bin)
+                (copy-recursively (string-append obj "/lib") lib))))
+          (add-after 'install 'move-static-archives
+            (lambda _
+              (with-directory-excursion #$output
+                (for-each (lambda (f)
+                            (install-file f
+                                          (string-append #$output:static
+                                                         "/" (dirname f))))
+                          (find-files "." "\\.a$"))))))))
     (inputs (list sqlite zlib))
     (propagated-inputs (list nspr))               ;required by nss.pc.
     (native-inputs (list perl                     ;for tests
@@ -276,13 +269,15 @@ in the Mozilla clients.")
     (properties '((timeout . 216000)))  ;60 hours
 
     (home-page "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS")
-    (synopsis "Network Security Services")
+    (synopsis "Network Security Services (ESR)")
     (description
      "Network Security Services (@dfn{NSS}) is a set of libraries designed to
 support cross-platform development of security-enabled client and server
 applications.  Applications built with NSS can support SSL v2 and v3, TLS,
 PKCS #5, PKCS #7, PKCS #11, PKCS #12, S/MIME, X.509 v3 certificates, and other
-security standards.")
+security standards.
+
+This package tracks the Extended Support Release (ESR) channel.")
     (license license:mpl2.0)))
 
 ;; nss-rapid tracks the rapid release channel.  Unless your package requires a
@@ -296,63 +291,24 @@ security standards.")
   (package
    (inherit nss)
    (name "nss-rapid")
-   (version "3.113")
-   (source (origin
-             (inherit (package-source nss))
-             (uri (let ((version-with-underscores
-                         (string-join (string-split version #\.) "_")))
-                    (string-append
-                     "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
-                     "releases/NSS_" version-with-underscores "_RTM/src/"
-                     "nss-" version ".tar.gz")))
-             (sha256
-              (base32
-               "03qwl3ps3xgc9pkc07qrsa4vd2r57mjwicv3gb483gfk2ashdvxc"))))
-   (arguments
-    (substitute-keyword-arguments (package-arguments nss)
-      ((#:phases phases)
-       #~(modify-phases #$phases
-           (add-after 'unpack 'neutralize-network-test
-             ;; Test tries to resolve `wrong.host.badssl.com' which fails due
-             ;; to no networking in the build environment.
-             ;; Behavior changed as of 3.110.
-             (lambda _
-               (substitute* "nss/tests/ssl/ssl.sh"
-                 ((" ssl_policy_pkix_ocsp" all)
-                  (string-append "#" all)))))
-           (replace 'check
-             (lambda* (#:key tests? #:allow-other-keys)
-               (if tests?
-                   (begin
-                     ;; Use 127.0.0.1 instead of $HOST.$DOMSUF as HOSTADDR for
-                     ;; testing.  The latter requires a working DNS or /etc/hosts.
-                     (setenv "DOMSUF" "localdomain")
-                     (setenv "USE_IP" "TRUE")
-                     (setenv "IP_ADDRESS" "127.0.0.1")
+   (version "3.115")
+   (source
+    (origin
+      (inherit (package-source nss))
+      (uri (let ((version-with-underscores
+                  (string-join (string-split version #\.) "_")))
+             (string-append
+              "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
+              "releases/NSS_" version-with-underscores "_RTM/src/"
+              "nss-" version ".tar.gz")))
+      (sha256
+       (base32 "1av1g18dkx86zxvpr34j5mx976mgsk002khlb40k4ydx6gxlfamc"))
+      (patches
+       (search-patches "nss-3.56-pkgconfig.patch"
+                       "nss-getcwd-nonnull.patch"
+                       "nss-increase-test-timeout.patch"
+                       "nss-3.115-disable-pkix-ocsp-tests.patch"))))
 
-                     ;; This specific test is looking at performance "now
-                     ;; verify that we can quickly dump a database", and
-                     ;; we're not testing performance here (especially
-                     ;; since we're using faketime), so raise the
-                     ;; threshold
-                     (substitute* "nss/tests/dbtests/dbtests.sh"
-                       ((" -lt 5") " -lt 50"))
-
-                     ;; Since the test suite is very lengthy, run the test
-                     ;; suite once, not thrice as done by default, by
-                     ;; selecting only the 'standard' cycle.
-                     (setenv "NSS_CYCLES" "standard")
-
-                     ;; The "PayPalEE.cert" certificate expires every six months,
-                     ;; leading to test failures:
-                     ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=609734>.  To
-                     ;; work around that, set the time to roughly the release date.
-                     (invoke #$(if (target-64bit?) "faketime" "datefudge")
-                            "2025-06-19" "./nss/tests/all.sh"))
-                   (format #t "test suite not run~%"))))))))
-   (propagated-inputs
-        (modify-inputs (package-propagated-inputs nss)
-          (replace "nspr" nspr-4.36)))
    (synopsis "Network Security Services (Rapid Release)")
    (description
     "Network Security Services (@dfn{NSS}) is a set of libraries designed to
@@ -362,6 +318,88 @@ PKCS #5, PKCS #7, PKCS #11, PKCS #12, S/MIME, X.509 v3 certificates, and other
 security standards.
 
 This package tracks the Rapid Release channel, which updates frequently.")))
+
+(define-public nss-certs
+  (package
+    (inherit nss)
+    (name "nss-certs")
+    (build-system gnu-build-system)
+    (outputs '("out"))
+    (native-inputs
+     (list certdata2pem openssl))
+    (inputs '())
+    (propagated-inputs '())
+    (arguments
+     (list #:modules '((guix build gnu-build-system)
+                       (guix build utils)
+                       (rnrs io ports)
+                       (srfi srfi-26))
+           #:phases
+           #~(modify-phases
+                 (map (cut assq <> %standard-phases)
+                      '(set-paths install-locale unpack))
+               (add-after 'unpack 'install
+                 (lambda _
+                   (let ((certsdir (string-append #$output
+                                                  "/etc/ssl/certs/")))
+                     (with-directory-excursion "nss/lib/ckfw/builtins/"
+                       (unless (file-exists? "blacklist.txt")
+                         (call-with-output-file "blacklist.txt" (const #t)))
+                       ;; Extract selected single certificates from blob.
+                       (invoke "certdata2pem")
+                       ;; Copy .pem files into the output.
+                       (for-each (cut install-file <> certsdir)
+                                 (find-files "." ".*\\.pem$")))
+                     (invoke "openssl" "rehash" certsdir)))))))
+    (synopsis "CA certificates from Mozilla")
+    (description
+     "This package provides certificates for Certification Authorities (CA)
+taken from the NSS package and thus ultimately from the Mozilla project.")
+    (home-page "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS")
+    (license license:mpl2.0)))
+
+(define-public nss-certs-for-test
+  (hidden-package
+   (package
+     (inherit nss-certs)
+     (name "nss-certs-for-test")
+     (source #f)
+     (build-system trivial-build-system)
+     (native-inputs (list nss-certs))
+     (inputs '())
+     (propagated-inputs '())
+     (arguments
+      (list #:modules '((guix build utils)
+                        (rnrs io ports)
+                        (srfi srfi-26))
+            #:builder
+            #~(begin
+                (use-modules (guix build utils)
+                             (rnrs io ports)
+                             (srfi srfi-26))
+                (define certs-dir (string-append #$output "/etc/ssl/certs/"))
+                (define ca-files
+                  (find-files (string-append #+(this-package-native-input
+                                                "nss-certs")
+                                             "/etc/ssl/certs")
+                              (lambda (file stat)
+                                (string-suffix? ".pem" file))))
+                (define (concatenate-files files result)
+                  "Make RESULT the concatenation of all of FILES."
+                  (define (dump file port)
+                    (display (call-with-input-file file get-string-all) port)
+                    (newline port))
+                  (call-with-output-file result
+                    (lambda (port)
+                      (for-each (cut dump <> port) files))))
+
+                (mkdir-p certs-dir)
+                (concatenate-files
+                 ca-files (string-append certs-dir "/ca-certificates.crt"))
+                (for-each (cut install-file <> certs-dir) ca-files))))
+     (native-search-paths
+      (list $SSL_CERT_DIR
+            $SSL_CERT_FILE)))))
 
 (define-public nsncd
   (package
@@ -388,23 +426,8 @@ This package tracks the Rapid Release channel, which updates frequently.")))
          "--skip=handlers::test::test_handle_getservbyport_port"
          "--skip=handlers::test::test_handle_getservbyport_port_proto"
          "--skip=handlers::test::test_handle_getservbyport_port_proto_aliases")
-      #:install-source? #f
-       #:cargo-inputs
-       (("rust-anyhow" ,rust-anyhow-1)
-        ("rust-atoi" ,rust-atoi-2)
-        ("rust-slog" ,rust-slog-2)
-        ("rust-slog-async" ,rust-slog-async-2)
-        ("rust-slog-term" ,rust-slog-term-2)
-        ("rust-crossbeam-channel" ,rust-crossbeam-channel-0.5)
-        ("rust-nix" ,rust-nix-0.28)
-        ("rust-num-derive" ,rust-num-derive-0.3)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-sd-notify" ,rust-sd-notify-0.4)
-        ("rust-static-assertions" ,rust-static-assertions-1)
-        ("rust-dns-lookup" ,rust-dns-lookup-2))
-       #:cargo-development-inputs
-       (("rust-criterion" ,rust-criterion-0.5)
-        ("rust-temp-env" ,rust-temp-env-0.3))))
+       #:install-source? #f))
+    (inputs (cargo-inputs 'nsncd))
     (home-page "https://github.com/twosigma/nsncd")
     (synopsis "The name service non-caching daemon")
     (description

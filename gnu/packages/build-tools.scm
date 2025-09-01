@@ -129,7 +129,7 @@ makes a few sacrifices to acquire fast full and incremental build times.")
 (define-public bear
   (package
     (name "bear")
-    (version "3.1.4")
+    (version "3.1.6")
     (source
      (origin
        (method git-fetch)
@@ -138,7 +138,7 @@ makes a few sacrifices to acquire fast full and incremental build times.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1x99d2cycgxay62cz2ypjjkmjgrbdvz5d3pg4fyv0gnq2srnlcnm"))))
+        (base32 "0pnrsnwvsqby0vgb33zsrjznb7l82ji7i4aigk32hg3rl674qqvx"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -157,15 +157,15 @@ makes a few sacrifices to acquire fast full and incremental build times.")
                         (invoke "ctest")))))))
     (inputs
      `(("c-ares" ,c-ares)
-       ("fmt" ,fmt-8)
+       ("fmt" ,fmt-9)
        ("grpc" ,grpc)
        ("nlohmann-json" ,nlohmann-json)
        ("protobuf" ,protobuf)
        ("python" ,python-wrapper)
        ("re2" ,re2)
-       ("spdlog" ,spdlog-1.10)))
+       ("spdlog" ,spdlog-1.13)))
     (native-inputs
-     `(("abseil-cpp" ,abseil-cpp-cxxstd11)
+     `(("abseil-cpp" ,abseil-cpp)
        ("googletest" ,googletest)
        ("openssl" ,openssl)
        ("pkg-config" ,pkg-config)
@@ -720,29 +720,27 @@ a build worked by accident.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1sqdnkka3c6b6hwnrmlwrgy7w62cp8raq8mph9pgd2lydzzbvwlp"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'fix-filename
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin (string-append (assoc-ref outputs "out") "/bin/")))
-               ;; Main osc tool is renamed in spec file, not setup.py, let's
-               ;; do that too.
-               (rename-file
-                (string-append bin "osc-wrapper.py")
-                (string-append bin "osc"))
-               #t))))))
-    (native-inputs
-     (list python-chardet))
-    (inputs
-     (list python-m2crypto python-pycurl rpm))                   ; for python-rpm
+     (list
+      ;; XXX: Tests require a config file.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'fix-filename
+            (lambda _
+              (with-directory-excursion (string-append #$output "/bin")
+                ;; osc tool is renamed in spec file, not setup.py.
+                (rename-file "osc-wrapper.py" "osc")))))))
+    (native-inputs (list python-chardet python-setuptools python-wheel))
+    (inputs (list python-m2crypto python-pycurl rpm)) ;for python-rpm
     (home-page "https://github.com/openSUSE/osc")
     (synopsis "Open Build Service command line tool")
-    (description "@command{osc} is a command line interface to the Open Build
-Service.  It allows you to checkout, commit, perform reviews etc.  The vast
-majority of the OBS functionality is available via commands and the rest can
-be reached via direct API calls.")
+    (description
+     "@command{osc} is a command line interface to the Open Build Service.  It
+allows you to checkout, commit, perform reviews etc.  The vast majority of the
+OBS functionality is available via commands and the rest can be reached via
+direct API calls.")
     (license license:gpl2+)))
 
 (define-public compdb
@@ -774,28 +772,36 @@ right compilation options.")
     (name "compiledb")
     (version "0.10.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "compiledb" version))
-        (sha256
-          (base32 "0vlngsdxfakyl8b7rnvn8h3l216lhbrrydr04yhy6kd03zflgfq6"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nickdiego/compiledb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qricdgqzry7j3rmgwyd43av3c2kxpzkh6f9zcqbzrjkn78qbpd4"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'no-compat-shim-dependency
-           ;; shutilwhich is only needed for python 3.3 and earlier
-           (lambda _
-             (substitute* "setup.py" (("^ *'shutilwhich'\n") ""))
-             (substitute* "compiledb/compiler.py" (("shutilwhich") "shutil")))))))
-    (propagated-inputs
-      (list python-bashlex python-click))
-    (native-inputs
-      (list python-pytest))
-    (home-page
-      "https://github.com/nickdiego/compiledb")
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'no-compat-shim-dependency
+            ;; shutilwhich is only needed for python 3.3 and earlier
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "setup.py"
+                (("^ *'shutilwhich'\n")
+                 ""))
+              (substitute* "compiledb/compiler.py"
+                (("shutilwhich")
+                 "shutil"))
+              (substitute* "tests/data/multiple_commands_oneline.txt"
+                (("/bin/echo")
+                 (search-input-file inputs "bin/echo"))))))))
+    (propagated-inputs (list python-bashlex python-click))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/nickdiego/compiledb")
     (synopsis
-      "Generate Clang JSON Compilation Database files for make-based build systems")
+     "Generate Clang JSON Compilation Database files for make-based build systems")
     (description
      "@code{compiledb} provides a @code{make} python wrapper script which,
 besides executing the make build command, updates the JSON compilation

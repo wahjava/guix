@@ -11,7 +11,7 @@
 ;;; Copyright © 2015 Florian Paul Schmidt <mista.tapas@gmx.net>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016, 2018 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2021, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2021, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2017, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Petter <petter@mykolab.ch>
@@ -906,26 +906,22 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
     (source
      (origin
        (method url-fetch)
-       (uri
-        (string-append
-         "https://www.cairographics.org/releases/pixman-"
-         version ".tar.gz"))
+       (uri (string-append "https://www.cairographics.org/releases/pixman-"
+                           version ".tar.gz"))
        (sha256
         (base32 "0pk298iqxqr64vk3z6nhjwr6vjg1971zfrjkqy5r9zd2mppq057a"))
-       (patches
-        (search-patches
-         "pixman-CVE-2016-5296.patch"))))
+       (patches (search-patches "pixman-CVE-2016-5296.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
-       (list
-        "--disable-static"
-        "--enable-timers"
-        "--enable-gnuplot")))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libpng zlib))
+       (list "--disable-static"
+             "--enable-timers"
+             "--enable-gnuplot"
+             ,@(if (target-arm32?)
+                   `("--disable-arm-simd")
+                   '()))))
+    (native-inputs (list pkg-config))
+    (inputs (list libpng zlib))
     (synopsis "Low-level pixel manipulation library")
     (description "Pixman is a low-level software library for pixel
 manipulation, providing features such as image compositing and trapezoid
@@ -2855,17 +2851,18 @@ both binary and text data.")
 (define-public python-pyperclip
   (package
     (name "python-pyperclip")
-    (version "1.8.2")
+    (version "1.9.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "pyperclip" version))
         (sha256
-         (base32
-          "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh"))))
-    (build-system python-build-system)
+         (base32 "046k4wjmwjprra363fa8nm925f90m6fs3vh7fmfgq6y8vm103pmp"))))
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f)) ; Not clear how to make tests pass.
+    (native-inputs
+     (list python-setuptools-next))
     (inputs
      (list xclip xsel))
     (home-page "https://github.com/asweigart/pyperclip")
@@ -4336,6 +4333,45 @@ on the screen and which then writes out the necessary C code for it.")
                          (append mesa)))
     (synopsis
      "GUI toolkit for X based on the X11 Xlib library, with OpenGL support")))
+
+(define-public xiccd
+  (let* ((version "0.4.1")
+         (tag (string-append "v" version)))
+    (package
+      (name "xiccd")
+      (version version)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/agalakhov/xiccd")
+               (commit tag)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01favi5v4qbpj6v6k6iab7wxhjy4vjnqwcykhhv2rgcqw5dx4w4a"))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     (substitute* "configure.ac"
+                       (("m4_esyscmd_s\\([^\n\\(\\)\\[\\]]*\\)")
+                        #$tag)
+                       (("tar-ustar")
+                        "tar-ustar foreign")) #t))))
+      (build-system gnu-build-system)
+      (inputs (list colord glib libx11 libxrandr))
+      (native-inputs (list autoconf automake gettext-minimal libtool
+                           pkg-config))
+      (home-page "https://github.com/agalakhov/xiccd")
+      (synopsis "X color profile daemon")
+      (description
+       "@command{xiccd} provides color profile support for desktop environments
+other than GNOME and KDE.  It does the following tasks:
+@itemize
+@item Enumerates displays and register them in colord.
+@item Creates default ICC profiles based on EDID data.
+@item Applies ICC profiles provided by colord.
+@item Maintains user's private ICC storage directory.
+@end itemize")
+      (license license:gpl3))))
 
 (define-public xxkb
   (package

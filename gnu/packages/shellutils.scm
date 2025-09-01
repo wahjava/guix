@@ -21,6 +21,8 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Brian Kubisiak <brian@kubisiak.com>
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Skylar Hill <stellarskylark@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -56,12 +58,6 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-crypto)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-shell)
-  #:use-module (gnu packages crates-vcs)
-  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -349,6 +345,31 @@ interactive terminal.  This helps in reviewing commands before running them,
 particularly in catching syntax errors.")
     (license license:bsd-3)))
 
+(define-public zsh-vi-mode
+  (package
+    (name "zsh-vi-mode")
+    (version "0.11.0")
+    (home-page "https://github.com/jeffreytse/zsh-vi-mode")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jeffreytse/zsh-vi-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        "0bs5p6p5846hcgf3rb234yzq87rfjs18gfha9w0y0nf5jif23dy5")))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("zsh-vi-mode.zsh" "share/zsh/plugins/zsh-vi-mode/")
+          ("zsh-vi-mode.plugin.zsh" "share/zsh/plugins/zsh-vi-mode/"))))
+    (synopsis "Plugin to improve vi keybindings in zsh")
+    (description "This package provides a zsh vimkey plugin with more features,
+which more closely matches the standard behavior of vim.")
+    (license license:expat)))
+
 (define-public grml-zsh-config
   (package
     (name "grml-zsh-config")
@@ -544,58 +565,8 @@ Shell}, @url{https://www.gnu.org/software/bash/,Bash}, and
           (add-before 'check 'set-test-env-vars
             (lambda _
               (setenv "HOME"
-                      (string-append (getcwd) "/.test-home")))))
-      #:cargo-inputs `(("rust-chrono" ,rust-chrono-0.4)
-                       ("rust-clap" ,rust-clap-4)
-                       ("rust-clap-complete" ,rust-clap-complete-4)
-                       ("rust-deelevate" ,rust-deelevate-0.2)
-                       ("rust-dirs" ,rust-dirs-5)
-                       ("rust-dunce" ,rust-dunce-1)
-                       ("rust-gix" ,rust-gix-0.66)
-                       ("rust-gix-features" ,rust-gix-features-0.38)
-                       ("rust-guess-host-triple" ,rust-guess-host-triple-0.1)
-                       ("rust-home" ,rust-home-0.5)
-                       ("rust-indexmap" ,rust-indexmap-2)
-                       ("rust-log" ,rust-log-0.4)
-                       ("rust-nix" ,rust-nix-0.29)
-                       ("rust-notify-rust" ,rust-notify-rust-4)
-                       ("rust-nu-ansi-term" ,rust-nu-ansi-term-0.50)
-                       ("rust-open" ,rust-open-5)
-                       ("rust-os-info" ,rust-os-info-3)
-                       ("rust-path-slash" ,rust-path-slash-0.2)
-                       ("rust-pest" ,rust-pest-2)
-                       ("rust-pest-derive" ,rust-pest-derive-2)
-                       ("rust-process-control" ,rust-process-control-5)
-                       ("rust-quick-xml" ,rust-quick-xml-0.36)
-                       ("rust-rand" ,rust-rand-0.8)
-                       ("rust-rayon" ,rust-rayon-1)
-                       ("rust-regex" ,rust-regex-1)
-                       ("rust-rust-ini" ,rust-rust-ini-0.21)
-                       ("rust-schemars" ,rust-schemars-0.8)
-                       ("rust-semver" ,rust-semver-1)
-                       ("rust-serde" ,rust-serde-1)
-                       ("rust-serde-json" ,rust-serde-json-1)
-                       ("rust-sha1" ,rust-sha1-0.10)
-                       ("rust-shadow-rs" ,rust-shadow-rs-0.35)
-                       ("rust-shell-words" ,rust-shell-words-1)
-                       ("rust-starship-battery" ,rust-starship-battery-0.10)
-                       ("rust-strsim" ,rust-strsim-0.11)
-                       ("rust-systemstat" ,rust-systemstat-0.2)
-                       ("rust-terminal-size" ,rust-terminal-size-0.4)
-                       ("rust-toml" ,rust-toml-0.8)
-                       ("rust-toml-edit" ,rust-toml-edit-0.22)
-                       ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
-                       ("rust-unicode-width" ,rust-unicode-width-0.2)
-                       ("rust-urlencoding" ,rust-urlencoding-2)
-                       ("rust-versions" ,rust-versions-6)
-                       ("rust-which" ,rust-which-6)
-                       ("rust-whoami" ,rust-whoami-1)
-                       ("rust-windows" ,rust-windows-0.58)
-                       ("rust-winres" ,rust-winres-0.1)
-                       ("rust-yaml-rust2" ,rust-yaml-rust2-0.9))
-      #:cargo-development-inputs `(("rust-mockall" ,rust-mockall-0.13)
-                                   ("rust-tempfile" ,rust-tempfile-3))))
-    (inputs (list cmake-minimal))
+                      (string-append (getcwd) "/.test-home")))))))
+    (inputs (cons cmake-minimal (cargo-inputs 'starship)))
     (native-inputs
      (append
        (if (%current-target-system)
@@ -1189,3 +1160,25 @@ with Guix Home:
    "The fzf-tab package replaces the default completion menu of the zsh
 shell with fzf, enabling fuzzy finding and multi-selection.")
   (license license:expat)))
+
+(define-public pay-respects
+  (package
+    (name "pay-respects")
+    (version "0.7.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pay-respects" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "14hrfmwhisc98ba1hyg86v20g9qaa6jhx051m1ylkmajbklvzmgz"))))
+    (build-system cargo-build-system)
+    (arguments (list #:install-source? #f))
+    (inputs (cargo-inputs 'pay-respects))
+    (home-page "https://codeberg.org/iff/pay-respects")
+    (synopsis "Suggest correction for mistyped console commands")
+    (description
+     "@command{pay-respects} provides a shell helper to suggest correction for
+mistyped commands, with @command{guix locate} integration and an alias (default
+to @command{f}) to correct the previous command.")
+    (license license:agpl3+)))

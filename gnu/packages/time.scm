@@ -164,18 +164,33 @@ applications, and several support tools.")
     (version "1.1.8")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytimeparse" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/wroberts/pytimeparse")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "02kaambsgpjx3zi42j6l11rwms2p35b9hsk4f3kdf979gd3kcqg8"))))
+        (base32 "1r5ybq2brdinqlvvdmfv2lz4g1hwz2zd6k21qwzzw17jfxdv2m6g"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'cleanup
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (delete-file-recursively
+               (string-append (site-packages inputs outputs)
+                              "/pytimeparse/tests"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest")))))))
     (native-inputs
-     (list python-nose))
-    (build-system python-build-system)
+     (list python-setuptools python-wheel))
     (home-page "https://github.com/wroberts/pytimeparse")
     (synopsis "Time expression parser")
-    (description "This small Python module parses various kinds of time
-expressions.")
+    (description
+     "This small Python module parses various kinds of time expressions.")
     (license expat)))
 
 (define-public python-pytzdata
@@ -396,20 +411,23 @@ business day calculation.")
     (version "2.6")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "parsedatetime" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/bear/parsedatetime")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0mfl0ixshqkwx7z5siaib7ix5j2iahb1jqfpyhqp42wan7xnicsc"))))
-    (build-system python-build-system)
+        (base32 "001rxkawjjjffbqzjg96znkhj4z6q7ky349rldd8yx6vk8cgdc2m"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-nose python-pyicu python-pytest python-pytest-runner))
+     (list python-pyicu python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-future))
     (home-page "https://github.com/bear/parsedatetime/")
     (synopsis "Parse human-readable date/time text")
     (description
-     "Parse human-readable date/time text.")
+     "This package provides some tools to parse human-readable date/time text
+in Python.")
     (license asl2.0)))
 
 (define-public python-ciso8601

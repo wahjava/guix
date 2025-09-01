@@ -53,6 +53,7 @@
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages scanner)
@@ -61,6 +62,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
@@ -1078,20 +1080,24 @@ obtained and installed separately.")
 (define-public python-pycups
   (package
     (name "python-pycups")
-    (version "2.0.1")
+    (version "2.0.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pycups" version ".tar.bz2"))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/zdohnal/pycups")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "140c7073bkhx8w9qpaynllhynkkg0rzj3a4wjh9fnj15yvjlqhsp"))))
-    (build-system python-build-system)
+        (base32 "1fx2b04wr9mv87lxk8jpglkyaqwj7bhlj6hnai0dji3jm503dqlb"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(;; Tests require CUPS to be running
-       #:tests? #f))
-    (inputs
-     (list cups))
+     (list
+      ;; XXX: Tests require CUPS to be running, a cups configuration, and
+      ;; access to associated printers.
+      #:tests? #f))
+    (inputs (list cups))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/zdohnal/pycups")
     (synopsis "Python bindings for libcups")
     (description

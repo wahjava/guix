@@ -25,12 +25,15 @@
 (define-module (guix scripts import crate)
   #:use-module (guix ui)
   #:use-module (guix utils)
+  #:use-module (guix read-print)
   #:use-module (guix scripts)
   #:use-module (guix import crate)
   #:use-module (guix scripts import)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
+  #:use-module (srfi srfi-71)
   #:use-module (ice-9 match)
   #:use-module (ice-9 format)
   #:export (guix-import-crate))
@@ -47,17 +50,11 @@
   (display (G_ "Usage: guix import crate PACKAGE-NAME
 Import and convert the crates.io package for PACKAGE-NAME.\n"))
   (display (G_ "
-  -r, --recursive        import packages recursively"))
-  (display (G_ "
-      --recursive-dev-dependencies
-                         include dev-dependencies recursively"))
-  (newline)
-  (display (G_ "
       --allow-yanked     allow importing yanked crates if no alternative
                          satisfying the version requirement is found"))
+  (newline)
   (display (G_ "
-      --mark-missing     comment out the desired dependency if no
-                         sufficient package exists for it"))
+  -f, --lockfile=FILE    import dependencies from FILE, a 'Cargo.lock' file"))
   (newline)
   (display (G_ "
   -h, --help             display this help and exit"))
@@ -75,18 +72,14 @@ Import and convert the crates.io package for PACKAGE-NAME.\n"))
          (option '(#\V "version") #f #f
                  (lambda args
                    (show-version-and-exit "guix import crate")))
-         (option '(#\r "recursive") #f #f
-                 (lambda (opt name arg result)
-                   (alist-cons 'recursive #t result)))
-         (option '("recursive-dev-dependencies") #f #f
-                 (lambda (opt name arg result)
-                   (alist-cons 'recursive-dev-dependencies #t result)))
          (option '("allow-yanked") #f #f
                  (lambda (opt name arg result)
                    (alist-cons 'allow-yanked #t result)))
-         (option '("mark-missing") #f #f
+         (option '(#\f "lockfile") #f #t
                  (lambda (opt name arg result)
-                   (alist-cons 'mark-missing #t result)))
+                   (if (file-exists? arg)
+                       (alist-cons 'lockfile arg result)
+                       (leave (G_ "file '~a' does not exist~%") arg))))
          %standard-import-options))
 
 
@@ -101,6 +94,8 @@ Import and convert the crates.io package for PACKAGE-NAME.\n"))
                         #:build-options? #f))
 
   (let* ((opts (parse-options))
+         (lockfile (assoc-ref opts 'lockfile))
+         (file-to-insert (assoc-ref opts 'file-to-insert))
          (args (filter-map (match-lambda
                              (('argument . value)
                               value)
@@ -111,16 +106,35 @@ Import and convert the crates.io package for PACKAGE-NAME.\n"))
        (define-values (name version)
          (package-name->name+version spec))
 
-       (match (if (assoc-ref opts 'recursive)
-                  (crate-recursive-import
-                   name #:version version
-                   #:recursive-dev-dependencies?
-                   (assoc-ref opts 'recursive-dev-dependencies)
-                   #:allow-yanked? (assoc-ref opts 'allow-yanked))
+       (match (if lockfile
+                  (let ((source-expressions
+                         _
+                         (cargo-lock->expressions lockfile name)))
+                    (when file-to-insert
+                      (let* ((source-expressions
+                              cargo-inputs-entry
+                              (cargo-lock->expressions lockfile name))
+                             (term (first cargo-inputs-entry))
+                             (cargo-inputs
+                              `(define-cargo-inputs lookup-cargo-inputs
+                                 ,@(sort
+                                    (cons cargo-inputs-entry
+                                          (extract-cargo-inputs
+                                           file-to-insert #:exclude term))
+                                    (lambda (a b)
+                                      (string< (symbol->string (first a))
+                                               (symbol->string (first b)))))))
+                             (_
+                              (and=> (find-cargo-inputs-location file-to-insert)
+                                     delete-expression))
+                             (port (open-file file-to-insert "a")))
+                        (pretty-print-with-comments port cargo-inputs)
+                        (newline port)
+                        (close-port port)))
+                    source-expressions)
                   (crate->guix-package
-                   name #:version version #:include-dev-deps? #t
-                   #:allow-yanked? (assoc-ref opts 'allow-yanked)
-                   #:mark-missing? (assoc-ref opts 'mark-missing)))
+                   name #:version version
+                   #:allow-yanked? (assoc-ref opts 'allow-yanked)))
          ((or #f '())
           (leave (G_ "failed to download meta-data for package '~a'~%")
                  (if version

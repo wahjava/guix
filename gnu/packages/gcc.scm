@@ -675,11 +675,32 @@ Go.  It also includes runtime support libraries for these languages.")
 
 (define %gcc-13-x86_64-micro-architectures
   (append %gcc-12-x86_64-micro-architectures
-          '("graniterapids")))                    ;Intel
+          '("graniterapids"                       ;Intel
+            "lujiazui")))
+
+(define %gcc-14-aarch64-micro-architectures
+  (append %gcc-13-aarch64-micro-architectures
+          '("armv9.4-a")))
+
+(define %gcc-14-ppc64le-micro-architectures
+  (append %gcc-10-ppc64le-micro-architectures
+          '("power11")))
 
 (define %gcc-14-x86_64-micro-architectures
   (append %gcc-13-x86_64-micro-architectures
-          '("znver5")))                           ;AMD
+          '("znver5"                              ;AMD
+            "yongfeng")))
+
+(define %gcc-15-aarch64-micro-architectures
+  (append %gcc-14-aarch64-micro-architectures
+          '("armv9.5-a")))
+
+(define %gcc-15-x86_64-micro-architectures
+  (append
+    (fold delete %gcc-14-x86_64-micro-architectures
+          '("knm" "knl"))
+    '("diamondrapids"                             ;Intel
+      "shijidadao")))
 
 (define-public gcc-7
   (package
@@ -887,24 +908,24 @@ It also includes runtime support libraries for these languages.")
                             (("\\.\\./lib64") "../lib"))))))))
     (properties
      `((compiler-cpu-architectures
-        ("aarch64" ,@%gcc-13-aarch64-micro-architectures)
+        ("aarch64" ,@%gcc-14-aarch64-micro-architectures)
         ("armhf" ,@%gcc-13-armhf-micro-architectures)
-        ("i686" ,@%gcc-13-x86_64-micro-architectures)
-        ("powerpc64le" ,@%gcc-10-ppc64le-micro-architectures)
+        ("i686" ,@%gcc-14-x86_64-micro-architectures)
+        ("powerpc64le" ,@%gcc-14-ppc64le-micro-architectures)
         ("x86_64" ,@%gcc-14-x86_64-micro-architectures))
        ,@(package-properties gcc-11)))))
 
 (define-public gcc-15
   (package
     (inherit gcc-14)
-    (version "15.1.0")
+    (version "15.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gcc/gcc-"
                                   version "/gcc-" version ".tar.xz"))
               (sha256
                (base32
-                "1skcy1a3wwb8k25f9l1qy11nj8b5089f05dpzzn1zw302v19xc72"))
+                "0knj4ph6y7r7yhnp1v4339af7mki5nkh7ni9b948433bhabdk3s3"))
               (patches (search-patches "gcc-12-strmov-store-file-names.patch"
                                        "gcc-5.0-libvtv-runpath.patch"))
               (modules '((guix build utils)))
@@ -932,11 +953,11 @@ It also includes runtime support libraries for these languages.")
                          (string-append lib "/include"))))))))))))
     (properties
      `((compiler-cpu-architectures
-        ("aarch64" ,@%gcc-13-aarch64-micro-architectures)
+        ("aarch64" ,@%gcc-15-aarch64-micro-architectures)
         ("armhf" ,@%gcc-13-armhf-micro-architectures)
-        ("i686" ,@%gcc-13-x86_64-micro-architectures)
-        ("powerpc64le" ,@%gcc-10-ppc64le-micro-architectures)
-        ("x86_64" ,@%gcc-14-x86_64-micro-architectures))
+        ("i686" ,@%gcc-15-x86_64-micro-architectures)
+        ("powerpc64le" ,@%gcc-14-ppc64le-micro-architectures)
+        ("x86_64" ,@%gcc-15-x86_64-micro-architectures))
        ,@(package-properties gcc-11)))))
 
 
@@ -1264,12 +1285,7 @@ as the 'native-search-paths' field."
                "gfortran" '("fortran")
                %generic-search-paths)))
 
-(define-public gdc-10
-  (hidden-package
-   (custom-gcc gcc-10 "gdc" '("d")
-               %generic-search-paths)))
-
-(define-public gdc-11
+(define-public gdc-11                   ;kept for bootstrapping
   (hidden-package
    (custom-gcc gcc-11 "gdc" '("d")
                %generic-search-paths)))
@@ -1277,8 +1293,18 @@ as the 'native-search-paths' field."
 ;;; Alias tracking the latest GDC version.
 (define-public gdc
   (hidden-package
-   (custom-gcc gcc "gdc" '("d")
-               %generic-search-paths)))
+   (let ((base (custom-gcc gcc
+                           "gdc" '("d")
+                           %generic-search-paths)))
+     (package
+       (inherit base)
+       (native-inputs
+        (modify-inputs (package-native-inputs base)
+          ;; Since GCC 12, GDC is self-hosted, requiring a version of itself
+          ;; to build.
+          ;; XXX: GCC must be prepended as well to avoid an issue with the C++
+          ;; headers ordering.
+          (prepend gcc gdc-11)))))))
 
 (define-public gm2
   (hidden-package

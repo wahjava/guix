@@ -335,6 +335,8 @@ without requiring the source code to be rewritten.")
             (files '("lib/guile/2.2/site-ccache")))))))
 
 (define-public guile-2.2.4
+  ;; This has no dependencies, but is used in (guix quirks).
+  ;; Do not remove!
   (package
     (inherit guile-2.2)
    (version "2.2.4")

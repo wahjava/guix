@@ -78,7 +78,7 @@
 (define-public diffoscope
   (package
     (name "diffoscope")
-    (version "302")
+    (version "303")
     (source
      (origin
        (method git-fetch)
@@ -87,7 +87,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1h7qkmy8q2l864f4vlpxclxljh7dqr51pwvwra5lfr92bjcy5mdr"))))
+        (base32 "1asrhbba9jrk7vibr89s03sy0kac0bhh9ddp0gy45zffhhflnxb5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -210,6 +210,7 @@
             html2text
             imagemagick
             libarchive
+            libcaca
             llvm
             lz4
             lzip
@@ -266,7 +267,7 @@ install.")
 (define-public reprotest
   (package
     (name "reprotest")
-    (version "0.7.29")
+    (version "0.7.30")
     (source
      (origin
        (method git-fetch)
@@ -275,7 +276,7 @@ install.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17n7pdqil3jmpwcshr6dm5qsbpim3847smgxa82wy33kl2bz1ai8"))))
+        (base32 "013mqbbh6dcia2i4qdi4270lcgzr0k879phsaydf9b5ng9fkdajl"))))
     (build-system pyproject-build-system)
     (arguments
      (list

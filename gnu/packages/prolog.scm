@@ -4,7 +4,7 @@
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2021, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2024-2025 jgart <jgart@dismail.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -185,7 +185,7 @@ it.")
 (define-public trealla
   (package
     (name "trealla")
-    (version "2.79.22")
+    (version "2.82.25")
     (source
      (origin
        (method git-fetch)
@@ -194,7 +194,7 @@ it.")
          (url "https://github.com/trealla-prolog/trealla")
          (commit (string-append "v" version))))
        (sha256
-        (base32 "1fhk9lsj71a3l5j0dvn2qjmj85r2ixianjqlf5j5s4d7h08amm2y"))
+        (base32 "0mq1yf5sxzvi9rkw1vwmyh0a9yv8rhqy8z0wd5k748ymvjfhi6g2"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

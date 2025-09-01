@@ -55,7 +55,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages django)
   #:use-module (gnu packages jupyter)
@@ -77,6 +77,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -363,6 +364,26 @@ all the files it generates a report.")
     (description "Beartype aims to be a very fast runtime type checking tool
 written in pure Python.")
     (license license:expat)))
+
+(define-deprecated/public python-case #f
+  (package
+    (name "python-case")
+    (version "1.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "case" version))
+       (sha256
+        (base32 "1cagg06vfph864s6l5jb0zqliwxh647bki8j6lf4a4qrv40jnhs8"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-mock python-nose python-six))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/celery/case")
+    (synopsis "Unittest utilities and convenience methods")
+    (description
+     "The @code{case} package provides utilities on top of unittest, including
+some helpful Python 2 compatibility convenience methods.")
+    (license license:bsd-3)))
 
 (define-public python-codacy-coverage
   (package
@@ -1228,25 +1249,16 @@ Python program.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0fg8jflcf4c929gd4zbcrk73d08waaqjfjmdjrgnv54mzl35pjxl"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")))))))
+        (base32 "0fg8jflcf4c929gd4zbcrk73d08waaqjfjmdjrgnv54mzl35pjxl"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-numpy python-pytest))
+     (list python-numpy python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/kaste/mockito-python")
     (synopsis "Mocking library for Python")
     (description "This package provides a Python implementation of the Java
 library of the same name.  It eases monkey patching, for example to stub out
 side effects when unit testing.")
     (license license:expat)))
-
 
 (define-public python-mypy
   (package
@@ -1587,13 +1599,13 @@ flake8 to check PEP-8 naming conventions.")
        (method url-fetch)
        (uri (pypi-uri "pyannotate" version))
        (sha256
-        (base32
-         "16bm0mf7wxvy0lgmcs1p8n1ji8pnvj1jvj8zk3am70dkp825iv84"))))
-    (build-system python-build-system)
+        (base32 "16bm0mf7wxvy0lgmcs1p8n1ji8pnvj1jvj8zk3am70dkp825iv84"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-mypy-extensions python-six))
-    (home-page
-     "https://github.com/dropbox/pyannotate")
+    (home-page "https://github.com/dropbox/pyannotate")
     (synopsis "Auto-generate PEP-484 annotations")
     (description "This package, PyAnnotate, is used to auto-generate PEP-484
 annotations.")
@@ -1958,18 +1970,21 @@ of the project to ensure it renders properly.")
     (version "1.0.2")
     (source
      (origin
-       (method url-fetch)
-       (uri
-        (pypi-uri "pytest_click" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Stranger6667/pytest-click")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1rcv4m850rl7djzdgzz2zhjd8g5ih8w6l0sj2f9hsynymlsq82xl"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-click python-pytest))
+        (base32 "197nvlqlyfrqpy5lrkmfh1ywpr6j9zipxl9d7syg2a2n7jz3a8rj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-click python-pytest))
     (home-page "https://github.com/Stranger6667/pytest-click")
-    (synopsis "Py.test plugin for Click")
-    (description "This package provides a plugin to test Python click
-interfaces with pytest.")
+    (synopsis "Pytest plugin for Click")
+    (description
+     "This package provides a plugin to test Python click interfaces with
+pytest.")
     (license license:expat)))
 
 (define-public python-pytest-console-scripts
@@ -2027,26 +2042,6 @@ interfaces with pytest.")
 wrapper for the Cookiecutter API.  This fixture helps you verify that
 your template is working as expected and takes care of cleaning up after
 running the tests.")
-    (license license:expat)))
-
-(define-public python-pytest-cram
-  (package
-    (name "python-pytest-cram")
-    (version "0.2.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-cram" version))
-              (sha256
-               (base32
-                "0405ymmrsv6ii2qhq35nxfjkb402sdb6d13xnk53jql3ybgmiqq0"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-cram python-pytest))
-    (home-page "https://github.com/tbekolay/pytest-cram")
-    (synopsis "Run cram tests with pytest")
-    (description "Cram tests command line applications; Pytest tests Python
-applications.  @code{pytest-cram} tests Python command line applications by
-letting you write your Python API tests with pytest, and your command line
-tests in cram.")
     (license license:expat)))
 
 (define-public python-pytest-csv
@@ -2495,16 +2490,17 @@ requests to be replied to with user provided responses.")
     (version "3.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest_isort" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/stephrdev/pytest-isort")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0v0qa5l22y3v0nfkpvghbinzyj2rh4f54k871lrp992lbvf02y06"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f)) ; No tests in PyPi tarball.
-    (propagated-inputs
-     (list python-isort python-pytest))
-    (home-page "https://github.com/moccu/pytest-isort/")
+        (base32 "07hj2z2jsshk0m60j0w10q3yzis69714k7qbw2f0cprc5li9b06n"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-isort python-pytest))
+    (native-inputs (list python-poetry-core))
+    (home-page "https://github.com/stephrdev/pytest-isort")
     (synopsis "Pytest plugin to check import ordering using isort")
     (description
      "This package provides a pytest plugin to check import ordering using
@@ -3399,31 +3395,21 @@ friendly library for concurrency and async I/O in Python.")
       (name "python-pytest-vcr")
       (version (git-version "1.0.2" revision commit))
       (source
-        (origin
-          (method git-fetch)
-          (uri (git-reference
-                 (url "https://github.com/ktosiek/pytest-vcr")
-                 (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32
-            "1yk988zi0la6zpcm3fff0mxf942di2jiymrfqas19nyngj5ygaqs"))))
-      (build-system python-build-system)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest" "tests/"))))))
-      (native-inputs
-       (list python-urllib3))
-      (propagated-inputs
-       (list python-pytest python-vcrpy))
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ktosiek/pytest-vcr")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1yk988zi0la6zpcm3fff0mxf942di2jiymrfqas19nyngj5ygaqs"))))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-urllib3 python-setuptools python-wheel))
+      (propagated-inputs (list python-pytest python-vcrpy))
       (home-page "https://github.com/ktosiek/pytest-vcr")
       (synopsis "Plugin for managing VCR.py cassettes")
       (description
-       "Plugin for managing VCR.py cassettes.")
+       "This package is a pytest plugin for managing VCR.py cassettes.")
       (license license:expat))))
 
 (define-public python-pytest-virtualenv
@@ -3867,7 +3853,9 @@ data in a standard way.")
        (uri (pypi-uri "test-utils" version))
        (sha256
         (base32 "0cs0gyihnkj8ya4yg3ld3ly73mpxrkn2gq9acamclhqvhxsv7zd6"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://github.com/Kami/python-test-utils/")
     (synopsis "Utilities for functional and integration tests")
     (description

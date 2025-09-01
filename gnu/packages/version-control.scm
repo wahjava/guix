@@ -111,10 +111,6 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cook)
-  #:use-module (gnu packages crates-compression)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-vcs)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
@@ -172,6 +168,8 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages qt)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages sync)
@@ -187,7 +185,7 @@
 (define-public breezy
   (package
     (name "breezy")
-    (version "3.3.9")
+    (version "3.3.11")
     (source
      (origin
        (method url-fetch)
@@ -199,29 +197,31 @@
        (snippet '(for-each delete-file (find-files "." "\\pyx.c$")))
        (sha256
         (base32
-         "1n6mqd1iy50537kb4lsr52289yyr1agmkxpchxlhb9682zr8nn62"))))
-    (build-system cargo-build-system)
+         "0fxv7ca6qbrj6bvrbfgjrd9ldppa8zq8hc461rikh85c5xg9rjqi"))))
+    (build-system python-build-system)
     (arguments
      (list
-      #:cargo-inputs (list rust-lazy-static-1
-                           rust-pyo3-0.22
-                           rust-regex-1)
-      #:install-source? #f
       #:modules
-      '((guix build cargo-build-system)
-        ((guix build python-build-system) #:prefix py:)
+      '(((guix build cargo-build-system) #:prefix cargo:)
+        (guix build python-build-system)
         (guix build utils))
       #:imported-modules
       `(,@%cargo-build-system-modules
         ,@%python-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'ensure-no-mtimes-pre-1980
-            (assoc-ref py:%standard-phases 'ensure-no-mtimes-pre-1980))
-          (add-after 'ensure-no-mtimes-pre-1980 'enable-bytecode-determinism
-            (assoc-ref py:%standard-phases 'enable-bytecode-determinism))
-          (add-after 'enable-bytecode-determinism 'ensure-no-cythonized-files
-            (assoc-ref py:%standard-phases 'ensure-no-cythonized-files))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums))))
           (add-after 'unpack 'patch-test-shebangs
             (lambda _
               (substitute* (append (find-files "breezy/bzr/tests")
@@ -235,24 +235,7 @@
                 ;; AttributeError: module 'datetime' has no attribute 'UTC'
                 ;; This only works for python >= 3.11
                 (("datetime.UTC") "datetime.timezone.utc"))))
-          (replace 'build
-            (assoc-ref py:%standard-phases 'build))
-          (delete 'check)             ;moved after the install phase
-          (replace 'install
-            (assoc-ref py:%standard-phases 'install))
-          (add-after 'install 'add-install-to-pythonpath
-            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
-          (add-after 'add-install-to-pythonpath 'add-install-to-path
-            (assoc-ref py:%standard-phases 'add-install-to-path))
-          (add-after 'add-install-to-path 'install-completion
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out  (assoc-ref outputs "out"))
-                     (bash (string-append out "/share/bash-completion"
-                                          "/completions")))
-                (install-file "contrib/bash/brz" bash))))
-          (add-after 'add-install-to-path 'wrap
-            (assoc-ref py:%standard-phases 'wrap))
-          (add-after 'wrap 'check
+          (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (setenv "BZR_EDITOR" "nano")
@@ -270,35 +253,40 @@
                         ;; Unknown Failure
                         "-x" "breezy.tests.test_plugins.TestLoadPluginAt.test_compiled_loaded"
                         "-x" "breezy.tests.test_plugins.TestPlugins.test_plugin_get_path_pyc_only"
-                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal"))))
-          (add-before 'strip 'rename-pth-file
-            (assoc-ref py:%standard-phases 'rename-pth-file)))))
-    (native-inputs (list gettext-minimal
-                         python-wrapper
-                         python-cython
-                         python-setuptools
-                         python-setuptools-gettext
-                         python-setuptools-rust
-                         python-tomli
-                         python-wheel
-                         ;; tests
-                         nano
-                         python-testtools
-                         python-packaging
-                         python-subunit))
-    (inputs (list python-configobj
-                  python-dulwich
-                  python-fastbencode
-                  python-fastimport
-                  python-launchpadlib
-                  python-merge3
-                  python-paramiko
-                  python-gpg
-                  python-patiencediff
-                  python-pygithub
-                  python-pyyaml
-                  python-tzlocal
-                  python-urllib3))
+                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal")))))))
+    (native-inputs
+     (append
+      (list gettext-minimal
+            python-cython
+            python-setuptools
+            python-setuptools-gettext
+            python-setuptools-rust
+            python-tomli
+            python-wheel
+            rust
+            `(,rust "cargo")
+            ;; tests
+            nano
+            python-testtools
+            python-packaging
+            python-subunit)
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs (cons* python-configobj
+                   python-dulwich
+                   python-fastbencode
+                   python-fastimport
+                   python-launchpadlib
+                   python-merge3
+                   python-paramiko
+                   python-gpg
+                   python-patiencediff
+                   python-pygithub
+                   python-pyyaml
+                   python-tzlocal
+                   python-urllib3
+                   (cargo-inputs 'breezy)))
     (home-page "https://www.breezy-vcs.org/")
     (synopsis "Decentralized revision control system")
     (description
@@ -324,14 +312,14 @@ Python 3.3 and later, rather than on Python 2.")
 (define-public git-minimal
   (package
     (name "git-minimal")
-    (version "2.50.1")
+    (version "2.51.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1i4gbin7ah9azaz68j10q9qkdq2bcyv2vm0lvppg3n6bvqv6qgky"))))
+                "0qhbk6wd5iy4pz6skp121kgcc5q64rkybfl7rpaqirf23hjw59v0"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1052,7 +1040,6 @@ the date of the most recent commit that modified them
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.24
       #:import-path "go.abhg.dev/gs"
       #:install-source? #f
       #:build-flags
@@ -1156,7 +1143,7 @@ provides an integration with GitHub and GitLab.")
 (define-public got
   (package
     (name "got")
-    (version "0.116")
+    (version "0.117")
     (source (origin
               (method url-fetch)
               (uri
@@ -1165,7 +1152,7 @@ provides an integration with GitHub and GitLab.")
                 version ".tar.gz"))
               (sha256
                (base32
-                "1zsdisaqv1q612a7jws9qd8n1gm9ilz5mnprkpgvdhc27gblm9p8"))))
+                "0hf16g18z3nfn2rqpgj1wmyxalwfbvj4fgkmfjj9nx7mypbgylwd"))))
     (inputs
      (list libevent
            `(,util-linux "lib")
@@ -1644,7 +1631,6 @@ collaboration using typical untrusted file hosts or services.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.24
       #:import-path "github.com/Apteryks/git-repo-go"
       #:build-flags
       #~(list "-ldflags" (string-append
@@ -2203,7 +2189,7 @@ lot easier.")
 (define-public stgit-2
   (package
     (name "stgit")
-    (version "2.4.12")
+    (version "2.5.3")
     (source
      (origin
        (method git-fetch)
@@ -2212,36 +2198,10 @@ lot easier.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kp3gwmxcjvphg1s0san0vyis8dsdaf02xsflc2b7kkg8m0r0mi3"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin (substitute* (find-files "." "^Cargo\\.toml$")
-                  (("\"~([[:digit:]]+(\\.[[:digit:]]+)*)" _ version)
-                   (string-append "\"^" version)))))))
+        (base32 "0pxhl7fnycs4bx46x9m8v33lsf5hwp0fhqyihlr4sf7ms4b7adsc"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs (("rust-anstyle" ,rust-anstyle-1)
-                       ("rust-anyhow" ,rust-anyhow-1)
-                       ("rust-bstr" ,rust-bstr-1)
-                       ("rust-bzip2-rs" ,rust-bzip2-rs-0.1)
-                       ("rust-clap" ,rust-clap-4)
-                       ("rust-ctrlc" ,rust-ctrlc-3)
-                       ("rust-curl" ,rust-curl-0.4)
-                       ("rust-encoding_rs" ,rust-encoding-rs-0.8)
-                       ("rust-flate2" ,rust-flate2-1)
-                       ("rust-gix" ,rust-gix-0.66)
-                       ("rust-indexmap" ,rust-indexmap-2)
-                       ("rust-is-terminal" ,rust-is-terminal-0.4)
-                       ("rust-jiff" ,rust-jiff-0.1)
-                       ("rust-serde" ,rust-serde-1)
-                       ("rust-serde-json" ,rust-serde-json-1)
-                       ("rust-strsim" ,rust-strsim-0.10)
-                       ("rust-tar" ,rust-tar-0.4)
-                       ("rust-tempfile" ,rust-tempfile-3)
-                       ("rust-termcolor" ,rust-termcolor-1)
-                       ("rust-thiserror" ,rust-thiserror-1)
-                       ("rust-winnow" ,rust-winnow-0.6))
-       #:install-source? #f
+     `(#:install-source? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'build 'build-extras
@@ -2269,7 +2229,7 @@ lot easier.")
            perl
            texinfo
            xmlto))
-    (inputs (list openssl zlib curl))
+    (inputs (cons* openssl zlib curl (cargo-inputs 'stgit-2)))
     (home-page "https://stacked-git.github.io/")
     (synopsis "Stacked Git (StGit) manages Git commits as a stack of patches")
     (description "StGit uses a patch stack workflow.  Each individual patch
@@ -2294,6 +2254,7 @@ Features include:
   (package
     (inherit stgit-2)
     (name "emacs-stgit")
+    (version "0.17.1")                  ;from stgit.el
     (build-system emacs-build-system)
     (arguments
      (list
@@ -2301,13 +2262,20 @@ Features include:
       #:lisp-directory "contrib"
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-version-executables
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "stgit.el"
+                ("stgit-stg-program" (search-input-file inputs "/bin/stg")))
+              (emacs-substitute-variables "stgit.el"
+                ("stgit-git-program" (search-input-file inputs "/bin/git")))))
           (add-before 'install-license-files 'leave-lisp-directory
             (lambda _
               (chdir ".."))))))
+    (inputs (list stgit-2 git))
     (synopsis "Emacs major mode for StGit interaction")
     (description "This package a interactive tool to interact with git
 branches using StGit.")
-    (license license:gpl3+)))
+    (license license:gpl2+)))
 
 (define-public stgit
   (package
@@ -2757,101 +2725,126 @@ execution of any hook written in any language before every commit.")
 (define-public python-pre-commit
   (deprecated-package "python-pre-commit" pre-commit))
 
+;; XXX: This is a temporary helper to avoid recompiling mercurial/pinned.
+;; If you update mercurial, don't touch it but work around it.
+;; If you update mercurial/pinned, include that in mercurial, and use inheritance
+;; for mercurial/pinned.
+(define mercurial-check-phase
+  #~(lambda* (#:key tests? #:allow-other-keys)
+      (with-directory-excursion "tests"
+        ;; The following tests are known to fail.
+        (for-each delete-file
+                  '(;; XXX: This test calls 'run-tests.py --with-hg=
+                    ;; `which hg`' and fails because there is no hg on
+                    ;; PATH from before (that's why we are building it!)?
+                    "test-hghave.t"
+
+                    ;; This test is missing a debug line
+                    ;; mmapping $TESTTMP/a/.hg/store/00changelog.i (no-pure !)
+                    ;; but the relevant output is correct.
+                    "test-revlog-mmapindex.t"
+
+                    ;; This test creates a shebang spanning multiple
+                    ;; lines which is difficult to substitute.  It
+                    ;; only tests the test runner itself, which gets
+                    ;; thoroughly tested during the check phase anyway.
+                    "test-run-tests.t"
+
+                    ;; These tests fail because the program is not
+                    ;; connected to a TTY in the build container.
+                    "test-nointerrupt.t"
+                    "test-transaction-rollback-on-sigpipe.t"
+
+                    ;; FIXME: This gets killed but does not receive an interrupt.
+                    "test-commandserver.t"
+
+                    ;; These tests get unexpected warnings about using
+                    ;; deprecated functionality in Python, but otherwise
+                    ;; succeed; try enabling for later Mercurial versions.
+                    "test-demandimport.py"
+                    "test-patchbomb-tls.t"
+                    ;; Similarly, this gets a more informative error
+                    ;; message from Python 3.10 than it expects.
+                    "test-http-bad-server.t"
+
+                    ;; Only works when run in a hg-repo, not in an
+                    ;; extracted tarball
+                    "test-doctest.py"
+
+                    ;; TODO: the fqaddr() call fails in the build
+                    ;; container, causing these server tests to fail.
+                    "test-hgwebdir.t"
+                    "test-http-branchmap.t"
+                    "test-pull-bundle.t"
+                    "test-push-http.t"
+                    "test-serve.t"
+                    "test-subrepo-deep-nested-change.t"
+                    "test-subrepo-recursion.t"
+                    ;; FIXME: Investigate why it failed.
+                    "test-convert-darcs.t"))
+        (when tests?
+          (invoke "./run-tests.py"
+                  ;; ‘make check’ does not respect ‘-j’.
+                  (string-append "-j" (number->string
+                                       (parallel-job-count)))
+                  ;; The default time-outs are too low for many systems.
+                  ;; Raise them generously: Guix enforces its own.
+                  "--timeout" "86400"
+                  "--slowtimeout" "86400"
+                  ;; The test suite takes a long time and produces little
+                  ;; output by default.  Prevent timeouts due to silence.
+                  "-v")))))
+
 (define-public mercurial
   (package
     (name "mercurial")
-    (version "6.9.5")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "https://www.mercurial-scm.org/"
-                                 "release/mercurial-" version ".tar.gz"))
-             (patches (search-patches "mercurial-hg-extension-path.patch"))
-             (sha256
-              (base32
-               "1zb5rjqs5z0y900hml0v4wsmv59cdhi50a8kcbjxdp79z7p2mwnk"))))
+    (version "7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.mercurial-scm.org/"
+                           "release/mercurial-" version ".tar.gz"))
+       (patches (search-patches "mercurial-hg-extension-path.patch"))
+       (sha256
+        (base32 "1jz54akdnsp5frlbsr2xg71kbp2919v61gkkx7c7bi1q7k421ng8"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'unpack 'patch-tests
-           (lambda _
-             (substitute* (find-files "tests" "\\.(t|py)$")
-               (("/bin/sh")
-                (which "sh"))
-               (("/usr/bin/env")
-                (which "env")))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (with-directory-excursion "tests"
-               ;; The following tests are known to fail.
-               (for-each delete-file
-                         '(;; XXX: This test calls 'run-tests.py --with-hg=
-                           ;; `which hg`' and fails because there is no hg on
-                           ;; PATH from before (that's why we are building it!)?
-                           "test-hghave.t"
-
-                           ;; This test is missing a debug line
-                           ;; mmapping $TESTTMP/a/.hg/store/00changelog.i (no-pure !)
-                           ;; but the relevant output is correct.
-                           "test-revlog-mmapindex.t"
-
-                           ;; This test creates a shebang spanning multiple
-                           ;; lines which is difficult to substitute.  It
-                           ;; only tests the test runner itself, which gets
-                           ;; thoroughly tested during the check phase anyway.
-                           "test-run-tests.t"
-
-                           ;; These tests fail because the program is not
-                           ;; connected to a TTY in the build container.
-                           "test-nointerrupt.t"
-                           "test-transaction-rollback-on-sigpipe.t"
-
-                           ;; FIXME: This gets killed but does not receive an interrupt.
-                           "test-commandserver.t"
-
-                           ;; These tests get unexpected warnings about using
-                           ;; deprecated functionality in Python, but otherwise
-                           ;; succeed; try enabling for later Mercurial versions.
-                           "test-demandimport.py"
-                           "test-patchbomb-tls.t"
-                           ;; Similarly, this gets a more informative error
-                           ;; message from Python 3.10 than it expects.
-                           "test-http-bad-server.t"
-
-                           ;; Only works when run in a hg-repo, not in an
-                           ;; extracted tarball
-                           "test-doctest.py"
-
-                           ;; TODO: the fqaddr() call fails in the build
-                           ;; container, causing these server tests to fail.
-                           "test-hgwebdir.t"
-                           "test-http-branchmap.t"
-                           "test-pull-bundle.t"
-                           "test-push-http.t"
-                           "test-serve.t"
-                           "test-subrepo-deep-nested-change.t"
-                           "test-subrepo-recursion.t"
-                           ;; FIXME: Investigate why it failed.
-                           "test-convert-darcs.t"))
-               (when tests?
-                 (invoke "./run-tests.py"
-                         ;; ‘make check’ does not respect ‘-j’.
-                         (string-append "-j" (number->string
-                                              (parallel-job-count)))
-                         ;; The default time-outs are too low for many systems.
-                         ;; Raise them generously: Guix enforces its own.
-                         "--timeout" "86400"
-                         "--slowtimeout" "86400"
-                         ;; The test suite takes a long time and produces little
-                         ;; output by default.  Prevent timeouts due to silence.
-                         "-v"))))))))
+     (list
+      #:imported-modules `((guix build python-build-system)
+                           ,@%default-gnu-imported-modules)
+      #:modules '((guix build gnu-build-system)
+                  ((guix build python-build-system) #:prefix py:)
+                  (guix build utils))
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'patch-tests
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* (find-files "tests" "\\.(t|py)$")
+                (("/bin/sh")
+                 (search-input-file inputs "bin/sh"))
+                (("/usr/bin/env")
+                 (search-input-file inputs "bin/env")))))
+          (add-before 'check 'configure-check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (with-directory-excursion "tests"
+                (substitute* "run-tests.py"
+                  ;; XXX: Adapt pip call to build daemon chroot.
+                  (("b\"install\", b\"\\.\"")
+                   "b\"install\", b\"--no-build-isolation\", b\".\"")
+                  ;; XXX: Log the actual PYTHONPATH.
+                  (("\"PYTHONPATH\"")
+                   "\"GUIX_PYTHONPATH\"")))))
+          (add-before 'configure-check 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (delete 'check)
+          (add-after 'install 'check #$mercurial-check-phase))))
     (native-inputs
      (list python-docutils
            ;; The following inputs are only needed to run the tests.
-           python-nose unzip which))
+           python-setuptools-next python-setuptools-scm-next python-wheel unzip which))
     (inputs
      (list python-wrapper))
     ;; Find third-party extensions.
@@ -2866,6 +2859,38 @@ execution of any hook written in any language before every commit.")
 efficiently handles projects of any size and offers an easy and intuitive
 interface.")
     (license license:gpl2+)))
+
+(define-public mercurial/pinned
+  (package
+    (inherit mercurial)
+    (version "6.9.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.mercurial-scm.org/"
+                           "release/mercurial-" version ".tar.gz"))
+       (patches (search-patches "mercurial-hg-extension-path.patch"))
+       (sha256
+        (base32 "1zb5rjqs5z0y900hml0v4wsmv59cdhi50a8kcbjxdp79z7p2mwnk"))))
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "PREFIX=" (assoc-ref %outputs "out")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'patch-tests
+            (lambda _
+              (substitute* (find-files "tests" "\\.(t|py)$")
+                (("/bin/sh")
+                 (which "sh"))
+                (("/usr/bin/env")
+                 (which "env")))))
+          (replace 'check #$mercurial-check-phase))))
+    (native-inputs
+     (list python-docutils
+           ;; The following inputs are only needed to run the tests.
+           python-nose unzip which))))
 
 (define-public python-hg-evolve
   (package
@@ -3024,14 +3049,14 @@ following features:
 (define-public subversion
   (package
     (name "subversion")
-    (version "1.14.3")
+    (version "1.14.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://apache/subversion/"
                                   "subversion-" version ".tar.bz2"))
               (sha256
                (base32
-                "0h54l4p2dlk1rm4zm428hi6ij6xpqxqlqmvkhmz5yhq9392zv7ll"))))
+                "18a4avism0a7b1siikkm6v2snhanlmqqzl4p8hspp2vbfvkjk2p7"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -3099,6 +3124,20 @@ reliability as a safe haven for valuable data; the simplicity of its model and
 usage; and its ability to support the needs of a wide variety of users and
 projects, from individuals to large-scale enterprise operations.")
     (license license:asl2.0)))
+
+(define-public subversion/pinned
+  (hidden-package
+   (package
+     (inherit subversion)
+     (name "subversion")
+     (version "1.14.3")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "mirror://apache/subversion/"
+                            "subversion-" version ".tar.bz2"))
+        (sha256
+         (base32 "0h54l4p2dlk1rm4zm428hi6ij6xpqxqlqmvkhmz5yhq9392zv7ll")))))))
 
 (define-public rcs
   (package
@@ -3816,72 +3855,11 @@ a built-in wiki, built-in file browsing, built-in tickets system, etc.")
        (uri (crate-uri "pijul" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "1lk261rrk4xy60d4akfn8mrrqxls28kf9mzrjcrxdzbdysml66n5"))
-        (snippet
-         #~(begin (use-modules (guix build utils))
-                  (substitute* "Cargo.toml"
-                    (("\"= ?([[:digit:]]+(\\.[[:digit:]]+)*)" _ version)
-                     (string-append "\"^" version)))))))
+        (base32 "1lk261rrk4xy60d4akfn8mrrqxls28kf9mzrjcrxdzbdysml66n5"))))
     (build-system cargo-build-system)
     (arguments
      (list
        #:install-source? #f
-       #:cargo-inputs
-       (list rust-anyhow-1
-             rust-async-trait-0.1
-             rust-atty-0.2
-             rust-byteorder-1
-             rust-bytes-1
-             rust-canonical-path-2
-             rust-chrono-0.4
-             rust-clap-4
-             rust-clap-complete-4
-             rust-ctrlc-3
-             rust-data-encoding-2
-             rust-dateparser-0.1
-             rust-dirs-next-2
-             rust-edit-0.1
-             rust-env-logger-0.8
-             rust-futures-0.3
-             rust-futures-util-0.3
-             rust-git2-0.13
-             rust-human-panic-1
-             rust-hyper-0.14
-             rust-ignore-0.4
-             rust-keyring-2
-             rust-lazy-static-1
-             rust-libpijul-1
-             rust-log-0.4
-             rust-open-3
-             rust-pager-0.16
-             rust-path-slash-0.1
-             rust-pijul-config-0.0.1
-             rust-pijul-identity-0.0.1
-             rust-pijul-interaction-0.0.1
-             rust-pijul-remote-1
-             rust-pijul-repository-0.0.1
-             rust-ptree-0.4
-             rust-rand-0.8
-             rust-regex-1
-             rust-reqwest-0.11
-             rust-sanakirja-1
-             rust-serde-1
-             rust-serde-derive-1
-             rust-serde-json-1
-             rust-tempfile-3
-             rust-termcolor-1
-             rust-thiserror-1
-             rust-thrussh-0.33
-             rust-thrussh-config-0.5
-             rust-thrussh-keys-0.21
-             rust-tokio-1
-             rust-toml-0.5
-             rust-url-2
-             rust-validator-0.15
-             rust-whoami-1)
-       #:cargo-development-inputs
-       (list rust-exitcode-1
-             rust-expectrl-0.7)
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'install 'install-extras
@@ -3920,7 +3898,7 @@ a built-in wiki, built-in file browsing, built-in tickets system, etc.")
                  (list this-package)
                  '())
              (list pkg-config)))
-    (inputs (list libsodium openssl))
+    (inputs (cons* libsodium openssl (cargo-inputs 'pijul)))
     (home-page "https://nest.pijul.com/pijul/pijul")
     (synopsis "Distributed version control system")
     (description "This package provides pijul, a sound and fast distributed
@@ -4207,28 +4185,28 @@ will reconstruct the object along its delta-base chain and return it.")
 (define-public git-lfs
   (package
     (name "git-lfs")
-    (version "3.6.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/git-lfs/git-lfs")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "02819i3sd9qjw89lcpv6rmhfqaxkz1pddqw8havw3ysmcmhmb7yd"))))
+    (version "3.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/git-lfs/git-lfs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wxx7i29n4gk8s78xq4hacc1ylwi6bq4b6y2bjx8fs9p7z4awnqh"))))
     (build-system go-build-system)
     (arguments
      (list
       #:embed-files #~(list "children" "nodes" "text")
-      #:import-path "github.com/git-lfs/git-lfs"
+      #:import-path "github.com/git-lfs/git-lfs/v3"
       #:install-source? #f
       #:test-flags #~(list "-skip" "TestHistoryRewriterUpdatesRefs")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-/bin/sh
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "src/github.com/git-lfs/git-lfs/lfs/hook.go"
+              (substitute* "src/github.com/git-lfs/git-lfs/v3/lfs/hook.go"
                 (("/bin/sh")
                  (search-input-file inputs "bin/sh")))))
           ;; Only build the man pages if ruby-asciidoctor is available.
@@ -4237,15 +4215,15 @@ will reconstruct the object along its delta-base chain and return it.")
                       ;; Without this, the binary generated in 'build
                       ;; phase won't have any embedded usage-text.
                       (lambda _
-                        (with-directory-excursion "src/github.com/git-lfs/git-lfs"
+                        (with-directory-excursion "src/github.com/git-lfs/git-lfs/v3"
                           (invoke "make" "mangen"))))
                     (add-after 'build 'build-man-pages
                       (lambda _
-                        (with-directory-excursion "src/github.com/git-lfs/git-lfs"
+                        (with-directory-excursion "src/github.com/git-lfs/git-lfs/v3"
                           (invoke "make" "man"))))
                     (add-after 'install 'install-man-pages
                       (lambda* (#:key outputs #:allow-other-keys)
-                        (with-directory-excursion "src/github.com/git-lfs/git-lfs/man"
+                        (with-directory-excursion "src/github.com/git-lfs/git-lfs/v3/man"
                           (for-each
                            (lambda (manpage)
                              (install-file manpage
@@ -4260,6 +4238,7 @@ will reconstruct the object along its delta-base chain and return it.")
                    go-github-com-git-lfs-go-netrc
                    go-github-com-git-lfs-pktline
                    go-github-com-git-lfs-wildmatch-v2
+                   go-github-com-golang-groupcache
                    go-github-com-jmhodges-clock
                    go-github-com-leonelquinteros-gotext
                    go-github-com-mattn-go-isatty
@@ -4301,6 +4280,7 @@ file contents on a remote server.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "git.sr.ht/~ngraves/lfs-s3"))
     (inputs (list git-lfs))
     (propagated-inputs
@@ -4609,7 +4589,7 @@ TkDiff is included for browsing and merging your changes.")
 (define-public qgit
   (package
     (name "qgit")
-    (version "2.11")
+    (version "2.12")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4618,12 +4598,20 @@ TkDiff is included for browsing and merging your changes.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11948zzszi28js3pbxlss8r85jlb6fizxm8f5ljqk67m5qxk2v0f"))))
+                "16gy1xyn4xa3bjziphcdixbf6qv3bcs81z2k9j6biwpzs1ingkdb"))
+              ;; TODO: Remove this patch in the next update since it is fixed
+              ;; in the next commit.
+              (patches
+               (search-patches "qgit-2.12-fix-search-style.patch"))))
     (build-system qt-build-system)
     (arguments
-     (list #:tests? #f)) ;no tests
+     (list #:qtbase qtbase
+           #:tests? #f)) ;no tests
     (propagated-inputs
      (list git))
+    (inputs
+     (list qt5compat
+           qtwayland))
     (home-page "https://github.com/tibirna/qgit")
     (synopsis "Graphical front-end for git")
     (description
@@ -4847,7 +4835,7 @@ developer workflow, and project and release management.")
 (define-public hut
   (package
     (name "hut")
-    (version "0.6.0")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
@@ -4856,19 +4844,11 @@ developer workflow, and project and release management.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14cia976i2jdzyzw4wk9fhkh6zqgmb09ryf31ys24smmfcdfxyf1"))
-       (modules '((guix build utils)))
-       (snippet
-        #~(begin
-            ;; XXX: Module name has been changed upstream, it's already
-            ;; adjusted on master, consider to remove in the next refresh
-            ;; cycle.
-            (substitute* (find-files "." "\\.go$")
-              (("git.sr.ht/~emersion/go-scfg")
-               "codeberg.org/emersion/go-scfg"))))))
+        (base32 "0scw4nvm3qpg7l6anhljkixn3g36k03ikg6pl0hs76a3wkf89km5"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       #:import-path "git.sr.ht/~xenrox/hut"
       #:phases
       #~(modify-phases %standard-phases

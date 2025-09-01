@@ -8110,8 +8110,10 @@ of http://code.google.com/p/mimeparse/, with a Common Lisp flavor.")
   (sbcl-package->clasp-package sbcl-cl-mimeparse))
 
 (define-public sbcl-cl-mixed
-  (let ((commit "4aaff134d3902d93a2a8605c10de4bcfc62d7afa")
-        (revision "0"))
+  ;; There are no releases, but this commit is entitled
+  ;; "Bump to libmixed-2.4.0".
+  (let ((commit "3da661ae199be94f822e3f9ef6bf03bc6456652b")
+        (revision "1"))
     (package
       (name "sbcl-cl-mixed")
       (version (git-version "2.1.0" revision commit))
@@ -8123,7 +8125,7 @@ of http://code.google.com/p/mimeparse/, with a Common Lisp flavor.")
                (commit commit)))
          (file-name (git-file-name "cl-mixed" version))
          (sha256
-          (base32 "1mrj95lxb1gbxxm89x8gy1ifw2ic1p5wwpapkxcd2jr8abw7zny0"))
+          (base32 "0i7bb2b3a9i4kgp7dzzs5211xj56zzcpwkjlfxpslfp7iz0685y0"))
          (modules '((guix build utils)))
          (snippet
           ;; Delete bundled libraries.
@@ -12203,8 +12205,8 @@ interfaces as well as a functional and an object oriented interface.")
           `(cons "clsql-cffi" ,asd-systems)))))))
 
 (define-public sbcl-clss
-  (let ((revision "2")
-        (commit "f62b849189c5d1be378f0bd3d403cda8d4fe310b"))
+  (let ((revision "3")
+        (commit "cd5f603e8207ec23c147c5cfda636ef8273a7525"))
     (package
       (name "sbcl-clss")
       (version (git-version "0.3.1" revision commit))
@@ -12213,10 +12215,10 @@ interfaces as well as a functional and an object oriented interface.")
          (method git-fetch)
          (uri
           (git-reference
-           (url "https://github.com/Shinmera/clss")
+           (url "https://codeberg.org/shinmera/clss")
            (commit commit)))
          (sha256
-          (base32 "1033dchpanhcgxl5qfhr80aw9adbp9bvllhzvvy5p9mrfnidd1fv"))
+          (base32 "15wh1zafamxc5z5hni9ni72xg4n24am2xfqv7fwwhfw1sl06bcm2"))
          (file-name (git-file-name name version))))
       (inputs
        (list sbcl-array-utils sbcl-plump))
@@ -12224,7 +12226,7 @@ interfaces as well as a functional and an object oriented interface.")
       (synopsis "DOM tree searching engine based on CSS selectors")
       (description "CLSS is a DOM traversal engine based on CSS
 selectors.  It makes use of the Plump-DOM and is used by lQuery.")
-      (home-page "https://github.com/Shinmera/clss")
+      (home-page "https://codeberg.org/shinmera/clss")
       (license license:zlib))))
 
 (define-public cl-clss
@@ -13610,6 +13612,42 @@ on UNIX like platforms.")
 
 (define-public ecl-daemon
   (sbcl-package->ecl-package sbcl-daemon))
+
+(define-public sbcl-damn-fast-priority-queue
+  (let ((commit "f4c03741d05c757aed245b41a5c3f8c7096cc1d2")
+        (revision "0"))
+    (package
+     (name "sbcl-damn-fast-priority-queue")
+     (version (git-version "0.0.2" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/phoe/damn-fast-priority-queue")
+             (commit commit)))
+       (file-name (git-file-name "damn-fast-priority-queue" version))
+       (sha256
+        (base32 "0ch4yma51r2lnsjpr45mxga7sf03l3c76l6ijffm1rq2g9ywaksa"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria))
+     (arguments
+      `(#:asd-systems '("damn-fast-priority-queue"
+                        "damn-fast-stable-priority-queue")))
+     (synopsis "Fast priority queue")
+     (description
+      "A heap-based priority queue whose first and foremost priority is speed.")
+     (home-page "https://github.com/phoe/damn-fast-priority-queue")
+     (license license:expat))))
+
+(define-public cl-damn-fast-priority-queue
+  (sbcl-package->cl-source-package sbcl-damn-fast-priority-queue))
+
+(define-public ecl-damn-fast-priority-queue
+  (sbcl-package->ecl-package sbcl-damn-fast-priority-queue))
+
+(define-public clasp-damn-fast-priority-queue
+  (sbcl-package->clasp-package sbcl-damn-fast-priority-queue))
 
 (define-public sbcl-data-format-validation
   (let ((commit "95d44766e829582598f9dcdc5c23719c462d5bfb")
@@ -21201,6 +21239,39 @@ LispWorks library that are used in software such as ContextL.")
 (define-public clasp-lw-compat
   (sbcl-package->clasp-package sbcl-lw-compat))
 
+(define-public sbcl-lwcells
+  (let ((commit "e7446ac146a31b630e74c9bce7dab34b50cc333d")
+        (revision "0"))
+    (package
+     (name "sbcl-lwcells")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/lwcells")
+             (commit commit)))
+       (file-name (git-file-name "lwcells" version))
+       (sha256
+        (base32 "1p8a5j52isp14w6pxy6c6fsrwwvnyb9r6yvd8bxh7sjh6mnvp3nc"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-named-closure
+            sbcl-damn-fast-priority-queue))
+     (synopsis "Light-weight cells for dataflow programming")
+     (description
+      "A dataflow extension to Common Lisp that maintains a consistent state of
+cells according to functions specifying their relation.")
+     (home-page "https://github.com/kchanqvq/lwcells")
+     (license license:gpl3+))))
+
+(define-public cl-lwcells
+  (sbcl-package->cl-source-package sbcl-lwcells))
+
+(define-public ecl-lwcells
+  (sbcl-package->ecl-package sbcl-lwcells))
+
 (define-public sbcl-lzlib
   (let ((commit "22767ca12d1c1bd59a7ae1f9c5ef7d2e937206bb")
         (revision "2"))
@@ -23012,6 +23083,40 @@ JSON handling.  Load the parser backend you prefer!
 
 (define-public ecl-nactivitypub
   (sbcl-package->ecl-package sbcl-nactivitypub))
+
+(define-public sbcl-named-closure
+  (let ((commit "d57305582137a24d6c8f8375fba496c653bb5699")
+        (revision "0"))
+    (package
+     (name "sbcl-named-closure")
+     (version (git-version "0.0.1" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kchanqvq/named-closure")
+             (commit commit)))
+       (file-name (git-file-name "named-closure" version))
+       (sha256
+        (base32 "17lpslk7amh9pghjpjdnd1aj50r1kdc4iyai2h2xas7wampg5xf5"))))
+     (build-system asdf-build-system/sbcl)
+     (inputs
+      (list sbcl-alexandria
+            sbcl-serapeum
+            sbcl-iterate
+            sbcl-trivial-cltl2))
+     (synopsis "Introspectable, readably-printable and redefinable closures")
+     (description
+      "A CLOS class that defines callable objects whose behavior is similar to
+closures but adds conveniences such as introspectability.")
+     (home-page "https://github.com/kchanqvq/named-closure")
+     (license license:expat))))
+
+(define-public cl-named-closure
+  (sbcl-package->cl-source-package sbcl-named-closure))
+
+(define-public ecl-named-closure
+  (sbcl-package->ecl-package sbcl-named-closure))
 
 (define-public sbcl-named-readtables
   (let ((commit "d5ff162ce02035ec7de1acc9721385f325e928c0")
@@ -27389,6 +27494,39 @@ internbombing, excessive input and macro characters.")
 (define-public ecl-safe-read
   (sbcl-package->ecl-package sbcl-safe-read))
 
+(define-public sbcl-salmagundi
+  (let ((commit "aa231f6043111ec5dbeb06feab732efb7d59c959")
+        (revision "0"))
+    (package
+      (name "sbcl-salmagundi")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/s-expressionists/Salmagundi")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1i0hknnd555ih509kvna2xdirfxyy05wr2bp628997rnj8drlsnx"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-trivial-package-locks))
+      (home-page "https://github.com/s-expressionists/Salmagundi")
+      (synopsis "Implementation of Common Lisp hash tables")
+      (description "This library contains code that implements Common Lisp
+hash tables.")
+      (license license:bsd-2))))
+
+(define-public cl-salmagundi
+  (sbcl-package->cl-source-package sbcl-salmagundi))
+
+(define-public ecl-salmagundi
+  (sbcl-package->ecl-package sbcl-salmagundi))
+
+(define-public clasp-salmagundi
+  (sbcl-package->clasp-package sbcl-salmagundi))
+
 (define-public sbcl-salza2
   (package
     (name "sbcl-salza2")
@@ -31589,6 +31727,39 @@ in DEFPACKAGE.")
 (define-public ecl-trivial-package-local-nicknames
   (sbcl-package->ecl-package sbcl-trivial-package-local-nicknames))
 
+(define-public sbcl-trivial-package-locks
+  (let ((commit "ca2e2b17124c7898942894383002313cea59486d")
+        (revision "0"))
+    (package
+      (name "sbcl-trivial-package-locks")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/yitzchak/trivial-package-locks")
+                (commit commit)))
+         (file-name (git-file-name "cl-trivial-package-locks" commit))
+         (sha256
+          (base32 "0kbyrkd7a9apyq83bl96jspjggjsswxh93111wrmpvhbnm2vll60"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-parachute))
+      (home-page "https://github.com/yitzchak/trivial-package-locks")
+      (synopsis "Standard interface to the various package lock implementations")
+      (description
+       "This package provides a standard interface to the various package lock
+implementations of Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-trivial-package-locks
+  (sbcl-package->cl-source-package sbcl-trivial-package-locks))
+
+(define-public ecl-trivial-package-locks
+  (sbcl-package->ecl-package sbcl-trivial-package-locks))
+
+(define-public clasp-trivial-package-locks
+  (sbcl-package->clasp-package sbcl-trivial-package-locks))
+
 (define-public sbcl-trivial-raw-io
   (let ((commit "b1a3c876305baa0dead419841de7b3e433a75867")
         (revision "1"))
@@ -32970,7 +33141,7 @@ has a small codebase that's easy to understand and use.")
 (define-public sbcl-wayflan
   (package
     (name "sbcl-wayflan")
-    (version "0.0.4")
+    (version "0.1.0")
     (source
      (origin
        (method git-fetch)
@@ -32979,7 +33150,7 @@ has a small codebase that's easy to understand and use.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-wayflan" version))
        (sha256
-        (base32 "0y6hzskp1vgaigzj5b3i695sc6dn5mk7nlxs21nh5ybzmf4chhyy"))))
+        (base32 "11n8w4fh996gspgcsfhbrcmz7az4yrx9a15jh6n72kswgjzq0s5j"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-parachute))
@@ -33878,6 +34049,9 @@ This library aims to provide developers with more options.")
 
 (define-public ecl-zsort
   (sbcl-package->ecl-package sbcl-zsort))
+
+(define-public clasp-zsort
+  (sbcl-package->clasp-package sbcl-zsort))
 
 (define-public sbcl-zstd
   (let ((commit "134f058eee11512cf772a8d5b64364acf56a10b8")

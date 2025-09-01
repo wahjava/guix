@@ -59,7 +59,6 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gl)
@@ -117,14 +116,14 @@
 (define computed-origin-method (@@ (guix packages) computed-origin-method))
 
 (define firefox-l10n
-  (let ((commit "25c14798b15f9933b6c1e2bc655030842b6e0edd"))
+  (let ((commit "2962877b9abd5bfa1e24e5bbc1e16e47e12d6760"))
     (origin
       (method git-fetch)
       (uri (git-reference
             (url "https://github.com/mozilla-l10n/firefox-l10n.git")
             (commit commit)))
       (file-name (git-file-name "firefox-l10n" commit))
-      (sha256 (base32 "06iymygkf94s04ixvk1mlis9p5lmypx5k8pmrd3z3jddpmawk0r1")))))
+      (sha256 (base32 "1gaxbjjm0d4k4wgl64mwcxy2hx1vdq1dbmvjacg2fqxpnb62481x")))))
 
 (define* (make-librewolf-source #:key version firefox-hash librewolf-hash l10n)
   (let* ((ff-src (firefox-source-origin
@@ -194,10 +193,20 @@
         "librewolf-compare-paths.patch"
         "librewolf-use-system-wide-dir.patch"
         "librewolf-add-store-to-rdd-allowlist.patch"))
-      ;; XXX: 75 Mo (800+ Mo uncompressed) of unused tests.
-      ;; Removing it makes it possible to compile on some systems.
+      ;; Slim down the tarball by removing unbundled libraries and 75 Mo (800+
+      ;; Mo uncompressed) of unused tests.
+      ;; TODO: Unbundle security/nss and media/libpng.
       (modules '((guix build utils)))
-      (snippet #~(delete-file-recursively "testing/web-platform")))))
+      (snippet
+       #~(for-each delete-file-recursively
+                   '("testing/web-platform"
+                     "gfx/cairo/libpixman"
+                     "js/src/ctypes/libffi"
+                     "ipc/chromium/src/third_party/libevent"
+                     "media/libvpx"
+                     "docs/nspr"
+                     "media/libwebp"
+                     "modules/zlib"))))))
 
 ;;; Define the versions of rust needed to build firefox, trying to match
 ;;; upstream.  See table at [0], `Uses' column for the specific version.
@@ -205,24 +214,23 @@
 ;;; but since in Guix only the latest packaged Rust is officially supported,
 ;;; it is a tradeoff worth making.
 ;;; 0: https://firefox-source-docs.mozilla.org/writing-rust-code/update-policy.html
-;; 136.0.1 wants 1.84, but it's not available in Guix yet.
-(define rust-librewolf rust-1.82)
+(define rust-librewolf rust)
 
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
 ;; or: (format-time-string "%Y%m%d%H%M%S")
-(define %librewolf-build-id "20250727200313")
+(define %librewolf-build-id "20250829153926")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "141.0-1")
+    (version "142.0.1-1")
     (source
      (make-librewolf-source
       #:version version
-      #:firefox-hash "1j1m6niw47xi6aj9rlcny8jhqkppjvg22cq7mikim93wpf22m640"
-      #:librewolf-hash "18k3d09dr6jkhr6g8z8c3aa7jj0ynjalkmvc3nj7wd98mgvky2xj"
+      #:firefox-hash "1h0hx0jxwy4rshdq6s5l5hbj8gyhn2zssisr59skwf63si7b9bdh"
+      #:librewolf-hash "1myzm6jblnrw1vdf5xlynbfr6a9swwcaws689az7xgq6s6n0rc3y"
       #:l10n firefox-l10n))
     (build-system gnu-build-system)
     (arguments
@@ -644,7 +652,7 @@
                   libxt
                   mesa
                   mit-krb5
-                  nspr-4.36
+                  nspr
                   nss-rapid
                   pango
                   pciutils

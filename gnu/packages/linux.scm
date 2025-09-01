@@ -34,7 +34,7 @@
 ;;; Copyright © 2018 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;; Copyright © 2019 mikadoZero <mikadozero@yandex.com>
-;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019 Stefan Stefanović <stefanx2ovic@gmail.com>
 ;;; Copyright © 2019-2022 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2019 Kei Kebreau <kkebreau@posteo.net>
@@ -83,6 +83,7 @@
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
+;;; Copyright © 2025 Mathieu Laparie <mlaparie@disr.it>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -118,7 +119,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages compression)
@@ -182,6 +182,7 @@
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages rrdtool)
   #:use-module (gnu packages rsync)
+  #:use-module (gnu packages rust-sources)
   #:use-module (gnu packages samba)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
@@ -514,86 +515,71 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.15-version "6.15.6")
+(define-public linux-libre-6.15-version "6.15.11")
 (define-public linux-libre-6.15-gnu-revision "gnu")
 (define deblob-scripts-6.15
   (linux-libre-deblob-scripts
    linux-libre-6.15-version
    linux-libre-6.15-gnu-revision
    (base32 "05fr8s00ljj7v26z3gb1yrfna42i7zy36x6wrg74ai5hwwc7jfnd")
-   (base32 "05153ci3sk9gsq8vgk6phvzszldaj2psmyp10cjivm3gl6qvkbhk")))
+   (base32 "0301x3n5qbg8xm48pxq1dhrq0vkr61bqdcyaz0mbckrg20kw6m67")))
 (define-public linux-libre-6.15-pristine-source
   (let ((version linux-libre-6.15-version)
-        (hash (base32 "1z5l0b59q56qj6s56cxzv43lhfx9z9sp4vfziw60fz97ak4qdd9b")))
+        (hash (base32 "14sxwrvw9p4ybizb8ky1rgahc62q0aw5qkmzqp3cpnavqfgldaw9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.15)))
-
-(define-public linux-libre-6.14-version "6.14.11")
-(define-public linux-libre-6.14-gnu-revision "gnu")
-(define deblob-scripts-6.14
-  (linux-libre-deblob-scripts
-   linux-libre-6.14-version
-   linux-libre-6.14-gnu-revision
-   (base32 "1c27l734pwxgdwhq0gzibaznh0695pqvl17vbddw6q5znm84a0s3")
-   (base32 "14vabccax7mq5gisshlnx2ljx3hr4jj106aw3s9qx5dxbjvr7qcw")))
-(define-public linux-libre-6.14-pristine-source
-  (let ((version linux-libre-6.14-version)
-        (hash (base32 "06rvydmc2yfspidnsay5hin3i8p4fxy3bvzwnry7gjf9dl5cs71z")))
-   (make-linux-libre-source version
-                            (%upstream-linux-source version hash)
-                            deblob-scripts-6.14)))
 
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.38")
+(define-public linux-libre-6.12-version "6.12.43")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
    (base32 "0y6i9ifax1a8bxih3rr9xzy3mj61ssgx9yfsy6fh94mni6wl51gp")
-   (base32 "1hc3fgc0wajlwbsjkvfcxvmjw4bcxfbrnbfbcasbczz7if4f0fvf")))
+   (base32 "1yl447396g454116j8v17wsqg5i0gyb2rrxvaygw6xdkbwrrj28j")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1k0gcwavn5iws3z1as39227i2hnc62qnfddjfqy7k7ymhf6zldgh")))
+        (hash (base32 "1vmxywg11z946i806sg7rk7jr9px87spmwwbzjxpps2nsjybpjqg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.98")
+(define-public linux-libre-6.6-version "6.6.102")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
    linux-libre-6.6-version
    linux-libre-6.6-gnu-revision
    (base32 "1fph0cf5vwkxcyz2cay4d70sqw1y02dx3shfclhp9y4nmkk169pq")
-   (base32 "1zzpk2hpv76lylip4j7jkn0jqcjj15h3jff22x22i73mwz2kiqgk")))
+   (base32 "11i7pvm5n31rvp05msbm3ciclr84cz9c94f5r5aa6mmzhslwpbxk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1raxyhvv0yay3k1izwcqdbq9322nflflfzcn9d1jrhmb032k8si9")))
+        (hash (base32 "0p6yjifwyrqlppn40isgxb0b5vqmljggmnp7w75vlc2c6fvzxll0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.145")
+(define-public linux-libre-6.1-version "6.1.148")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
    (base32 "00yh14z7sr9pkakkkpdyp8fj41d56a306xsf5yb2lzm0sgl6lvza")
-   (base32 "1hzjr44hy8px4n3x5my2syhd60chkfy79ajgzvlz04pc5yf6ihpi")))
+   (base32 "0f3jgbfd2j7sz7h1hb30s1r9147g1cbb3ia09k9834fvbiz1ihaa")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0qrkcrqb0migsrq6xl1idyz8n6vjbdk74z4sc9na97b6n5vp0r9i")))
+        (hash (base32 "18c024bqqc3srzv2gva55p95yghjc6x3p3f54v3hziki4wx3v86r")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.188")
+(define-public linux-libre-5.15-version "5.15.189")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -603,27 +589,27 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "1nfcrdwa2mgih57ch9kh8gc6jl950a7vpqgr56xk1b02303km5f4")))
+        (hash (base32 "1hshd26ahn6dbw6jnqi0v5afpk672w7p09mk7iri93i7hxdh5l73")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.239")
+(define-public linux-libre-5.10-version "5.10.240")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
    linux-libre-5.10-version
    linux-libre-5.10-gnu-revision
-   (base32 "1lg0sxfjn0hpcdfyqy2r5kchnjfyyx2xraxhmjhwwkpiwl9ph501")
-   (base32 "11liynz5vayms646gj0rjj8fmrqhv203mwsqs3sx9p8y84v50d4p")))
+   (base32 "1wn9k4lbxcc9rzl1rqidlnb472wyayillrh57gyxnghi7j9ghqna")
+   (base32 "0r1whrfhhhjyvppiidhihcvyzcab6dva6g9a4div8jkxm62s2cq3")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "1nzhl1y6avfl77fyqwjwy3qc6679gp92k0d3aarscrdydcml5yid")))
+        (hash (base32 "04sdcf4aqsqchii38anzmk9f9x65wv8q1x3m9dandmi6fabw724d")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.295")
+(define-public linux-libre-5.4-version "5.4.296")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -633,7 +619,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0l7pwhgw9laxfypcpqlz411x3hybcw2269abh3lpcw96bgv5m1k2")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "1adn0pbk8y1zp1yrz83ch6h4wypm2qvbnx4xig3sls2nfgvmi0f4")))
+        (hash (base32 "0fm73yqzbzclh2achcj8arpg428d412k2wgmlfmyy6xzb1762qrx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -668,11 +654,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 (define-public linux-libre-6.15-source
   (source-with-patches linux-libre-6.15-pristine-source
-                       (list %boot-logo-patch
-                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
-
-(define-public linux-libre-6.14-source
-  (source-with-patches linux-libre-6.14-pristine-source
                        (list %boot-logo-patch
                              %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
@@ -801,11 +782,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
   (make-linux-libre-headers* linux-libre-6.15-version
                              linux-libre-6.15-gnu-revision
                              linux-libre-6.15-source))
-
-(define-public linux-libre-headers-6.14
-  (make-linux-libre-headers* linux-libre-6.14-version
-                             linux-libre-6.14-gnu-revision
-                             linux-libre-6.14-source))
 
 (define-public linux-libre-headers-6.12
   (make-linux-libre-headers* linux-libre-6.12-version
@@ -1178,14 +1154,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
   (make-linux-libre* linux-libre-6.15-version
                      linux-libre-6.15-gnu-revision
                      linux-libre-6.15-source
-                     '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
-                     #:configuration-file kernel-config))
-
-(define-public linux-libre-6.14
-  (make-linux-libre* linux-libre-6.14-version
-                     linux-libre-6.14-gnu-revision
-                     linux-libre-6.14-source
                      '("x86_64-linux" "i686-linux" "armhf-linux"
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
@@ -2381,7 +2349,7 @@ and the notification, WiFi, and Bluetooth LED.")
 (define-public tuxedo-keyboard
   (package
     (name "tuxedo-keyboard")
-    (version "4.14.2")
+    (version "4.15.4")
     (source
      (origin
        (method git-fetch)
@@ -2390,21 +2358,23 @@ and the notification, WiFi, and Bluetooth LED.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0b7qivyd8r58cq84q11b2z919px5p9k5zbinm6ahj07w0lsq2j7b"))))
+        (base32 "0mimgcbp57gp3smd439g8040sl80qqnfzmh2vhs2qv1kwyxs75sq"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite
+    ;; This package fails to build on aarch64, and the manufacturer only sells
+    ;; machines based on Intel-compatible processors. For more information, see
+    ;; <https://codeberg.org/guix/guix/pulls/1795>.
+    (supported-systems '("i686-linux" "x86_64-linux"))
     (home-page "https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers")
     (synopsis "Linux kernel modules to control keyboard on most Tuxedo computers")
     (description
      "This package provides the @code{tuxedo_keyboard}, @code{tuxedo_io},
 @code{clevo_wmi} @acronym{WMI, Windows Management Engine} and the
 @code{clevo_acpi} @acronym{ACPI, Advanced Configuration and Power Interface}
-kernel modules to control the keyboard on most Tuxedo computers.  Only white
-backlight only models are currently not supported.  The @code{tuxedo_io}
-module is also needed for the @code{tuxedo-control-center} (short tcc)
-package.")
-    (license license:gpl3+)))
+kernel modules to control the keyboard on most Tuxedo computers. The @code{tuxedo_io}
+module is also needed for the @code{tuxedo-control-center} (short tcc) package.")
+    (license license:gpl2+)))
 
 (define-public evdi
   (package
@@ -2580,38 +2550,35 @@ graphics card on Optimus laptops.")
       (license license:gpl2))))
 
 (define-public bin-graph
-  ;; XXX: The upstream does not have tags yet.
-  (let ((commit "1dd42e3e8e123e993d6c287967502c8d4b36f9ba")
-        (revision "0"))
-    (package
-      (name "bin-graph")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/8dcc/bin-graph")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1wjkl789r7iys3nnyk813gsdxwwy2ryxgxirx5xw02lzk790dywl"))))
-      (arguments
-       (list #:tests? #f                ; no tests
-             #:make-flags
-             #~(list (string-append "CC=" #$(cc-for-target))
-                     (string-append "PREFIX=" #$output)
-                     (string-append "INSTALL_DIR=" #$output "/bin"))
-             #:phases
-             #~(modify-phases %standard-phases
-                 (delete 'configure))))    ; no configure script
-      (build-system gnu-build-system)
-      (inputs (list libpng))
-      (home-page "https://github.com/8dcc/bin-graph")
-      (synopsis "Visualize binary files")
-      (description
-       "@code{bin-graph} provides a simple way of visualizing the different regions
+  (package
+    (name "bin-graph")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/8dcc/bin-graph")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18m71kn7f4mn7k8hxx8mr1zl35a9ri06a3p1y2mncbgr8nn3pgb0"))))
+    (arguments
+     (list #:tests? #f                ; no tests
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output)
+                   (string-append "INSTALL_DIR=" #$output "/bin"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))    ; no configure script
+    (build-system gnu-build-system)
+    (inputs (list libpng))
+    (home-page "https://github.com/8dcc/bin-graph")
+    (synopsis "Visualize binary files")
+    (description
+     "@code{bin-graph} provides a simple way of visualizing the different regions
 of a binary file.")
-      (license license:gpl3))))
+    (license license:gpl3)))
 
 (define-public ddcci-driver-linux
   (let ((revision "0")
@@ -3099,7 +3066,7 @@ deviation, and minimum and maximum values.  It can show a nice histogram too.")
            ;; FIXME: For now we cannot reliably run tests on GNU/Hurd:
            ;; <https://bugs.gnu.org/47791>.
            #:tests? (and (not (%current-target-system))
-                         (not (string-suffix? "-gnu" (%current-system))))
+                         (not (system-hurd?)))
 
            #:phases
            #~(modify-phases %standard-phases
@@ -3414,24 +3381,20 @@ slabtop, tload, top, vmstat, w, watch and sysctl.")
 (define-public usbutils
   (package
     (name "usbutils")
-    (version "017")
+    (version "018")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kernel.org/linux/utils/usb/usbutils/"
-                          "usbutils-" version ".tar.xz"))
-      (sha256
-       (base32 "0nz008kshcajc9asxr4j5dh4wgq72z52lws4ga6y60wirzymz8m6"))))
-    (build-system gnu-build-system)
+       (method url-fetch)
+       (uri (string-append "mirror://kernel.org/linux/utils/usb/usbutils/"
+                           "usbutils-" version ".tar.xz"))
+       (sha256
+        (base32 "14xd7j9fl3pm0z4dhqj3mf9paqk431kq4vi602f5hiw5nmcqpxl3"))))
+    (build-system meson-build-system)
     (outputs (list "out" "python"))
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'bootstrap 'patch-bootstrap-scripts
-            (lambda _
-              (substitute* "usbhid-dump/bootstrap"
-                (("/bin/sh") (which "sh")))))
           (add-after 'install 'separate-python-output
             ;; Separating one Python script shaves more than 106 MiB from :out.
             (lambda _
@@ -3440,17 +3403,21 @@ slabtop, tload, top, vmstat, w, watch and sysctl.")
                                 (new (string-append #$output:python "/" file)))
                             (mkdir-p (dirname new))
                             (rename-file old new)))
-                        (list "bin/lsusb.py")))))))
-    (inputs
-     (list eudev libusb python))
-    (native-inputs
-     (list autoconf automake libtool pkg-config))
+                        (list "bin/lsusb.py"))))
+          (add-after 'install 'install-usbreset
+            (lambda _
+              (install-file "usbreset"
+                            (string-append #$output "/bin")))))))
+    (native-inputs (list pkg-config))
+    (inputs (list eudev libusb python))
     (home-page "http://www.linux-usb.org/")
     (synopsis
      "Tools for working with USB devices")
     (description
-     "Collection of tools to query what type of USB devices are connected to the
-system, including @command{lsusb}.")
+     "Collection of tools to query what type of USB devices are connected to
+the system, including @command{lsusb}.  The experimental @command{usbreset}
+command included in the package, but be aware that it may not work for all
+devices.")
     (license license:gpl2+)))
 
 (define-public usbip-utils
@@ -4258,7 +4225,10 @@ that the Ethernet protocol is much simpler than the IP protocol.")
                 (string-append "HDRDIR=" out "/include")
                 (string-append "SBINDIR=" out "/sbin")
                 (string-append "CONFDIR=" out "/etc")
-                (string-append "MANDIR=" out "/share/man")))
+                (string-append "MANDIR=" out "/share/man")
+                #$@(if (target-ppc64le?)
+                       '("CCOPTS=-O2 -pipe -Wno-incompatible-pointer-types")
+                       '())))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -5312,7 +5282,7 @@ from the module-init-tools project.")
         (list
           ;; For the test suite.
           cppcheck
-          go)))
+          go-1.23)))
     (home-page "https://github.com/rfjakob/earlyoom")
     (synopsis "Simple out of memory (OOM) daemon for the Linux kernel")
     (description "Early OOM is a minimalist out of memory (OOM) daemon that
@@ -8136,124 +8106,128 @@ not as a replacement for it.")
                    license:gpl3+))))            ; everything else
 
 (define-public hotspot
-  (package
-    (name "hotspot")
-    (version "1.5.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/KDAB/hotspot")
-                    (commit (string-append "v" version))
-                    ;; Include the bundled perfparser and PrefixTickLabels
-                    ;; libraries, which are to be used in source form.
-                    (recursive? #t)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "04k2rvf2lgi8hp7dzqzn65fcd2lsiylwr04d44q75j0wvgbjjv1v"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      ;; As mentioned in the option help text, the KAuth helper cannot be
-      ;; installed to a custom prefix and the build fails with "file cannot
-      ;; create directory: /polkit-1/actions.  Maybe need administrative"
-      ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
-      #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
-                                "-DQT6_BUILD=ON")
-      #:qtbase qtbase
-      ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
-      ;; the later seemingly requiring sudo or access to the kernel
-      ;; trace points.
-      #:test-exclude
-       (string-append
-        "("
-        (string-join
-         ;; The 'tst_models' expected output doesn't exactly
-         ;; match.
-         '("tst_models"
-           ;; The 'tst_callgraphgenerator' perf invocation
-           ;; fails when run in the build container.
-           "tst_callgraphgenerator"
-           ;; The 'tst_perfparser' test requires sudo/access
-           ;; to the kernel scheduler trace points.
-           "tst_perfparser")
-         "|")
-        ")")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-perfparser
-            ;; XXX: This phase is copied from qt-creator: keep them in sync!
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; perfparser attempts to dynamically load the demangle
-              ;; libraries; use their absolute file name to avoid having to
-              ;; set LD_LIBRARY_PATH.
-              (let ((librustc_demangle.so
-                     (with-exception-handler (lambda (ex)
-                                               (if (search-error? ex)
-                                                   #f
-                                                   (raise-exception ex)))
-                       (lambda ()
-                         (search-input-file inputs "lib/librustc_demangle.so"))
-                       #:unwind? #t)))
-                (substitute* "3rdparty/perfparser/app/demangler.cpp"
-                  (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
-                    all)
-                   (if librustc_demangle.so
-                       (format #f "loadDemangleLib(QStringLiteral(~s)"
-                               librustc_demangle.so)
-                       all))            ;no rustc_demangle; leave unchanged
-                  (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
-                   (format #f "loadDemangleLib(QStringLiteral(~s)"
-                           (search-input-file inputs
-                                              "lib/libd_demangle.so")))))))
-          (add-after 'unpack 'path-paths
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "src/perfoutputwidgetkonsole.cpp"
-                (("\"tail\"")
-                 (format #f "~s" (search-input-file inputs "bin/tail"))))
-              (substitute* "src/perfrecord.cpp"
-                (("\"perf( )?\"" _ space)
-                 (string-append "\"" (search-input-file inputs "bin/perf")
-                                (or space "") "\""))))))))
-    (native-inputs
-     (list extra-cmake-modules
-           vulkan-headers))
-    (inputs
-     (append
-      (list coreutils-minimal
-            d-demangler
-            elfutils
-            karchive
-            kconfig
-            kcoreaddons
-            kddockwidgets
-            kgraphviewer
-            ki18n
-            kio
-            kiconthemes
-            kitemmodels
-            kitemviews
-            knotifications
-            kparts
-            ksyntaxhighlighting
-            kwindowsystem
-            libxkbcommon
-            perf
-            qtdeclarative
-            qtsvg
-            solid
-            threadweaver
-            `(,zstd "lib"))
-      (if (supported-package? rust-rustc-demangle-capi-0.1)
-          (list rust-rustc-demangle-capi-0.1)
-          '())))
-    (home-page "https://github.com/KDAB/hotspot")
-    (synopsis "Performance analysis GUI for Linux perf")
-    (description "Hotspot is a standalone GUI for performance data analysis.
+  ;; Use the latest git commit as it includes unreleased fixes for the test
+  ;; suite.
+  (let ((commit "5cec69301a3f34ada86ce9fe01a9538b04b3cf7c")
+        (revision "0"))
+    (package
+      (name "hotspot")
+      (version (git-version "1.5.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/KDAB/hotspot")
+                       (commit commit)
+                       ;; Include the bundled perfparser and PrefixTickLabels
+                       ;; libraries, which are to be used in source form.
+                       (recursive? #t)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "115gskjdcb1q3mgrnv1qcdrhxabjzl1hhkpk1klk67ayicsk1ym6"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        ;; As mentioned in the option help text, the KAuth helper cannot be
+        ;; installed to a custom prefix and the build fails with "file cannot
+        ;; create directory: /polkit-1/actions.  Maybe need administrative"
+        ;; (see: https://bugs.kde.org/show_bug.cgi?id=363678).
+        #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
+                                  "-DQT6_BUILD=ON")
+        #:qtbase qtbase
+        ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
+        ;; the later seemingly requiring sudo or access to the kernel
+        ;; trace points.
+        #:test-exclude
+        (string-append
+         "("
+         (string-join
+          ;; The 'tst_models' expected output doesn't exactly
+          ;; match.
+          '("tst_models"
+            ;; The 'tst_callgraphgenerator' perf invocation
+            ;; fails when run in the build container.
+            "tst_callgraphgenerator"
+            ;; The 'tst_perfparser' test requires sudo/access
+            ;; to the kernel scheduler trace points.
+            "tst_perfparser")
+          "|")
+         ")")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-perfparser
+              ;; XXX: This phase is copied from qt-creator: keep them in sync!
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; perfparser attempts to dynamically load the demangle
+                ;; libraries; use their absolute file name to avoid having to
+                ;; set LD_LIBRARY_PATH.
+                (let ((librustc_demangle.so
+                       (with-exception-handler (lambda (ex)
+                                                 (if (search-error? ex)
+                                                     #f
+                                                     (raise-exception ex)))
+                         (lambda ()
+                           (search-input-file inputs "lib/librustc_demangle.so"))
+                         #:unwind? #t)))
+                  (substitute* "3rdparty/perfparser/app/demangler.cpp"
+                    (("loadDemangleLib\\(QStringLiteral\\(\"rustc_demangle\")"
+                      all)
+                     (if librustc_demangle.so
+                         (format #f "loadDemangleLib(QStringLiteral(~s)"
+                                 librustc_demangle.so)
+                         all))            ;no rustc_demangle; leave unchanged
+                    (("loadDemangleLib\\(QStringLiteral\\(\"d_demangle\")")
+                     (format #f "loadDemangleLib(QStringLiteral(~s)"
+                             (search-input-file inputs
+                                                "lib/libd_demangle.so")))))))
+            (add-after 'unpack 'path-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "src/perfoutputwidgetkonsole.cpp"
+                  (("\"tail\"")
+                   (format #f "~s" (search-input-file inputs "bin/tail"))))
+                (substitute* "src/perfrecord.cpp"
+                  (("\"perf( )?\"" _ space)
+                   (string-append "\"" (search-input-file inputs "bin/perf")
+                                  (or space "") "\""))))))))
+      (native-inputs
+       (list extra-cmake-modules
+             vulkan-headers))
+      (inputs
+       (append
+        (list coreutils-minimal
+              d-demangler
+              elfutils
+              karchive
+              kconfig
+              kcoreaddons
+              kddockwidgets
+              kgraphviewer
+              ki18n
+              kio
+              kiconthemes
+              kitemmodels
+              kitemviews
+              knotifications
+              kparts
+              ksyntaxhighlighting
+              kwindowsystem
+              libxkbcommon
+              perf
+              qtdeclarative
+              qtsvg
+              solid
+              threadweaver
+              `(,zstd "lib"))
+        (if (supported-package? rust-rustc-demangle-capi-0.1)
+            (list rust-rustc-demangle-capi-0.1)
+            '())))
+      (home-page "https://github.com/KDAB/hotspot")
+      (synopsis "Performance analysis GUI for Linux perf")
+      (description "Hotspot is a standalone GUI for performance data analysis.
 It aims to be similar to KCachegrind, but for data collected with
 @command{perf}, a profiler for use with the kernel Linux.  Its main feature is
 graphically visualizing a @file{perf.data} file.")
-    (license (list license:gpl2+ license:gpl3+)))) ;dual licensed
+      (license (list license:gpl2+ license:gpl3+))))) ;dual licensed
 
 (define-public ecryptfs-utils
   (package
@@ -11137,7 +11111,7 @@ persistent over reboots.")
                                                  ;; user API (uAPI) headers.
                                                  "install_uapi_headers")
                                            make-flags)))))))))
-    (native-inputs (list linux-libre-headers-latest pkg-config))
+    (native-inputs (list pkg-config))
     (propagated-inputs (list elfutils zlib)) ;in Requires.private of libbpf.pc
     (home-page "https://github.com/libbpf/libbpf")
     (synopsis "BPF CO-RE (Compile Once – Run Everywhere)")
@@ -12222,6 +12196,36 @@ random programs using differential testing.")
 virtual server table in the Linux kernel.  The Linux Virtual Server can be used
 to build scalable network services based on a cluster of two or more nodes.")
     (license license:gpl2+)))
+
+(define-public ryzenadj
+  (package
+    (name "ryzenadj")
+    (version "0.17.0")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/flygoat/ryzenadj/archive/refs/tags/"
+                                  "v" version ".tar.gz"))
+                   (sha256
+                    (base32 "0i2x6kbn2ix52vjz1mmh0c0g3w0k4sn0lq68wbsk0pgndzcck2l4"))
+              (modules '((guix build utils)))
+              (snippet
+               '(begin (delete-file-recursively "win32")
+                 #t))))
+    (build-system cmake-build-system)
+    (inputs (list pciutils))
+    (arguments
+     (list #:tests? #f ; No test suite
+           #:phases #~(modify-phases %standard-phases
+                        (add-before 'install 'build
+                          (lambda _
+                            (invoke "cmake" "-DCMAKE_BUILD_TYPE=Release" "."))))))
+    (home-page "https://github.com/flygoat/ryzenadj")
+    (synopsis "Power management tool for AMD Ryzen APUs")
+    (description
+     "@command{ryzenadj} is an utility to adjust power management settings for
+AMD Ryzen mobile processors.  You will need to ensure it can access /dev/mem,
+for instance by using the \"iomem=relaxed\" kernel argument.")
+    (license license:lgpl3)))
 
 (define-public ryzen-smu
   (package

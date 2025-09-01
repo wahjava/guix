@@ -72,6 +72,7 @@
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages messaging)
   #:use-module (gnu packages multiprecision)
@@ -271,6 +272,7 @@ Breeze is the default theme for the KDE Plasma desktop.")
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
+           #:test-exclude "flatpaktest"
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'remove-qmlmodule-required
@@ -282,13 +284,12 @@ Breeze is the default theme for the KDE Plasma desktop.")
                  (lambda _
                    (setenv "LDFLAGS" (string-append "-Wl,-rpath=" #$output
                                                     "/lib/plasma-discover"))))
-               (replace 'check
+               (add-before 'check 'check-setup
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests?
                      (setenv "XDG_DATA_DIRS"
                              (string-append (getcwd)
-                                            ":" (getenv "XDG_DATA_DIRS")))
-                     (invoke "ctest" "-E" "knsbackendtest")))))))
+                                            ":" (getenv "XDG_DATA_DIRS")))))))))
     (native-inputs (list extra-cmake-modules pkg-config))
     (inputs (list appstream-qt6
                   attica
@@ -314,14 +315,17 @@ Breeze is the default theme for the KDE Plasma desktop.")
                   kdeclarative
                   kcmutils
                   kidletime
+                  libostree ; required by flatpak
+                  markdown
                   packagekit-qt6
                   purpose
+                  qcoro-qt6
                   qt5compat
                   qtdeclarative
                   qtsvg
+                  qtwebview
                   qcoro-qt6))
     ;; -- The following features have been disabled:
-    ;; * Ostree, Library to manage ostree repository. Required to build the rpm-ostree backend
     ;; * RpmOstree, rpm-ostree binary to manage the system. Required to build the rpm-ostree backend
     ;;
     ;; -- The following OPTIONAL packages have not been found:
@@ -435,6 +439,53 @@ games, and tools.")
 concept.")
     (home-page "https://invent.kde.org/plasma/kactivitymanagerd")
     (license (list license:gpl2 license:gpl3))))
+
+(define-public klassy
+  (package
+    (name "klassy")
+    (version "6.4.breeze6.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/paulmcauley/klassy")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hrr8kg988qzpk8mccc8kk9lah9b89wx0h47s1981wvb9bci5dpr"))))
+    (build-system qt-build-system)
+    (native-inputs (list extra-cmake-modules))
+    (inputs (list qtsvg
+                  kirigami
+                  qtdeclarative
+                  kconfig
+                  kconfigwidgets
+                  kcoreaddons
+                  kcolorscheme
+                  kdecoration
+                  kcmutils
+                  kguiaddons
+                  kiconthemes
+                  kwindowsystem
+                  ki18n))
+    (arguments
+     (list
+      #:qtbase qtbase
+      #:tests? #f ; No tests.
+      #:configure-flags
+      #~(list "-DBUILD_QT5=OFF")))
+    (home-page "https://github.com/paulmcauley/klassy")
+    (synopsis "Customizable window decoration for the KDE Plasma desktop")
+    (description
+     "Klassy is a highly customizable binary Window Decoration,
+Application Style and Global Theme plugin for recent versions of the KDE Plasma
+desktop.")
+    (license (list license:bsd-3
+                   license:cc0
+                   license:expat
+                   license:gpl2
+                   license:gpl2+
+                   license:gpl3))))
 
 (define-public krdp
   (package
@@ -869,6 +920,82 @@ computer's hardware.")
     (description "This package provides menu editor for Plasma Workspaces.")
     (home-page "https://invent.kde.org/plasma/kmenuedit")
     (license license:gpl2+)))
+
+(define-public koi
+  (package
+    (name "koi")
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/baduhai/Koi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z3j3lcfqkwck4i4srpcanjyb2cmizd702f6s5lhfhrmmsbccwkx"))))
+    (build-system qt-build-system)
+    (inputs (list kconfig
+                  kcoreaddons
+                  kconfigwidgets
+                  kdbusaddons
+                  kde-cli-tools
+                  kvantum
+                  plasma-workspace))
+    (arguments
+     (list
+      #:modules '((ice-9 ftw)
+                  (guix build qt-build-system)
+                  (guix build utils))
+      #:tests? #f
+      #:qtbase qtbase
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-hardcoded-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; Correct theme search paths.  This won't be needed if the
+              ;; following request is implemented:
+              ;; https://github.com/baduhai/Koi/issues/123
+              (ftw "."
+                   (lambda (file _ flag)
+                     (when (and (eq? flag 'regular)
+                                (or (string-suffix? ".c" file)
+                                    (string-suffix? ".cpp" file)))
+                       (substitute* file
+                         (("/var/run/current-system/sw")
+                          "/run/current-system/profile")))))
+              ;; Correct executable paths.
+              (substitute* "src/utils.cpp"
+                (("/usr/bin/kquitapp6")
+                 (search-input-file inputs "bin/kquitapp6"))
+                (("/usr/bin/kstart")
+                 (search-input-file inputs "bin/kstart")))
+              (substitute* "src/plugins/plasmastyle.cpp"
+                (("/usr/bin/plasma-apply-desktoptheme")
+                 (search-input-file inputs "bin/plasma-apply-desktoptheme")))
+              (substitute* "src/plugins/kvantumstyle.cpp"
+                (("/usr/bin/kvantummanager")
+                 (search-input-file inputs "bin/kvantummanager")))
+              (substitute* "src/plugins/colorscheme.cpp"
+                (("programToLocate = \\{\"plasma-apply-colorscheme\"\\}")
+                 (string-append "programToLocate = {\""
+                                (search-input-file inputs
+                                 "bin/plasma-apply-colorscheme") "\"}")))
+              (substitute* "src/plugins/icons.cpp"
+                (("programToLocate = \\{\"plasma-changeicons\"\\}")
+                 (string-append "programToLocate = {\""
+                                (search-input-file inputs
+                                 "libexec/plasma-changeicons") "\"}")))
+              (substitute* "src/plugins/script.cpp"
+                (("programToLocate = \\{\"bash\"\\}")
+                 (string-append "programToLocate = {\""
+                                (search-input-file inputs "bin/bash") "\"}"))))))))
+    (home-page "https://github.com/baduhai/Koi")
+    (synopsis "Theme scheduling for the KDE Plasma Desktop")
+    (description
+     "Koi is a program designed to provide the KDE Plasma Desktop functionality
+to automatically switch between light and dark themes.")
+    (license license:lgpl3)))
 
 (define-public kongress
   (package
@@ -1955,7 +2082,8 @@ on QtMultimedia and @command{yt-dlp}.")
                   kstatusnotifieritem
                   qtdeclarative))
     (propagated-inputs (list plasma-workspace))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:tests? #f        ; no tests
+                     #:qtbase qtbase))
     (home-page "https://invent.kde.org/plasma/plasma-browser-integration")
     (synopsis "Integrate browsers into the Plasma Desktop")
     (description
@@ -3125,7 +3253,8 @@ of a Plasma shell.")
                   plasma-workspace
                   qtdeclarative
                   qtwebengine))
-    (arguments (list #:qtbase qtbase))
+    (arguments (list #:qtbase qtbase
+                     #:tests? #f))      ; no tests
     (synopsis "Control center to configure Plasma Desktop")
     (description "This package provides configuration UI for Plasma Desktop.")
     (home-page "https://invent.kde.org/plasma/systemsettings")

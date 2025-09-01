@@ -107,12 +107,10 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages django)
@@ -140,6 +138,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages rdf)
   #:use-module (gnu packages rpc)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
@@ -835,7 +834,7 @@ of a fake DNS resolver.")
 (define-public python-huggingface-hub
   (package
     (name "python-huggingface-hub")
-    (version "0.23.2")
+    (version "0.31.4")
     (source
      (origin
        (method git-fetch)
@@ -844,7 +843,7 @@ of a fake DNS resolver.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hygxqcixkc1d9sr47j2km6z0p17aj4k1dzm4cvpddrvhrgqayq5"))))
+        (base32 "1rjkrmvvyzxlbnbndrg4v9qq39grn46c26zrdjgpf114gci5pwap"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -881,7 +880,13 @@ of a fake DNS resolver.")
              "-k" (string-append
                    "not test_push_to_hub"
                    " and not test_from_pretrained_model_id_only"
-                   " and not test_from_pretrained_model_id_and_revision"))
+                   " and not test_from_pretrained_model_id_and_revision"
+                   ;; These all require internet access
+                   " and not test_auth"
+                   " and not test_oauth"
+                   " and not test_utils_sha"
+                   " and not test_inference_providers"
+                   " and not test_xet"))
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'pre-check
@@ -908,6 +913,7 @@ of a fake DNS resolver.")
            python-pytest-asyncio
            python-pytest-cov
            python-pytest-env
+           python-pytest-mock
            python-pytest-rerunfailures
            python-pytest-vcr
            python-pytest-xdist
@@ -918,7 +924,7 @@ of a fake DNS resolver.")
            python-typing-extensions
            python-urllib3
            python-wheel))
-    (home-page "https://github.com/huggingface/huggingface_hub")
+    (home-page "https://huggingface.co/docs/huggingface_hub/")
     (synopsis "Client library for accessing the huggingface.co hub")
     (description
      "This package provides a client library to download and publish models,
@@ -969,14 +975,14 @@ adds functionality on top of @code{wadlib}.")
 (define-public python-launchpadlib
   (package
     (name "python-launchpadlib")
-    (version "1.10.16")
+    (version "2.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "launchpadlib" version))
        (sha256
-        (base32 "106aixwchwyb100wlf4cnj1vgsi2d7x40ps8xv8az27r6qwv3x0d"))))
-    (build-system python-build-system)
+        (base32 "0br4j76l83lvyrhm8psml9cqmdsn65rx48w1q1a0s1bmpf85ihml"))))
+    (build-system pyproject-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
                         (add-before 'check 'set-home
@@ -984,12 +990,10 @@ adds functionality on top of @code{wadlib}.")
                             ;; Tests require a writable home.
                             (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-     (list python-httplib2
-           python-keyring
-           python-lazr-restfulclient
-           python-lazr-uri))
-    (native-inputs (list python-mock python-testresources python-wadllib))
-    (home-page "https://help.launchpad.net/API/launchpadlib")
+     (list python-httplib2 python-lazr-restfulclient python-lazr-uri))
+    (native-inputs (list python-pytest python-testresources python-wadllib
+                         python-setuptools python-wheel))
+    (home-page "https://documentation.ubuntu.com/launchpad")
     (synopsis "Python client library for Launchpad's web service")
     (description "@code{launchpadlib} is a Python library that allows
 scripting Launchpad via its the web service API.")
@@ -1617,17 +1621,30 @@ It features a minimal TLS 1.3 implementation, a QUIC stack and an HTTP/3 stack."
 (define-public python-aiorpcx
   (package
     (name "python-aiorpcx")
-    (version "0.22.1")
+    (version "0.25.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "aiorpcX" version))
+       (method git-fetch)
+       ;; PyPI misses the util.py file used for tests.
+       (uri (git-reference
+              (url "https://github.com/kyuupichan/aiorpcX")
+              (commit version)))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "0lx54bcinp44fmr8q4bbffsqbkg8kdcwykf9i5jj0bj3sfzgf9k0"))))
-    (build-system python-build-system)
+         "0sn4xxlpy0kb5b25bqrjzh2m6bskdyydc6cq8bigb7g5dacksn4q"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; This test opens a remote connection.
+      #~(list "-k" "not test_create_connection_resolve_good")))
+    (native-inputs (list python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-wheel))
     (propagated-inputs
-     (list python-attrs))
+     (list python-attrs python-websockets))
     (home-page "https://github.com/kyuupichan/aiorpcX")
     (synopsis "Generic asyncio RPC implementation")
     (description
@@ -1848,28 +1865,38 @@ routes using HTTP Digest Authentication.")
     (license license:bsd-2)))
 
 (define-public python-css-html-js-minify
-  (package
-    (name "python-css-html-js-minify")
-    (version "2.5.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "css-html-js-minify" version ".zip"))
-              (sha256
-               (base32
-                "0v3l2dqdk2y4r6ax259gs4ij1zzm9yxg6491s6254vs9w3vi37sa"))))
-    (build-system python-build-system)
-    ;; XXX: The git repository has no tags, and the PyPI releases do not
-    ;; contain tests.
-    (arguments '(#:tests? #f))
-    (native-inputs (list unzip))
-    (home-page "https://github.com/juancarlospaco/css-html-js-minify")
-    (synopsis "CSS/HTML/JS minifier")
-    (description
-     "This package provides a single-file minifier for CSS, HTML, and JavaScript.")
-    ;; XXX: The README just says "GNU GPL and GNU LGPL and MIT".  From
-    ;; <https://github.com/juancarlospaco/css-html-js-minify/issues/9> it
-    ;; looks like the user can choose a license.
-    (license (list license:gpl3+ license:lgpl3+ license:expat))))
+  (let ((commit "8f72452960e41bc5476e50d96481f633eff72750")
+        (revision "0"))
+    (package
+      (name "python-css-html-js-minify")
+      (version (git-version "2.5.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/juancarlospaco/css-html-js-minify")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1lkx03720zk6q16w3d9r3l5kryikd1cmzwrcjzsjxwrq4zfh6vdf"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'relax-requirements
+              (lambda _
+                (substitute* "setup.cfg"
+                  (("^tests_require.*") "")))))))
+      (native-inputs (list python-setuptools python-wheel unzip))
+      (home-page "https://github.com/juancarlospaco/css-html-js-minify")
+      (synopsis "CSS/HTML/JS minifier")
+      (description
+       "This package provides a single-file minifier for CSS, HTML, and JavaScript.")
+      ;; XXX: The README just says "GNU GPL and GNU LGPL and MIT".  From
+      ;; <https://github.com/juancarlospaco/css-html-js-minify/issues/9> it
+      ;; looks like the user can choose a license.
+      (license (list license:gpl3+ license:lgpl3+ license:expat)))))
 
 (define-public python-aws-sam-translator
   (package
@@ -2146,15 +2173,24 @@ decode and default on encode.
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-deprecated
+            (lambda _
+              (substitute* "src/cfnlint/data/AdditionalSpecs/LmbdRuntimeLifecycle.json"
+                (("deprecated\": \"2025")
+                 "deprecated\": \"2125")))))
+      ;; tests: 1807 passed, 26 deselected, 1 warning
       #:test-flags
       #~(list "-k" (string-join
                     (list
                      ;; Skip documentation tests.
                      "not test_update_docs"
                      ;; Tests fail with error: AssertinError ...
+                     "test_module_integration"
                      "test_parameter_for_autopublish_code_sha256"
                      "test_sam_with_language_extension"
-                     "test_module_integration"
+                     "test_success_run"
                      "test_templates"
                      ;; Test fails with error: diff error while comparing
                      ;; graphs.
@@ -2633,20 +2669,13 @@ API, but uses asyncio to parallelise downloading the files.")
        (method url-fetch)
        (uri (pypi-uri "html2text" version))
        (sha256
-        (base32
-         "1fvv4z6dblii2wk1x82981ag8yhxbim1v2ksgywxsndh2s7335p2"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "test/"))))))
-    (native-inputs
-     (list python-pytest))
+        (base32 "1fvv4z6dblii2wk1x82981ag8yhxbim1v2ksgywxsndh2s7335p2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/Alir3z4/html2text")
     (synopsis "Convert HTML into plain text")
-    (description "html2text takes HTML and converts it into plain ASCII text
+    (description
+     "html2text takes HTML and converts it into plain ASCII text
 which is also valid markdown.  html2text was originally written by Aaron
 Swartz.")
     (license license:gpl3+)))
@@ -4978,30 +5007,35 @@ and MAC network addresses.")
        (uri (pypi-uri "nh3" version))
        (sha256
         (base32 "1mcf3y5294glji9lhzh57wymw4srbvzdg0kcakm0p2pqgwnw81cp"))))
-    (build-system cargo-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:imported-modules `(,@%cargo-build-system-modules
                            ,@%pyproject-build-system-modules)
-      #:modules '((guix build cargo-build-system)
-                  ((guix build pyproject-build-system) #:prefix py:)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build pyproject-build-system)
                   (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
-          (replace 'build (assoc-ref py:%standard-phases 'build))
-          (replace 'install (assoc-ref py:%standard-phases 'install))
-          ;; cargo-build-system's %standard-phases has 'check before 'install.
-          (delete 'check)
-          (add-after 'install 'check
-            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-              (when tests?
-                (py:add-installed-pythonpath inputs outputs)
-                (invoke "pytest" "-vv" "tests")))))
-      #:cargo-inputs
-      `(("rust-ammonia" ,rust-ammonia-4)
-        ("rust-pyo3" ,rust-pyo3-0.23))
-      #:install-source? #false))
-    (native-inputs (list maturin python-pytest python-wrapper))
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums)))))))
+    (native-inputs
+     (append
+      (list maturin python-pytest rust `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs (cargo-inputs 'python-nh3))
     (home-page "https://nh3.readthedocs.io")
     (synopsis "Python bindings to Ammonia HTML sanitization library")
     (description "This package provides Python bindings to Ammonia HTML
@@ -8352,17 +8386,19 @@ association.")
 (define-public python-livereload
   (package
     (name "python-livereload")
-    (version "2.6.3")
+    (version "2.7.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "livereload" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lepture/python-livereload")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0scqjnhg3ap81v36ghp0pik774dnfdkwqsx5j1jfbzarbs32yvvp"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-six python-tornado))
+        (base32 "19wkdd1grw6mcd4qi8iaw4jdr207h3m24951vgy69j7g904lynjq"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-django python-setuptools python-wheel))
+    (propagated-inputs (list python-tornado))
     (home-page "https://github.com/lepture/python-livereload")
     (synopsis "Python LiveReload")
     (description
@@ -9297,11 +9333,12 @@ using a pure Python implementation.")
        (uri (pypi-uri "pyjsparser" version))
        (sha256
         (base32 "0ycmf9fsvwliqmm1n6sfz7x71y7i2kbfgn39d8lsbiccfxmxlq5y"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/PiotrDabkowski/pyjsparser")
     (synopsis "Fast JavaScript parser")
-    (description "This package provides a fast JavaScript parser (based on
-esprima.js)")
+    (description
+     "This package provides a fast JavaScript parser (based on esprima.js)")
     (license license:expat)))
 
 (define-public python-js2py
@@ -10902,7 +10939,9 @@ metadata from HTML markup.  Currently, extruct supports:
        (uri (pypi-uri "wadllib" version))
        (sha256
         (base32 "1z65crvdsjxh9nahz1g6q021ijmv85ixmq88l96d61qh5imavndc"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools python-wheel))
     (propagated-inputs (list python-lazr-uri))
     (home-page "https://launchpad.net/wadllib")
     (synopsis "Web Application Description Language (WADL) navigation library")

@@ -7,6 +7,8 @@
 ;;; Copyright © 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023, 2024 Raven Hallsby <karl@hallsby.com>
+;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,9 +28,6 @@
 (define-module (gnu packages tree-sitter)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
-  #:use-module (gnu packages crates-graphics)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages node)
@@ -37,6 +36,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system tree-sitter)
+  #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
@@ -45,7 +45,7 @@
 (define-public python-tree-sitter
   (package
     (name "python-tree-sitter")
-    (version "0.20.1")
+    (version "0.21.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -54,7 +54,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rc8zqiry4n52xlf7pwx4s56ka9vwjzwgn7blwbkiscqdwvsai92"))))
+                "1cdxl0zyldml3x5wi2nmlmhwfahwxalcr5lxyb6j6762irmm4b2c"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -64,34 +64,47 @@
             (lambda _
               (let ((tree-sitter #$(this-package-input "tree-sitter")))
                 (substitute* "setup.py"
-                  (((string-append
-                     "( *)\\[\"tree_sitter\\/core\\/lib\\/src\\/lib\\.c\", "
-                     "\"tree_sitter\\/binding\\.c\"\\],") all tabs)
+                  ((".*\"tree_sitter/core.*") "")
+                  (("( *)sources=" all tabs)
                    (string-append
-                    tabs "[\"tree_sitter/binding.c\"],\n"
                     tabs "library_dirs=[\"" tree-sitter "/lib\"],\n"
-                    tabs "libraries=[\"tree-sitter\"],"))
-                  (("include_dirs=.*")
-                   (string-append
-                    "include_dirs=[\"" tree-sitter "/include\"],\n"))))))
+                    tabs "libraries=[\"tree-sitter\"],\n"
+                    all))
+                  (("include_dirs=\\[" all)
+                   (string-append all "\"" tree-sitter "/include\""))))))
           (add-before 'check 'set-test-lib-paths
-            (lambda _
-              (let ((py #$(this-package-native-input "tree-sitter-python"))
-                    (js #$(this-package-native-input "tree-sitter-javascript")))
-                (substitute* "tests/test_tree_sitter.py"
-                  (("Language\\.build_library")
-                   "_ =")
-                  (("LIB_PATH(, \"python\")" all name)
-                   (string-append
-                    "\"" py "/lib/tree-sitter/libtree-sitter-python.so\"" name))
-                  (("LIB_PATH(, \"javascript\")" all name)
-                   (string-append
-                    "\"" js "/lib/tree-sitter/libtree-sitter-javascript.so\""
-                    name)))))))))
+            (lambda* (#:key native-inputs inputs #:allow-other-keys)
+              (substitute* "tests/test_tree_sitter.py"
+                (("Language\\.build_library")
+                 "_ =")
+                (((string-append "LIB_PATH, \"("
+                                 (string-join
+                                  '("embedded_template"
+                                    "html"
+                                    "javascript"
+                                    "json"
+                                    "python"
+                                    "rust")
+                                  "|")
+                                 ")\"")
+                  all name)
+                 (string-append
+                  (format #f "~s, ~s"
+                          (search-input-file
+                           (or native-inputs inputs)
+                           (string-append
+                            "lib/tree-sitter/libtree-sitter-" name ".so"))
+                          name)))))))))
     (inputs (list tree-sitter))
     (native-inputs
-     (list tree-sitter-python tree-sitter-javascript
-           python-setuptools python-wheel))
+     (list tree-sitter-embedded-template
+           tree-sitter-html
+           tree-sitter-javascript
+           tree-sitter-json
+           tree-sitter-python
+           tree-sitter-rust
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/tree-sitter/py-tree-sitter")
     (synopsis "Python bindings to the Tree-sitter parsing library")
     (description "This package provides Python bindings to the
@@ -101,16 +114,16 @@ Tree-sitter parsing library.")
 (define-public tree-sitter
   (package
     (name "tree-sitter")
-    (version "0.20.10")                 ;untagged
+    (version "0.25.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/tree-sitter/tree-sitter")
-                    (commit "0e4ff0bb27edf37b76fc7d35aa768b02cf4392ad")))
+                    (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bai4gdhf8w5p1i9np2kl2ms0jq6rgq98qpiipipzayb9jjjlxcy"))
+                "0cck2wa17figxww7lb508sgwy9sbyqj89vxci07hiscr5sgdx9y5"))
               (modules '((guix build utils)))
               (snippet #~(begin
                            ;; Remove bundled ICU parts
@@ -120,7 +133,16 @@ Tree-sitter parsing library.")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
-               (delete 'configure))
+               (delete 'configure)
+               ;; The library uses -fvisibility=hidden to compile, but this
+               ;; symbol is needed by the Rust bindings.
+               (add-after 'unpack 'patch-_ts_dup-visibility
+                 (lambda _
+                   (substitute* "lib/src/tree.c"
+                     (("int _ts_dup")
+                      (string-append
+                       "int __attribute__ ((visibility (\"default\"))) "
+                       "_ts_dup"))))))
            #:tests? #f ; there are no tests for the runtime library
            #:make-flags
            #~(list (string-append "PREFIX=" #$output)
@@ -149,22 +171,35 @@ This package includes the @code{libtree-sitter} runtime library.")
   (package
     (inherit tree-sitter)
     (name "tree-sitter-cli")
-    (source (origin
-              (inherit (package-source tree-sitter))
-              (snippet
-               #~(begin
-                   ;; Remove the runtime library code and dynamically link to
-                   ;; it instead.
-                   (delete-file-recursively "lib/src")
-                   (delete-file "lib/binding_rust/build.rs")
-                   (with-output-to-file "lib/binding_rust/build.rs"
-                     (lambda _
-                       (format #t "fn main() {~@
-                              println!(\"cargo:rustc-link-lib=tree-sitter\");~@
-                              }~%")))))))
+    (source
+     (origin
+       (inherit (package-source tree-sitter))
+       (snippet
+        #~(begin
+            ;; Remove the runtime library code and dynamically link to it
+            ;; instead.
+            (for-each delete-file-recursively
+                      (find-files
+                       "lib/src"
+                       (lambda (file stat)
+                         ;; These files are required for building the binding.
+                         (not
+                          (or (string-contains file "parser.h")
+                              (string-contains file "stdlib-symbols.txt"))))))
+            (delete-file "lib/binding_rust/build.rs")
+            (with-output-to-file "lib/binding_rust/build.rs"
+              (lambda _
+                (format #t "~
+use std::{env, fs, path::{Path, PathBuf}};
+fn main() {
+    let out_dir = PathBuf::from(env::var(\"OUT_DIR\").unwrap());
+    fs::copy(\"src/wasm/stdlib-symbols.txt\",
+    out_dir.join(\"stdlib-symbols.txt\")).unwrap();
+    println!(\"cargo:rustc-link-lib=tree-sitter\");
+}~%")))))))
     (build-system cargo-build-system)
     (inputs
-     (list tree-sitter graphviz node-lts))
+     (cons* tree-sitter graphviz node-lts (cargo-inputs 'tree-sitter-cli)))
     (arguments
      (list
       #:cargo-test-flags
@@ -178,7 +213,6 @@ This package includes the @code{libtree-sitter} runtime library.")
          ;; good compromise compared to maintaining two different sets of
          ;; grammars (Guix packages vs test fixtures).
          "--skip=tests::corpus_test"
-         "--skip=tests::github_issue_test"
          "--skip=tests::highlight_test"
          "--skip=tests::node_test"
          "--skip=tests::parser_test"
@@ -187,55 +221,32 @@ This package includes the @code{libtree-sitter} runtime library.")
          "--skip=tests::tags_test"
          "--skip=tests::test_highlight_test"
          "--skip=tests::test_tags_test"
-         "--skip=tests::tree_test")
+         "--skip=tests::tree_test"
+         "--skip=tests::async_context_test"
+         "--skip=tests::text_provider_test"
+         "--skip=tests::detect_language"
+         "--skip=tests::language_test"
+         "--skip=tests::parser_hang_test")
       ;; We're only packaging the CLI program so we do not need to install
       ;; sources.
       #:install-source? #f
-      #:cargo-inputs
-      `(("rust-ansi-term" ,rust-ansi-term-0.12)
-        ("rust-anyhow" ,rust-anyhow-1)
-        ("rust-atty" ,rust-atty-0.2)
-        ("rust-clap" ,rust-clap-2)
-        ("rust-difference" ,rust-difference-2)
-        ("rust-dirs" ,rust-dirs-3)
-        ("rust-html-escape" ,rust-html-escape-0.2)
-        ("rust-libloading" ,rust-libloading-0.7)
-        ("rust-path-slash" ,rust-path-slash-0.2)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-rustc-hash" ,rust-rustc-hash-1)
-        ("rust-semver" ,rust-semver-1)
-        ("rust-smallbitvec" ,rust-smallbitvec-2)
-        ("rust-thiserror" ,rust-thiserror-1)
-        ("rust-tiny-http" ,rust-tiny-http-0.12)
-        ("rust-toml" ,rust-toml-0.5)
-        ("rust-walkdir" ,rust-walkdir-2)
-        ("rust-webbrowser" ,rust-webbrowser-0.8)
-        ("rust-which" ,rust-which-4))
-      #:cargo-development-inputs
-      `(("rust-ctor" ,rust-ctor-0.1)
-        ("rust-pretty-assertions" ,rust-pretty-assertions-0.7)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-tempfile" ,rust-tempfile-3)
-        ("rust-unindent" ,rust-unindent-0.2))
+      #:cargo-install-paths ''("cli")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-node
-            (lambda _
-              (substitute* "cli/src/generate/mod.rs"
-                (("Command::new\\(\"node\"\\)")
+          (add-after 'unpack 'patch-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "cli/generate/src/lib.rs"
+                (("(js_runtime\\.unwrap_or\\(\")node(\"\\))" _ prefix suffix)
                  (string-append
-                  "Command::new(\"" #$node-lts "/bin/node\")")))))
-          (add-after 'unpack 'patch-dot
-            (lambda _
+                  prefix
+                  (search-input-file inputs "bin/node")
+                  suffix)))
               (substitute* "cli/src/util.rs"
                 (("Command::new\\(\"dot\"\\)")
                  (string-append
-                  "Command::new(\"" #$graphviz "/bin/dot\")")))))
-          (replace 'install
-            (lambda _
-              (let ((bin (string-append #$output "/bin")))
-                (mkdir-p bin)
-                (install-file "target/release/tree-sitter" bin)))))))
+                  "Command::new(\""
+                  (search-input-file inputs "bin/dot")
+                  "\")"))))))))
     (description "Tree-sitter is a parser generator tool and an incremental
 parsing library.  It can build a concrete syntax tree for a source file and
 efficiently update the syntax tree as the source file is edited.
@@ -316,39 +327,20 @@ which will be used as a snippet in origin."
 (define-public tree-sitter-html
   (tree-sitter-grammar
    "html" "HTML"
-   "1hg7vbcy7bir6b8x11v0a4x0glvqnsqc3i2ixiarbxmycbgl3axy"
-   "0.19.0"))
+   "0slhrmwcw2xax4ylyaykx4libkzlaz2lis8x8jmn6b3hbdxlrpix"
+   "0.23.2"))
 
 (define-public tree-sitter-javascript
-  ;; Commit required by tree-sitter-typescript 0.20.3.
-  (let ((commit "f772967f7b7bc7c28f845be2420a38472b16a8ee")
-        (revision "22"))
-    (tree-sitter-grammar
-     "javascript" "JavaScript(JSX)"
-     "0vp7z57scpbcvyxpya06lnpz9f5kjdb66wjlkrp684xwjjgq1wxd"
-     (git-version "0.20.0" revision commit)
-     #:commit commit
-     #:get-cleanup-snippet
-     (lambda (grammar-directories)
-       #~(begin
-           (use-modules (guix build utils))
-           (delete-file "tree-sitter-javascript.wasm")
-           (delete-file "binding.gyp")
-           (delete-file-recursively "bindings")
-           (for-each
-            (lambda (lang)
-              (with-directory-excursion lang
-                (delete-file "src/grammar.json")
-                (delete-file "src/node-types.json")
-                (delete-file "src/parser.c")
-                (delete-file-recursively "src/tree_sitter")))
-            '#$grammar-directories))))))
+  (tree-sitter-grammar
+   "javascript" "JavaScript(JSX)"
+   "03v1gpr5lnifrk4lns690fviid8p02wn7hfdwp3ynp7lh1cid63a"
+   "0.23.1"))
 
 (define-public tree-sitter-typescript
   (tree-sitter-grammar
    "typescript" "TypeScript and TSX"
-   "08k785q3cy8byrb3zrg93mfidnj1pcx1ggm1xhd8rgmfs2v6jns5"
-   "0.20.3"
+   "0rlhhqp9dv6y0iljb4bf90d89f07zkfnsrxjb6rvw985ibwpjkh9"
+   "0.23.2"
    #:inputs (list tree-sitter-javascript)
    #:grammar-directories '("typescript" "tsx")))
 
@@ -366,62 +358,77 @@ which will be used as a snippet in origin."
 (define-public tree-sitter-css
   (tree-sitter-grammar
    "css" "CSS"
-   "014jrlgi7zfza9g38hsr4vlbi8964i5p7iglaih6qmzaiml7bja2"
-   "0.19.0"))
+   "0c5j9zyjcykmraix1agbc0gdk85zs2v379q0aykr10fi9w2r9z9c"
+   "0.23.2"))
 
 (define-public tree-sitter-c
   (tree-sitter-grammar
    "c" "C"
-   "00mhz2rz98pxssgyhm0iymgcb8cbv8slsf3nmfgyjhfchpmb9n6z"
-   "0.20.6"))
+   "1vw7jd3wrb4vnigfllfmqxa8fwcpvgp1invswizz0grxv249piza"
+   "0.23.5"))
 
 (define-public tree-sitter-cpp
   (tree-sitter-grammar
    "cpp" "C++"
-   "0fsb6la0da3azh7m9p1w3w079bpg6074dy8jisjw1yq1w1r9grxy"
-   "0.20.3"
+   "0sbvvfa718qrjmfr53p8x3q2c19i4vhw0n20106c8mrvpsxm7zml"
+   "0.23.4"
    #:inputs (list tree-sitter-c)))
 
 (define-public tree-sitter-cmake
   (tree-sitter-grammar
    "cmake" "CMake"
-   "1z49jdachwxwbzrrapskpi2kxq3ydihfj45ab9892gbamfij2zp5"
-   "0.4.1"
+   "0b30ci696iabk3hm03rm4c3qi72d7xsbipc6g0ixxxj2qihdl2fy"
+   "0.7.0"
    #:repository-url "https://github.com/uyha/tree-sitter-cmake"))
 
 (define-public tree-sitter-devicetree
   (tree-sitter-grammar
    "devicetree" "Devicetree"
-   "0igkwrlgbwphn8dwj91fy2film2mxz4kjdjnc141kmwi4czglwbq"
-   "0.8.0"
+   "13rm15p9mrdklys0d720xy386pnvirxxjswg0wi1m87hs8i49qns"
+   "0.11.1"
    #:repository-url "https://github.com/joelspadin/tree-sitter-devicetree"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (for-each delete-file '("parser.exp" "parser.lib"))
+         #$(tree-sitter-delete-generated-files grammar-directories)))
    #:license license:expat))
 
 (define-public tree-sitter-elixir
-  ;; No tags at all, version in the source code is 0.19.0
-  (let ((commit "b20eaa75565243c50be5e35e253d8beb58f45d56")
-        (revision "0"))
-    (tree-sitter-grammar
-     "elixir" "Elixir"
-     "1i0c0xki3sv24649p0ws7xs2jagbwg7z7baz1960239bj94nl487"
-     (git-version "0.19.0" revision commit)
-     #:article "an"
-     #:repository-url "https://github.com/elixir-lang/tree-sitter-elixir"
-     #:commit commit
-     #:license (list license:asl2.0 license:expat))))
+  (tree-sitter-grammar
+   "elixir" "Elixir"
+   "12i0z8afdzcznn5dzrssr7b7jx4h7wss4xvbh3nz12j6makc7kzl"
+   "0.3.4"
+   #:article "an"
+   #:repository-url "https://github.com/elixir-lang/tree-sitter-elixir"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         ;; FIXME: Failure - row: 18, column: 4, expected highlight
+         ;; 'comment.doc', actual highlights: none.
+         (delete-file "test/highlight/module.ex")
+         #$(tree-sitter-delete-generated-files grammar-directories)))
+   #:license (list license:asl2.0 license:expat)))
+
+(define-public tree-sitter-embedded-template
+  (tree-sitter-grammar
+   "embedded-template" "embedded template (like ERB and EJS)"
+   "1vq9dywd9vcy59f6i5mk5n7vwk67g8j5x77czg7avpznskgfhqhb"
+   "0.23.2"
+   #:article "an"))
 
 (define-public tree-sitter-heex
   (tree-sitter-grammar
    "heex" "Heex"
-   "00330rgg67fq0d9gk1yswj78d9mn1jvvjmmy1k7cxpvm5993p3sw"
-   "0.6.0"
+   "0d0ljmxrvmr8k1wc0hd3qrjzwb31f1jaw6f1glamw1r948dxh9xf"
+   "0.8.0"
    #:repository-url "https://github.com/phoenixframework/tree-sitter-heex"))
 
 (define-public tree-sitter-bash
   (tree-sitter-grammar
    "bash" "Bash"
-   "01sjympivwhr037c0gdx5fqw8fvzchq4fd4m8wlr8mdw50di0ag2"
-   "0.20.4"))
+   "1smlcfkxxknhya1b1h72zj3ccg35szbg9mii2xwh7iq9acnlzpgc"
+   "0.23.3"))
 
 (define-public tree-sitter-blueprint
   (let ((commit "329699d55f3e3955091e13756563c3f320a561fc")
@@ -437,88 +444,104 @@ which will be used as a snippet in origin."
 (define-public tree-sitter-c-sharp
   (tree-sitter-grammar
    "c-sharp" "C#"
-   "0lijbi5q49g50ji00p2lb45rvd76h07sif3xjl9b31yyxwillr6l"
-   "0.20.0"))
+   "0w6xdb8m38brhin0bmqsdqggdl95xqs3lbwq7azm5gg94agz9qf1"
+   "0.23.1"))
 
 (define-public tree-sitter-dockerfile
   (tree-sitter-grammar
    "dockerfile" "Dockerfile"
-   "0kf4c4xs5naj8lpcmr3pbdvwj526wl9p6zphxxpimbll7qv6qfnd"
-   "0.1.2"
+   "09iw9mqlpgsi6ak4mxrv16anvmbyap6vf61r2pi2lqdp9h1mp7g0"
+   "0.2.0"
    #:repository-url "https://github.com/camdencheek/tree-sitter-dockerfile"))
 
 (define-public tree-sitter-erlang
-  ;; Versions newer than 0.4.0 use tree-sitter 0.22.1
-  (let ((version "0.4.0") ; In Cargo.toml, but untagged
-        (commit "57e69513efd831f9cc8207d65d96bad917ca4aa4")
+  (let ((commit "364e323b32d098ad0e7b29e7adb4005c2bb5cf34")
         (revision "0"))
   (tree-sitter-grammar
    "erlang" "Erlang"
-   "1h0c9qc6i0kz5a0yq68xp623f84g4mc8hcp00khdbf7y7z7b9izc"
-   (git-version version revision commit)
+   "17dkvygqrx4v3y568jg72q6rdli5bp55l3zfqxvq6b5ibw48kilq"
+   (git-version "0.14.0" revision commit)
    #:repository-url "https://github.com/WhatsApp/tree-sitter-erlang"
-   #:commit commit)))
+   #:commit commit
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME: Language not found.
+         (delete-file-recursively "test/highlight")
+         #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-elm
-  (tree-sitter-grammar
-   "elm" "Elm"
-   "0b5jpj8bnil1ylisyc4w48j8a30dyf3zylhidj73mlrb8rf7xm2s"
-   "5.6.3"
-   #:article "an"
-   #:repository-url "https://github.com/elm-tooling/tree-sitter-elm"))
+  (let ((commit "3b373a3ccb48f31aa4b7ddc9092e2f5e24ab7aed")
+        (revision "0"))
+    (tree-sitter-grammar
+     "elm" "Elm"
+     "1cfkqi1vgxg7bkdda1vy9wqz6ap61fwjcdv9qzkcfzxaqr5z8dbw"
+     (git-version "5.7.0" revision commit)
+     #:article "an"
+     #:repository-url "https://github.com/elm-tooling/tree-sitter-elm"
+     #:commit commit
+     #:get-cleanup-snippet
+     (lambda (grammar-directories)
+       #~(begin
+           (for-each
+            delete-file
+            '("docs/js/tree-sitter-elm.wasm" "docs/js/tree-sitter.wasm"))
+           #$(tree-sitter-delete-generated-files grammar-directories))))))
 
 (define-public tree-sitter-gomod
   (tree-sitter-grammar
    "gomod" "Go .mod"
-   "1hblbi2bs4hlil703myqhvvq2y1x41rc3w903hg2bhbazh7x8yyf"
-   "1.0.0"
-   #:repository-url "https://github.com/camdencheek/tree-sitter-go-mod.git"))
+   "1vbg4fn54a7lbwcrvjdx3nrwgw5y925chbbb7sd6kwms1434yyhb"
+   "1.1.0"
+   #:repository-url "https://github.com/camdencheek/tree-sitter-go-mod"))
 
 (define-public tree-sitter-go
   (tree-sitter-grammar
    "go" "Go"
-   "0wlhwcdlaj74japyn8wjza0fbwckqwbqv8iyyqdk0a5jf047rdqv"
-   "0.20.0"))
+   "0yi8if9mqzzcs4qflflz90hhaxkzlq54wia3s0iiqzfqxk24a61g"
+   "0.23.4"))
 
 (define-public tree-sitter-haskell
-  ;; There are a lot of additions, the last tag was placed more than 4 years ago
-  (let ((commit "3bdba07c7a8eec23f87fa59ce9eb2ea4823348b3")
-        (revision "0"))
-    (tree-sitter-grammar
-     "haskell" "Haskell"
-     "1hg19af1n510bndf5k5iri7dzb48xb527vispv1aapki4mvr98gx"
-     (git-version "0.14.0" revision commit)
-     #:commit commit)))
+  (tree-sitter-grammar
+   "haskell" "Haskell"
+   "08qzkvyc830k56j5lglfzmlp03ygixf9vlrpazbndqvqk20n56xa"
+   "0.15.0"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (delete-file "test/highlight/Basic.hs") ;FIXME: Language not found.
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-hcl
-  (tree-sitter-grammar
-   "hcl" "HCL"
-   "1yydi61jki7xpabi0aq6ykz4w4cya15g8rp34apb6qq9hm4lm9di"
-   "1.1.0"
-   #:article "an"
-   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-hcl"
-   #:license license:asl2.0))
+  (let ((commit "de10d494dbd6b71cdf07a678fecbf404dbfe4398")
+        (revision "0"))
+    (tree-sitter-grammar
+     "hcl" "HCL"
+     "0dpxrr7m1k4kjasgz6v8kj7ldp0k6jcxlzcrr09qv7209v24s4x1"
+     (git-version "1.1.0" revision commit)
+     #:article "an"
+     #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-hcl"
+     #:commit commit
+     #:license license:asl2.0)))
 
 (define-public tree-sitter-java
   (tree-sitter-grammar
    "java" "Java"
-   "0440xh8x8rkbdlc1f1ail9wzl4583l29ic43x9lzl8290bm64q5l"
-   "0.20.1"))
+   "11j4ifhl5hsmb2sa651cp5xds9cjgjynl86yivvk6bnr2ba0xw9s"
+   "0.23.5"))
 
 (define-public tree-sitter-json
-  ;; Not tagged
-  (let ((commit "5d992d9dd42d533aa25618b3a0588f4375adf9f3"))
-    (tree-sitter-grammar
-     "json" "JSON"
-     "08kxzqyyl900al8mc0bwigxlkzsh2f14qzjyb5ki7506myxlmnql"
-     "0.20.0"
-     #:commit commit)))
+  (tree-sitter-grammar
+   "json" "JSON"
+   "0p0fiqi5imxm13s1fs6bhqw6v11n79ri1af3d072zm7jqkcl5mhc"
+   "0.24.8"))
 
 (define-public tree-sitter-julia
   (tree-sitter-grammar
    "julia" "Julia"
-   "1pbnmvhy2gq4vg1b0sjzmjm4s2gsgdjh7h01yj8qrrqbcl29c463"
-   "0.19.0"))
+   "0xi04a48ly438gar25bkkvvr8by4dd013cnafbjdysqjfs04q2wg"
+   "0.23.1"))
 
 (define-public tree-sitter-kdl
   (tree-sitter-grammar
@@ -530,67 +553,67 @@ which will be used as a snippet in origin."
 (define-public tree-sitter-ocaml
   (tree-sitter-grammar
    "ocaml" "OCaml (.ml and .mli)"
-   "021vnbpzzb4cca3ncd4qhzy583vynhndn3qhwayxrpgdl61m44i6"
-   "0.20.1"
-   #:grammar-directories '("ocaml" "interface")))
+   "17g2ynqhjf1nyhdidz9j9s0s12iys3b2vbywxkygwyccj7rb8zdi"
+   "0.24.0"
+   #:grammar-directories '("grammars/interface" "grammars/ocaml" "grammars/type")))
 
 (define-public tree-sitter-php
-  ;; There are a lot of additions, the last tag was placed more than 1 year ago
-  (let ((commit "f860e598194f4a71747f91789bf536b393ad4a56")
-        (revision "0"))
-    (tree-sitter-grammar
-     "php" "PHP"
-     "02yc5b3qps8ghsmy4b5m5kldyr5pnqz9yw663v13pnz92r84k14g"
-     (git-version "0.19.0" revision commit)
-     #:commit commit)))
+  (tree-sitter-grammar
+   "php" "PHP"
+   "05qhz14vvqgwpxgdfr1skwgrv041zwc3wxjyx6y679965nn0lrji"
+   "0.23.12"
+   #:grammar-directories '("php" "php_only")))
 
 (define-public tree-sitter-prisma
   (tree-sitter-grammar
    "prisma" "Prisma"
-   "19zb3dkwp2kpyivygqxk8yph0jpl7hn9zzcry15mshn2n0rs9sih"
-   "1.4.0"
+   "144l2w7ky5imd7yvp1n6lgbyy5kq6kx4c2ja43yk15k3258pf52v"
+   "1.5.1"
    #:repository-url "https://github.com/victorhqc/tree-sitter-prisma"
    #:license license:expat))
 
 (define-public tree-sitter-python
   (tree-sitter-grammar
    "python" "Python"
-   "1sxz3npk3mq86abcnghfjs38nzahx7nrn3wdh8f8940hy71d0pvi"
-   "0.20.4"))
+   "0a108sfqcsxrp54lapk7k3kq6fmz8745z5q99wpn3i1cqpi9slzg"
+   "0.23.6"))
 
 (define-public tree-sitter-r
-  ;; No tags
-  (let ((commit "80efda55672d1293aa738f956c7ae384ecdc31b4")
-        (revision "0"))
-    (tree-sitter-grammar
-     "r" "R"
-     "1n7yxi2wf9xj8snw0b85a5w40vhf7x1pwirnwfk78ilr6hhz4ix9"
-     (git-version "0.0.1" revision commit)
-     #:commit commit)))
+  (tree-sitter-grammar
+   "r" "R"
+   "1jf14nvrfcznsnmxmlkbnn59bdykpsawxm5grph65p8vghi4fik7"
+   "1.1.0"
+   #:repository-url "https://github.com/r-lib/tree-sitter-r"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME: Language not found.
+         (for-each delete-file-recursively '("test/highlight" "test/tags"))
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-ron
-  (tree-sitter-grammar
-   "ron" "RON"
-   "1la5v0nig3xp1z2v3sj36hb7wkkjch46dmxf457px7ly43x4cb83"
-   "0.2.0"
-   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-ron"
-   #:license (list license:asl2.0 license:expat)))
-
-(define-public tree-sitter-ruby
-  ;; There are a lot of additions, the last tag was placed more than 1 year ago
-  (let ((commit "206c7077164372c596ffa8eaadb9435c28941364")
+  (let ((commit "78938553b93075e638035f624973083451b29055")
         (revision "0"))
     (tree-sitter-grammar
-     "ruby" "Ruby"
-     "1pqr24bj68lgi1w2cblr8asfby681l3032jrppq4n9x5zm23fi6n"
-     (git-version "0.19.0" revision commit)
-     #:commit commit)))
+     "ron" "RON"
+     "13f8a5sfvyrizkl0szh2yaslmvjk91s97yb2abrdh74a0pl217aa"
+     (git-version "0.2.0" revision commit)
+     #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-ron"
+     #:commit commit
+     #:license (list license:asl2.0 license:expat))))
+
+(define-public tree-sitter-ruby
+  (tree-sitter-grammar
+   "ruby" "Ruby"
+   "0c1vs63ydcb3q2wnif18l5irbj6chkcvd3p6dg0vyhklk5acrvca"
+   "0.23.1"))
 
 (define-public tree-sitter-rust
   (tree-sitter-grammar
    "rust" "Rust"
-   "1pk4mb3gh62xk0qlhxa8ihhxvnf7grrcchwg2xv99yy6yb3yh26b"
-   "0.20.4"))
+   "0x7xqxspdfnbgn9nvrsl2rsnrjbs01i5hy8k8p5wwk2j358hjyyb"
+   "0.24.0"))
 
 (define-public tree-sitter-ungrammar
   ;; No releases yet.
@@ -624,106 +647,112 @@ which will be used as a snippet in origin."
           '#$grammar-directories)))))
 
 (define-public tree-sitter-markdown
-  ;; No tags
-  (let ((commit "ef3caf83663ea97ad9e88d891424fff6a20d878d")
-        (revision "0"))
-    (tree-sitter-grammar
-     "markdown" "Markdown (CommonMark Spec v0.30)"
-     "0p9mxpvkhzsxbndda36zx5ycd6g2r2qs60gpx4y56p10lhgzlyqj"
-     "0.1.1"
-     #:repository-url "https://github.com/MDeiml/tree-sitter-markdown"
-     #:grammar-directories '("tree-sitter-markdown"
-                             "tree-sitter-markdown-inline")
-     #:commit commit)))
+  (tree-sitter-grammar
+   "markdown" "Markdown (CommonMark Spec v0.30)"
+   "0r8jlmyr1bnyqqipmpmxxw4qw81c9n0l29xdfkz2n2zmjqps5v9r"
+   "0.4.1"
+   #:repository-url "https://github.com/MDeiml/tree-sitter-markdown"
+   #:grammar-directories '("tree-sitter-markdown"
+                           "tree-sitter-markdown-inline")
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME
+         (with-directory-excursion "tree-sitter-markdown-inline/test/corpus"
+           (for-each delete-file
+                     '("extension_wikilink.txt" "spec.txt" "tags.txt")))
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-markdown-gfm
-  ;; Not updated for more than 1 year, can be deprecated when gfm will be
-  ;; implemented in tree-sitter-markdown
+  (deprecated-package "tree-sitter-markdown-gfm" tree-sitter-markdown))
+
+(define-public tree-sitter-typst
   (tree-sitter-grammar
-   "markdown-gfm" "Markdown (CommonMark Spec v0.29-gfm)"
-   "1a2899x7i6dgbsrf13qzmh133hgfrlvmjsr3bbpffi1ixw1h7azk"
-   "0.7.1"
-   #:repository-url "https://github.com/ikatyang/tree-sitter-markdown"))
+   "typst" "Typst"
+   "198rn8wdcqq51nz6hj1zxk7mplplr2z8vc36z6h1zpjjq925794z"
+   "0.11.0"
+   #:repository-url "https://github.com/uben0/tree-sitter-typst"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         ;; These tests are supposed to fail, but they don't fail the way the
+         ;; suite expects anymore.
+         (delete-file "test/corpus/negative.scm")
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-matlab
-  (let ((commit "79d8b25f57b48f83ae1333aff6723b83c9532e37")
-        (revision "0"))
-    (tree-sitter-grammar
-     "matlab" "Matlab"
-     "04ffhfnznskkcp91fbnv8jy3wkb9cd8ifwrkrdwcw74n1b2hq80c"
-     (git-version "1.0.2" revision commit)
-     #:repository-url "https://github.com/acristoffers/tree-sitter-matlab"
-     #:commit commit
-     #:license license:expat)))
+  (tree-sitter-grammar
+   "matlab" "Matlab"
+   "1kcg16aa9swk4a73klp72rib15ljz7zjlr97rr134laym4x0fnvl"
+   "1.0.4"
+   #:repository-url "https://github.com/acristoffers/tree-sitter-matlab"
+   #:license license:expat))
 
 (define-public tree-sitter-meson
-  ;; tag 1.2 is Aug 24,2022  this commit is Feb 28,2023
-  (let ((commit "3d6dfbdb2432603bc84ca7dc009bb39ed9a8a7b1")
-        (revision "0"))
-    (tree-sitter-grammar
-     "meson" "Meson"
-     "1rn7r76h65d41354czyccm59d1j9nzybcrjvjh934lpr59qrw61m"
-     (git-version "1.2" revision commit)
-     #:repository-url "https://github.com/Decodetalkers/tree-sitter-meson"
-     #:commit commit
-     #:license license:expat)))
+  (tree-sitter-grammar
+   "meson" "Meson"
+   "10v1d22wgkc9m33b7zfl712q7zrpn17l1xyprj4wwasqjvg29l03"
+   "1.3.0"
+   #:repository-url "https://github.com/Decodetalkers/tree-sitter-meson"
+   #:license license:expat))
 
 (define-public tree-sitter-nix
   (tree-sitter-grammar
    "nix" "Nix"
-   "0nn3ij8k6wkbf3kcvkyyp0vhfjcksi31wyyfwmsbx66maf2xgaii"
-   "0.0.0"
-   ;; The most recent commit at time of packaging, no tags.
-   #:commit "763168fa916a333a459434f1424b5d30645f015d"
-   #:repository-url "https://github.com/nix-community/tree-sitter-nix"))
+   "0rkvr64fvawblpg39rr0mrigf1rhsk30vng2vxviwb7fk50iww0i"
+   "0.0.2"
+   #:repository-url "https://github.com/nix-community/tree-sitter-nix"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         ;; FIXME: Language not found.
+         (delete-file-recursively "test/highlight")
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-org
   ;; There are a lot of additions, the last tag was placed a while ago
-  (let ((commit "081179c52b3e8175af62b9b91dc099d010c38770")
-        (revision "0"))
+  (let ((commit "64cfbc213f5a83da17632c95382a5a0a2f3357c1")
+        (revision "1"))
     (tree-sitter-grammar
      "org" "Org"
-     "0h9krbaq9j6ijf86sg0w221s0zbpbx5f7m1l0whzjahbrqpnqgxl"
+     "1l62p4a3b22pa7b5mzmy497pk5b8w01hx6zinfwpbnzg2rjdwkgz"
      (git-version "1.3.1" revision commit)
      #:repository-url "https://github.com/milisims/tree-sitter-org"
      #:commit commit)))
 
 (define-public tree-sitter-scheme
-  ;; There are a lot of additions, the last tag was placed a while ago
-  (let ((commit "67b90a365bebf4406af4e5a546d6336de787e135")
-        (revision "0"))
-    (tree-sitter-grammar
-     "scheme" "Scheme (R5RS, R6RS)"
-     "1pvxckza1kdfwqs78ka3lbwldrwkgymb31f5x1fq5vyawg60wxk8"
-     (git-version "0.2.0" revision commit)
-     #:repository-url "https://github.com/6cdh/tree-sitter-scheme"
-     #:commit commit)))
+  (tree-sitter-grammar
+   "scheme" "Scheme (R5RS, R6RS, R7RS)"
+   "12p8g2mnd73lanibk16llhbx7xarlcl2ihngcibhpa4bzppcbb8l"
+   "0.23.0-1"
+   #:repository-url "https://github.com/6cdh/tree-sitter-scheme"))
 
 (define-public tree-sitter-sway
-  (tree-sitter-grammar
-   "sway" "Sway"
-   "016zq8jbyy0274qyr38f6kvvllzgni0w7742vlbkmpv8d2blr7xj"
-   "1.0.0"
-   #:repository-url "https://github.com/FuelLabs/tree-sitter-sway"))
-
-(define-public tree-sitter-racket
-  ;; No tags
-  (let ((commit "1a5df0206b25a05cb1b35a68d2105fc7493df39b")
+  (let ((commit "f9e53e922496dd47208a141fa7ac315625a1874f")
         (revision "0"))
     (tree-sitter-grammar
-     "racket" "Racket"
-     "06gwn3i7swhkvbkgxjlljdjgvx8y1afafbqmpwya70r9z635593h"
-     (git-version "0.1.0" revision commit)
-     #:repository-url "https://github.com/6cdh/tree-sitter-racket"
+     "sway" "Sway"
+     "1bgr3153wwzgkrnk5w9mv7kskw3ygdxaihrpiljcw0bhciqsnkk8"
+     (git-version "1.0.0" revision commit)
+     #:repository-url "https://github.com/FuelLabs/tree-sitter-sway"
      #:commit commit)))
+
+(define-public tree-sitter-racket
+  (tree-sitter-grammar
+   "racket" "Racket"
+   "1x9x6pn7l578xlm1cmg5w0cy2zk34qywsn0jzf1j8phwf7k66bxg"
+   "0.23.0-1"
+   #:repository-url "https://github.com/6cdh/tree-sitter-racket"))
 
 (define-public tree-sitter-plantuml
   ;; No tags
-  (let ((commit "bea443ef909484938cb0a9176ebda7b8a3d108f7")
-        (revision "0"))
+  (let ((commit "c7361a1d481dc1ff6700b14ea1d5efc549b72713")
+        (revision "1"))
     (tree-sitter-grammar
      "plantuml" "PlantUML"
-     "0swqq4blhlvvgrvsb0h4cjl3pnfmmdpfd5r5kg9rpdwk0sn98x3a"
+     "0apmv0dad58ixhxhzxkwlm9wgbphj7lxilbh427rpxy1y5hrml0f"
      (git-version "1.0.0" revision commit)
      #:repository-url "https://github.com/Decodetalkers/tree_sitter_plantuml"
      #:commit commit
@@ -731,68 +760,72 @@ which will be used as a snippet in origin."
      (lambda _
        #~(begin
            (use-modules (guix build utils))
+           (substitute* "grammar.js"
+             (("u\\{\\[0-9a-fA-F\\]\\+\\}")
+              "u\\{[0-9a-fA-F]+\\}"))
            (delete-file "binding.gyp")
            (delete-file-recursively "bindings"))))))
 
 (define-public tree-sitter-latex
   (tree-sitter-grammar
    "latex" "LaTeX"
-   "0lc42x604f04x3kkp88vyqa5dx90wqyisiwl7nn861lyxl6phjnf"
-   "0.3.0"
-   #:repository-url "https://github.com/latex-lsp/tree-sitter-latex"))
+   "18dyda7299imb6i2jnjpr7z2jdrjn804c3958nkkpxzzfhbq39h7"
+   "0.4.0"
+   #:repository-url "https://github.com/latex-lsp/tree-sitter-latex"
+   #:get-cleanup-snippet
+   (lambda _
+     #~(begin
+         (use-modules (guix build utils))
+         (delete-file "binding.gyp")
+         (delete-file-recursively "bindings")))))
 
 (define-public tree-sitter-lua
   (tree-sitter-grammar
    "lua" "Lua"
-   "05irhg6gg11r9cnzh0h3691pnxjhd396sa1x8xrgqjz2fd09brf3"
-   "0.0.19"
-   #:repository-url "https://github.com/MunifTanjim/tree-sitter-lua"))
+   "041anx0qirvd4il87whpic8nfdc1nk3kimxdb99m25bfdzm9rn0r"
+   "0.3.0"
+   #:repository-url "https://github.com/MunifTanjim/tree-sitter-lua"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         (delete-file-recursively "test/highlight") ;FIXME
+         #$(tree-sitter-delete-generated-files grammar-directories)))))
 
 (define-public tree-sitter-scala
   (tree-sitter-grammar
    "scala" "Scala"
-   "0hs6gmkq5cx9qrmgfz1mh0c34flwffc0k2mhwf13laawswnywfkz"
-   "0.20.2"))
+   "02awiraj5mmgyi31yzxyxarkkl41qksm3lm41pq9c6bmyqpir2y6"
+   "0.23.4"))
 
 (define-public tree-sitter-tlaplus
   (tree-sitter-grammar
    "tlaplus" "TLA+"
-   "1k60dnzafj6m9c2d4xnwiz3d7yw3bg3iwx7c1anhwr76iyxdci3w"
-   "1.0.8"
-   ;; Version 1.2.1 is most recent, but requires tree-sitter >0.21.0
-   #:repository-url "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
+   "11073rjg9n9hnr88193mmb8ff5xlcv6isgqc0g2fbfbl0y820zlk"
+   "1.5.0"
+   #:repository-url "https://github.com/tlaplus-community/tree-sitter-tlaplus"
+   #:commit "1.5.0"))
 
 (define-public tree-sitter-kotlin
   (tree-sitter-grammar
    "kotlin" "Kotlin"
-   "0lqwjg778xy561hhf90c9m8zdjmv58z5kxgy0cjgys4xqsfbfri6"
-   "0.3.6"
+   "0bv21rcypi9dx87kgfr89mg8qfc7ik1g1fcb8am7ss17by8badwk"
+   "0.3.8"
    #:repository-url "https://github.com/fwcd/tree-sitter-kotlin"
-   #:commit "0.3.6"))
+   #:commit "0.3.8"))
 
 (define-public tree-sitter-awk
   (tree-sitter-grammar
    "awk" "AWK"
-   "1far60pxkqfrxi85hhn811g2r7vhnzdvfp5piy89fmpxk33s4vmi"
-   ;; Version 0.7.1 would be most recent, but would require tree-sitter >= 0.21.0.
-   "0.6.2"
+   "1bglimp46cggq9kx92h943wnq2r6ymp7anwynjnl42wrdssc0drh"
+   "0.7.2"
    #:repository-url "https://github.com/Beaglefoot/tree-sitter-awk"))
 
 (define-public tree-sitter-verilog
-  (let ((version "1.0.0") ; In package.json, but untagged
-        (commit "075ebfc84543675f12e79a955f79d717772dcef3")
-        (revision "0"))
-    (tree-sitter-grammar
-     "verilog" "Verilog"
-     "0j5iycqm5dmvzy7dssm8km1djhr7hnfgk26zyzcxanhrwwq3wi4k"
-     (git-version version revision commit)
-     #:commit commit
-     #:get-cleanup-snippet
-     (lambda _
-       #~(begin
-           (use-modules (guix build utils))
-           (delete-file "binding.gyp")
-           (delete-file-recursively "bindings"))))))
+  (tree-sitter-grammar
+   "verilog" "Verilog"
+   "1mk8waij5lbj1wbayvqs0cxk003dssdic13h14gd5fi1ckfvflja"
+   "1.0.3"))
 
 (define-public tree-sitter-vhdl
   (let ((version "0.1.1") ; In package.json, but untagged
@@ -814,6 +847,8 @@ which will be used as a snippet in origin."
            (delete-file "src/node-types.json")
            (delete-file "src/parser.c")
            (delete-file-recursively "src/tree_sitter")
+           ;; FIXME: Language not found.
+           (delete-file-recursively "test/highlight")
            ;; Fix a query error in the highlight.scm query test. This would be
            ;; easier with a patch, but this works too, and we still get to use
            ;; tree-sitter-grammar. The fix is taken from here:
@@ -825,3 +860,17 @@ which will be used as a snippet in origin."
              (("\\(integer_decimal\n") "(integer_decimal)\n")
              (("\\(integer\\)") "")
              (("\"0\")") "\"0\"")))))))
+
+(define-public tree-sitter-yaml
+  (tree-sitter-grammar
+   "yaml" "YAML"
+   "0z5fz9hiafzapi0ijhyz8np6rksq6c1pb16xv1vhnlfh75rg6zyv"
+   "0.7.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-yaml"))
+
+(define-public tree-sitter-zig
+  (tree-sitter-grammar
+   "zig" "Zig"
+   "1r9p7hhnc1zagwxzdxhs4p6rnqs9naddkgbfymi6pbw6cyg2ccwl"
+   "1.1.2"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-zig"))

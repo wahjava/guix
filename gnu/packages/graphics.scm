@@ -759,37 +759,46 @@ application can be customized via its API for Python scripting.")
     (license license:gpl2+)))
 
 (define-public goxel
-  (package
-    (name "goxel")
-    (version "0.10.8")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/guillaumechereau/goxel")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0qvz566awhp03yp696fn3c80hnky41fpbi4sqg4lx69ibx4zvl9k"))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases (delete 'configure))
-       #:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
-                          "release")))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     `(("gtk3" ,gtk+)
-       ("glfw" ,glfw)
-       ("scons" ,scons)))
-    (home-page "https://goxel.xyz/")
-    (synopsis "Voxel editor")
-    (description
-     "Goxel is a voxel editor that features unlimited scene size, unlimited
+  ;; The latest commit is used as it builds with GCC 14.
+  (let ((commit   "66d36e0c3511479ceaac8cbf9f5c7c3e619b30d3")
+        (revision "0"))
+    (package
+      (name "goxel")
+      (version (git-version "0.15.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/guillaumechereau/goxel")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "18xbfkn3xh5y88iahrykyqh5nykkx7y468f450l5gdiagwpgz7g2"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f
+        #:make-flags
+        #~(list (string-append "PREFIX=" #$output)
+                "release")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; No configure provided
+            (delete 'configure))))
+      (native-inputs
+       (list pkg-config
+             scons))
+      (inputs
+       (list gtk+
+             glfw
+             libpng))
+      (home-page "https://goxel.xyz/")
+      (synopsis "Voxel editor")
+      (description
+       "Goxel is a voxel editor that features unlimited scene size, unlimited
 history buffer, 24-bit RGB colors, layers, procedural rendering, ray tracing,
 and export to various formats including the format used by Magicavoxel.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public assimp
   (package
@@ -3371,19 +3380,21 @@ options.")
 (define-public gpaint
   (package
     (name "gpaint")
-    (version "0.3.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://alpha.gnu.org/gnu/"
-                                  name "/"
-                                  name "-2-" version ".tar.gz"))
-              (sha256
-               (base32
-                "13jv0zqbnyxjw7fa9x0yl08rrkqq0mdvki0yzbj6vqifvs393v5h"))))
+    (version "0.3.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.savannah.gnu.org/git/gpaint.git")
+             (commit (string-append "v"
+                       (string-replace-substring version "." "_")))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0drsvrihyvkdf5g65w5784ap06d2x9zkas69amp1mb6jmnzp8rir"))))
     (build-system gnu-build-system)
     (inputs (list gtk+-2 libglade))
-    (native-inputs
-     (list gettext-minimal `(,glib "bin") pkg-config))
+    (native-inputs (list gettext-minimal
+                         `(,glib "bin") pkg-config))
     (synopsis "Simple paint program for GNOME")
     (description
      "GNU Paint is a simple, easy-to-use paint program for the GNOME

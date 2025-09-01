@@ -91,8 +91,8 @@
   #:use-module (gnu packages web))
 
 (define-public abc
-  (let ((commit "d2714035145bd237097c509c23fc9e24b0fa933b")
-        (revision "5"))
+  (let ((commit "e29dcd9f3275874c8d31a2f781487efac1dabb7b")
+        (revision "6"))
     (package
       (name "abc")
       (version (git-version "0.0" revision commit))
@@ -104,7 +104,7 @@
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "10qjw6mbzwg2lgsscw759xrghqq2mvv0xcalpymngnjhpg9qznqk"))))
+                  "18g4i1kdsxvp25p5z3wja4jkxppgrp6ybxal9y2p2d2qvlafiw5z"))))
       (build-system gnu-build-system)
       (inputs
        (list readline))
@@ -129,7 +129,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.55")
+    (version "0.56")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -138,11 +138,34 @@ formal verification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15a7nyk8iqpadp326icnr7rn5pwq44b9lvajqc35hcsvixz4gxsa"))))
+                "0wy42qd0dl58icw3nklgns5zrr1inj8br40vwcpwiz1pkfg3gl0j"))))
     (home-page "https://github.com/YosysHQ/abc/")
     (description "ABC is a program for sequential logic synthesis and
 formal verification.  This is the Yosyshq fork of ABC.")
     (license (license:non-copyleft "file:///copyright.txt"))))
+
+(define-public apycula
+  (package
+    (name "apycula")
+    (version "0.23")
+    ;; The pypi tar.gz file includes the necessary .pickle files, not available
+    ;; in the home-page repository.
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "apycula" version))
+       (sha256
+        (base32 "1kk9hi8zhdp1am5vj716lwlmrs31lxrwhdbbc4qsad470dcjqs57"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;requires Gowin EDA tools
+    (inputs (list python-crc))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/YosysHQ/apicula/")
+    (synopsis "Gowin FPGA bitstream format")
+    (description
+     "The project Apycula provides tools to support development and
+generating bitstreams with Gowin FPGAs.")
+    (license license:expat)))
 
 (define-public iverilog
   (package
@@ -187,7 +210,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.55")
+    (version "0.56")
     (source
      (origin
        (method git-fetch)
@@ -195,7 +218,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1c5zvbk0jpz564l1jw7pxba93iq967ci0qpam7ahq0mhi14jinl8"))
+        (base32 "1q74hm1z0m08r9amz982a9ylcwz2mbg3hqarprwj775wkrbv81h7"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -247,6 +270,12 @@ For synthesis, the compiler generates netlists in the desired format.")
               ;; work.
               (symlink (search-input-file inputs "/bin/abc")
                        (string-append #$output "/bin/yosys-abc"))))
+          (add-after 'install 'keep-pmgen-py
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; pmgen.py is required by some yosys plugins.
+              (install-file (search-input-file inputs
+                                               "/passes/pmgen/pmgen.py")
+                            (string-append #$output "/bin"))))
           (add-after 'install 'wrap
             (lambda* (#:key inputs #:allow-other-keys)
               (wrap-program (string-append #$output "/bin/yosys-witness")
@@ -390,115 +419,114 @@ files.")
                      license:bsd-2))))) ;for lz4-derived sources
 
 (define-public nextpnr
-  (package
-    (name "nextpnr")
-    (version "0.8")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/YosysHQ/nextpnr/")
-             (commit (string-append "nextpnr-" version))
-             ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
-             ;; json11 and python-console, which have custom modifications or
-             ;; no longer have their original upstream.
-             (recursive? #t)))
-       (file-name (git-file-name name version))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
-       (snippet
-        '(begin
-           ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-           (define (delete-all-but directory . preserve)
-             (define (directory? x)
-               (and=> (stat x #f)
-                      (compose (cut eq? 'directory <>) stat:type)))
-             (with-directory-excursion directory
-               (let* ((pred
-                       (negate (cut member <> (append '("." "..") preserve))))
-                      (items (scandir "." pred)))
-                 (for-each (lambda (item)
-                             (if (directory? item)
-                                 (delete-file-recursively item)
-                                 (delete-file item)))
-                           items))))
-           (delete-all-but "3rdparty"
-                           ;; The following sources have all been patched, so
-                           ;; cannot easily be unbundled.
-                           "QtPropertyBrowser"
-                           "json11"
-                           "python-console"
-                           "oourafft")))
-       (patches (search-patches "nextpnr-gtest.patch"
-                                "nextpnr-imgui.patch"))
-       (sha256
-        (base32 "0p53a2gl89hf3hfwdxs6pykxyrk82j4lqpwd1fqia2y0c9r2gjlm"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      #:cmake cmake                     ;CMake 3.25 or higher is required.
-      #:configure-flags
-      ;; TODO: enable more architectures?
-      #~(list "-DARCH=generic;ice40;ecp5;himbaechel"
-              "-DBUILD_GUI=ON"
-              "-DUSE_OPENMP=ON"
-              "-DBUILD_TESTS=ON"
-              "-DHIMBAECHEL_UARCH=ng-ultra"
-              "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
-              "-DHIMBAECHEL_PRJBEYOND_DB=/tmp/prjbeyond-db"
-              (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
-              (string-append "-DICESTORM_INSTALL_PREFIX="
-                             #$(this-package-input "icestorm"))
-              (string-append "-DTRELLIS_INSTALL_PREFIX="
-                             #$(this-package-input "prjtrellis"))
-              "-DUSE_IPO=OFF")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Required by himbaechel architecture, ng-ultra support.
-          (add-after 'unpack 'get-prjbeyond-db
-            (lambda _
-              (copy-recursively
-               #$(origin
-                   (method git-fetch)
-                   (uri (git-reference
-                         (url "https://github.com/yosyshq-GmbH/prjbeyond-db/")
-                         ;; We take latest commit, as indicated in nextpnr’s
-                         ;; README.md file
-                         (commit "06d3b424dd0e52d678087c891c022544238fb9e3")))
-                   (sha256
-                    (base32
-                     "17dd3cgms2fy6xvz7magdmvv92km4cqh2kz9dyjrvz5y8caqav4y")))
-               "/tmp/prjbeyond-db")))
-          (add-after 'unpack 'unbundle-sanitizers-cmake
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                ;; Use the system sanitizers-cmake module.  This is made
-                ;; necessary 'sanitizers-cmake' installing a FindPackage
-                ;; module but no CMake config file.
-                (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
-                 (string-append
-                  #$(this-package-native-input "sanitizers-cmake")
-                  "/share/sanitizers-cmake/cmake"))))))))
-    (native-inputs
-     (list googletest
-           sanitizers-cmake))
-    (inputs
-     (list boost
-           corrosion
-           eigen
-           icestorm
-           prjtrellis
-           pybind11
-           python
-           qtbase-5
-           qtwayland-5
-           qtimgui
-           yosys))
-    (synopsis "Place-and-Route tool for FPGAs")
-    (description "Nextpnr is a portable FPGA place and route tool.")
-    (home-page "https://github.com/YosysHQ/nextpnr/")
-    (license license:isc)))
+  ;; Necessary for compatibility with latest apycula.
+  ;; TODO: Remove with release 0.9.
+  (let ((commit "d796cc720b60ccc18580c686d93c8751fe461532")
+        (revision "0"))
+    (package
+      (name "nextpnr")
+      (version (git-version "0.8" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/YosysHQ/nextpnr/")
+                (commit commit)
+                ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
+                ;; json11 and python-console, which have custom modifications or
+                ;; no longer have their original upstream.
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (srfi srfi-26)))
+         (snippet
+          '(begin
+             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+             (define (delete-all-but directory . preserve)
+                (with-directory-excursion directory
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (cut delete-file-recursively <>) items))))
+             (delete-all-but "3rdparty"
+                             ;; The following sources have all been patched, so
+                             ;; cannot easily be unbundled.
+                             "QtPropertyBrowser"
+                             "json11"
+                             "python-console"
+                             "oourafft")))
+         (patches (search-patches "nextpnr-gtest.patch"
+                                  "nextpnr-imgui.patch"))
+         (sha256
+          (base32 "1arj25vad76wg6b5yaaky4cby5zp9v92pdd4y3l0kxi7wvxhmmya"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        #:cmake cmake                     ;CMake 3.25 or higher is required.
+        #:configure-flags
+        ;; TODO: enable more architectures?
+        #~(list "-DARCH=generic;ice40;ecp5;himbaechel"
+                "-DBUILD_GUI=ON"
+                "-DUSE_OPENMP=ON"
+                "-DBUILD_TESTS=ON"
+                "-DHIMBAECHEL_UARCH=ng-ultra;gowin"
+                "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
+                "-DHIMBAECHEL_SPLIT=ON"
+                "-DHIMBAECHEL_PRJBEYOND_DB=/tmp/prjbeyond-db"
+                (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
+                (string-append "-DICESTORM_INSTALL_PREFIX="
+                               #$(this-package-input "icestorm"))
+                (string-append "-DTRELLIS_INSTALL_PREFIX="
+                               #$(this-package-input "prjtrellis"))
+                "-DUSE_IPO=OFF")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; Required by himbaechel architecture, ng-ultra support.
+            (add-after 'unpack 'get-prjbeyond-db
+              (lambda _
+                (copy-recursively
+                 #$(origin
+                     (method git-fetch)
+                     (uri (git-reference
+                            (url "https://github.com/yosyshq-GmbH/prjbeyond-db/")
+                            ;; We take latest commit, as indicated in nextpnr’s
+                            ;; README.md file
+                            (commit "06d3b424dd0e52d678087c891c022544238fb9e3")))
+                     (sha256
+                      (base32
+                       "17dd3cgms2fy6xvz7magdmvv92km4cqh2kz9dyjrvz5y8caqav4y")))
+                 "/tmp/prjbeyond-db")))
+            (add-after 'unpack 'unbundle-sanitizers-cmake
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  ;; Use the system sanitizers-cmake module.  This is made
+                  ;; necessary 'sanitizers-cmake' installing a FindPackage
+                  ;; module but no CMake config file.
+                  (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
+                   (string-append
+                    #$(this-package-native-input "sanitizers-cmake")
+                    "/share/sanitizers-cmake/cmake"))))))))
+      (native-inputs
+       (list googletest
+             sanitizers-cmake))
+      (inputs
+       (list apycula
+             boost
+             corrosion
+             eigen
+             icestorm
+             prjtrellis
+             pybind11
+             python
+             qtbase-5
+             qtwayland-5
+             qtimgui
+             yosys))
+      (synopsis "Place-and-Route tool for FPGAs")
+      (description "Nextpnr is a portable FPGA place and route tool.")
+      (home-page "https://github.com/YosysHQ/nextpnr/")
+      (license license:isc))))
 
 (define-public nextpnr-ice40
   (deprecated-package "nextpnr-ice40" nextpnr))
@@ -578,16 +606,16 @@ Python program.")
 (define-public python-myhdl
   (package
     (name "python-myhdl")
-    (version "0.11")
+    (version "0.11.51")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "myhdl" version))
         (sha256
           (base32
-            "04fi59cyn5dsci0ai7djg74ybkqfcjzhj1jfmac2xanbcrw9j3yk"))))
+            "0b360smk2m60vhxdi837hz75m0pnms477wkn9gh6m4v3nih1v4cx"))))
     (build-system python-build-system)
-    (home-page "https://www.myhdl.org/")
+    (home-page "http://www.myhdl.org/")
     (synopsis "Python as a Hardware Description Language")
     (description "This package provides a library to turn Python into
 a hardware description and verification language.")
@@ -650,7 +678,7 @@ automated testing of HDL code.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.17.0")
+    (version "1.17.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -659,7 +687,7 @@ automated testing of HDL code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1grbz8gm2rc9qz14ik0fgxd5qv1kix4aiha3zv60h9wbvssw592v"))))
+                "0hr5y9ys5kf096x18mh10wwqa0hbzlmdj7pyayc6szsjla1d3mk0"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
@@ -703,7 +731,7 @@ automated testing of HDL code.")
 (define-public systemc
   (package
     (name "systemc")
-    (version "3.0.0")
+    (version "3.0.1")
     (source
      (origin
        (method git-fetch)
@@ -712,7 +740,7 @@ automated testing of HDL code.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1v5fg3h9ffdzq9f6zplvr9all00ssc1gpdvbg129xahkrbl53kvw"))))
+        (base32 "1c8brlv3702p2ivifai9929bg20y30jb301ap0gdmz305q8mcb33"))))
     (native-inputs (list perl))
     (build-system cmake-build-system)
     (arguments
@@ -723,7 +751,7 @@ automated testing of HDL code.")
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
-    (home-page "https://accellera.org/community/systemc")
+    (home-page "https://systemc.org/")
     (synopsis "Library for event-driven simulation")
     (description
      "SystemC is a C++ library for modeling concurrent systems, and the
@@ -767,61 +795,66 @@ using different abstraction levels.")
      (list perl python systemc))
     (build-system gnu-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'bootstrap
-           (lambda _ (invoke "autoconf")))
-         (add-after 'unpack 'adjust-source
-           (lambda _
-             (substitute* "bin/verilator"
-               (("/bin/echo") "echo"))))
-         (add-before 'check 'disable-gdb-safe-path
-           (lambda _
-             (setenv "HOME" (getcwd))
-             (mkdir-p (string-append (getcwd) "/.config/gdb"))
-             (with-output-to-file (string-append (getcwd) "/.config/gdb/gdbinit")
-               (lambda ()
-                 (display "set auto-load safe-path /"))))))
-       #:test-target "test"))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'bootstrap
+            (lambda _ (invoke "autoconf")))
+          (add-after 'unpack 'adjust-source
+            (lambda _
+              (substitute* "bin/verilator"
+                (("/bin/echo") "echo"))))
+          (add-before 'check 'disable-gdb-safe-path
+            (lambda _
+              (setenv "HOME" (getcwd))
+              (mkdir-p (string-append (getcwd) "/.config/gdb"))
+              (with-output-to-file
+                  (string-append (getcwd) "/.config/gdb/gdbinit")
+                (lambda ()
+                  (display "set auto-load safe-path /"))))))
+      #:test-target "test"))
     (home-page "https://www.veripool.org/verilator/")
     (synopsis "Verilog/SystemVerilog simulator")
     (description
-     "Verilator transforms the specified Verilog or SystemVerilog code by reading it,
-performing lint checks, and optionally inserting assertion checks and
-coverage-analysis points.  It outputs single- or multi-threaded @file{.cpp}
-and @file{.h} files.")
+     "Verilator transforms the specified Verilog or SystemVerilog code by
+reading it, performing lint checks, and optionally inserting assertion checks
+and coverage-analysis points.  It outputs single- or multi-threaded
+@file{.cpp} and @file{.h} files.")
     (license license:lgpl3)))
 
 (define-public fftgen
-  (let ((commit "1d75a992efd0528edea128a903aafdabe133cb08") ;no releases
-        (revision "0"))
+  (let ((commit "3378b77d83a98b06184656a5cb9b54e50dfe4485") ;no releases
+        (revision "1"))
     (package
       (name "fftgen")
       (version (git-version "0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/ZipCPU/dblclockfft")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0qq874yalzpjdwnxhc5df8a0ifywv29wcncb09945x56xplvkcmd"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/ZipCPU/dblclockfft")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1rvln871wjkbbqnv88jnx328xlhn5sgbr8fglk3ajnd9rwgiq3jg"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:tests? #f                              ;no tests
-         #:make-flags '("CFLAGS=-g -O2")          ;default flags lack -O2
-         #:phases (modify-phases %standard-phases
-                    (delete 'configure)
-                    (replace 'install
-                      (lambda* (#:key outputs #:allow-other-keys)
-                        (let ((bin (string-append (assoc-ref outputs "out")
-                                                  "/bin")))
-                          (install-file "sw/fftgen" bin)))))))
+       (list
+        #:test-target "bench-test"
+        #:make-flags #~(list "CFLAGS=-g -O2") ;default flags lack -O2
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'install
+              (lambda _
+                (install-file "sw/fftgen"
+                              (string-append #$output "/bin")))))))
+      (native-inputs (list bc fftw python-minimal verilator which))
       (synopsis "Generic pipelined FFT core generator")
       (description "fftgen produces @acronym{FFT, fast-Fourier transforms}
 hardware designs in Verilog.")
-      (home-page "https://zipcpu.com/")
+      (home-page "https://github.com/ZipCPU/zipcpu/")
       (license license:lgpl3+))))
 
 (define-public openfpgaloader
@@ -893,7 +926,7 @@ to @samp{info \"(guix) Base Services\"} for examples.")
                        #:test-flags #~(list "test_all.py")))
       (native-inputs (list python-pytest python-setuptools python-wheel))
       (propagated-inputs (list python-networkx python-six))
-      (home-page "https://gitlab.com/ohwr/project/hdl-make/")
+      (home-page "https://ohwr.gitlab.io/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")
       (description
        "Hdlmake helps manage and share @acronym{HDL, hardware description

@@ -20,9 +20,10 @@
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
-;;; Copyright © 2023, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Robin Templeton <robin@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -62,7 +63,7 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
-  #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages dns)
@@ -79,9 +80,11 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages cyrus-sasl)
+  #:use-module (gnu packages openldap)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages serialization)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages perl)
@@ -1026,26 +1029,14 @@ v0.7/v0.8 and Nitrokey Storage devices.")
     (build-system cargo-build-system)
     (arguments
      `(#:tests? #f ;; 2/164 tests fail, nitrocli-ext tests failing
-       #:cargo-inputs
-       (("rust-anyhow" ,rust-anyhow-1)
-        ("rust-base32" ,rust-base32-0.4)
-        ("rust-directories" ,rust-directories-3)
-        ("rust-envy" ,rust-envy-0.4)
-        ("rust-libc-0.2" ,rust-libc-0.2)
-        ("rust-merge" ,rust-merge-0.1)
-        ("rust-nitrokey" ,rust-nitrokey-0.9)
-        ("rust-progressing" ,rust-progressing-3)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-structopt" ,rust-structopt-0.3)
-        ("rust-termion" ,rust-termion-1)
-        ("rust-toml" ,rust-toml-0.5))
-       #:cargo-development-inputs
-       (("rust-nitrokey-test" ,rust-nitrokey-test-0.5)
-        ("rust-nitrokey-test-state" ,rust-nitrokey-test-state-0.1)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-tempfile" ,rust-tempfile-3))))
+       #:install-source? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'use-system-deps
+           (lambda _
+             (setenv "USE_SYSTEM_LIBNITROKEY" "1"))))))
     (inputs
-     (list hidapi gnupg))
+     (cons* hidapi libnitrokey gnupg (cargo-inputs 'nitrocli)))
     (home-page "https://github.com/d-e-s-o/nitrocli")
     (synopsis "Command line tool for Nitrokey devices")
     (description
@@ -1210,4 +1201,59 @@ It also has limited support for Mifare Classic compatible cards (Thalys card)")
      "This package includes the IFD driver for the cyberJack
 contactless (RFID) and contact USB chipcard readers.")
     (home-page "http://www.reiner-sct.com/")
+    (license license:lgpl2.1+)))
+
+(define-public qdigidoc
+  (package
+    (name "qdigidoc")
+    (version "4.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-eid/DigiDoc4-Client")
+             (commit (string-append "v" version))
+             ;; The repository contains two git modules, an empty and obsolete
+             ;; "cmake" repository and https://github.com/open-eid/qt-common,
+             ;; which is an internal "libdigidoccommon" library with no
+             ;; support for standalone installation.
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05ncaw8m6d5lsswji950yx4p96y3ri0254vwrrdn4vkkflkc8any"))
+       (patches (search-patches "qdigidoc-bundle-config-files.patch"
+                                "qdigidoc-bundle-tsl-files.patch"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:qtbase qtbase                   ;qt6
+      #:tests? #f                       ;no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; QDigiDoc4 dlopens OpenSC libraries.
+          (add-after 'unpack 'patch-opensc-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "client/QPKCS11.cpp"
+                (("\"opensc-pkcs11.so\"")
+                 (format #f "~S"
+                         (search-input-file inputs
+                                            "lib/opensc-pkcs11.so")))))))))
+    (native-inputs
+     (list pkg-config
+           gettext-minimal
+           qttools))
+    (inputs (list flatbuffers
+                  libdigidocpp
+                  openldap
+                  opensc
+                  openssl
+                  pcsc-lite
+                  qtsvg
+                  zlib))
+    (home-page "https://github.com/open-eid/DigiDoc4-Client")
+    (synopsis "Estonian ID card application")
+    (description
+     "This application provides support for using private and governmental
+e-services, signing and encrypting DigiDoc documents, and configuring Estonian
+ID cards.  It requires a running pcscd service and a compatible card reader.")
     (license license:lgpl2.1+)))

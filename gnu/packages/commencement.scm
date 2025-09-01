@@ -3750,17 +3750,8 @@ is the GNU Compiler Collection.")
   ;; automatically "redirects" them to 'gcc-toolchain'.
   (deprecated-package "gcc" gcc-toolchain))
 
-
-(define-public gdc-toolchain-10
-  (package (inherit (make-gcc-toolchain gdc-10))
-    (synopsis "Complete GCC tool chain for D lang development")
-    (description "This package provides a complete GCC tool chain for
-D lang development to be installed in user profiles.  This includes
-gdc, as well as libc (headers and binaries, plus debugging symbols
-in the @code{debug} output), and binutils.")))
-
-(define-public gdc-toolchain-11
-  (package (inherit (make-gcc-toolchain gdc-11))
+(define-public gdc-toolchain
+  (package (inherit (make-gcc-toolchain gdc))
     (synopsis "Complete GCC tool chain for D lang development")
     (description "This package provides a complete GCC tool chain for
 D lang development to be installed in user profiles.  This includes

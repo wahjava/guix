@@ -2,7 +2,7 @@
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2017 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
-;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2015, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015, 2016, 2017, 2018, 2019, 2021, 2022, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2018-2021, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -77,7 +77,7 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
-  #:use-module (gnu packages certs)
+  #:use-module (gnu packages nss)
   #:use-module (gnu packages code)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -96,6 +96,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
@@ -151,6 +152,7 @@
   #:use-module (gnu packages telephony)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
+  #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
@@ -400,20 +402,23 @@ conferencing.")
 (define-public qxmpp
   (package
     (name "qxmpp")
-    (version "1.4.0")
+    ;; kaidan requires a precise version
+    (version "1.10.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/qxmpp-project/qxmpp")
+             (url "https://invent.kde.org/libraries/qxmpp")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1knpq1jkwk0lxdwczbmzf7qrjvlxba9yr40nbq9s5nqkcx6q1c3i"))))
-    (build-system cmake-build-system)
+        (base32 "0qinrbr63b1baqv1a7cph8bma6kj1ib8s8ywq6d9497lc1yl2kgi"))))
+    (build-system qt-build-system)
     (arguments
-     `(#:configure-flags (list "-DBUILD_EXAMPLES=false"
-                               "-DWITH_GSTREAMER=true")
+     `(#:qtbase ,qtbase
+       #:configure-flags (list "-DBUILD_EXAMPLES=false"
+                               "-DWITH_GSTREAMER=true"
+                               "-DBUILD_OMEMO=ON") ;needed by kaidan
        #:test-exclude
         (string-join ;; These tests use the network.
          (list "tst_qxmppiceconnection"
@@ -423,8 +428,12 @@ conferencing.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list gstreamer qtbase-5))
-    (home-page "https://github.com/qxmpp-project/qxmpp")
+     (list
+       gstreamer
+       libomemo-c
+       qca-qt6
+       qt5compat))
+    (home-page "https://invent.kde.org/libraries/qxmpp")
     (synopsis "XMPP client and server library")
     (description
      "QXmpp is a XMPP client and server library written in C++ and uses the Qt
@@ -1137,14 +1146,14 @@ control of your private keys, no previous conversation is compromised.")
 (define-public znc
   (package
     (name "znc")
-    (version "1.10.0")
+    (version "1.10.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://znc.in/releases/archive/znc-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "06bb6c2nciwbknfschxd2fjkpigd6i0zgwl6jiz5lm7gcadssrdy"))))
+                "0038qjkc1cxqz16nx9b37gjqzmnavv2kxdbjb4c0c9mz3n2pcvjf"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f
@@ -1473,7 +1482,7 @@ default.")
 (define-public kaidan
   (package
     (name "kaidan")
-    (version "0.9.0")
+    (version "0.12.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/unstable/kaidan/" version
@@ -1483,28 +1492,38 @@ default.")
                #~(begin
                    (delete-file-recursively "3rdparty")))
               (sha256
-               (base32 "1waqv0fdkhvp3cqy2a2g6i2wc9s0zbvgzknymrwxy99mnx9ymw9g"))))
+               (base32 "0q8py100nmvyhm8pfnvpxmghbg445x2vgpw3c519bcrr4w7y6yl0"))))
     (build-system qt-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTS=true")))
+     (list
+       #:qtbase qtbase
+       #:configure-flags #~(list "-DBUILD_TESTS=true")
+       #:test-exclude "PublicGroupChatTest"
+       #:phases
+         #~(modify-phases %standard-phases
+           (add-before 'check 'set-home
+             (lambda _
+               ;; Tests need write permission in $HOME.
+               (setenv "HOME" "/tmp"))))))
     (native-inputs (list extra-cmake-modules
-                         perl
-                         pkg-config
-                         python-wrapper))
-    (inputs (list kirigami-5
-                  knotifications-5
-                  qtbase-5
-                  qtdeclarative-5
-                  qtgraphicaleffects
-                  qtlocation-5
-                  qtquickcontrols2-5
-                  qtsvg-5
-                  qtmultimedia-5
-                  qtxmlpatterns-5
+                         pkg-config))
+    (inputs (list icu4c
+                  kcrash
+                  kdsingleapplication
+                  kio
+                  kirigami
+                  kirigami-addons
+                  knotifications
+                  kquickimageeditor
+                  prison
                   qqc2-desktop-style
+                  qtlocation
+                  qtmultimedia
+                  qtpositioning
+                  qtsvg
+                  qttools
                   qxmpp
-                  sonnet
-                  zxing-cpp-1.2a))
+                  sonnet))
     (home-page "https://www.kaidan.im/")
     (synopsis "Qt-based XMPP/Jabber Client")
     (description "Kaidan is a chat client.  It uses the open communication
@@ -2905,7 +2924,7 @@ validating international phone numbers.")
 (define-public chatty
   (package
     (name "chatty")
-    (version "0.6.7")
+    (version "0.7.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2920,7 +2939,7 @@ validating international phone numbers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11q07vjrrjf3k00kk41vm79brpq0qigz7l328br3g0li979kz32v"))))
+                "0d6z0mgl1xx384ph5lw3p5rpg3w1ninzyxjjjas3z8i7fyk47inf"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -2947,7 +2966,7 @@ validating international phone numbers.")
            xorg-server-for-tests))
     (inputs
      (list feedbackd
-           folks-with-libsoup2
+           folks
            gnome-desktop
            gsettings-desktop-schemas
            gspell
@@ -2962,7 +2981,7 @@ validating international phone numbers.")
            purple-mm-sms
            sqlite))
     (propagated-inputs
-     (list adwaita-icon-theme evolution-data-server-3.44))
+     (list adwaita-icon-theme evolution-data-server))
     (synopsis "Mobile client for XMPP and SMS messaging")
     (description "Chatty is a chat program for XMPP and SMS.  It works on mobile
 as well as on desktop platforms.  It's based on libpurple and ModemManager.")
@@ -3213,42 +3232,31 @@ designed for experienced users.")
 (define-public python-zulip
   (package
     (name "python-zulip")
-    (version "0.7.1")
+    (version "0.9.0")
     (source
      (origin
-       ;; There is no source on Pypi.
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/zulip/python-zulip-api")
-              (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "zulip" version))
        (sha256
-        (base32
-         "0da1ki1v252avy27j6d7snnc0gyq0xa9fypm3qdmxhw2w79d6q36"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; TODO: This is fixed upstream in later versions
-           (substitute* "zulip/tests/test_default_arguments.py"
-             (("optional arguments:") "options:"))))))
-    (build-system python-build-system)
+        (base32 "0hq8kl5cvbqsmb5zqq5wi61cnv0zzlcqg69yn59wqgwybng1853s"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'cd-to-zulip-dir
-           (lambda _ (chdir "zulip")))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (let ((test-zulip "../tools/test-zulip"))
-               (when tests?
-                 (add-installed-pythonpath inputs outputs)
-                 (patch-shebang test-zulip)
-                 (invoke test-zulip))))))))
-    (propagated-inputs
-     (list python-matrix-client python-pyopenssl python-requests
-           python-six))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: It tries to load from ~/zuliprc and fails:
+          ;; zulip.ConfigNotFoundError: api_key or email not specified and
+          ;; file /homeless-shelter/zuliprc does not exist.
+          (delete 'sanity-check))))
     (native-inputs
-     (list python-cython python-distro python-pytest))
+     (list python-matrix-nio
+           python-pytest
+           python-setuptools-next))
+    (propagated-inputs
+     (list python-click
+           python-distro
+           python-requests
+           python-typing-extensions))
     (home-page "https://github.com/zulip/python-zulip-api")
     (synopsis "Zulip's API Python bindings")
     (description
@@ -3258,7 +3266,7 @@ designed for experienced users.")
 (define-public zulip-term
   (package
     (name "zulip-term")
-    (version "0.5.2")
+    (version "0.7.0")
     (source
      (origin
        ;; Pypi package doesn't ship tests.
@@ -3268,26 +3276,39 @@ designed for experienced users.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1xhhy3v4wck74a83avil0rnmsi2grrh03cww19n5mv80p2q1cjmf"))
-       (modules '((guix build utils)))
-       (snippet '(substitute* "setup.py"
-                   (("\\=\\=1\\.7") ">=1.7")    ; pytest-mock
-                   (("\\=\\=2\\.5") ">=2.5")    ; pytest-cov
-                   (("4\\.5\\.2") "4.4.2")))))  ; lxml
+        (base32 "0p7q9r1bwak3kx4ig96pn3x53ggp9y70xczvqj6225bmi99r92v6"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:test-flags '("--ignore=tests/cli/test_run.py")))
+     (list
+      ;; tests: 2357 passed, 3 skipped, 1 deselected, 19 xfailed, 2162
+      #:test-flags
+      ;; All CLI tests fail
+      #~(list "--ignore=tests/cli/test_run.py"
+              ;; IndexError: list index out of range
+              "-k" "not test_keypress_CYCLE_COMPOSE_FOCUS[tab-edit_box-message_to_stream_name_box]")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                (("urwid~=2.1.2") "urwid")))))))
     (inputs
      (list python-beautifulsoup4
            python-lxml
-           python-mypy-extensions
+           python-pygments
+           python-pyperclip
+           python-dateutil
+           python-pytz
+           python-typing-extensions
+           python-tzlocal
            python-urwid
            python-urwid-readline
            python-zulip))
     (native-inputs
-     (list python-distro python-pytest python-pytest-cov
-           python-pytest-mock))
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mock
+           python-setuptools-next))
     (home-page "https://github.com/zulip/zulip-terminal")
     (synopsis "Zulip's official terminal client")
     (description "This package contains Zulip's official terminal client.")
@@ -3357,6 +3378,7 @@ designed for experienced users.")
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
       ;; It helps to resolve <golang.org/x/net/publicsuffix/table.go:63:12>:
       ;; pattern data/children: cannot embed irregular file data/children
       #:embed-files #~(list "children" "nodes" "text")
@@ -3516,71 +3538,6 @@ notifications.")
 a persistent connection to an IRC server, acting as a proxy and buffer for
 a number of clients.")
     (license license:gpl3+)))
-
-(define-public weechat-matrix
-  (package
-    (name "weechat-matrix")
-    (version "0.3.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/poljar/weechat-matrix")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1iv55n4k05139f7jzkhczgw4qp6qwilrvfsy3c6v2m1kxffj12d3"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'build)
-         (replace 'install
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((weechat-python (string-append (assoc-ref outputs "out")
-                                                   "/share/weechat/python")))
-               ;; Avoid circular import by renaming the matrix module to
-               ;; weechat_matrix.
-               (substitute* (cons "main.py"
-                                  (append (find-files "matrix")
-                                          (find-files "tests")))
-                 (("from matrix") "from weechat_matrix")
-                 (("import matrix") "import weechat_matrix"))
-               ;; Install python modules.
-               (invoke "make" "install-lib"
-                       (string-append "INSTALLDIR="
-                                      (site-packages inputs outputs)
-                                      "/weechat_matrix"))
-               ;; Extend PYTHONPATH to find installed python modules.
-               (add-installed-pythonpath inputs outputs)
-               ;; Augment sys.path so that dependencies are found.
-               (substitute* "main.py"
-                 (("import os\n" all)
-                  (apply string-append
-                         all
-                         "import sys\n"
-                         (map (lambda (path)
-                                (string-append "sys.path.append('" path "')\n"))
-                              (string-split (getenv "GUIX_PYTHONPATH") #\:)))))
-               ;; Install script.
-               (mkdir-p weechat-python)
-               (copy-file "main.py"
-                          (string-append weechat-python "/matrix.py")))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")))))))
-    (inputs
-     (list python-matrix-nio python-pygments python-pyopenssl
-           python-webcolors))
-    (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/poljar/weechat-matrix")
-    (synopsis "Weechat Matrix protocol script")
-    (description "@code{weechat-matrix} is a Python plugin for Weechat that lets
-Weechat communicate over the Matrix protocol.")
-    (license license:isc)))
 
 (define-public weechat-wee-slack
   (package

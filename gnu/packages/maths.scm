@@ -829,20 +829,6 @@ translator for the language.  In addition to the C library, a stand-alone
 LP/MIP solver is included in the package.")
     (license license:gpl3+)))
 
-(define-public glpk-4
-  (package
-    (inherit glpk)
-    (name "glpk")
-    (version "4.65")
-    (source
-     (origin
-      (method url-fetch)
-      (uri (string-append "mirror://gnu/glpk/glpk-"
-                          version ".tar.gz"))
-      (sha256
-       (base32
-        "040sfaa9jclg2nqdh83w71sv9rc1sznpnfiripjdyr48cady50a2"))))))
-
 (define-public linasm
   (package
     (name "linasm")
@@ -2022,7 +2008,43 @@ extremely large and complex data collections.")
             (lambda _
               (invoke "perl" "bin/make_err" "src/H5err.txt")
               (invoke "perl" "bin/make_vers" "src/H5vers.txt")
-              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt"))))))
+              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt")))
+          ;; Remove references to GCC/GFortran/binutils in order to decrease
+          ;; package size.
+          (add-before 'generate-headers 'remove-referencess
+            (lambda _
+              (substitute* '("src/libhdf5.settings.cmake.in"
+                             "src/H5build_settings.cmake.c.in")
+                (("@CMAKE_AR@") "ar")
+                (("@CMAKE_RANLIB@") "ranlib")
+                (("@CMAKE_C_COMPILER@") "gcc")
+                (("@CMAKE_CXX_COMPILER") "g++")
+                (("@CMAKE_Fortran_COMPILER@") "gfortran"))
+              (substitute* '("src/libhdf5.settings.autotools.in"
+                             "src/H5build_settings.autotools.c.in")
+                (("@AR@") "ar")
+                (("@RANLIB@") "ranlib")
+                (("@CXX_VERSION@") "g++")
+                (("@@CC_VERSION@") "gcc")
+                (("@FC_VERSION@") "gfortran"))))
+          (add-after 'install 'remove-gcc-references
+            (lambda _
+              (substitute* (map (lambda (f)
+                                  (string-append #$output "/" f))
+                                '("bin/h5hlcc"
+                                  "bin/h5hlc++"
+                                  "bin/h5cc"
+                                  "bin/h5c++"))
+                (("/gnu/store/[a-z0-9]*-gcc-[0-9.]*/bin/")
+                 ""))))
+          (add-after 'install 'remove-gfortran-references
+            (lambda _
+              (substitute* (map (lambda (f)
+                                  (string-append #$output "/" f))
+                                '("bin/h5hlfc"
+                                  "bin/h5fc"))
+                (("/gnu/store/[a-z0-9]*-gfortran-[0-9.]*/bin/")
+                 "")))))))
     (inputs (list libaec zlib))
     (native-inputs
      (list bison
@@ -2280,7 +2302,15 @@ Swath).")
                 ;; test per line in this file).
                 (substitute* "testpar/CMakeLists.txt"
                   (("(t_pmulti_dset|t_shapesame|t_filters_parallel)" _ test)
-                   (string-append "# " test "\n")))))))))
+                   (string-append "# " test "\n")))))
+            (replace 'remove-gcc-references
+              (lambda _
+                (substitute* (map (lambda (f)
+                                    (string-append #$output "/" f))
+                                  '("bin/h5hlcc"
+                                    "bin/h5cc"))
+                  (("/gnu/store/[a-z0-9]*-gcc-[0-9.]*/bin/")
+                   ""))))))))
     (synopsis "Management suite for data with parallel IO support")))
 
 (define-public hdf5-blosc
@@ -8476,7 +8506,7 @@ operations.")
 (define-public bitwuzla
   (package
     (name "bitwuzla")
-    (version "0.7.0")
+    (version "0.8.2")
     (source
      (origin
        (method git-fetch)
@@ -8485,7 +8515,7 @@ operations.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fpd1kgb5xdbcjiqbbc6j0b8g2ly9bp9m3la78fiayl4qlmsvh2b"))))
+        (base32 "0nakqz29cfkn91yvx1xzsk50rlqbiihslflbjanv4lflcl2zx6mz"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Dtesting=enabled" "-Ddefault_library=shared"
@@ -11399,7 +11429,7 @@ Mathics3.")
              (setenv "PYTHONPATH" (getcwd))
              (setenv "DJANGO_SETTINGS_MODULE" "mathics_django.settings")
              (invoke "django-admin" "test"))))))
-    (propagated-inputs (list python-django-4.2
+    (propagated-inputs (list python-django
                              python-mathics-scanner
                              python-mathics-core
                              python-networkx

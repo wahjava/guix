@@ -25,12 +25,15 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix build-system cargo)
+  #:use-module (guix diagnostics)
+  #:use-module (guix i18n)
   #:use-module (guix search-paths)
   #:use-module (guix store)
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (guix monads)
   #:use-module (guix packages)
+  #:use-module (guix download)
   #:use-module (guix platform)
   #:use-module (guix build-system)
   #:use-module (guix build-system gnu)
@@ -44,7 +47,12 @@
             %crate-base-url
             crate-url
             crate-url?
-            crate-uri))
+            crate-uri
+            crate-name->package-name
+            crate-source
+            define-cargo-inputs
+            cargo-inputs
+            cargo-triplet))
 
 (define %crate-base-url
   (make-parameter "https://crates.io"))
@@ -58,6 +66,47 @@
 to NAME and VERSION."
   (string-append crate-url name "/" version "/download"))
 
+(define (crate-name->package-name name)
+  (downstream-package-name "rust-" name))
+
+;; NOTE: Only use this procedure in (gnu packages rust-crates).
+(define* (crate-source name version hash #:key (patches '()) (snippet #f))
+  (origin
+    (method url-fetch)
+    (uri (crate-uri name version))
+    (file-name
+     (string-append (crate-name->package-name name) "-" version ".tar.gz"))
+    (sha256 (base32 hash))
+    (modules '((guix build utils)))
+    (patches patches)
+    (snippet snippet)))
+
+(define-syntax define-cargo-inputs
+  (syntax-rules (=>)
+    ((_ lookup inputs ...)
+     (define lookup
+       (let ((table (make-hash-table)))
+         (letrec-syntax ((record
+                          (syntax-rules (=>)
+                            ((_) #t)
+                            ((_ (name => lst) rest (... ...))
+                             (begin
+                               (hashq-set! table 'name (filter identity lst))
+                               (record rest (... ...)))))))
+           (record inputs ...)
+           (lambda (name)
+             "Return the inputs for NAME."
+             (hashq-ref table name))))))))
+
+(define* (cargo-inputs name #:key (module '(gnu packages rust-crates)))
+  "Lookup Cargo inputs for NAME defined in MODULE, return an empty list if
+unavailable."
+  (let ((lookup (module-ref (resolve-interface module) 'lookup-cargo-inputs)))
+    (or (lookup name)
+        (begin
+          (warning (G_ "no Cargo inputs available for '~a'~%") name)
+          '()))))
+
 (define (default-rust target)
   "Return the default Rust package."
   ;; Lazily resolve the binding to avoid a circular dependency.
@@ -70,7 +119,9 @@ to NAME and VERSION."
   (let ((module (resolve-interface '(gnu packages rust))))
     (module-ref module 'make-rust-sysroot)))
 
-(define (cargo-triplet target)
+(define* (cargo-triplet #:optional
+                        (target (or (%current-target-system)
+                                    (%current-system))))
   (false-if-exception
     (platform-rust-target
       (lookup-platform-by-target-or-system target))))
@@ -94,7 +145,9 @@ to NAME and VERSION."
                       (vendor-dir "guix-vendor")
                       (cargo-build-flags ''("--release"))
                       (cargo-test-flags ''())
+                      (cargo-package-crates ''())
                       (cargo-package-flags ''("--no-metadata" "--no-verify"))
+                      (cargo-install-paths ''())
                       (features ''())
                       (skip-build? #f)
                       (parallel-build? #t)
@@ -122,7 +175,9 @@ to NAME and VERSION."
                        #:vendor-dir #$vendor-dir
                        #:cargo-build-flags #$(sexp->gexp cargo-build-flags)
                        #:cargo-test-flags #$(sexp->gexp cargo-test-flags)
+                       #:cargo-package-crates #$(sexp->gexp cargo-package-crates)
                        #:cargo-package-flags #$(sexp->gexp cargo-package-flags)
+                       #:cargo-install-paths #$(sexp->gexp cargo-install-paths)
                        #:cargo-target #$(cargo-triplet system)
                        #:features #$(sexp->gexp features)
                        #:skip-build? #$skip-build?
@@ -154,7 +209,9 @@ to NAME and VERSION."
                             (vendor-dir "guix-vendor")
                             (cargo-build-flags ''("--release"))
                             (cargo-test-flags ''())
+                            (cargo-package-crates ''())
                             (cargo-package-flags ''("--no-metadata" "--no-verify"))
+                            (cargo-install-paths ''())
                             (cargo-target (cargo-triplet (or target system)))
                             (features ''())
                             (skip-build? #f)
@@ -185,7 +242,9 @@ to NAME and VERSION."
                        #:vendor-dir #$vendor-dir
                        #:cargo-build-flags #$(sexp->gexp cargo-build-flags)
                        #:cargo-test-flags #$(sexp->gexp cargo-test-flags)
+                       #:cargo-package-crates #$(sexp->gexp cargo-package-crates)
                        #:cargo-package-flags #$(sexp->gexp cargo-package-flags)
+                       #:cargo-install-paths #$(sexp->gexp cargo-install-paths)
                        #:cargo-target #$(cargo-triplet (or target system))
                        #:features #$(sexp->gexp features)
                        #:skip-build? #$skip-build?
@@ -214,6 +273,7 @@ to NAME and VERSION."
                     #:graft? #f
                     #:guile-for-build guile))
 
+;; TODO: Remove after Dec. 31, 2026.
 (define (package-cargo-inputs p)
   (apply
     (lambda* (#:key (cargo-inputs '()) #:allow-other-keys)
@@ -338,6 +398,11 @@ any dependent crates. This can be a benefits:
       #:rust-sysroot #:cargo-target
       ,@(if target '() '(#:target))))
 
+  (unless (every null? (list cargo-inputs cargo-development-inputs))
+    (warning (G_ "'~a' and '~a' are deprecated~%")
+             "#:cargo-inputs"
+             "#:cargo-development-inputs"))
+
   (bag
     (name name)
     (system system)
@@ -371,7 +436,8 @@ any dependent crates. This can be a benefits:
 
                      ;; This provides a separate sysroot for the regular rustc
                      ,@(if target
-                         `(("rust-sysroot" ,(rust-sysroot target)))
+                         `((,(string-append "rust-sysroot-for-" target)
+                            ,(rust-sysroot target)))
                          '())))
     (outputs outputs)
     (build (if target cargo-cross-build cargo-build))

@@ -36,6 +36,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix gexp)
   #:use-module (guix download)
@@ -514,17 +515,41 @@ scene to produce an image that looks much like a tone-mapped image.")
         (base32 "1lwf3cwldvh9qfmh3w7nqqildfmxx2i5f5bn0vr8y6qc5kh7a1s9"))))
     (build-system cmake-build-system)
     (arguments
-     `(,@(if (any (cute string-prefix? <> (or (%current-system)
-                                              (%current-target-system)))
-                  '("x86_64" "i686"))
-        ;; SSE and SSE2 are supported only on Intel processors.
-        '()
-        '(#:configure-flags '("-DBUILD_FOR_SSE=OFF" "-DBUILD_FOR_SSE2=OFF")))
-       #:tests? #f)) ; There are no tests to run.
+     (list
+      #:imported-modules `(,@%cmake-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cmake-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:configure-flags
+      (if (any (cute string-prefix? <> (or (%current-system)
+                                           (%current-target-system)))
+               '("x86_64" "i686"))
+          ;; SSE and SSE2 are supported only on Intel processors.
+          #~'()
+          #~'("-DBUILD_FOR_SSE=OFF" "-DBUILD_FOR_SSE2=OFF"))
+      #:tests? #f ; There are no tests to run.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-egg
+            (lambda _
+              (substitute* "apps/CMakeLists.txt"
+                ;; Prevent creation of Python egg.
+                (("\\$\\{SETUP_PY\\} install")
+                 "${SETUP_PY} install --single-version-externally-managed --root=/"))))
+          (add-after 'install 'python-wrap
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (for-each (lambda (program)
+                          (wrap-program (search-input-file outputs program)
+                            `("GUIX_PYTHONPATH" ":" prefix
+                              (,(getenv "GUIX_PYTHONPATH")
+                               ,(py:site-packages inputs outputs)))))
+                        (list "bin/lensfun-update-data"
+                              "bin/lensfun-add-adapter")))))))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glib))
+     (list bash-minimal glib python))
     (home-page "https://lensfun.github.io/")
     (synopsis "Library to correct optical lens defects with a lens database")
     (description "Digital photographs are not ideal.  Of course, the better is
@@ -545,7 +570,7 @@ photographic equipment.")
 (define-public darktable
   (package
     (name "darktable")
-    (version "5.2.0")
+    (version "5.2.1")
     (source
      (origin
        (method url-fetch)
@@ -553,7 +578,7 @@ photographic equipment.")
              "https://github.com/darktable-org/darktable/releases/"
              "download/release-" version "/darktable-" version ".tar.xz"))
        (sha256
-        (base32 "1imyk611wz0zxp03w91lhsxkj5hqgi0apx5bqj2q84gpdva6r92k"))))
+        (base32 "04gfcislcq2wymfqcir5bpwqfarcz5gynkn3ajyffj9rx6damw82"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -678,9 +703,19 @@ and enhance them.")
        (list
         #:tests? #f ;Tests are only examples
         #:configure-flags
-          #~(list "-DUSE_BUNDLED_LIBRAW=OFF"
-                  "-DBINARY_PACKAGE_BUILD=ON")
-        #:build-type "Release")) ;Rawspeed fails on default 'RelWithDebInfo'
+        #~(list "-DUSE_BUNDLED_LIBRAW=OFF"
+                "-DBINARY_PACKAGE_BUILD=ON")
+        #:build-type "Release" ;Rawspeed fails on default 'RelWithDebInfo'
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'libOpenCL-path
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Statically link to libOpenCL.
+                (substitute* "./src/common/dlopencl.c"
+                  (("\"libOpenCL\"")
+                   (string-append "\""
+                                  (search-input-file inputs "/lib/libOpenCL.so")
+                                  "\""))))))))
       (native-inputs
        (list cmocka
              desktop-file-utils

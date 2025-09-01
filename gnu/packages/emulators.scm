@@ -25,6 +25,7 @@
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.comg>
 ;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
+;;; Copyright © 2025 Laura Kirsch <laurakirsch240406@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -468,10 +469,10 @@ It aims to support Nintendo DSi and 3DS as well.")
                               "rangeset"
                               "rcheevos") ;submodule
               (with-directory-excursion "Externals"
+                ;; Note: Not copying implot sources here, which would
+                ;; introduce a top-level circular dependency.
                 (copy-recursively #$dolphin-rcheevos-submodule
-                                  "rcheevos/rcheevos")
-                (copy-recursively #$(package-source implot)
-                                  "implot/implot"))
+                                  "rcheevos/rcheevos"))
 
               (for-each delete-file
                         (find-files
@@ -495,6 +496,10 @@ It aims to support Nintendo DSi and 3DS as well.")
                     (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
+            (add-after 'unpack 'copy-implot-source
+              (lambda _
+                (copy-recursively #$(package-source implot)
+                                  "Externals/implot/implot")))
             (add-before 'configure 'generate-fonts&hardcode-libvulkan-path
               (lambda* (#:key inputs #:allow-other-keys)
                 (let ((fontfile
@@ -639,18 +644,11 @@ turbo speed, networked multiplayer, and graphical enhancements.")
           #~(begin
               ;; XXX: 'delete-all-but' is copied from the turbovnc package.
               (define (delete-all-but directory . preserve)
-                (define (directory? x)
-                  (and=> (stat x #f)
-                         (compose (cut eq? 'directory <>) stat:type)))
                 (with-directory-excursion directory
-                  (let* ((pred
-                          (negate (cut member <> (append '("." "..") preserve))))
+                  (let* ((pred (negate (cut member <>
+                                            (cons* "." ".." preserve))))
                          (items (scandir "." pred)))
-                    (for-each (lambda (item)
-                                (if (directory? item)
-                                    (delete-file-recursively item)
-                                    (delete-file item)))
-                              items))))
+                    (for-each (cut delete-file-recursively <>) items))))
 
               ;; Clean up the source from bundled libraries we don't need.
               (delete-all-but "Externals"
@@ -2862,18 +2860,11 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
                          (srfi srfi-26))
             ;; XXX: 'delete-all-but' is copied from the turbovnc package.
             (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
               (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
+                (let* ((pred (negate (cut member <>
+                                          (cons* "." ".." preserve))))
                        (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
+                  (for-each (cut delete-file-recursively <>) items))))
             ;; Remove as much bundled sources as possible, shaving off about
             ;; 65 MiB.
             (delete-all-but "deps"
@@ -3571,59 +3562,58 @@ assembler, and debugger for the Intel 8085 microprocessor.
 
 (define-public pcsxr
   ;; No release since 2017.
-  (let ((commit "6484236cb0281e8040ff6c8078c87899a3407534"))
+  (let ((commit "666604321bf2d3dd5e5f58b534cfce41e72ad7d1")
+        (revision "1"))
     (package
       (name "pcsxr")
-      ;; Version is tagged here: https://github.com/frealgagu/PCSX-Reloaded
-      (version "1.9.95")
+      ;; From CMakeLists.txt.
+      (version (git-version "1.9.94" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/pcsxr/PCSX-Reloaded")
+               (url "https://github.com/MaddTheSane/PCSX-Reloaded")
                (commit commit)))
+         (patches (search-patches "pcsxr-find-harfbuzz.patch"
+                                  "pcsxr-fix-definitions.patch"))
          (sha256
-          (base32
-           "138mayp7zi9v4l3lm5f6xxkds619w1fgg769zm8s45c84jbz7dza"))
+          (base32 "0lcypcawnipm02m3wnjsrm9r10llabncx78ramk7iw03a646dngj"))
          (file-name (git-file-name name commit))))
       (build-system cmake-build-system)
       (arguments
-       `(#:tests? #f                    ;no "test" target
-         #:configure-flags
-         (list "-DSND_BACKEND=pulse"
-               "-DENABLE_CCDDA='ON'"
-               "-DUSE_LIBARCHIVE='ON'"
-               "-DUSE_LIBCDIO='ON'")
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'cd-subdir
-             (lambda _ (chdir "pcsxr") #t))
-           (add-before 'configure 'fix-cdio-lookup
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "cmake/FindCdio.cmake"
-                 (("/usr/include/cdio")
-                  (search-input-directory inputs "/include/cdio")))))
-           (add-after 'install 'wrap-program
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (wrap-program (string-append (assoc-ref outputs "out")
-                                            "/bin/pcsxr")
-                 ;; For GtkFileChooserDialog.
-                 `("GSETTINGS_SCHEMA_DIR" =
-                   (,(string-append (assoc-ref inputs "gtk+")
-                                    "/share/glib-2.0/schemas")))))))))
-      (native-inputs
-       (list pkg-config intltool
-             `(,glib "bin")))
-      (inputs
-       (list bash-minimal
-             libcdio
-             sdl2
-             gtk+
-             ffmpeg-4
-             libxv
-             libarchive
-             pulseaudio))
-      (home-page "https://archive.codeplex.com/?p=pcsxr")
+       (list
+        #:tests? #f ;no "test" target
+        #:configure-flags
+        #~(list "-DSND_BACKEND=pulse"
+                "-DENABLE_CCDDA='ON'"
+                "-DUSE_LIBARCHIVE='ON'"
+                "-DUSE_LIBCDIO='ON'"
+                "-DCMAKE_C_FLAGS=-Wno-incompatible-pointer-types")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'configure 'fix-cdio-lookup
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "cmake/FindCdio.cmake"
+                  (("/usr/include/cdio")
+                   (search-input-directory inputs "/include/cdio")))))
+            (add-after 'install 'wrap-program
+              (lambda* (#:key inputs #:allow-other-keys)
+                (wrap-program (string-append #$output "/bin/pcsxr")
+                  ;; For GtkFileChooserDialog.
+                  `("GSETTINGS_SCHEMA_DIR" =
+                    (,(string-append (assoc-ref inputs "gtk+")
+                                     "/share/glib-2.0/schemas")))))))))
+      (native-inputs (list pkg-config intltool
+                           `(,glib "bin")))
+      (inputs (list bash-minimal
+                    libcdio
+                    sdl2
+                    gtk+
+                    ffmpeg-4
+                    libxv
+                    libarchive
+                    pulseaudio))
+      (home-page "https://github.com/MaddTheSane/PCSX-Reloaded")
       (synopsis "PlayStation emulator")
       (description
        "A PlayStation emulator based on PCSX-df Project with bugfixes and
@@ -4363,72 +4353,96 @@ on a Commodore C64, C128 etc.")
     (license license:zlib)))
 
 (define-public flycast
-  (package
-    (name "flycast")
-    (version "2.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/flyinghead/flycast")
-             (commit (string-append "v" version))
-             ;; There are many bundled packages here included as git
-             ;; submodules. Removing many of them would require patching the
-             ;; source code and repository layout.
-             (recursive? #t)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0ainy75gkrvilcm89hq6wq9md41w0mxgp6l27q5fzrxxykpjh6ym"))
-       (modules '((guix build utils)))
-       (snippet #~(begin
-                    (substitute* "CMakeLists.txt"
-                      (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
-                       "find_package(VulkanHeaders)"))
-                    (with-directory-excursion "core/deps"
-                      (for-each delete-file-recursively
-                                '("SDL"
-                                  "Spout"
-                                  "Syphon"
-                                  "Vulkan-Headers"
-                                  "breakpad"
-                                  "discord-rpc"
-                                  "libzip"
-                                  "oboe")))))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f ; no test suite
-      #:configure-flags
-      #~(list "-DUSE_ALSA=ON"
-              "-DUSE_BREAKPAD=OFF"
-              "-DUSE_DX11=OFF"
-              "-DUSE_DX9=OFF"
-              ;; The USE_HOST_GLSLANG option is not implemented correctly.
-              ;; (see: https://github.com/flyinghead/flycast/issues/1843)
-              "-DUSE_HOST_GLSLANG=OFF"
-              "-DUSE_HOST_LIBZIP=ON"
-              "-DUSE_HOST_SDL=ON"
-              "-DUSE_LIBAO=ON"
-              "-DUSE_LUA=ON"
-              "-DUSE_PULSEAUDIO=ON"
-              "-DUSE_VULKAN=ON")))
-    (inputs (list alsa-lib
-                  ao
-                  curl
-                  glslang
-                  libzip
-                  lua
-                  miniupnpc
-                  pulseaudio
-                  sdl2
-                  spirv-tools
-                  vulkan-headers
-                  pkg-config))
-    (home-page "https://github.com/flyinghead/flycast")
-    (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
-    (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
+  ;; Use a git snapshot as the latest 2.5 release is still on an older glslang
+  ;; version that doesn't build with GCC 14.
+  (let ((commit "33833cfd1ed2d94d907223442fdb8cdafd8d5d80")
+        (revision "0"))
+    (package
+      (name "flycast")
+      (version (git-version "2.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/flyinghead/flycast")
+                (commit commit)
+                ;; There are many bundled packages here included as git
+                ;; submodules, but removing many of them would require patching
+                ;; the source code and repository layout (see: <>).
+                (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "16vwhw33zhq2b8mpg863cn7sz4f04wxjz2650jgqjv7i5lkdd1g9"))
+         (modules '((guix build utils)))
+         (snippet #~(begin
+                      ;; TODO: Uncomment after our vulkan-headers
+                      ;; are update to 1.3.261.0 or newer.
+                      ;; (substitute* "CMakeLists.txt"
+                      ;;   (("add_subdirectory\\(core/deps/Vulkan-Headers\\)")
+                      ;;    "find_package(VulkanHeaders)"))
+                      (with-directory-excursion "core/deps"
+                        (for-each
+                         delete-file-recursively
+                         '("SDL"
+                           "Spout"
+                           "Syphon"
+                           ;; TODO: Uncomment after our vulkan-headers
+                           ;; are update to 1.3.261.0 or newer.
+                           ;;"Vulkan-Headers"
+                           "breakpad"
+                           "discord-rpc"
+                           ;; XXX: The libretro build requires the bundled
+                           ;; libzip, which it uses to produce a
+                           ;; static library.
+                           ;;"libzip"
+                           "oboe")))))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:tests? #f                       ;no test suite
+        #:configure-flags
+        #~(list "-DUSE_ALSA=ON"
+                "-DUSE_BREAKPAD=OFF"
+                "-DUSE_DX11=OFF"
+                "-DUSE_DX9=OFF"
+                ;; The USE_HOST_GLSLANG option is not implemented correctly.
+                ;; (see: https://github.com/flyinghead/flycast/issues/1843)
+                "-DUSE_HOST_GLSLANG=OFF"
+                "-DUSE_HOST_LIBZIP=ON"
+                "-DUSE_HOST_SDL=ON"
+                "-DUSE_LIBAO=ON"
+                "-DUSE_LIBCDIO=ON"
+                "-DUSE_LUA=ON"
+                "-DUSE_PULSEAUDIO=ON"
+                "-DUSE_VULKAN=ON")))
+      (native-inputs (list pkg-config))
+      (inputs (list alsa-lib
+                    ao
+                    curl
+                    glslang
+                    libcdio
+                    libzip
+                    lua
+                    miniupnpc
+                    pulseaudio
+                    sdl2
+                    spirv-tools
+                    ;; TODO: Uncomment after vulkan-headers
+                    ;; is updated to 1.3.261.0 or newer.
+                    ;;vulkan-headers
+                    ))
+      (home-page "https://github.com/flyinghead/flycast")
+      (synopsis "Sega Dreamcast, Naomi, Naomi 2, and Atomiswave emulator")
+      (description "Flycast is a multi-platform Sega Dreamcast, Naomi, Naomi 2,
 and Atomiswave emulator derived from reicast.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
+
+(define-public libretro-flycast
+  (package/inherit flycast
+    (name "libretro-flycast")
+    (arguments (substitute-keyword-arguments (package-arguments flycast)
+                 ((#:configure-flags flags)
+                  #~(cons "-DLIBRETRO=ON" #$flags))))))
 
 (define-public freedisksysrom
   ;; There is no release; use the latest commit.
@@ -4700,3 +4714,45 @@ information.  Useful for cross-architecture tools (such as @code{python-pyvex}).
       (synopsis "8051/8052 emulator with curses-based UI")
       (description "emu8051 is a simulator of the 8051/8052 microcontrollers.")
       (license license:expat))))
+
+(define-public fceux
+  (package
+    (name "fceux")
+    (version "2.6.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/TASEmulators/fceux")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02s5qmxdxpsa71977z9bs5vfhnszn5nr5hk05wns8cm9nshbg7as"))
+       (modules '((guix build utils)))
+       (snippet #~(map delete-file-recursively
+                       (list "output/lua5.1.dll" "output/lua51.dll"
+                             "src/drivers/win" "fceux-server" "vc")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; No test suite.
+      #:tests? #f))
+    (inputs (list qtbase-5
+                  zlib
+                  minizip
+                  sdl2
+                  lua-5.1
+                  libx264
+                  x265
+                  ffmpeg
+                  libxkbcommon
+                  libarchive))
+    (native-inputs (list pkg-config))
+    (synopsis "NES/Famicom emulator")
+    (description
+     "FCEUX is a Nintendo Entertainment System (NES), Famicom, Famicom Disk
+System (FDS), and Dendy emulator.  It supports NTSC (USA/JPN), PAL (European),
+and NTSC-PAL Hybrid modes.  It also offers tools for debugging, rom-hacking,
+map making, Tool-assisted movies, and Lua scripting.")
+    (home-page "https://fceux.com/web/home.html")
+    (license license:gpl2+)))

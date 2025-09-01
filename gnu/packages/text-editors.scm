@@ -39,6 +39,7 @@
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Marc Coquand <marc@coquand.email>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -69,6 +70,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
@@ -82,11 +84,6 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
-  #:use-module (gnu packages crates-io)
-  #:use-module (gnu packages crates-check)
-  #:use-module (gnu packages crates-vcs)
-  #:use-module (gnu packages crates-web)
-  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages datastructures)
@@ -96,6 +93,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-xyz)
@@ -118,10 +116,12 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages regex)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages slang)
   #:use-module (gnu packages sqlite)
@@ -180,6 +180,7 @@ extensions over the standard utility.")
       (build-system go-build-system)
       (arguments
        (list
+        #:go go-1.23
         #:install-source? #f
         #:import-path "github.com/zyedidia/micro/v2/cmd/micro"
         #:unpack-path "github.com/zyedidia/micro/v2"
@@ -465,45 +466,13 @@ competitive (as in keystroke count) with Vim.")
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-clap" ,rust-clap-4)
-        ("rust-crossbeam-channel" ,rust-crossbeam-channel-0.5)
-        ("rust-daemonize" ,rust-daemonize-0.5)
-        ("rust-diffs" ,rust-diffs-0.5)
-        ("rust-dirs" ,rust-dirs-5)
-        ("rust-enum-primitive" ,rust-enum-primitive-0.1)
-        ("rust-fs4" ,rust-fs4-0.8)
-        ("rust-glob" ,rust-glob-0.3)
-        ("rust-indoc" ,rust-indoc-2)
-        ("rust-itertools" ,rust-itertools-0.13)
-        ("rust-jsonrpc-core" ,rust-jsonrpc-core-18)
-        ("rust-lazy-static" ,rust-lazy-static-1)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-lsp-types" ,rust-lsp-types-0.95)
-        ("rust-mio" ,rust-mio-1)
-        ("rust-notify-debouncer-full" ,rust-notify-debouncer-full-0.3)
-        ("rust-pulldown-cmark" ,rust-pulldown-cmark-0.9)
-        ("rust-rand" ,rust-rand-0.8)
-        ("rust-regex" ,rust-regex-1)
-        ("rust-ropey" ,rust-ropey-1)
-        ;("rust-sentry" ,rust-sentry-0.35)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-derive" ,rust-serde-derive-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-serde-repr" ,rust-serde-repr-0.1)
-        ("rust-slog" ,rust-slog-2)
-        ("rust-slog-scope" ,rust-slog-scope-4)
-        ("rust-sloggers" ,rust-sloggers-2)
-        ("rust-toml" ,rust-toml-0.8)
-        ("rust-unicode-width" ,rust-unicode-width-0.1)
-        ("rust-url" ,rust-url-2)
-        ("rust-whoami" ,rust-whoami-1))
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'disable-optional-crash-reporting
            (lambda _
              (substitute* "Cargo.toml"
                ((".*sentry.*") "")))))))
+    (inputs (cargo-inputs 'kak-lsp))
     (home-page "https://github.com/kak-lsp/kak-lsp")
     (synopsis "Language Server Protocol (LSP) client for Kakoune")
     (description
@@ -527,15 +496,6 @@ Rust.")
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f
-       #:cargo-inputs
-       (("rust-getopts" ,rust-getopts-0.2)
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-emacs" ,rust-emacs-0.11)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-serde-derive" ,rust-serde-derive-1)
-        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
-        ("rust-unicode-width" ,rust-unicode-width-0.1))
        #:phases
        (modify-phases %standard-phases
          (add-after 'install 'install-plugins-and-libs
@@ -556,7 +516,7 @@ Rust.")
                (install-file "rc/parinfer.kak"
                              (string-append out "/share/kak/autoload"))))))))
     (inputs
-     (list clang))
+     (cons clang (cargo-inputs 'parinfer-rust)))
     (home-page "https://github.com/justinbarclay/parinfer-rust")
     (synopsis "Infer parentheses for Clojure, Lisp and Scheme")
     (description
@@ -582,23 +542,13 @@ can load dynamic libraries.")
     (arguments
      (list
       #:install-source? #f
-      #:cargo-inputs (list rust-getopts-0.2
-                           rust-libc-0.2
-                           rust-emacs-0.19
-                           rust-serde-1
-                           rust-serde-json-1
-                           rust-serde-derive-1
-                           rust-stdweb-0.4
-                           rust-unicode-segmentation-1
-                           rust-unicode-width-0.1
-                           rust-winapi-0.3)
       #:phases #~(modify-phases %standard-phases
                    (add-after 'install 'install-library
                      (lambda _
                        (let ((lib (string-append #$output "/lib")))
                          (with-directory-excursion "target/release"
                            (install-file "libparinfer_rust.so" lib))))))))
-    (inputs (list clang))
+    (inputs (cons clang (cargo-inputs 'parinfer-rust-emacs)))
     (home-page "https://github.com/justinbarclay/parinfer-rust-emacs")
     (synopsis "Emacs-centric fork of parinfer-rust")
     (description
@@ -611,7 +561,7 @@ plugin, though a standalone binary is built also.")
 (define-public helix
   (package
     (name "helix")
-    (version "23.10")
+    (version "25.07.1")
     (source
      (origin
        (method git-fetch)
@@ -620,7 +570,7 @@ plugin, though a standalone binary is built also.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gl5iplj9x58pgqvb296d70xgq8fslqk8chai2arn65bcbgaw014"))))
+        (base32 "06m4zagivfa40rw25n3fn66d0z2rsf3r3cjdzwh67lh10wcb6m24"))))
     (build-system cargo-build-system)
     (arguments
      (list
@@ -642,71 +592,8 @@ plugin, though a standalone binary is built also.")
                  (copy-recursively "runtime" runtime)
                  (wrap-program hx
                    `("HELIX_RUNTIME" prefix
-                     (,runtime)))))))
-       #:cargo-inputs
-       (list rust-ahash-0.8
-             rust-anyhow-1
-             rust-arc-swap-1
-             rust-bitflags-2
-             rust-cassowary-0.3
-             rust-cc-1
-             rust-chardetng-0.1
-             rust-chrono-0.4
-             rust-clipboard-win-4
-             rust-content-inspector-0.2
-             rust-crossterm-0.27
-             rust-dunce-1
-             rust-encoding-rs-0.8
-             rust-etcetera-0.8
-             rust-fern-0.6
-             rust-futures-executor-0.3
-             rust-futures-util-0.3
-             rust-gix-0.55
-             rust-globset-0.4
-             rust-grep-regex-0.1
-             rust-grep-searcher-0.1
-             rust-hashbrown-0.14
-             rust-ignore-0.4
-             rust-imara-diff-0.1
-             rust-libc-0.2
-             rust-libloading-0.8
-             rust-log-0.4
-             rust-lsp-types-0.94
-             rust-nucleo-0.2
-             rust-once-cell-1
-             rust-parking-lot-0.12
-             rust-pulldown-cmark-0.9
-             rust-regex-1
-             rust-ropey-1
-             rust-rustix-0.38
-             rust-serde-1
-             rust-serde-json-1
-             rust-signal-hook-0.3
-             rust-signal-hook-tokio-0.3
-             rust-slotmap-1
-             rust-smallvec-1
-             rust-smartstring-1
-             rust-tempfile-3
-             rust-termini-1
-             rust-textwrap-0.16
-             rust-thiserror-1
-             rust-threadpool-1
-             rust-tokio-1
-             rust-tokio-stream-0.1
-             rust-toml-0.7
-             rust-tree-sitter-0.20
-             rust-unicode-general-category-0.6
-             rust-unicode-segmentation-1
-             rust-unicode-width-0.1
-             rust-url-2
-             rust-which-4)
-       #:cargo-development-inputs
-       (list rust-fern-0.6
-             rust-indoc-2
-             rust-quickcheck-1
-             rust-smallvec-1
-             rust-tempfile-3)))
-    (inputs (list bash-minimal))
+                     (,runtime)))))))))
+    (inputs (cons bash-minimal (cargo-inputs 'helix)))
     (home-page "https://helix-editor.com/")
     (synopsis "Post-modern modal text editor")
     (description "A Kakoune / Neovim inspired editor, written in Rust.")
@@ -836,7 +723,7 @@ jmacs, joe, jpico, jstar, and rjoe.")
      (list aspell
            bash-minimal
            boost
-           clang-11               ;XXX: must be the same version as Mesas LLVM
+           clang-18               ;XXX: must be the same version as Mesas LLVM
            gtkmm-3
            gtksourceviewmm
            nlohmann-json
@@ -959,7 +846,7 @@ Wordstar-, EMACS-, Pico, Nedit or vi-like key bindings.  e3 can be used on
 (define-public mg
   (package
     (name "mg")
-    (version "20240709")
+    (version "20250523")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -968,7 +855,7 @@ Wordstar-, EMACS-, Pico, Nedit or vi-like key bindings.  e3 can be used on
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "02q3976glcih0icqvfz2fxrc723si57q080ba4ali5hw4wwggnk4"))
+                "1a08jvljmysangmwzv9ga84iy0s7afr7vb1gabivrxagkb5j70f5"))
               (modules '((guix build utils)))
               (snippet '(begin
                           (substitute* "GNUmakefile"
@@ -1010,13 +897,13 @@ OpenBSD team.")
 (define-public nano
   (package
     (name "nano")
-    (version "8.5")
+    (version "8.6")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/nano/nano-" version ".tar.xz"))
       (sha256
-       (base32 "0sn2aikbqyvq5d46x7fkx33gaprjaj7jhhvdckwil54w6cfh22q0"))))
+       (base32 "06d66wagx5lxh6gnisamkj2zk0idydca8xxxa6mp7xfmxvqgpazp"))))
     (build-system gnu-build-system)
     (arguments
      (if (%current-target-system)
@@ -1474,6 +1361,34 @@ The basic features of Text Pieces are:
 @item You can write your own scripts and create custom tools
 @end itemize")
     (license license:gpl3)))
+
+(define-public typstwriter
+  (package
+    (name "typstwriter")
+    (version "0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "typstwriter" version))
+       (sha256
+        (base32 "0whx593xi5pv9wqzzd6xa97pln5b0j629s3qnfs80v06p2r5ghs6"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))
+    (native-inputs
+     ;; TODO: Add the following dependencies and enable tests once this package
+     ;; is merged into master.
+     ;; python-fpdf python-pytest python-pytest-qt
+     (list python-flit-core))
+    (inputs
+     (list python-platformdirs python-pygments python-pyside-6 python-qtpy))
+    (propagated-inputs (list typst))
+    (home-page "https://github.com/Bzero/typstwriter")
+    (synopsis "Integrated editor for Typst typesetting system")
+    (description
+     "Typstwriter is an integrated editor for the Typst typesetting system,
+including syntax highlighting and compiler output as well as file-system and
+document views presented in a clean, friendly Qt graphical interface.")
+    (license license:expat)))
 
 (define-public scintilla
   (package
