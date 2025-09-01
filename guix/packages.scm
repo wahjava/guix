@@ -671,6 +671,10 @@ Texinfo.  Otherwise, return the string."
      (list (package-name package) package))
     (((? package? package) output)                ;XXX: ugly?
      (list (package-name package) package output))
+    ((label (? package? package) . output)
+     ;; Allow mixing labeled inputs with new style, specifying output or not.
+     (append (list label package)
+             output))
     ((? gexp-input?)       ;XXX: misplaced because 'native?' field is ignored?
      (let ((obj    (gexp-input-thing input))
            (output (gexp-input-output input)))

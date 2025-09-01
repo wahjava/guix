@@ -2178,6 +2178,14 @@
       ((("coreutils" input "debug"))
        input))))
 
+(test-assert "add-input-label, handle already labelled input without output"
+  (equal? `("label" ,coreutils)
+        ((@@ (guix packages) add-input-label) `("label",coreutils))))
+
+(test-assert "add-input-label, handle already labelled input without output"
+  (equal? `("label" ,coreutils "debug")
+        ((@@ (guix packages) add-input-label) `("label",coreutils "debug"))))
+
 (test-end "packages")
 
 ;;; Local Variables:
