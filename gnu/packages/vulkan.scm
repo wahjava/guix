@@ -483,7 +483,7 @@ API.")
   (package
     (name "shaderc")
     ;; shaderc doesn't follow the versioning scheme of vulkan sdk
-    (version "2025.1")
+    (version "2025.3")
     (source
      (origin
        (method git-fetch)
@@ -493,7 +493,7 @@ API.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0hbsvyyy5fzgal83z8kx4a3x9d2fnd2fcs53l3s9n0pyybip3i5j"))))
+         "0w1mj5b3n6kp0brqindb7fppvllzlywkdk1zglkbj3bw8k0795mb"))))
     (build-system cmake-build-system)
     (arguments
      `(;; FIXME: Skip most of the tests, because enabling system gtest breaks
@@ -508,6 +508,7 @@ API.")
              ;; Note: despite the name, this just specifies the headers.
              (string-append "-Dglslang_SOURCE_DIR="
                             (assoc-ref %build-inputs "glslang") "/include/glslang"))
+       #:tests? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'do-not-look-for-bundled-sources
