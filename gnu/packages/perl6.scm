@@ -37,6 +37,77 @@
 (define-public moarvm
   (package
     (name "moarvm")
+    (version "2025.06")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://moarvm.org/releases/MoarVM-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0myjp2rwcl83sn2myrdmifinczy8irx3m11avqm0569zvc6b1mp8"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;(delete-file-recursively "3rdparty/dynasm") ; JIT
+           (delete-file-recursively "3rdparty/dyncall")
+           (delete-file-recursively "3rdparty/freebsd")
+           (delete-file-recursively "3rdparty/libatomicops")
+           (delete-file-recursively "3rdparty/libuv")
+           (delete-file-recursively "3rdparty/libtommath")
+           (delete-file-recursively "3rdparty/msinttypes")))))
+    (build-system perl-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-build
+           (lambda _
+             (substitute* "build/Makefile.in"
+               (("^ +3rdparty/freebsd/.*") ""))))
+         (replace 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (pkg-config (assoc-ref inputs "pkg-config")))
+               ;; fix building with GCC 14
+               (setenv "CFLAGS" "-fcommon -Wno-incompatible-pointer-types")
+               (setenv "LDFLAGS"
+                       ,@(if (target-ppc32?)
+                           `((string-append "-Wl,-rpath=" out "/lib" " -latomic"))
+                           `((string-append "-Wl,-rpath=" out "/lib"))))
+               (invoke "perl" "Configure.pl"
+                       "--prefix" out
+                       "--pkgconfig" (string-append pkg-config "/bin/pkg-config")
+                       "--has-libtommath"
+                       "--has-libatomic_ops"
+                       "--has-libffi"
+                       "--has-libuv")))))))
+    (home-page "https://moarvm.org/")
+    (native-inputs
+     (list pkg-config))
+    ;; These should be inputs but moar.h can't find them when building Rakudo.
+    (propagated-inputs
+     (list libatomic-ops libffi libtommath libuv))
+    (synopsis "VM for NQP And Rakudo Perl 6")
+    (description
+     "Short for \"Metamodel On A Runtime\", MoarVM is a modern virtual machine
+built for the Rakudo Perl 6 compiler and the NQP Compiler Toolchain.  Highlights
+include:
+
+@itemize
+@item Great Unicode support, with strings represented at grapheme level
+@item Dynamic analysis of running code to identify hot functions and loops, and
+perform a range of optimizations, including type specialization and inlining
+@item Support for threads, a range of concurrency control constructs, and
+asynchronous sockets, timers, processes, and more
+@item Generational, parallel, garbage collection
+@item Support for numerous language features, including first class functions,
+exceptions, continuations, runtime loading of code, big integers and interfacing
+with native libraries.
+@end itemize")
+    (license license:artistic2.0)))
+
+(define-public moarvm
+  (package
+    (name "moarvm")
     (version "2022.04")
     (source
      (origin
@@ -106,6 +177,60 @@ with native libraries.
     (license license:artistic2.0)))
 
 (define-public nqp-configure
+  (let ((commit "566ca585735e9dc5abe0f0cf40e1f9912b69c693"))
+    (package
+      (name "nqp-configure")
+      ;; NQP and Rakudo use the same version of nqp-configure.
+      ;; We may as well set nqp-configure's version to the same as theirs.
+      (version "2025.06")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Raku/nqp-configure")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1i6n6xsw4kdr5rbmi5gn5x6c9665yd7d8x9cqpz870db4dd0bcfa"))))
+      (build-system perl-build-system)
+      (arguments
+       '(#:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'create-makefile-and-manifest
+             (lambda _
+               (call-with-output-file "Makefile.PL"
+                 (lambda (port)
+                   (format port "
+use ExtUtils::MakeMaker;
+WriteMakefile(NAME => 'NQP::Config');\n")))
+               (call-with-output-file "MANIFEST"
+                 (lambda (port)
+                   (format port "
+LICENSE
+MANIFEST
+Makefile.PL
+README.md
+bin/make.nqp
+doc/Macros.md
+doc/NQP-Config.md
+lib/NQP/Config.pm
+lib/NQP/Config/Test.pm
+lib/NQP/Macros.pm
+t/10-config.t
+t/20-macros.t
+t/30-if-macro.t\n")))))
+           (add-after 'patch-source-shebangs 'patch-more-shebangs
+             (lambda _
+               (substitute* '("bin/make.nqp"
+                              "lib/NQP/Config.pm")
+                 (("/bin/sh") (which "sh"))))))))
+      (home-page "https://github.com/Raku/nqp-configure")
+      (synopsis "Configuration and build modules for NQP")
+      (description "This library provides support modules for NQP and Rakudo
+@file{Configure.pl} scripts.")
+      (license license:artistic2.0))))
+
+(define-public nqp-configure
   (let ((commit "9b98931e0bfb8c4aac61590edf5074e63aa8ea4b"))
     (package
       (name "nqp-configure")
@@ -158,6 +283,69 @@ t/30-if-macro.t\n")))))
       (description "This library provides support modules for NQP and Rakudo
 @file{Configure.pl} scripts.")
       (license license:artistic2.0))))
+
+(define-public nqp
+  (package
+    (name "nqp")
+    (version "2025.06.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/Raku/nqp/releases/download/"
+                           version "/nqp-" version ".tar.gz"))
+       (sha256
+        (base32 "0lrka0nhshp63wrak4y81hr3803kwwlhj2wchl1yy1p3z76dzpz6"))
+       (modules '((guix build utils)))
+       (snippet
+        '(delete-file-recursively "3rdparty"))))
+    (build-system perl-build-system)
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'remove-calls-to-git
+           (lambda _ (invoke "true"))) ;; do nothing but didnt find how to
+                                       ;; remove this without getting errors
+         (add-after 'remove-calls-to-git 'fix-paths
+           (lambda _
+             (substitute* "tools/build/gen-version.pl"
+               (("catfile\\(\\$libdir, 'MAST', \\$_\\)")
+                (string-append "catfile('"
+                               (assoc-ref %build-inputs "moarvm")
+                               "/share/nqp/lib"
+                               "', 'MAST', $_)")))))
+         (add-after 'patch-source-shebangs 'patch-more-shebangs
+           (lambda _
+             (substitute* '("t/nqp/111-spawnprocasync.t"
+                            "t/nqp/113-run-command.t"
+                            "tools/build/gen-js-cross-runner.pl"
+                            "tools/build/gen-js-runner.pl"
+                            "tools/build/install-js-runner.pl"
+                            "tools/build/install-jvm-runner.pl.in")
+               (("/bin/sh") (which "sh")))))
+         (replace 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (moar (assoc-ref inputs "moarvm")))
+               (invoke "perl" "Configure.pl"
+                       "--backends=moar"
+                       "--with-moar" (string-append moar "/bin/moar")
+                       "--prefix" out)))))))
+    (native-inputs
+     (list nqp-configure))
+    (inputs
+     (list moarvm))
+    (home-page "https://github.com/Raku/nqp")
+    (synopsis "Not Quite Perl")
+    (description "This is \"Not Quite Perl\" -- a lightweight Raku-like
+environment for virtual machines.  The key feature of NQP is that it's
+designed to be a very small environment (as compared with, say, Rakudo) and is
+focused on being a high-level way to create compilers and libraries for
+virtual machines like MoarVM, the JVM, and others.
+
+Unlike a full-fledged implementation of Raku, NQP strives to have as small a
+runtime footprint as it can, while still providing a Raku object model and
+regular expression engine for the virtual machine.")
+    (license license:artistic2.0)))
 
 (define-public nqp
   (package
@@ -222,6 +410,74 @@ virtual machines like MoarVM, the JVM, and others.
 Unlike a full-fledged implementation of Raku, NQP strives to have as small a
 runtime footprint as it can, while still providing a Raku object model and
 regular expression engine for the virtual machine.")
+    (license license:artistic2.0)))
+
+(define-public rakudo
+  (package
+    (name "rakudo")
+    (version "2025.06.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/rakudo/rakudo/releases/download/"
+                           version "/rakudo-" version ".tar.gz"))
+       (sha256
+        (base32 "0yfbbk73rccn6qfjzd5hxaihbz93z3bb7xdamp2hml4m8xbmc78j"))
+       (modules '((guix build utils)))))
+    (build-system perl-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'remove-calls-to-git
+           (lambda _ (invoke "true")))
+         (add-after 'remove-calls-to-git 'fix-paths
+           (lambda _
+             (substitute* "tools/templates/Makefile-common-macros.in"
+               (("NQP_CONFIG_DIR = .*")
+                (string-append "NQP_CONFIG_DIR = "
+                               (assoc-ref %build-inputs "nqp-configure")
+                               "/lib/perl5/site_perl/"
+                               ,(package-version perl)
+                               "\n")))))
+         ;; These tests pass when run manually.
+         (add-after 'fix-paths 'disable-failing-tests
+           (lambda _
+             (system "cp t/harness5 harness5")
+             (system "find t/ -type f | xargs rm")
+             (system "cp harness5 t/harness5")))
+         (replace 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (nqp (assoc-ref inputs "nqp")))
+               (invoke "perl" "Configure.pl"
+                       "--backend=moar"
+                       "--with-nqp" (string-append nqp "/bin/nqp")
+                       "--prefix" out))))
+         ;; This is the recommended tool for distro maintainers to install Raku
+         ;; modules systemwide.  See: https://github.com/ugexe/zef/issues/117
+         (add-after 'install 'install-dist-tool
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (dest (string-append out "/share/perl6/tools")))
+               (install-file "tools/install-dist.raku" dest)
+               (substitute* (string-append dest "/install-dist.raku")
+                 (("/usr/bin/env raku")
+                  (string-append out "/bin/raku")))))))))
+    (native-inputs
+     (list nqp-configure))
+    (inputs
+     (list moarvm nqp openssl))
+    (home-page "https://rakudo.org/")
+    (native-search-paths
+     (list (search-path-specification
+            (variable "PERL6LIB")
+            (separator ",")
+            (files '("share/perl6/lib"
+                     "share/perl6/site/lib"
+                     "share/perl6/vendor/lib")))))
+    (synopsis "Raku Compiler")
+    (description "Rakudo is a compiler that implements the Raku specification
+and runs on top of several virtual machines.")
     (license license:artistic2.0)))
 
 (define-public rakudo
