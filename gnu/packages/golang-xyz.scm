@@ -67,6 +67,7 @@
 ;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Arthur Rodrigues <arthurhdrodrigues@proton.me>
+;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org> 
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;

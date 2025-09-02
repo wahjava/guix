@@ -27,6 +27,7 @@
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2025 Tomás Ortín Fernández <quanrong@mailbox.org> 
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
