@@ -2450,16 +2450,14 @@ filtering and ordering functionality.
 (define-public sirikali
   (package
     (name "sirikali")
-    (version "1.6.0")
+    (version "1.8.3")
     (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mhogomchungu/sirikali")
-                    (commit version)))
-              (file-name (git-file-name name version))
+              (method url-fetch)
+              (uri (string-append
+                    "https://github.com/mhogomchungu/sirikali/releases/download/"
+                    version "/SiriKali-" version ".tar.xz"))
               (sha256
-               (base32
-                "06cl7srxaqpzv7gcd17cl78qhrpqhdvpfcj4pr73fr5hhackrf52"))))
+               (base32 "0hjj9784vz17k0f4yyc1868nmwm3vgn87hqh8kjvnvxdsxmjbg0c"))))
     (build-system qt-build-system)
     (arguments
      (list
