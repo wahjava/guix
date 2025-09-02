@@ -18,9 +18,11 @@
 
 (define-module (test-pki)
   #:use-module (guix pki)
+  #:use-module (gcrypt base16)
   #:use-module (gcrypt pk-crypto)
   #:use-module (gcrypt hash)
   #:use-module (rnrs io ports)
+  #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-64))
 
 ;; Test the (guix pki) module.
@@ -77,6 +79,21 @@
    (signature-case (sig hash (public-keys->acl (list %public-key)))
      (valid-signature #t)
      (else #f))))
+
+(test-assert "signature-case valid-signature for non bytevector hash data"
+  (let* ((hash (base16-string->bytevector
+                ;; This hash was observed in the wild producing this behaviour
+                "56efb5d0e5cffb3a6fef4750f94651f2d1e25351e32b49f2ffcafa6bfe4de4e2"))
+         (data (bytevector->hash-data hash #:key-type (key-type %public-key)))
+         (sig  (signature-sexp data %secret-key %public-key)))
+    (and
+     ;; This test could become irrelevant with changes in guile-gcrypt, so
+     ;; check that hash-data->bytevector is not returning a bytevector in this
+     ;; case
+     (not (bytevector? (hash-data->bytevector data)))
+     (signature-case (sig hash (public-keys->acl (list %public-key)))
+       (valid-signature #t)
+       (else #f)))))
 
 (test-eq "signature-case invalid-signature" 'i
   (let* ((hash (sha256 #vu8(1 2 3)))

@@ -22,7 +22,9 @@
   #:use-module ((guix utils) #:select (with-atomic-file-output))
   #:use-module ((guix build utils) #:select (mkdir-p))
   #:autoload   (srfi srfi-1) (delete-duplicates)
+  #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 iconv)
   #:use-module (ice-9 rdelim)
   #:export (%public-key-file
             %private-key-file
@@ -171,11 +173,24 @@ forget some of the cases."
         (data    (signature-signed-data signature)))
     (if (and data subject)
         (if (authorized-key? subject acl)
-            (if (equal? (hash-data->bytevector data) hash)
-                (if (valid-signature? signature)
-                    'valid-signature
-                    'invalid-signature)
-                'hash-mismatch)
+            (let* ((hash-data-bytevector
+                    ;; hash-data->bytevector from (gcrypt pk-crypto)
+                    ;; unfortunately doesn't just return a bytevector, it can
+                    ;; return a symbol, bytevector or #f. The returned
+                    ;; bytevector or symbol can represent the hash data, so
+                    ;; convert the symbol here to a bytevector so the
+                    ;; comparison can be made.
+                    (match (hash-data->bytevector data)
+                      ((? bytevector? bv) bv)
+                      ((? symbol? s)
+                       (string->bytevector
+                        (symbol->string s)
+                        "ISO-8859-1")))))
+              (if (equal? hash-data-bytevector hash)
+                  (if (valid-signature? signature)
+                      'valid-signature
+                      'invalid-signature)
+                  'hash-mismatch))
             'unauthorized-key)
         'corrupt-signature)))
 
