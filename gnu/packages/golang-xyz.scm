@@ -19865,7 +19865,7 @@ distributable command line applications in an expressive way.")
      (list
       #:tests? #f
       #:import-path "github.com/urfave/cli/v3"))
-    (propagated-inputs (list go-github-com-stretchr-testify))))
+    (native-inputs (list go-github-com-stretchr-testify))))
 
 (define-public go-github-com-valyala-bytebufferpool
   (package
