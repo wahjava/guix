@@ -2681,6 +2681,11 @@ PackageKit is a common unified interface for package managers.")
                              go-github-com-go-git-go-git-v5
                              python))
     (home-page "https://asdf-vm.com")
-    (synopsis "Tool version manager extendable via plugins.")
-    (description "Tool version manager extendable via plugins.")
+    (synopsis "Extensible version manager with support for multiple programming
+languages and tools.")
+    (description "ASDF is an version manager for programming language runtimes and
+tools.  Versions can be defined and managed on a per-project basis.
+It features a plugin system that allows it to be extended to support
+further languages.  It currently supports a many popular runtimes,
+such as Ruby, Node.js, Elixir, and Erlang.")
     (license license:expat)))
