@@ -80,6 +80,10 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-vcs)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
@@ -130,6 +134,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system go)
   #:use-module (guix build-system guile)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
@@ -2619,3 +2624,62 @@ to specific versions of applications.")
 PackageKit is a common unified interface for package managers.")
     (home-page "https://gitlab.gnome.org/GNOME/gnome-packagekit")
     (license license:gpl2+)))
+
+(define-public asdf-vm
+  (package
+    (name "asdf-vm")
+    (version "0.18.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/asdf-vm/asdf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09p4d41l3f0dzm4bdvb45lxzsvlh3b99rgbdv8rk6jj84hr7w5q4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Complex integration tests
+      #:import-path "github.com/asdf-vm/asdf"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'resolve-symlinks
+            (lambda _
+              (let ((autocomplete-dir
+                     "src/github.com/urfave/cli/v3/autocomplete"))
+                ;; Copy symlinks to actual files
+                (for-each (lambda (file)
+                            (when (symbolic-link? file)
+                              (let ((target (readlink file)))
+                                (delete-file file)
+                                (copy-file target file))))
+                          (find-files autocomplete-dir ".*"
+                                      #:directories? #f))) #t))
+          (replace 'build
+            (lambda _
+              (with-directory-excursion "src/github.com/asdf-vm/asdf"
+                (invoke "go" "build" "-ldflags=-s -w" "-trimpath" "./cmd/asdf"))))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (mkdir-p (string-append out "/bin"))
+                (with-directory-excursion "src/github.com/asdf-vm/asdf"
+                  (install-file "asdf"
+                                (string-append out "/bin")))))))))
+    (propagated-inputs (list bats
+                             go-mvdan-cc-gofumpt
+                             go-honnef-co-go-tools
+                             go-gopkg-in-ini-v1
+                             go-golang-org-x-sys
+                             go-github-com-urfave-cli-v3
+                             go-github-com-stretchr-testify
+                             go-github-com-rogpeppe-go-internal
+                             go-github-com-otiai10-copy
+                             go-github-com-go-git-go-git-v5
+                             python))
+    (home-page "https://asdf-vm.com")
+    (synopsis "Tool version manager extendable via plugins.")
+    (description "Tool version manager extendable via plugins.")
+    (license license:expat)))
