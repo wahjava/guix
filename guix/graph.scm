@@ -295,15 +295,25 @@ NODE1 to NODE2 of the given TYPE.  Return #f when there is no path."
       \"name\": \"guix\"
     }
   ]\n}\n" port))
+
 (define (emit-cyclonedx-node id label port)
-  (define name (first (string-split label #\@)))
-  (define version (second (string-split label #\@)))
-  (format port "\n    {
+  (match (if (string-contains label "@")
+             (string-split label #\@)
+             (list label "N/A"))
+    ((name version)
+     (format port "\n    {
       \"type\": \"application\",
       \"name\": \"~a\",
       \"version\": \"~a\"
     },"
-          name version))
+             name version))
+    (else ;; more than one @
+     (format port "\n    {
+      \"type\": \"application\",
+      \"name\": \"~a\",
+    },"
+             label))))
+
 (define (emit-cyclonedx-edge id1 id2 port)
   ;; left empty: does not include edges at the moment. Adding them as
   ;; dependencies would require <graph-backend> to include a separator between
