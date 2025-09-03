@@ -1971,10 +1971,8 @@ Stackage LTS version."
 
 (define (report-long-line package line line-number)
   "Emit a warning if LINE is too long."
-  ;; Note: We don't warn at 80 characters because sometimes hashes and URLs
-  ;; make it hard to fit within that limit and we want to avoid making too
-  ;; much noise.
-  (and (> (string-length line) 90)
+  ;; Same value as in .editorconfig and .dir-locals.el.
+  (and (> (string-length line) 80)
        (make-warning package
                      (G_ "line ~a is way too long (~a characters)")
                      (list line-number (string-length line))
