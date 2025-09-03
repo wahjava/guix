@@ -315,7 +315,7 @@ NODE1 to NODE2 of the given TYPE.  Return #f when there is no path."
              label))))
 
 (define (emit-cyclonedx-edge id1 id2 port)
-  ;; left empty: does not include edges at the moment. Adding them as
+  ;; Left empty: does not include edges at the moment.  Adding them as
   ;; dependencies would require <graph-backend> to include a separator between
   ;; nodes and edges.
   "")
