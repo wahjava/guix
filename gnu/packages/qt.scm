@@ -786,6 +786,9 @@ developers using C++ or QML, a CSS & JavaScript like language.")
     (build-system cmake-build-system)
     (arguments
      (substitute-keyword-arguments (package-arguments qtbase-5)
+       ;; tst_QThread::multiThreadWait can fail with: "The computed value is
+       ;; expected to be greater than or equal to the baseline, but is not".
+       ((#:parallel-tests? _ #f) #f)
        ((#:configure-flags _ ''())
         `(let ((out (assoc-ref %outputs "out")))
            (list "-GNinja"              ;officially supported
