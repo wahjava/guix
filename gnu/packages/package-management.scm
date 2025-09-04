@@ -2643,7 +2643,8 @@ PackageKit is a common unified interface for package managers.")
     (arguments
      (list
       #:tests? #f ;Complex integration tests
-      #:import-path "github.com/asdf-vm/asdf"
+      #:import-path "github.com/asdf-vm/asdf/cmd/asdf"
+      #:unpack-path "github.com/asdf-vm/asdf"
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'resolve-symlinks
@@ -2657,18 +2658,7 @@ PackageKit is a common unified interface for package managers.")
                                 (delete-file file)
                                 (copy-file target file))))
                           (find-files autocomplete-dir ".*"
-                                      #:directories? #f))) #t))
-          (replace 'build
-            (lambda _
-              (with-directory-excursion "src/github.com/asdf-vm/asdf"
-                (invoke "go" "build" "-ldflags=-s -w" "-trimpath" "./cmd/asdf"))))
-          (replace 'install
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out")))
-                (mkdir-p (string-append out "/bin"))
-                (with-directory-excursion "src/github.com/asdf-vm/asdf"
-                  (install-file "asdf"
-                                (string-append out "/bin")))))))))
+                                      #:directories? #f))) #t)))))
     (propagated-inputs (list bats
                              go-mvdan-cc-gofumpt
                              go-honnef-co-go-tools
