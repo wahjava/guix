@@ -5315,7 +5315,7 @@ and the GLib main loop, to integrate well with GNOME applications.")
 
 (define-public libsoup
   (package/inherit libsoup-minimal
-    (replacement #f)
+    (replacement libsoup/fixed)
     (name "libsoup")
     (outputs (cons "doc" (package-outputs libsoup-minimal)))
     (arguments
@@ -5349,6 +5349,13 @@ and the GLib main loop, to integrate well with GNOME applications.")
                              (string-append #$output:doc "/share/doc"))))))))
     (native-inputs (modify-inputs (package-native-inputs libsoup-minimal)
                      (prepend gettext-minimal gi-docgen)))))
+
+(define-public libsoup/fixed
+  (package
+    (inherit libsoup)
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs libsoup)
+       (replace "libxml2" libxml2-next)))))
 
 (define-public libsecret
   (package
