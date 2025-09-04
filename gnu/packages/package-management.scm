@@ -2648,15 +2648,16 @@ PackageKit is a common unified interface for package managers.")
       #:embed-files
       #~(list "bash_autocomplete" "zsh_autocomplete"
               "powershell_autocomplete.ps1")))
-    (propagated-inputs (list go-honnef-co-go-tools
-                             go-gopkg-in-ini-v1
-                             go-golang-org-x-sys
+    (propagated-inputs (list go-gopkg-in-ini-v1 go-golang-org-x-sys
                              go-github-com-urfave-cli-v3
-                             go-github-com-rogpeppe-go-internal
                              go-github-com-otiai10-copy
                              go-github-com-go-git-go-git-v5))
-    (native-inputs (list bats go-mvdan-cc-gofumpt
-                         go-github-com-stretchr-testify python))
+    (native-inputs (list bats
+                         go-mvdan-cc-gofumpt
+                         go-honnef-co-go-tools
+                         go-github-com-rogpeppe-go-internal
+                         go-github-com-stretchr-testify
+                         python))
     (home-page "https://asdf-vm.com")
     (synopsis
      "Extensible version manager with support for multiple programming
