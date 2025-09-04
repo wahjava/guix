@@ -2645,20 +2645,9 @@ PackageKit is a common unified interface for package managers.")
       #:tests? #f ;Complex integration tests
       #:import-path "github.com/asdf-vm/asdf/cmd/asdf"
       #:unpack-path "github.com/asdf-vm/asdf"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'resolve-symlinks
-            (lambda _
-              (let ((autocomplete-dir
-                     "src/github.com/urfave/cli/v3/autocomplete"))
-                ;; Copy symlinks to actual files
-                (for-each (lambda (file)
-                            (when (symbolic-link? file)
-                              (let ((target (readlink file)))
-                                (delete-file file)
-                                (copy-file target file))))
-                          (find-files autocomplete-dir ".*"
-                                      #:directories? #f))) #t)))))
+      #:embed-files
+      #~(list "bash_autocomplete" "zsh_autocomplete"
+              "powershell_autocomplete.ps1")))
     (propagated-inputs (list go-honnef-co-go-tools
                              go-gopkg-in-ini-v1
                              go-golang-org-x-sys
