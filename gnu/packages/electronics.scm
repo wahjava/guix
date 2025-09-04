@@ -52,6 +52,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages embedded)
@@ -66,12 +67,14 @@
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages java)
   #:use-module (gnu packages libftdi)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -80,6 +83,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages shells)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages stb)
   #:use-module (gnu packages swig)
@@ -1300,6 +1304,86 @@ suite.")
       (description "Fx2lafw is free firmware for Cypress FX2 chips which makes
 them usable as simple logic analyzer and/or oscilloscope hardware.")
       (license license:gpl2+))))
+
+(define-public surelog
+  (package
+    (name "surelog")
+    (version "1.86")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/chipsalliance/Surelog/")
+              (commit (string-append "v" version))
+              ;; TODO; set to false once antlr4@12 is available
+              (recursive? #t)))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        '(begin
+           ;; Unbundle third-party libraries.
+           (delete-file-recursively "third_party/googletest")
+           (delete-file-recursively "third_party/json")
+           ;; FIXME: See below.
+           ;; (delete-file-recursively "third_party/antlr4")
+           (delete-file-recursively "third_party/UHDM")))
+       (sha256
+        (base32 "0pj84bb3iyhrq09ggwfbhdhzb5c3d9ifga87pn0rjw9ym17ns1vh"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))
+      #:configure-flags
+      #~(list
+         "-DSURELOG_BUILD_TESTS=ON"
+         "-DSURELOG_USE_HOST_JSON=ON"
+         ;; FIXME: append -DSURELOG_USE_HOST_ANTLR=On or
+         ;; -DSURELOG_USE_HOST_ALL once antlr4@12 is available
+         ;; in the meantime, use the submodule
+         ;; " -DSURELOG_USE_HOST_ANTLR=On"
+         "-DSURELOG_USE_HOST_GTEST=ON"
+         "-DSURELOG_USE_HOST_UHDM=ON"
+         "-DSURELOG_WITH_ZLIB=ON"
+         "-DSURELOG_WITH_TCMALLOC=ON")))
+    (native-inputs
+     (list googletest
+           pkg-config
+           python-wrapper
+           ;; antlr4                       ;FIXME: See above.
+           swig
+           uhdm
+           nlohmann-json))
+    (inputs
+     (list capnproto
+           openssl
+           python-orderedmultidict
+           zlib
+           openjdk
+           perl
+           python-psutil
+           tcl
+           tcsh))
+    (home-page "https://github.com/chipsalliance/Surelog/")
+    (synopsis "Pre-procesor and parser for SystemVerilog 2017")
+    (description
+     "Surelog is a pre-processor, parser, elaborator and @acronym{UHDM,
+Universal Hardware Data Model} compiler.  It provides IEEE design, a C/C++
+@acronym{VPI, Verilog Procedural Interface} and a Python @acronym{AST,
+Abstract Syntax Trees} API.
+Some of its features are:
+@enumerate
+@item The tool is built thread safe and performs multithread parsing
+@item Large files/modules/packages are splitted for multi-threading
+compilation
+@item Surelog accepts IEEE Simulator-compliant project specification
+@item Surelog issues errors/warning/info/notes about language compliance
+@item Visit the design data model and create custom linting rules
+@end enumerate")
+    (license license:asl2.0)))
 
 (define-public symbiyosys
   (package
