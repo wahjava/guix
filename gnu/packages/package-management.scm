@@ -2642,22 +2642,28 @@ PackageKit is a common unified interface for package managers.")
     (build-system go-build-system)
     (arguments
      (list
-      #:tests? #f ;Complex integration tests
       #:import-path "github.com/asdf-vm/asdf/cmd/asdf"
       #:unpack-path "github.com/asdf-vm/asdf"
       #:embed-files
       #~(list "bash_autocomplete" "zsh_autocomplete"
-              "powershell_autocomplete.ps1")))
-    (propagated-inputs (list go-gopkg-in-ini-v1 go-golang-org-x-sys
-                             go-github-com-urfave-cli-v3
+              "powershell_autocomplete.ps1")
+      #:test-subdirs ;Test only those subdirs that don't include integration tests
+      #~(list "../../internal/cli/set"
+              "../../internal/completions"
+              "../../internal/config"
+              "../../internal/data"
+              "../../internal/exec"
+              "../../internal/execute"
+              "../../internal/hook"
+              "../../internal/paths"
+              "../../internal/toolversions")))
+    (propagated-inputs (list go-github-com-go-git-go-git-v5
                              go-github-com-otiai10-copy
-                             go-github-com-go-git-go-git-v5))
-    (native-inputs (list bats
-                         go-mvdan-cc-gofumpt
-                         go-honnef-co-go-tools
-                         go-github-com-rogpeppe-go-internal
-                         go-github-com-stretchr-testify
-                         python))
+                             go-github-com-urfave-cli-v3 go-gopkg-in-ini-v1
+                             go-golang-org-x-sys))
+    (native-inputs (list go-github-com-rogpeppe-go-internal
+                         go-github-com-stretchr-testify go-honnef-co-go-tools
+                         go-mvdan-cc-gofumpt))
     (home-page "https://asdf-vm.com")
     (synopsis
      "Extensible version manager with support for multiple programming
