@@ -434,7 +434,7 @@ provide serif, sans and monospaced variants.")
 package provides the TrueType (TTF) files.")
     (license
      (license:fsdg-compatible
-      "https://www.gnome.org/fonts/#Final_Bitstream_Vera_Fonts"
+      "https://docubrain.com/sites/default/files/licenses/bitstream-vera.html"
       "The Font Software may be sold as part of a larger software package but
 no copy of one or more of the Font Software typefaces may be sold by
 itself."))))
