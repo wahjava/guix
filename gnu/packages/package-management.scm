@@ -2673,7 +2673,7 @@ PackageKit is a common unified interface for package managers.")
      "Extensible version manager with support for multiple programming
 languages and tools.")
     (description
-     "ASDF is an version manager for programming language runtimes and
+     "ASDF is a version manager for programming language runtimes and
 tools.  Versions can be defined and managed on a per-project basis.
 It features a plugin system that allows it to be extended to support
 further languages.  It currently supports a many popular runtimes,
