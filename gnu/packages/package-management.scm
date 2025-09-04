@@ -2659,21 +2659,21 @@ PackageKit is a common unified interface for package managers.")
                                 (copy-file target file))))
                           (find-files autocomplete-dir ".*"
                                       #:directories? #f))) #t)))))
-    (propagated-inputs (list bats
-                             go-mvdan-cc-gofumpt
-                             go-honnef-co-go-tools
+    (propagated-inputs (list go-honnef-co-go-tools
                              go-gopkg-in-ini-v1
                              go-golang-org-x-sys
                              go-github-com-urfave-cli-v3
-                             go-github-com-stretchr-testify
                              go-github-com-rogpeppe-go-internal
                              go-github-com-otiai10-copy
-                             go-github-com-go-git-go-git-v5
-                             python))
+                             go-github-com-go-git-go-git-v5))
+    (native-inputs (list bats go-mvdan-cc-gofumpt
+                         go-github-com-stretchr-testify python))
     (home-page "https://asdf-vm.com")
-    (synopsis "Extensible version manager with support for multiple programming
+    (synopsis
+     "Extensible version manager with support for multiple programming
 languages and tools.")
-    (description "ASDF is an version manager for programming language runtimes and
+    (description
+     "ASDF is an version manager for programming language runtimes and
 tools.  Versions can be defined and managed on a per-project basis.
 It features a plugin system that allows it to be extended to support
 further languages.  It currently supports a many popular runtimes,
