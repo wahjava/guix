@@ -1898,13 +1898,15 @@ because lxml.etree already has its own implementation of XPath 1.0.")
        (uri (pypi-uri "lxml" version))
        (sha256
         (base32 "11yvrzlswlh81z6lpmds2is2jd3wkigpwj6mcfcaggl0h64w8bdv"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
                   (replace 'check
                     (lambda* (#:key tests? #:allow-other-keys)
                       (when tests?
                         (invoke "make" "test")))))))
+    (native-inputs
+     (list python-setuptools))
     (inputs
      (list libxml2 libxslt))
     (home-page "https://lxml.de/")
