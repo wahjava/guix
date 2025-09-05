@@ -902,31 +902,30 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
 (define-public pixman
   (package
     (name "pixman")
-    (version "0.42.2")
+    (version "0.46.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.cairographics.org/releases/pixman-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0pk298iqxqr64vk3z6nhjwr6vjg1971zfrjkqy5r9zd2mppq057a"))
+        (base32 "072rd8sd454rzybmxx90fdzvabzvx0pr57y745qfwnxxqgml976h"))
        (patches (search-patches "pixman-CVE-2016-5296.patch"))))
-    (build-system gnu-build-system)
+    (build-system meson-build-system)
     (arguments
      `(#:configure-flags
-       (list "--disable-static"
-             "--enable-timers"
-             "--enable-gnuplot"
+       (list "-Dtimers=true"
+             "-Dgnuplot=true"
              ,@(if (target-arm32?)
-                   `("--disable-arm-simd")
+                   `("-Darm-simd=false")
                    '()))))
-    (native-inputs (list pkg-config))
+    (native-inputs (list perl pkg-config))
     (inputs (list libpng zlib))
     (synopsis "Low-level pixel manipulation library")
     (description "Pixman is a low-level software library for pixel
 manipulation, providing features such as image compositing and trapezoid
 rasterisation.")
-    (home-page "http://www.pixman.org/")
+    (home-page "https://www.pixman.org/")
     (license license:expat)))
 
 (define-public libdrm
