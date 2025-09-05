@@ -121,7 +121,7 @@ FULL-VALUE tentatives, spaced by 1 second."
        (http-request url)
        #t)))
 
-  (define (ci-available?)
+  (define (common-urls-alive?)
     (dynamic-wind
       (lambda ()
         (sigaction SIGALRM
@@ -129,13 +129,15 @@ FULL-VALUE tentatives, spaced by 1 second."
         (alarm 3))
       (lambda ()
         (or (url-alive? "https://bordeaux.guix.gnu.org")
-            (url-alive? "https://ci.guix.gnu.org")))
+            (url-alive? "https://ci.guix.gnu.org")
+            (url-alive? "https://guix.gnu.org")
+            (url-alive? "https://gnu.org")))
       (lambda ()
         (alarm 0))))
 
   (define (online?)
     (or (and (connman-online?)
-             (ci-available?))
+             (common-urls-alive?))
         (file-exists? "/tmp/installer-assume-online")))
 
   (let* ((full-value 5))
