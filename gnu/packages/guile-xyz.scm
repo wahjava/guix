@@ -2709,21 +2709,20 @@ above command-line parameters.")
               (replace "guile" guile-2.2)))))
 
 (define-public guile-hall
-  ;; There are many unreleased bug fixes; use the latest commit for now.
-  (let ((commit "7558ba906d4281a5b825e3c1c87f2810312414b6")
-        (revision "1"))
+  (let ((commit "cda0bec30dcae2bc5cf4eeb4e7436f045d1f62d7")
+        (revision "0"))
     (package
       (name "guile-hall")
-      (version (git-version "0.4.1" revision commit))
+      (version (git-version "0.6.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://gitlab.com/a-sassmannshausen/guile-hall")
-               (commit commit)))
+                (url "https://gitlab.com/a-sassmannshausen/guile-hall")
+                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0sqm6nyzc37p0xgjj21m9dar2iqik9gfwlcacp2v6y10lh2f1yps"))))
+          (base32 "11v7gmldz4i59q64xhz5l958dw57gn7y24ccivw2qv5sf0djad54"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -2766,9 +2765,10 @@ above command-line parameters.")
        (list bash-minimal
              guile-3.0
              guile-config
-             guile-lib))
+             guile-lib
+             guix))
       (propagated-inputs
-       (list guile-config))
+       (list guile-config guile-lib))
       (synopsis "Guile project tooling")
       (description
        "Hall is a command-line application and a set of Guile libraries that
