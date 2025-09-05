@@ -1772,6 +1772,34 @@ performance.  Similar to neofetch, this package prints out system information
 on the terminal in a visually appealing way.")
     (license license:expat)))
 
+(define-public markdown-oxide
+  (package
+    (name "markdown-oxide")
+    (version "0.25.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Feel-ix-343/markdown-oxide")
+              (commit (string-append "v" version))))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0kqm4khrwiymbxx50a543dd8k77z09mnwjkx8rg3a76bd64lqz33"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 ;; Use a packaged version of tower-lsp.
+                 (substitute* "Cargo.toml"
+                   (("git.*tower-lsp\"") "version = \"*\""))))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f))
+    (inputs (cargo-inputs 'markdown-oxide))
+    (home-page "https//oxide.md")
+    (synopsis "PKM Markdown Language Server")
+    (description
+     "Language server for Personal Knowledge Management System.")
+    (license license:asl2.0)))
+
 (define-public matugen
   (package
     (name "matugen")

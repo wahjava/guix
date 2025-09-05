@@ -608,6 +608,34 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
 intelligence.")
      (license license:expat))))
 
+(define-public rust-tower-lsp-0.20.0.a27868b
+  (let ((commit "a27868bf5c6b5bb6a106cfbb41c0624ce7bb6f42")
+        (revision "0"))
+    (hidden-package
+     (package
+       (name "rust-tower-lsp")
+       (version (git-version "0.20.0" revision commit))
+       (source (origin
+                 (method git-fetch)
+                 (uri (git-reference
+                       (url "https://github.com/Feel-ix-343/tower-lsp")
+                       (commit commit)))
+                 (file-name (git-file-name name version))
+                 (sha256
+                  (base32
+                   "0bnxha6dwvydxwgwimddqhindjicg5ph9nsppnr65rw8khpga4s1"))))
+       (build-system cargo-build-system)
+       (arguments
+        (list #:skip-build? #t
+              #:cargo-package-crates ''("tower-lsp-macros" "tower-lsp")))
+       (inputs (cargo-inputs 'tower-lsp-0.20.0.a27868b))
+       (home-page "https://github.com/Feel-ix-343/tower-lsp")
+       (synopsis "Language Server Protocol implementation for Rust based on Tower.")
+       (description
+        "This library (tower-lsp) provides a simple implementation of the Language
+Server Protocol (LSP) that makes it easy to write your own language server.")
+       (license license:asl2.0)))))
+
 (define-public rust-web-view-0.7.3.82d7cbc
   (let ((commit "82d7cbce6228b1a964673cc0f22944ad808eab42")
         (revision "0"))
