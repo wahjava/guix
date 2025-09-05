@@ -1484,7 +1484,10 @@ project's documentation} for more information."
                   ,(file-union "network-manager-configuration-directory"
                                extra-configuration-files)
                   "/etc/NetworkManager/conf.d"))
-               '()))))
+               '())
+        ;; "/etc/ipsec.secrets" to exists, so that nm-l2tp could work
+        ;; see https://github.com/NixOS/nixpkgs/issues/64965
+        (mkdir-p "/etc/ipsec.secrets"))))
 
 (define (vpn-plugin-directory plugins)
   "Return a directory containing PLUGINS, the NM VPN plugins."
