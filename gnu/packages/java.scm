@@ -52,7 +52,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system maven)
-  #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (gnu packages)
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
@@ -87,6 +87,7 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages onc-rpc)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wget)
   #:use-module (gnu packages pkg-config)
@@ -8757,18 +8758,19 @@ actual rendering.")
 (define-public java-antlr4-runtime
   (package
     (name "java-antlr4-runtime")
-    (version "4.10.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/antlr/antlr4")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0ldvd9jm4nrivaw7i7wh1q40q6xgzmzirsywiakbhg8sppagqlv7"))
-              (patches
-                (search-patches "java-antlr4-Add-standalone-generator.patch"))))
+    (version "4.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/antlr/antlr4")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1dpmqjq5z0r0543jfsbl9rwjrv459dxj378vs6qhy52hw4pm270g"))
+       (patches
+        (search-patches "java-antlr4-Add-standalone-generator.patch"))))
     (build-system ant-build-system)
     (arguments
      `(#:jar-name "java-antlr4-runtime.jar"
@@ -8779,12 +8781,11 @@ actual rendering.")
          (add-before 'build 'copy-resources
            (lambda _
              (copy-recursively "runtime/Java/src/main/dot"
-                               "build/classes")
-             #t)))))
+                               "build/classes"))))))
     (home-page "https://www.antlr.org")
     (synopsis "ANTLR runtime library")
-    (description "This package contains the runtime library used with generated
-sources by ANTLR.")
+    (description "This package contains the runtime library used with
+generated sources by ANTLR.")
     (license license:bsd-3)))
 
 (define-public java-antlr4-runtime-cpp
@@ -8826,7 +8827,7 @@ generated sources by ANTLR.")))
     (inherit java-antlr4-runtime)
     (name "java-antlr4-runtime-python")
     (outputs '("out"))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f                       ; tests require antlr
@@ -8835,7 +8836,7 @@ generated sources by ANTLR.")))
           (add-after 'unpack 'chdir
             (lambda _
               (chdir "runtime/Python3"))))))
-    (native-inputs (list pkg-config))
+    (native-inputs (list pkg-config python-setuptools-next))
     (inputs (list `(,util-linux "lib"))) ; libuuid
     (synopsis "ANTLR Python runtime library")
     (description "This package contains the Python runtime library used with
