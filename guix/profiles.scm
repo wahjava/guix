@@ -391,7 +391,10 @@ file name."
                           ((label package output)
                            (package->manifest-entry package output
                                                     #:parent (delay entry))))
-                        (package-propagated-inputs package)))
+                        (package-propagated-inputs
+                         (or (and (%graft?)
+                                  (package-replacement package))
+                             package))))
             (entry (manifest-entry
                      (name (package-name package))
                      (version (package-version package))

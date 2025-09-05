@@ -690,6 +690,29 @@
                        (drv (profile-derivation manifest)))
     (return (->bool drv))))
 
+(test-assertm "no collision of propagated inputs changed by grafts"
+  ;; Make sure that if propagated-inputs are changed inside of a graft,
+  ;; the replacement is propagated to the profile.
+  (parameterize ((%graft? #t))
+    (mlet* %store-monad ((propagated -> (dummy-package "propagated"
+                                          (version "0")))
+                         (propagated/new -> (package
+                                              (inherit propagated)
+                                              (version "1")))
+                         (p1/new -> (dummy-package "p1"
+                                      (propagated-inputs (list propagated/new))))
+                         (p1 -> (dummy-package "p1"
+                                  (propagated-inputs (list propagated))
+                                  (replacement p1/new)))
+                         (p2 -> (dummy-package "p2"
+                                  (propagated-inputs (list propagated/new))))
+                         (manifest -> (manifest
+                                       (list
+                                        (package->manifest-entry p1)
+                                        (package->manifest-entry p2))))
+                         (drv (profile-derivation manifest)))
+      (return (->bool drv)))))
+
 (test-assertm "etc/profile"
   ;; Make sure we get an 'etc/profile' file that at least defines $PATH.
   (mlet* %store-monad
