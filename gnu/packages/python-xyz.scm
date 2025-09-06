@@ -24907,50 +24907,6 @@ numbers, real numbers, mixed types and more, and comes with a shell command
 @command{natsort} that exposes this functionality in the command line.")
     (license license:expat)))
 
-(define-public glances
-  (package
-    (name "glances")
-    (version "4.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/nicolargo/glances")
-              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "00xyixi3wrajmkmqgd1rlaqypi6c1wskm6q0xbrw2k1zc7wi3kxl"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-update-checks
-            (lambda _
-              ;; Glances phones PyPI for weekly update checks by default.
-              ;; Disable these.  The user can re-enable them if desired.
-              (substitute* "glances/outdated.py"
-                (("^(.*)self\\.load_config\\(config\\)\n" line
-                  indentation)
-                 (string-append indentation
-                                "self.args.disable_check_update = True\n"
-                                line)))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; XXX: Taken from tox.ini.
-                (invoke "python" "unittest-core.py")))))))
-    (native-inputs (list python-pytest python-setuptools-next))
-    (propagated-inputs (list python-defusedxml python-orjson python-packaging
-                             python-psutil))
-    (home-page "https://github.com/nicolargo/glances")
-    (synopsis "Cross-platform curses-based monitoring tool")
-    (description
-     "Glances is a curses-based monitoring tool for a wide variety of platforms.
-     Glances uses the PsUtil library to get information from your system.  It
-     monitors CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
-    (license license:lgpl3+)))
-
 (define-public python-graphql-core
   (package
     (name "python-graphql-core")
