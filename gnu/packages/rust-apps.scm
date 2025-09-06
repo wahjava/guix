@@ -40,6 +40,7 @@
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;; Copyright © 2025 Timo Wilken <guix@twilken.net>
+;;; Copyright © 2025 Samuel Sehnert <mail@buffersquid.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3996,6 +3997,31 @@ and users are in full control of their data and workflow.")
     (description
      "This package provides a high performance CSV command line toolkit.")
     (license (list license:unlicense license:expat))))
+
+(define-public zola
+  (package
+    (name "zola")
+    (version "0.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (file-name (git-file-name name version))
+       (uri (git-reference
+             (url "https://github.com/getzola/zola")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1j7mdw7y3j2fzwickfl9w4yx0xjbkaf03vcndf2b6jc3la20rzgv"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f))
+    (native-inputs (list pkg-config))
+    (inputs (cons* libwebp oniguruma
+                   (cargo-inputs 'zola)))
+    (synopsis "Static site generator")
+    (description
+     "A fast static site generator in a single binary with everything built-in.")
+    (home-page "https://getzola.org")
+    (license license:expat)))
 
 (define-public zoxide
   (package
