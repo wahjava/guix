@@ -2,6 +2,7 @@
 ;;; Copyright © 2016 Stefan Reichoer <stefan@xsteve.at>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 gemmaro <gemmaro.dev@gmail.com>
@@ -272,6 +273,40 @@ It supports syntax highlighting, multiline editing, autocompletion, mouse,
 color schemes, bracketed paste, Vi and Emacs keybindings, Chinese characters
 etc.")
     (license license:bsd-3)))
+
+(define-public pyzo
+  (package
+    (name "pyzo")
+    (version "4.18.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pyzo/pyzo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0agq171cz7y10cknjypwrvsvikja3w9d28hlr3kw5k2sdvfqnpam"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore-glob=pyzo/yoton/tests/*"     ; XXX: yoton is outdated.
+              "--ignore=pyzo/codeeditor/_test.py"))) ; XXX: cannot import qt.
+    (native-inputs (list python-pytest python-setuptools-next))
+    (propagated-inputs (list python-pyqt))
+    (home-page "https://pyzo.org")
+    (synopsis "Python IDE for scientific computing")
+    (description
+     "Pyzo is a Python IDE focused on interactivity and introspection,
+which makes it very suitable for scientific computing.  Its practical
+design is aimed at simplicity and efficiency.
+
+It consists of two main components, the editor and the shell, and uses
+a set of pluggable tools to help the programmer in various ways.  Some
+example tools are source structure, project manager, interactive help,
+workspace...")
+    (license license:bsd-2)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
