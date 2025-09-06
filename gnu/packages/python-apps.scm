@@ -3,7 +3,7 @@
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
+;;; Copyright © 2021, 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2022 Matthew James Kraai <kraai@ftbfs.org>
@@ -351,6 +351,57 @@ Service (S3) protocol, including S3 itself.  It supports rsync-like backup,
 GnuPG encryption, and more.  It also supports management of Amazon's
 CloudFront content delivery network.")
     (license license:gpl2+)))
+
+(define-public wfetch
+  (let ((commit "e1cfa37814aebc9eb56ce994ebe877b6a6f9a715")
+        (revision "2"))
+    (package
+      (name "wfetch")
+      (version (git-version "0.1-pre" revision commit))
+      (home-page "https://github.com/Gcat101/Wfetch")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1dmr85plx8zr6s14ym3r32g6crwxghkval5a24ah90ijx4dbn5q5"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:tests? #f ;no test suite
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build)
+            (replace 'install
+              (lambda _
+                (let ((bin (string-append #$output "/bin"))
+                      (share (string-append #$output "/share")))
+                  (mkdir-p share)
+                  (substitute* "wfetch/wfetch.py"
+                    (("os.sep, 'opt', 'wfetch'")
+                     (string-append "'" share "'")))
+                  ;; The documentation expects the executable to be named
+                  ;; 'wfetch', not 'wfetch.py'.
+                  (rename-file "wfetch/wfetch.py" "wfetch/wfetch")
+                  (install-file "wfetch/wfetch" bin)
+                  (copy-recursively "wfetch/icons" share)))))))
+      (native-inputs (list python-setuptools-next))
+      (inputs (list python-pyowm python-fire python-termcolor python-requests))
+      (synopsis "Command-line tool to display weather info")
+      (description
+       "This package provides a tool similar to Neofetch/pfetch, but for
+weather: it can display the weather condition, temperature, humidity, etc.
+
+To use it, you must first run:
+
+@example
+export WEATHER_CLI_API=@var{your OpenWeatherMap API key}
+@end example
+")
+      (license license:gpl3+))))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
