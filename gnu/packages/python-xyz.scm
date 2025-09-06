@@ -32566,59 +32566,6 @@ operating systems and an elegant approach to concurrency using threading.")
 with features similar to the @command{wget} utility.")
     (license license:unlicense)))
 
-(define-public offlate
-  (package
-    (name "offlate")
-    (version "0.6.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://framagit.org/tyreunom/offlate")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1sx5cv8pamyw1m089b6x8ykaxdkx26jk9cblhbzlf0m3ckz52jik"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:tests? #f                       ; No tests.
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'generate-fonts
-            (lambda _
-              (invoke "make" "fonts")))
-          (add-before 'build 'generate-translations
-            (lambda _
-              (invoke "make" "update-langs"))))))
-    (propagated-inputs
-     (list python-android-stringslib
-           python-dateutil
-           python-gitlab
-           python-lxml
-           python-polib
-           python-pycountry
-           python-pyenchant
-           python-pygit2
-           python-pygithub
-           python-pyqt
-           python-requests
-           python-ruamel.yaml
-           python-translate-toolkit
-           python-translation-finder
-           python-watchdog))
-    (native-inputs (list qttools-5 fontforge python-setuptools-next))
-    (home-page "https://framagit.org/tyreunom/offlate")
-    (synopsis "Offline translation interface for online translation tools")
-    (description
-     "Offlate offers a unified interface for different translation file
-formats, as well as many different online translation platforms.  You can use
-it to get work from online platforms, specialized such as the Translation
-Project, or not such a gitlab instance when your upstream doesn't use any
-dedicated platform.  The tool proposes a unified interface for any format and
-an upload option to send your work back to the platform.")
-    (license license:gpl3+)))
-
 (define-public python-titlecase
   (package
     (name "python-titlecase")
