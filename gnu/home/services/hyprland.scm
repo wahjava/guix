@@ -33,7 +33,8 @@
 	    binding
 	    bindings
 	    monitor
-      env
+            monitorv2
+            env
 	    submap
 	    home-hyprland-service-type))
 
@@ -43,6 +44,105 @@
   (and (pair? x)
        (number? (car x))
        (number? (cdr x))))
+
+(define (self x) x)
+
+;;
+
+(define-syntax-rule (match-lambda-do clause)
+  (match-lambda clause (_ #f)))
+
+(define-syntax-rule (match-lambda? pattern)
+  (match-lambda-do (pattern #t)))
+
+;;
+
+(define (entry? type?)
+  (match-lambda? ((? symbol?) (? type?))))
+
+(define* (serialize-entry entry type? value->string tabs
+                         #:key (block #f))
+  (match entry
+    (((? symbol? name) (? type? value))
+     (format #f
+             "~v/~a = ~a\n"
+             ;; (if block "~a {\n~a\n}\n"
+             ;;     "~v/~a = ~a\n")
+             tabs
+             (symbol->string name)
+             (value->string value)))))
+
+;; 
+
+(define (serialize-boolean entry tabs)
+  (serialize-entry entry
+                   boolean?
+                   (match-lambda (#t "true") (#f "false"))
+                   tabs))
+
+(define (serialize-number entry tabs)
+  (serialize-entry entry
+                   number?
+                   number->string
+                   tabs))
+
+(define serialize-integer serialize-number)
+
+(define serialize-real serialize-number)
+
+(define estring? string?)
+
+(define (serialize-estring entry tabs)
+  (serialize-entry entry
+                   string?
+                   (match-lambda ((? string? s) s))
+                   tabs))
+
+(define-maybe boolean)
+(define-maybe number)
+(define-maybe integer)
+(define-maybe real)
+(define-maybe estring)
+
+;;
+
+(define (block-entry? value)
+  ;; TODO: Is there a way to avoid the write of the `value` field?
+  (or (string? value)
+      (number? value)
+      (boolean? value)
+      (block-entries? value)))
+
+(define (serialize-block-entry entry tabs)
+  (match entry
+    (() "")
+    (((? symbol?) (? string?))
+     (serialize-estring entry tabs))
+    (((? symbol?) (? number?))
+     (serialize-number entry tabs))
+    (((? symbol?) (? boolean?))
+     (serialize-boolean entry tabs))
+    (((? symbol? key) (? block-entries? value))
+     (string-append
+      (symbol->string key) " {\n"
+      (serialize-block-entries value tabs) "}"))))
+
+(define block-entries? 
+  (list-of block-entry?))
+
+(define (serialize-block-entries entries level)
+  (apply string-append
+         (map (λ (e)
+                (serialize-block-entry e level)) entries)))
+
+;; (define (serialize-block-entries entry tabs)
+;;   (serialize-entry entry
+;;                    block-entries?
+;;                    (apply string-append
+;;                           (map (λ (e)
+;;                                  (serialize-block-entry e () tabs)) entries))
+;;                    tabs
+;;                    #:block #t))
 
 ;;; Commentary:
 ;;;
@@ -54,15 +154,19 @@
 ;;; Generic hyprland-configuration value serializer
 (define* (serialize-joined config fields #:key (delimiter ", "))
   #~(string-join
-      (list #$@(list-transduce (base-transducer config) rcons fields))
-      #$delimiter))
+     (list
+      ;; This is the same as serialize-configuration
+      #$@(list-transduce (base-transducer config) rcons fields))
+     #$delimiter))
 
 ;;; String serializers
 (define (serialize-string _ s) s)
+;; TODO: Use string
 
 (define (serialize-list-of-strings name l)
+  ;; TODO: Generalise the serialization of a list of entries?
   (string-join
-    (map (λ (s) (string-append (symbol->string name) " = " s)) l) "\n"))
+   (map (λ (s) (string-append (symbol->string name) " = " s)) l) "\n"))
 
 ;;;
 ;;; Definition of configurations.
@@ -73,52 +177,10 @@
 ;;; (symbol block-entries)
 ;;; A block entry can contain a list of block entries, effectively allowing
 ;;; nested blocks
-(define (block-entry? data)
-  (match data
-    (((? symbol?)
-      (or (? string?)
-          (? number?)
-          (? boolean?)
-          (? pair-of-numbers?)
-          (? block-entries?)))
-     #t)))
 
 ;;; A block entry will be serialized as an indented hyprlang
 ;;; statement, nested blocks are allowed
-(define (serialize-block-entry value tabs)
-  (string-append
-   (or (match value
-         (() "")
-         (((? symbol? name) value)
-          (let ((indent (make-string (max 0 tabs) #\tab)))
-            (string-append
-             indent
-             (symbol->string name)
-             (match value
-               ((? string? v)
-                (string-append " = " v))
-               ((? number? v)
-                (string-append " = " (number->string v)))
-               ((? boolean? v)
-                (if v " = true" " = false"))
-               ((? pair-of-numbers? v)
-                (string-append (number->string (car v)) "x" (number->string (cadr v))))
-               ((? block-entries? v)
-                (string-append " {\n"
-                               (serialize-block-entries #f v (+ tabs 1))
-                               indent "}")))
-             "\n")))
-         ((_)
-          #f)) "\n")))
 
-;;; List of block entries
-(define block-entries?
-  (list-of block-entry?))
-
-(define (serialize-block-entries _ entries level)
-  (apply string-append
-         (map (λ (e)
-                (serialize-block-entry e level)) entries)))
 
 ;;; An executable (a target for the exec action) can be a string or a gexp
 (define (executable? value)
@@ -148,24 +210,26 @@
 (define (serialize-block name block)
   (serialize-block-entry (list name block) 0))
 
-;;; Monitor transform
+;;; Monitor transform -> number
 (define (monitor-transform? x)
   (and (number? x)
        (<= x 7)
        (>= x 0)))
 
 (define (serialize-monitor-transform _ t)
+  ;; 1st parameter -> field-name
+  ;; 2nd parameter -> value
   (string-append "\ttransform = "
                  (number->string t)))
 
-;;; Monitor name
+;;; Monitor name -> string
 (define monitor-name? string?)
 
 (define (serialize-monitor-name _ name)
     (string-append
         "\toutput = " name))
 
-;;; Monitor scale
+;;; Monitor scale -> string
 (define monitor-scale? string?)
 
 (define (serialize-monitor-scale _ scale)
@@ -210,6 +274,8 @@
 (define (serialize-monitor-color-management _ c)
   (string-append "\tcm = " (symbol->string c)))
 
+(define-maybe monitor-color-management)
+
 ;;; Monitor sub-configuration
 (define-configuration monitor
   (name (monitor-name "") "Monitor's name")
@@ -235,6 +301,110 @@
 
 (define (serialize-list-of-monitors name monitors)
   #~(string-join (list #$@(map (cut serialize-monitor name <>)
+                               monitors))
+                 "\n"))
+
+;; Addreserved field
+(define (addreserved? entry)
+  ((entry? ((? integer?)
+            (? integer?)
+            (? integer?)
+            (? integer?))) entry))
+
+(define (serialize-addreserved name value)
+  ;; TODO: Use serialize-entry?
+  (match value
+    (((? integer? top)
+      (? integer? bottom)
+      (? integer? left)
+      (? integer? right))
+     (format #f
+             "~/~a = ~a, ~a, ~a, ~a"
+             name top bottom left right))))
+
+(define-maybe addreserved)
+
+;; Bitdepth field
+(define (bitdepth? entry)
+  ((entry? 10) entry))
+
+(define (serialize-bitdepth name value)
+  ;; TODO: Use serialize-entry?
+  (format #f "~/~a = ~a" name value))
+
+(define-maybe bitdepth)
+
+;; VRR field
+;; (define (vrr? entry)
+;;   ((entry? ))) ;; TODO: use memq (forse con cut) default 0
+;; (define (vrr? x)
+;;   (and (number? x)
+;;        (<= x 3)
+;;        (>= x 0)))
+
+;; Monitorv2
+
+(define-configuration monitorv2
+  (output
+   (monitor-name)
+   "Monitor's name")
+  (mode
+      (monitor-resolution 'preferred)
+    "Monitor's resolution")
+  (position
+   (monitor-position 'auto)
+   "Monitor's position")
+  (scale
+   (monitor-scale "auto")
+   "Monitor's scale")
+  (transform
+   (monitor-transform 0)
+   "Monitor's transform")
+  (addreserved
+   (maybe-addreserved %unset-value)
+   "A reserved area is an area that remains unoccupied by tiled windows.")
+  (mirror
+   (maybe-estring %unset-value)
+   "Mirror a display.")
+  (bitdepth
+   (maybe-bitdepth %unset-value)
+   "Enable 0 bit support for your display.")
+  (cm
+   (maybe-monitor-color-management %unset-value)
+   "Change default sRGB output preset.")
+  ;; TODO: Add VRR
+  (supports_wide_color
+   (maybe-boolean %unset-value)
+   "Force wide color gamut support.")
+  (supports_hdr
+   (maybe-boolean %unset-value)
+   "Force HDR support. Requires wide color gamut.")
+  (sdr_min_luminance
+   (maybe-real %unset-value)
+   "SDR minimum lumninace used for SDR → HDR mapping.")
+  (sdr_max_luminance
+   (maybe-integer %unset-value)
+   "SDR maximum luminance. Can be used to adjust overall SDR → HDR brightness.")
+  (min_luminance
+   (maybe-real %unset-value)
+   "Monitor's minimum luminance")
+  (max_luminance
+   (maybe-integer %unset-value)
+   "Monitor's maximum possible luminance")
+  (max_avg_luminance
+   (maybe-integer %unset-value)
+   "Monitor's maximum luminance on average for a typical frame"))
+
+(define (serialize-monitorv2 _ m)
+  ;; TODO: Use format
+  #~(string-append "monitorv2 {\n"
+                   #$(serialize-joined m monitorv2-fields #:delimiter "\n")
+                   "\n}\n"))
+
+(define list-of-monitorsv2? (list-of monitorv2?))
+
+(define (serialize-list-of-monitorsv2 name monitors)
+  #~(string-join (list #$@(map (cut serialize-monitorv2 name <>)
                                monitors))
                  "\n"))
 
@@ -294,7 +464,7 @@
          "Bind flags https://wiki.hyprland.org/Configuring/Binds/"
          empty-serializer)
   (use-main-mod? (boolean #t) "If true, mod from main-mod is used"
-       empty-serializer)
+                 empty-serializer)
   (mods (list-of-mods '()) "Mods")
   (key (string) "Binding main key")
   (action (dispatcher 'exec) "Binding action")
@@ -307,10 +477,10 @@
                    #$(if (null? (binding-mods b)) "" " + ")
                    #$(serialize-joined b binding-fields)
                    (if (null? '#$(binding-args b)) ""
-                              (string-append ", "
-                                             #$(serialize-arguments
-                                                name
-                                                (binding-args b))))))
+                       (string-append ", "
+                                      #$(serialize-arguments
+                                         name
+                                         (binding-args b))))))
 
 (define raw-config? string?)
 
@@ -324,7 +494,7 @@
 (define (serialize-list-of-bindings name n)
   #~(string-join
      (list #$@(map (λ (b) (serialize-binding name b)) n))
-           "\n"))
+     "\n"))
 
 ;;; Submap configuration
 (define-configuration submap
@@ -370,7 +540,7 @@
   (package (package hyprland) "Hyprland package to use"
            empty-serializer)
   (monitors (list-of-monitors (list (monitor))) "Monitors definition")
-  (monitorsv2 (block '()) "Monitors definition using v2 syntax")
+  (monitorsv2 (list-of-monitorsv2 '()) "Monitors definition using v2 syntax")
   (exec-once (list-of-executables '()) "Command to exec once")
   (exec (list-of-executables '()) "Command to automatically exec")
   (general (block (block)) "General configuration variables")
@@ -412,6 +582,7 @@
 ;;;
 ;;; Default settings and useful constants.
 ;;;
+
 (define-public %default-hyprland-env
   (list
    (env (name "XCURSOR_SIZE")
@@ -438,7 +609,6 @@
     (rounding_power 2)
     (active_opacity 1.0)
     (inactive_opacity 1.0)
-
     (shadow ((enabled #t)
              (range 4)
              (render_power 3)
