@@ -3,6 +3,7 @@
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
+;;; Copyright © 2022 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -204,6 +205,41 @@ Project, or not such a gitlab instance when your upstream doesn't use any
 dedicated platform.  The tool proposes a unified interface for any format and
 an upload option to send your work back to the platform.")
     (license license:gpl3+)))
+
+(define-public online-judge-tools
+  (package
+    (name "online-judge-tools")
+    (version "11.5.1")
+    ;; Source distributions are not uploaded to PyPI.
+    ;; https://pypi.org/project/online-judge-tools/11.5.1/#files
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/online-judge-tools/oj")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zkzmmjgjb6lyrzq1ip54cpnp7al9a7mcyjyi5vx58bvnx3q0c6m"))
+       (patches (search-patches "online-judge-tools.patch"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; These tests require network connections
+      #~(list "--ignore=tests/command_version.py")))
+    (native-inputs (list python-pytest python-setuptools-next))
+    (inputs (list time))
+    (propagated-inputs (list python-online-judge-api-client python-colorama
+                             python-requests))
+    (home-page "https://github.com/online-judge-tools/oj")
+    (synopsis "Command to help solving problems on various online judges")
+    (description
+     "@command{oj} is a command line tool to help solving problems on
+various online judges.  This command automates downloading sample
+cases, generating additional test cases, testing for your code, and
+submitting it.")
+    (license license:expat)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
