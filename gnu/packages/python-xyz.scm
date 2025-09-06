@@ -16258,6 +16258,44 @@ X client library for Python programs.  It is useful to implement
 low-level X clients.  It is written entirely in Python.")
     (license license:gpl2+)))
 
+(define-public python-quicktile
+  ;; Latest release, 0.4.0 does not use pyproject.toml yet.
+  (let ((commit "b0c6e46bfe8719614263d1b7896e7c0cc4914ae7")
+        (revision "0"))
+    (package
+      (name "python-quicktile")
+      (version (git-version "0.4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ssokolow/quicktile")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         ;; setup.py is still in the repository next to pyproject.toml and
+         ;; sanitize.py tries to run 'setup.py test' which fails with
+         ;; newer setuptools.
+         (snippet #~(begin
+                      (delete-file "setup.py")))
+         (sha256
+          (base32 "0vzfa1bpbkv7v9vaznz2f21rbcirbcmnvvmjiawx35ghwv0s7bpb"))))
+      (build-system pyproject-build-system)
+      (native-inputs (list python-setuptools))
+      (inputs (list gtk+
+                    libwnck
+                    python-xlib
+                    python-pygobject
+                    python-dbus-python))
+      ;; The actual home page https://ssokolow.com/quicktile/ gives an SSL error.
+      (home-page "https://github.com/ssokolow/quicktile")
+      (synopsis
+       "Utility that adds window-tiling keybindings to your X11 window manager")
+      (description
+       "QuickTile is a simple utility, inspired by WinSplit Revolution for
+Windows, which adds window-tiling keybindings to your existing X11 window
+manager.")
+      (license license:gpl2))))
+
 (define-public python-singledispatch
   (package
     (name "python-singledispatch")
