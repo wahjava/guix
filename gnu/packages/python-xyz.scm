@@ -2155,6 +2155,7 @@ decorators, including variants of the Python standard library's
                          python-pytest-cov
                          python-pytest-mpl
                          python-setuptools
+                         python-setuptools-scm
                          python-wheel))
     (home-page "https://colorcet.holoviz.org/")
     (synopsis "Collection of perceptually uniform colormaps")
@@ -17014,7 +17015,7 @@ pseudo terminal (pty), and interact with both the process and its pty.")
        ;; XXX: Snippet below is required because on v1.1.30 the source code
        ;; has configshell_fb as softlink to configshell and guix
        ;; pyproject-build-system doesn't work with symlinks very well.
-       ;; 
+       ;;
        ;; This package is only used in spdk for now and it's crucial to keep
        ;; it locked on version and keep the snipped for spdk to build
        ;; successfully.
