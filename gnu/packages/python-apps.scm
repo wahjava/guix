@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Stefan Reichoer <stefan@xsteve.at>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
+;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -119,6 +120,30 @@ the beginning of the file or directory name.")
      Glances uses the PsUtil library to get information from your system.  It
      monitors CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
     (license license:lgpl3+)))
+
+(define-public i3-autotiling
+  (package
+    (name "i3-autotiling")
+    (version "1.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nwg-piotr/autotiling")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ag3zz4r3cwpj769m2aw3l8yj93phsydzfz02dig5z81cc025rck"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs (list python-i3ipc))
+    (home-page "https://github.com/nwg-piotr/autotiling")
+    (synopsis "Automatically tile windows in i3 and Sway")
+    (description
+     "Script for Sway and i3 to automatically switch the horizontal/vertical
+ window split orientation.")
+    (license license:gpl3)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
