@@ -572,6 +572,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/pv.scm				\
   %D%/packages/pypy.scm				\
   %D%/packages/python.scm			\
+  %D%/packages/python-apps.scm			\
   %D%/packages/python-build.scm			\
   %D%/packages/python-check.scm			\
   %D%/packages/python-compression.scm		\
