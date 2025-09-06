@@ -7,6 +7,7 @@
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2022 Matthew James Kraai <kraai@ftbfs.org>
+;;; Copyright © 2024 Romain Garbage <romain.garbage@inria.fr>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -155,6 +156,36 @@ the beginning of the file or directory name.")
      "Script for Sway and i3 to automatically switch the horizontal/vertical
  window split orientation.")
     (license license:gpl3)))
+
+(define-public jube
+  (package
+    ;; This is a command-line tool, so no "python-" prefix.
+    (name "jube")
+    (version "2.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "http://apps.fz-juelich.de/jsc/jube/jube2/download.php?version="
+             version))
+       (sha256
+        (base32 "0r5d2gdqa0f4c468q3k25ycw1k2g76gg8fyiln4ni98fvfsbx3il"))
+       (file-name (string-append "jube-" version ".tar.gz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))                     ; No tests.
+    (propagated-inputs (list python-pyyaml))
+    (native-inputs (list python-setuptools-next))
+    (home-page "https://apps.fz-juelich.de/jsc/jube/jube2/docu/index.html")
+    (synopsis "Benchmarking environment")
+    (description
+     "JUBE helps perform and analyze benchmarks in a systematic way.  For each
+benchmarked application, benchmark data is stored in a format that allows JUBE
+to deduct the desired information.  This data can be parsed by automatic pre-
+and post-processing scripts that draw information and store it more densely
+for manual interpretation.")
+    (license license:gpl3+)))
 
 (define-public offlate
   (package
