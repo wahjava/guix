@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Stefan Reichoer <stefan@xsteve.at>
+;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
@@ -240,6 +241,37 @@ various online judges.  This command automates downloading sample
 cases, generating additional test cases, testing for your code, and
 submitting it.")
     (license license:expat)))
+
+(define-public ptpython
+  (package
+    (name "ptpython")
+    (version "3.0.20")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jonathanslenders/ptpython")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qbj7d4qkzl8l05kpmm19953lmqk379i17ab8g3sfnmfpsy3ji5m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: There is a tests/run_tests.py file but all it does is a
+      ;; sanity check.
+      #:tests? #f))
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs
+     (list python-appdirs python-jedi python-prompt-toolkit python-pygments))
+    (home-page "https://github.com/jonathanslenders/ptpython")
+    (synopsis "Python Read-Eval-Print-Loop with nice IDE-like features")
+    (description
+     "ptpython is a Python read-eval-print loop with IDE-like features.
+It supports syntax highlighting, multiline editing, autocompletion, mouse,
+color schemes, bracketed paste, Vi and Emacs keybindings, Chinese characters
+etc.")
+    (license license:bsd-3)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances
