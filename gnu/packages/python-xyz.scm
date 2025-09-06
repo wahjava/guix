@@ -37423,30 +37423,6 @@ it supports reStructuredText, Markdown, IPython (Jupyter) Notebooks and HTML,
 and has plugins for many other formats.")
     (license license:expat)))
 
-(define-public nbss-upload
-  (package
-    (name "nbss-upload")
-    (version "0.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/notebook-sharing-space/nbss-upload")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0cxj4zqcxzi3c5kw649jxmdpnbyrkrwx4licxdg6zc317v8gxw54"))))
-    (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))      ;no tests
-    (native-inputs (list python-setuptools-next))
-    (propagated-inputs (list python-requests))
-    (home-page "https://github.com/notebook-sharing-space/nbss-upload")
-    (synopsis "Upload notebooks to a notebooksharing.space instance")
-    (description
-     "Upload notebooks as @code{.ipynb}, @code{.rmd}, and @code{.html} to a
-notebooksharing.space instance.")
-    (license license:bsd-3)))
-
 (define-public python-reedsolo
   (package
     (name "python-reedsolo")
