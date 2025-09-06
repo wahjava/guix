@@ -66,6 +66,7 @@
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -815,6 +816,37 @@ everything from small to very large projects with speed and efficiency.")
               (sha256
                (base32
                 "0if0vqn3fj22p95a0125zpgwz3mqfqxqnvwa7fkf7b00wh0c1wyz"))))))
+
+(define-public gitu
+  (package
+    (name "gitu")
+    (version "0.35.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "gitu" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1wk9sbwx2lpn5in9f84sx41m5im91f5wzawfb34xccpcgq2pq6k7"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-git-bin
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-program (string-append #$output "/bin/gitu")
+                `("PATH" ":" prefix
+                  (,(string-append #$git-minimal "/bin")))))))))
+    (inputs (cons bash-minimal
+                  (cargo-inputs 'gitu)))
+    (native-inputs (list git-minimal zlib))
+    (home-page "https://github.com/altsem/gitu")
+    (synopsis "Git client inspired by Magit")
+    (description "@code{gitu} is a git Terminal User Interface inspired
+by @code{emacs-magit}.")
+    (license license:expat)))
 
 (define-public python-klaus
   (package
