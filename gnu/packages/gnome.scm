@@ -5368,7 +5368,10 @@ and the GLib main loop, to integrate well with GNOME applications.")
     (arguments
      (list
       #:configure-flags
-      #~(list "-Dgtk_doc=false")        ;requires gi-docgen
+      #~(list "-Dgtk_doc=false"         ;requires gi-docgen
+              (string-append
+               "-Dintrospection="
+               (if #$(%current-target-system) "false" "true")))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)
@@ -5391,6 +5394,7 @@ and the GLib main loop, to integrate well with GNOME applications.")
            gobject-introspection
            libxslt
            pkg-config
+           pkg-config-for-build
            python
            python-dbus
            python-pygobject
