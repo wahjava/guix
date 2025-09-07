@@ -2185,8 +2185,8 @@ touchscreen devices.")
     (license license:expat)))
 
 (define-public rusty
-  (let ((commit "ce6892169b4c4d8b924eaf4323db4564f722064c")
-        (revision "0"))
+  (let ((commit "f051de68c0308bbcd587376cb9aa800ce65674cb")
+        (revision "1"))
     (package
       (name "rusty")
       (version (git-version "0.2.0" revision commit))
@@ -2198,7 +2198,7 @@ touchscreen devices.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0m0g4xpwb43bh5vzlx9vp69rnhsry6bz8yn0xsvmsa9iwak4sgm5"))))
+          (base32 "099as6dkdpmqps0s7m3dwncqlsy5fin8fzhnc992cralg2zc493j"))))
       (build-system cargo-build-system)
       (arguments
        (list
