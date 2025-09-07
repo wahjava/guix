@@ -7096,14 +7096,14 @@ side panel;
                 "1laxgdkgmr30aw44sm4rgpsdybwxx5rszcm8c2y3vmy9myqnl9k1"))))
     (build-system meson-build-system)
     (native-inputs
-     `(("glib:bin" ,glib "bin") ; for glib-genmarshal, etc.
-       ("gobject-introspection" ,gobject-introspection)
-       ("pkg-config" ,pkg-config)))
+     (list `(,glib "bin") ; for glib-genmarshal, etc.
+           pkg-config
+           pkg-config-for-build))
     (propagated-inputs
-     (list glib ; in Requires of gudev-1.0.pc
+     (list glib                  ; in Requires of gudev-1.0.pc
            eudev))               ; in Requires.private of gudev-1.0.pc
     (inputs
-     `(("udev" ,eudev)))
+     (list gobject-introspection))
     (home-page "https://wiki.gnome.org/Projects/libgudev")
     (synopsis "GObject bindings for libudev")
     (description
