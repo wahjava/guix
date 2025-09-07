@@ -404,17 +404,13 @@ formats to milliseconds.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1xr2msdc143cd3xwgq7n3rhzy7j8wrnaidxl0r6l6b6g3mpbpjig"))))
+        (base32 "1xr2msdc143cd3xwgq7n3rhzy7j8wrnaidxl0r6l6b6g3mpbpjig"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda args
-             (modify-json (delete-dependencies `("chai" "mocha"))))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs '("chai" "mocha")))
     (home-page "https://github.com/darkskyapp/binary-search#readme")
     (properties '((hidden? . #t)))
     (synopsis "Tiny binary search function with comparators")
