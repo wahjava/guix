@@ -1304,7 +1304,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.56")
+    (version "0.57")
     (source
      (origin
        (method git-fetch)
