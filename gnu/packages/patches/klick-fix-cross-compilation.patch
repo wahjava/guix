@@ -1,0 +1,22 @@
+The scons build system doesn't provide a standardized way for package managers to
+cros build, packages have to support it in the SConstruct file.
+Packages commonly use CC, CXX, LD environment variables, so use this here as well
+to unify it with rest of the build system.
+
+This package doesn't provide any other means for cross compilation, a patch is
+necessary.
+
+--- a/SConstruct	2025-09-07 15:18:07.198756016 +0200
++++ b/SConstruct	2025-09-07 15:23:19.804898385 +0200
+@@ -13,2 +13,11 @@ env = Environment(
+ 
++if 'CC' in os.environ:
++    env['CC'] = os.environ['CC']
++
++if 'CXX' in os.environ:
++    env['CXX'] = os.environ['CXX']
++
++if 'LD' in os.environ:
++    env['LD'] = os.environ['LD']
++
+ # build options

@@ -1661,6 +1661,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/json-c-0.12-CVE-2020-12762.patch		\
   %D%/packages/patches/julia-SOURCE_DATE_EPOCH-mtime.patch	\
   %D%/packages/patches/julia-Use-MPFR-4.2.patch	                \
+  %D%/packages/patches/klick-fix-cross-compilation.patch        \
   %D%/packages/patches/komikku-python-3.11-compat.patch	                \
   %D%/packages/patches/komikku-future-servers-compat.patch	                \
   %D%/packages/patches/libcall-ui-make-it-installable.patch	\

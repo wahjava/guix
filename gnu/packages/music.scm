@@ -402,7 +402,7 @@ more.")
      (list
       #:tests? #f  ;no tests
       #:scons-flags
-      #~(list (string-append "prefix=" (assoc-ref %outputs "out")))
+      #~(list (string-append "prefix=" #$output))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
@@ -1514,15 +1514,16 @@ engine (except effects) that can be used for layering or split patches.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "http://das.nasophon.de/download/klick-" version
+       (uri (string-append "https://das.nasophon.de/download/klick-" version
                            ".tar.gz"))
+       (patches (search-patches "klick-fix-cross-compilation.patch"))
        (sha256
         (base32 "0hmcaywnwzjci3pp4xpvbijnnwvibz7gf9xzcdjbdca910y5728j"))))
     (build-system scons-build-system)
     (arguments
      (list
       #:scons-flags
-      #~(list (string-append "PREFIX=" %output))
+      #~(list (string-append "PREFIX=" #$output))
       #:tests? #f ;no "check" target
       #:phases
       #~(modify-phases %standard-phases
@@ -1531,6 +1532,11 @@ engine (except effects) that can be used for layering or split patches.")
               (substitute* "SConstruct"
                 (("'-Wall'")
                  "'-Wall', '-fpermissive'"))))
+          (add-after 'unpack 'replace-pkg-config
+            (lambda _
+              (substitute* "SConstruct"
+                (("pkg-config")
+                 #$(pkg-config-for-target)))))
           (add-after 'unpack 'replace-removed-scons-syntax
             (lambda _
               (substitute* "SConstruct"
