@@ -2611,15 +2611,24 @@ follower.")
                 "05lr9f0q4x1kvgfa3xrfmagpwvijv9m1s316aa9figqlkcc5vv4k"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:tests? #f                      ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-libdir
-           (lambda _
-             ;; Install libraries to /lib, not /lib64.
-             (substitute* "CMakeLists.txt"
-               (("LIB_SUFFIX \\$\\{_init_lib_suffix\\}")
-                "LIB_SUFFIX \"\"")))))))
+     (list
+      #:tests? #f                      ; no check target
+      #:configure-flags
+      #~(if #$(%current-target-system)
+            (list
+             (string-append "-DPKG_CONFIG_EXECUTABLE="
+                            (search-input-file %build-inputs
+                                               (string-append
+                                                "/bin/" #$(pkg-config-for-target)))))
+            '())
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-libdir
+            (lambda _
+              ;; Install libraries to /lib, not /lib64.
+              (substitute* "CMakeLists.txt"
+                (("LIB_SUFFIX \\$\\{_init_lib_suffix\\}")
+                 "LIB_SUFFIX \"\"")))))))
     (inputs
      (list ladspa))
     (native-inputs
