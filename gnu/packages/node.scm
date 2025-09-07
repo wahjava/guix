@@ -573,52 +573,47 @@ Node.js and web browsers.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/indutny/llparse.git")
-             (commit (string-append "v" version))))
+              (url "https://github.com/indutny/llparse.git")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "10da273iy2if88hp79cwms6c8qpsl1fkgzll6gmqyx5yxv5mkyp6"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Fix imports for esbuild.
-           ;; https://github.com/evanw/esbuild/issues/477
-           (substitute* '("src/compiler/index.ts"
-                          "src/implementation/c/node/base.ts"
-                          "src/implementation/c/node/table-lookup.ts"
-                          "src/implementation/c/compilation.ts"
-                          "src/implementation/c/helpers/match-sequence.ts"
-                          "src/implementation/c/code/mul-add.ts")
-             (("\\* as assert") "assert")
-             (("\\* as debugAPI") "debugAPI"))
-           #t))))
+         "10da273iy2if88hp79cwms6c8qpsl1fkgzll6gmqyx5yxv5mkyp6"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda args
-             (modify-json (delete-dependencies
-                           `("@types/debug"
-                             "@types/mocha"
-                             "@types/node"
-                             "esm"
-                             "llparse-test-fixture"
-                             "mocha"
-                             "ts-node"
-                             "tslint"
-                             "typescript")))))
-         (replace 'build
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((esbuild (search-input-file inputs "/bin/esbuild")))
-               (invoke esbuild
-                       "--platform=node"
-                       "--outfile=lib/api.js"
-                       "--bundle"
-                       "src/api.ts")))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs
+      '("@types/debug"
+        "@types/mocha"
+        "@types/node"
+        "esm"
+        "llparse-test-fixture"
+        "mocha"
+        "ts-node"
+        "tslint"
+        "typescript")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-imports-for-esbuild
+            (lambda _
+              ;; https://github.com/evanw/esbuild/issues/477
+              (substitute* '("src/compiler/index.ts"
+                             "src/implementation/c/node/base.ts"
+                             "src/implementation/c/node/table-lookup.ts"
+                             "src/implementation/c/compilation.ts"
+                             "src/implementation/c/helpers/match-sequence.ts"
+                             "src/implementation/c/code/mul-add.ts")
+                (("\\* as assert") "assert")
+                (("\\* as debugAPI") "debugAPI"))))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (invoke (search-input-file inputs "/bin/esbuild")
+                      "--platform=node"
+                      "--outfile=lib/api.js"
+                      "--bundle"
+                      "src/api.ts"))))))
     (inputs
      (list node-debug-bootstrap node-llparse-frontend-bootstrap))
     (native-inputs
