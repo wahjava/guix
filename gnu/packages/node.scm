@@ -377,22 +377,14 @@ devices.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1pjxzbi4j8pinlsc7yxvfrh0b47kb2dc4lfc2rjq4wx5bdwl33fj"))))
+        (base32 "1pjxzbi4j8pinlsc7yxvfrh0b47kb2dc4lfc2rjq4wx5bdwl33fj"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda args
-             (modify-json (delete-dependencies
-                           '("eslint"
-                             "expect.js"
-                             "husky"
-                             "lint-staged"
-                             "mocha"))))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs
+      '("eslint" "expect.js" "husky" "lint-staged" "mocha")))
     (home-page "https://github.com/zeit/ms#readme")
     (properties '((hidden? . #t)))
     (synopsis "Tiny millisecond conversion utility")
