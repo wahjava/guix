@@ -2123,37 +2123,56 @@ custom formats for representing color values..")
     (license license:gpl3+)))
 
 (define-public gpick
+  (let ((commit "dd27232a4dd08cf6271ecc2a7e96da25f8071ed5;")
+        (date "2022-05-08")
+        (version "0.3")
+        (revision "0"))
   (package
     (name "gpick")
-    (version "0.2.6")
+    (version version)
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/thezbyg/gpick")
-             (commit (string-append name "-" version))))
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
+       (patches (search-patches "gpick-lua-extern-c.patch"))
        (sha256
-        (base32 "0nl89gca5nmbyycv5rl5bm6k7facapdk4pab9pl949aa3cjw9bk7"))))
-    (build-system scons-build-system)
+        (base32 "12lmzpimxvw0yj0lhmh51gzriph86a5h4asr1hpnrbq0s2jxhpk7"))))
+    (build-system cmake-build-system)
     (arguments
      (list
       #:tests? #f
-      #:scons-flags
-      #~(list (string-append "DESTDIR=" %output))
+      #:configure-flags
+      #~(if #$(%current-target-system)
+            (list
+             (string-append "-DPKG_CONFIG_EXECUTABLE="
+                            (search-input-file
+                             %build-inputs
+                             (string-append "bin/" #$(pkg-config-for-target)))))
+            '())
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'build 'fix-lua-reference
+          (add-after 'unpack 'patch-cmake-lists
             (lambda _
-              (substitute* "SConscript"
-                (("lua5.2")
-                 "lua-5.2")))))))
-    (native-inputs (list boost gettext-minimal pkg-config ragel))
-    (inputs (list expat gtk+-2 lua-5.2))
+              (substitute* "CMakeLists.txt"
+                (("lua5\\.4-c\\+\\+") "lua-5.4"))))
+          (add-after 'unpack 'add-version-file
+            (lambda _
+              (call-with-output-file ".version"
+                (lambda (port)
+                  (format port "~a~%~a~%~a~%~a~%"
+                          #$version
+                          #$revision
+                          #$commit
+                          #$date))))))))
+    (native-inputs (list gettext-minimal pkg-config ragel))
+    (inputs (list expat gtk+ lua-5.4 boost))
     (home-page "http://www.gpick.org/")
     (synopsis "Color picker")
     (description "Gpick is an advanced color picker and palette editing tool.")
-    (license license:bsd-3)))
+    (license license:bsd-3))))
 
 (define-public libiptcdata
   (package

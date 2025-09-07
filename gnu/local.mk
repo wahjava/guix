@@ -1522,6 +1522,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gourmet-sqlalchemy-compat.patch		\
   %D%/packages/patches/gpaste-fix-paths.patch			\
   %D%/packages/patches/gpm-glibc-2.26.patch			\
+  %D%/packages/patches/gpick-lua-extern-c.patch			\
   %D%/packages/patches/gpodder-disable-updater.patch		\
   %D%/packages/patches/grantlee-fix-i586-precision.patch	\
   %D%/packages/patches/grantlee-register-metaenumvariable.patch	\
