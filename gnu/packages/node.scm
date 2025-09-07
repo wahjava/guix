@@ -629,64 +629,59 @@ parser definition into a C output.")
   (package
     (name "llhttp")
     (version "9.2.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/nodejs/llhttp.git")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0mzg19aqb1am498gms0z75cwd5kmfg9p78b1hhxw67019nsjcbac"))
-              (patches (search-patches "llhttp-ponyfill-object-fromentries.patch"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Fix imports for esbuild.
-                  ;; https://github.com/evanw/esbuild/issues/477
-                  (substitute* "src/llhttp/http.ts"
-                    (("\\* as assert") "assert"))
-                  (substitute* "Makefile"
-                    (("npx ts-node bin/generate.ts")
-                     "node bin/generate.js"))
-                  #t))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/nodejs/llhttp.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0mzg19aqb1am498gms0z75cwd5kmfg9p78b1hhxw67019nsjcbac"))
+       (patches (search-patches "llhttp-ponyfill-object-fromentries.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags (list (string-append "CLANG=" ,(cc-for-target))
-                          (string-append "DESTDIR=" (assoc-ref %outputs "out"))
-                          "PREFIX=")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs native-inputs #:allow-other-keys)
-             (let ((esbuild (search-input-file (or native-inputs inputs)
-                                               "/bin/esbuild")))
-               (invoke esbuild
-                       "--platform=node"
-                       "--target=node10"
-                       "--outfile=bin/generate.js"
-                       "--bundle" "bin/generate.ts"))))
-         (add-before 'install 'create-install-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (for-each (lambda (dir)
-                           (mkdir-p (string-append out dir)))
-                         (list "/lib" "/include" "/src"))
-               #t)))
-         (add-after 'install 'install-src
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (src-dir (string-append out "/src")))
-               (install-file "build/c/llhttp.c" src-dir)
-               (install-file "src/native/api.c" src-dir)
-               (install-file "src/native/http.c" src-dir)
-               #t))))))
+     (list
+      #:tests? #f ; no tests
+      #:make-flags
+      #~(list (string-append "CLANG=" #$(cc-for-target))
+              (string-append "DESTDIR=" #$output)
+              "PREFIX=")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-imports-for-esbuild
+            (lambda _
+              ;; https://github.com/evanw/esbuild/issues/477
+              (substitute* "src/llhttp/http.ts"
+                (("\\* as assert") "assert"))
+              (substitute* "Makefile"
+                (("npx ts-node bin/generate.ts")
+                 "node bin/generate.js"))))
+          (replace 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (invoke (search-input-file inputs "/bin/esbuild")
+                      "--platform=node"
+                      "--target=node10"
+                      "--outfile=bin/generate.js"
+                      "--bundle"
+                      "bin/generate.ts")))
+          (add-before 'install 'create-install-directories
+            (lambda _
+              (for-each (lambda (dir)
+                          (mkdir-p (string-append #$output dir)))
+                        (list "/lib" "/include" "/src"))))
+          (add-after 'install 'install-src
+            (lambda _
+              (let ((src-dir (string-append #$output "/src")))
+                (install-file "build/c/llhttp.c" src-dir)
+                (install-file "src/native/api.c" src-dir)
+                (install-file "src/native/http.c" src-dir)))))))
     (native-inputs
-     `(("esbuild" ,esbuild)
-       ("node" ,node-bootstrap)
-       ("node-semver" ,node-semver-bootstrap)
-       ("node-llparse-bootstrap" ,node-llparse-bootstrap)))
+     (list esbuild
+           node-bootstrap
+           node-llparse-bootstrap
+           node-semver-bootstrap))
     (home-page "https://github.com/nodejs/llhttp")
     (properties '((hidden? . #t)))
     (synopsis "Parser for HTTP messages")
