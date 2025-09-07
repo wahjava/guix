@@ -940,14 +940,17 @@ is part of the GNOME accessibility project.")
            libxrender
            libxshmfence))
     (native-inputs
-     (list gettext-minimal
+     (cons* gettext-minimal
            `(,glib "bin")
            gobject-introspection
            intltool
            perl
            pkg-config
            python-wrapper
-           xorg-server-for-tests))
+           xorg-server-for-tests
+           (if (%current-target-system)
+               `((,this-package "bin"))
+               '())))
     (arguments
      (list
       #:parallel-tests? #f
@@ -988,8 +991,8 @@ is part of the GNOME accessibility project.")
               (setenv "DBUS_FATAL_WARNINGS" "0")))
           (add-after 'install 'remove-cache
             (lambda _
-	      (for-each delete-file
-	                (find-files #$output "immodules.cache")))))))
+              (for-each delete-file
+                        (find-files #$output "immodules.cache")))))))
     (native-search-paths
      (list (search-path-specification
             (variable "GUIX_GTK2_PATH")
