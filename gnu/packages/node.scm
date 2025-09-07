@@ -429,28 +429,24 @@ formats to milliseconds.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "08g52r1d4yqcsfdfb7n5if33d4cghaq75gx5n9hj6m6fd8jfp2pi"))))
+        (base32 "08g52r1d4yqcsfdfb7n5if33d4cghaq75gx5n9hj6m6fd8jfp2pi"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda args
-             (modify-json (delete-dependencies
-                           `("brfs"
-                             "browserify"
-                             "coveralls"
-                             "istanbul"
-                             "karma"
-                             "karma-browserify"
-                             "karma-chrome-launcher"
-                             "karma-mocha"
-                             "mocha"
-                             "mocha-lcov-reporter"
-                             "xo"))))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs
+      '("brfs"
+        "browserify"
+        "coveralls"
+        "istanbul"
+        "karma"
+        "karma-browserify"
+        "karma-chrome-launcher"
+        "karma-mocha"
+        "mocha"
+        "mocha-lcov-reporter"
+        "xo")))
     (inputs (list node-ms-bootstrap))
     (home-page "https://github.com/visionmedia/debug#readme")
     (properties '((hidden? . #t)))
