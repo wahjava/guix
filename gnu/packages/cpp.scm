@@ -2089,7 +2089,7 @@ point and then, after each tween step, plugging back the result.")
                (("check_target\\(gtest\\)") "")
                (("check_target\\(gtest_main\\)") "")
                (("check_target\\(gmock\\)") "")))))))
-    (native-inputs
+    (inputs
      (list googletest))
     (home-page "https://abseil.io")
     (synopsis "Augmented C++ standard library")
