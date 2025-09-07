@@ -14,6 +14,7 @@
 ;;; Copyright © 2022 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2024, 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -341,24 +342,21 @@ devices.")
   (package
     (name "node-semver")
     (version "7.2.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/npm/node-semver")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "06biknqb05r9xsmcflm3ygh50pjvdk84x6r79w43kmck4fn3qn5p"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/npm/node-semver")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06biknqb05r9xsmcflm3ygh50pjvdk84x6r79w43kmck4fn3qn5p"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda args
-             (modify-json (delete-dependencies '("tap"))))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs '("tap")))
     (home-page "https://github.com/npm/node-semver")
     (properties '((hidden? . #t)))
     (synopsis "Parses semantic versions strings")
