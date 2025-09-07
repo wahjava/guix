@@ -2627,52 +2627,54 @@ from streaming URLs.  It is a command-line wrapper for the libquvi library.")
            ;;("gss" ,gss)
            zlib))
     (arguments
-     `(#:scons-flags (list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
-                           (string-append "APR=" (assoc-ref %build-inputs "apr"))
-                           (string-append "APU=" (assoc-ref %build-inputs "apr-util"))
-                           (string-append "OPENSSL=" (assoc-ref %build-inputs "openssl"))
-                           ;; (string-append "GSSAPI=" (assoc-ref %build-inputs "gss"))
-                           (string-append "ZLIB=" (assoc-ref %build-inputs "zlib"))
-                           (string-append "PREFIX=" %output))
+     (list
+      #:scons-flags #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
+                            (string-append "CC=" #$(cc-for-target))
+                            (string-append "APR=" #$(this-package-input "apr"))
+                            (string-append "APU=" #$(this-package-input "apr-util"))
+                            (string-append "OPENSSL=" #$(this-package-input "openssl"))
+                            ;; (string-append "GSSAPI=" (assoc-ref %build-inputs "gss"))
+                            (string-append "ZLIB=" #$(this-package-input "zlib"))
+                            (string-append "PREFIX=" #$output))
        #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'scons-propagate-environment
-                    (lambda _
-                      ;; By design, SCons does not, by default, propagate
-                      ;; environment variables to subprocesses.  See:
-                      ;; <http://comments.gmane.org/gmane.linux.distributions.nixos/4969>
-                      ;; Here, we modify the SConstruct file to arrange for
-                      ;; environment variables to be propagated.
-                      (substitute* "SConstruct"
-                        (("^env = Environment\\(")
-                         "env = Environment(ENV=os.environ, "))))
-         (add-before 'check 'disable-broken-tests
-           (lambda _
-             ;; These tests rely on SSL certificates that expired 2017-04-18.
-             ;; While there are newer certs available upstream, we don't want
-             ;; this package to suddenly "expire" some time in the future.
-             ;; https://bugs.gnu.org/26671
-             (let ((broken-tests
-                    '("test_ssl_trust_rootca"
-                      "test_ssl_certificate_chain_with_anchor"
-                      "test_ssl_certificate_chain_all_from_server"
-                      "test_ssl_no_servercert_callback_allok"
-                      "test_ssl_large_response"
-                      "test_ssl_large_request"
-                      "test_ssl_client_certificate"
-                      "test_ssl_future_server_cert"
-                      "test_setup_ssltunnel"
-                      "test_ssltunnel_basic_auth"
-                      "test_ssltunnel_basic_auth_server_has_keepalive_off"
-                      "test_ssltunnel_basic_auth_proxy_has_keepalive_off"
-                      "test_ssltunnel_basic_auth_proxy_close_conn_on_200resp"
-                      "test_ssltunnel_digest_auth")))
-               (for-each
-                (lambda (test)
-                  (substitute* "test/test_context.c"
-                    (((string-append "SUITE_ADD_TEST\\(suite, " test "\\);")) "")))
-                broken-tests)
-               #t))))))
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'scons-propagate-environment
+             (lambda _
+               ;; By design, SCons does not, by default, propagate
+               ;; environment variables to subprocesses.  See:
+               ;; <http://comments.gmane.org/gmane.linux.distributions.nixos/4969>
+               ;; Here, we modify the SConstruct file to arrange for
+               ;; environment variables to be propagated.
+               (substitute* "SConstruct"
+                 (("^env = Environment\\(")
+                  "env = Environment(ENV=os.environ, "))))
+           (add-before 'check 'disable-broken-tests
+             (lambda _
+               ;; These tests rely on SSL certificates that expired 2017-04-18.
+               ;; While there are newer certs available upstream, we don't want
+               ;; this package to suddenly "expire" some time in the future.
+               ;; https://bugs.gnu.org/26671
+               (let ((broken-tests
+                      '("test_ssl_trust_rootca"
+                        "test_ssl_certificate_chain_with_anchor"
+                        "test_ssl_certificate_chain_all_from_server"
+                        "test_ssl_no_servercert_callback_allok"
+                        "test_ssl_large_response"
+                        "test_ssl_large_request"
+                        "test_ssl_client_certificate"
+                        "test_ssl_future_server_cert"
+                        "test_setup_ssltunnel"
+                        "test_ssltunnel_basic_auth"
+                        "test_ssltunnel_basic_auth_server_has_keepalive_off"
+                        "test_ssltunnel_basic_auth_proxy_has_keepalive_off"
+                        "test_ssltunnel_basic_auth_proxy_close_conn_on_200resp"
+                        "test_ssltunnel_digest_auth")))
+                 (for-each
+                  (lambda (test)
+                    (substitute* "test/test_context.c"
+                      (((string-append "SUITE_ADD_TEST\\(suite, " test "\\);")) "")))
+                  broken-tests)
+                 #t))))))
     (home-page "https://serf.apache.org/")
     (synopsis "High-performance asynchronous HTTP client library")
     (description
@@ -2684,7 +2686,10 @@ minimum to provide high performance operation.")
     ;; bundled CuTest framework uses a different non-copyleft license.
     (properties
      '((release-monitoring-url . "https://serf.apache.org/download")))
-    (license (list license:asl2.0 (license:non-copyleft "file://test/CuTest-README.txt")))))
+    (license
+     (list
+      license:asl2.0
+      (license:non-copyleft "file://test/CuTest-README.txt")))))
 
 (define-public libsass
   (package
