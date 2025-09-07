@@ -3649,10 +3649,20 @@ can run @code{guix shell perl-perl-tidy perl} in advance to load
                (base32 "0sxb3835nly1jxn071f59fwbdzmqi74j040r81fanxyw3s1azw0i"))))
     (arguments
      (list
-      #:tests? #f                       ; It's run after build automatically.
       ;; Fix 'Version:' setting in .pc file. See:
       ;; <https://github.com/unittest-cpp/unittest-cpp/pull/188>
-      #:configure-flags #~(list (string-append "-DPACKAGE_VERSION=" #$version))))
+      #:configure-flags #~(list (string-append "-DPACKAGE_VERSION=" #$version)
+                                "-DUTPP_INCLUDE_TESTS_IN_BUILD=OFF")
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? configure-flags #:allow-other-keys)
+                       (if tests?
+                           (invoke "cmake"
+                                   "--build"
+                                   "."
+                                   "--target"
+                                   "TestUnitTest++")
+                           (format #t "test suite not run~%")))))))
     (build-system cmake-build-system)
     (home-page "https://github.com/unittest-cpp/unittest-cpp")
     (synopsis "Lightweight unit testing framework for C++")
