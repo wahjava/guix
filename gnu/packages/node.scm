@@ -34,6 +34,7 @@
 (define-module (gnu packages node)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module ((guix build utils) #:select (alist-replace))
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix derivations)
   #:use-module (guix download)
@@ -468,55 +469,40 @@ Node.js and web browsers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0r82iiwqsb73k2fxw7842rjjiixllxpyc6yl9cq4ma6ybkf6xmzm"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; FIXME: Unneeded runtime dependency.
-           ;; https://github.com/indutny/llparse-builder/pull/2
-           (substitute* "package.json"
-             (("\"@types/debug.*,") ""))
-           ;; Fix imports for esbuild.
-           ;; https://github.com/evanw/esbuild/issues/477
-           (substitute* '("src/node/invoke.ts"
-                          "src/node/base.ts"
-                          "src/node/consume.ts"
-                          "src/node/match.ts"
-                          "src/node/error.ts"
-                          "src/node/pause.ts"
-                          "src/edge.ts"
-                          "src/utils.ts"
-                          "src/loop-checker/index.ts"
-                          "src/loop-checker/lattice.ts"
-                          "src/code/field.ts"
-                          "src/span-allocator.ts")
-             (("\\* as assert") "assert")
-             (("\\* as debugAPI") "debugAPI"))
-           #t))))
+        (base32 "0r82iiwqsb73k2fxw7842rjjiixllxpyc6yl9cq4ma6ybkf6xmzm"))))
     (build-system node-build-system)
     (arguments
-     `(#:node ,node-bootstrap
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-dependencies 'delete-dependencies
-           (lambda _
-             (modify-json (delete-dependencies
-                           `("@types/mocha"
-                             "@types/node"
-                             "mocha"
-                             "ts-node"
-                             "tslint"
-                             "typescript")))))
-         (replace 'build
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((esbuild (search-input-file inputs "/bin/esbuild")))
-               (invoke esbuild
-                       "--platform=node"
-                       "--outfile=lib/builder.js"
-                       "--bundle"
-                       "src/builder.ts")))))))
+     (list
+      #:node node-bootstrap
+      #:tests? #f
+      #:ignored-inputs
+      '("^@types" "mocha" "ts-node" "tslint" "typescript")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-imports-for-esbuild
+            (lambda _
+              ;; https://github.com/evanw/esbuild/issues/477
+              (substitute* '("src/node/invoke.ts"
+                             "src/node/base.ts"
+                             "src/node/consume.ts"
+                             "src/node/match.ts"
+                             "src/node/error.ts"
+                             "src/node/pause.ts"
+                             "src/edge.ts"
+                             "src/utils.ts"
+                             "src/loop-checker/index.ts"
+                             "src/loop-checker/lattice.ts"
+                             "src/code/field.ts"
+                             "src/span-allocator.ts")
+                (("\\* as assert") "assert")
+                (("\\* as debugAPI") "debugAPI"))))
+          (replace 'build
+            (lambda* (#:key inputs #:allow-other-keys)
+              (invoke (search-input-file inputs "/bin/esbuild")
+                      "--platform=node"
+                      "--outfile=lib/builder.js"
+                      "--bundle"
+                      "src/builder.ts"))))))
     (inputs
      (list node-binary-search-bootstrap node-debug-bootstrap))
     (native-inputs
