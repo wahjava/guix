@@ -857,7 +857,10 @@ game.")
         #:tests? #f                     ;no test suite
         #:scons-flags #~(list (string-append "prefix=" #$output)
                               "release=1"
-                              "verbose=1")
+                              "verbose=1"
+                              "os_cc=1"
+                              "os_cxx=1"
+                              (string-append "pkg_config=" #$(pkg-config-for-target)))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'setup-vdrift-data
