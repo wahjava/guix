@@ -52,6 +52,12 @@
      ;; Thus, build sequentially.
      `(#:parallel-build? #f
        #:parallel-tests? #f
+       #:configure-flags (if ,(%current-target-system)
+                             '("ac_cv_file__dev_zero=yes"
+                               "apr_cv_process_shared_works=yes"
+                               "apr_cv_mutex_robust_shared=yes"
+                               "apr_cv_tcp_nodelay_with_cork=yes")
+                             '())
        #:phases
        (modify-phases %standard-phases
          ,@(if (target-ppc32?)
