@@ -2679,6 +2679,61 @@ comes with an integrated live-reloading web server, uses customizable HTML
 templates, understands numpydoc and Google-style docstrings.")
     (license license:unlicense)))
 
+(define-public python-polars
+  (package
+    (name "python-polars")
+    (version "1.33.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "polars" version))
+       (sha256
+        (base32 "0mhdk7vhvlf5i1dy2vf0yqlg51d3lsd4sn4vmk3f46vhdjwjmbah"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (for-each delete-file
+                           (find-files "." "Cargo\\.lock$"))
+                 (substitute* "pyproject.toml"
+                   (("locked = true") "offline = true"))))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '(((guix build cargo-build-system) #:prefix cargo:)
+                  (guix build pyproject-build-system)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-cargo-build-system
+            (lambda args
+              (for-each
+               (lambda (phase)
+                 (format #t "Running cargo phase: ~a~%" phase)
+                 (apply (assoc-ref cargo:%standard-phases phase)
+                        #:cargo-target #$(cargo-triplet)
+                        args))
+               '(unpack-rust-crates
+                 configure
+                 check-for-pregenerated-files
+                 patch-cargo-checksums)))))))
+    (native-inputs
+     (append
+      (list python-pytest
+            python-setuptools
+            python-wheel
+            rust
+            `(,rust "cargo"))
+      (or (and=> (%current-target-system)
+                 (compose list make-rust-sysroot))
+          '())))
+    (inputs
+     (cons* maturin (cargo-inputs 'python-polars)))
+    (home-page "https://docs.pola.rs/api/python/stable/reference/index.html")
+    (synopsis "Blazingly fast DataFrame library")
+    (description "Blazingly fast @code{DataFrame} library.")
+    (license license:expat)))
+
 (define-public python-py4j
   (package
     (name "python-py4j")
@@ -17013,7 +17068,7 @@ pseudo terminal (pty), and interact with both the process and its pty.")
        ;; XXX: Snippet below is required because on v1.1.30 the source code
        ;; has configshell_fb as softlink to configshell and guix
        ;; pyproject-build-system doesn't work with symlinks very well.
-       ;; 
+       ;;
        ;; This package is only used in spdk for now and it's crucial to keep
        ;; it locked on version and keep the snipped for spdk to build
        ;; successfully.

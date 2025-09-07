@@ -608,6 +608,36 @@ extensions, such as @code{wlr-protocols} and @code{plasma-wayland-protocols}.")
 intelligence.")
      (license license:expat))))
 
+(define-public rust-tikv-jemallocator-0.6.0.c7991e5
+  (let ((commit "c7991e5bb6b3e9f79db6b0f48dcda67c5c3d2936")
+        (revision "0"))
+    (hidden-package
+     (package
+       (name "rust-tikv-jemallocator")
+       (version (git-version "0.6.0" revision commit))
+       (source (origin
+                 (method git-fetch)
+                 (uri (git-reference
+                       (url "https://github.com/tikv/jemallocator")
+                       (commit commit)))
+                 (file-name (git-file-name name version))
+                 (sha256
+                  (base32
+                   "0wwdw0f3a9vgck3x10gxq80606b2wam31vglhjw2fabdvq2wmxcy"))))
+       (build-system cargo-build-system)
+       (arguments
+           (list #:skip-build? #t
+                 #:cargo-package-crates
+                 ''("tikv-jemallocator"
+                    "tikv-jemallocator-global"
+                    "tikv-jemalloc-ctl"
+                    "tikv-jemalloc-sys")))
+       (inputs (cargo-inputs 'rust-tikv-jemallocator-0.6.0.c7991e5))
+       (home-page "https://github.com/tikv/jemallocator")
+       (synopsis "Rust allocator backed by jemalloc")
+       (description "This package provides a Rust allocator backed by jemalloc.")
+       (license (list license:expat license:asl2.0))))))
+
 (define-public rust-web-view-0.7.3.82d7cbc
   (let ((commit "82d7cbce6228b1a964673cc0f22944ad808eab42")
         (revision "0"))
