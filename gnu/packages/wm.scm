@@ -81,6 +81,7 @@
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 caem <me@caem.dev>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4565,3 +4566,41 @@ configure input, and customize Wayfire plugins.")
      "A drop-in replacement for the wlroots scene API that allows wayland
 compositors to render surfaces with eye-candy effects.")
     (license license:expat)))
+
+(define-public eww
+  ;; Use the latest commit as the latest stable release cannot be built using
+  ;; a version of Rust that is 1.80.0 or higher.
+  (let ((commit "fddb4a09b107237819e661151e007b99b5cab36d")
+        (revision "0"))
+    (package
+      (name "eww")
+      (version (git-version "0.6.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/elkowar/eww")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0ihgcxppywpcp24zhws1if6h7cxbrq2vd53wyh36j5mxylpbi59w"))))
+      (build-system cargo-build-system)
+      (arguments
+       (list
+        #:install-source? #f
+        #:cargo-install-paths ''("crates/eww")))
+      (native-inputs (list pkg-config))
+      (inputs (append (cargo-inputs 'eww)
+                      (list glib
+                            libdbusmenu
+                            pango
+                            gtk-layer-shell
+                            gdk-pixbuf
+                            gtk+
+                            cairo)))
+      (home-page "https://elkowar.github.io/eww/")
+      (synopsis "Custom widget system for any window manager")
+      (description
+       "Elkowars Wacky Widgets is a standalone widget system that allows you to
+ implement your own custom widgets in any window manager.")
+      (license license:expat))))
