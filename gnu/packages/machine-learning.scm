@@ -2455,16 +2455,21 @@ visualizing high-dimensional data sets.")
   (package
     (name "python-scikit-rebate")
     (version "0.62")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "skrebate" version))
-              (sha256
-               (base32
-                "0n55ghvnv7rxqa5agq6a4892ad0ghha165b0g4ghwr9gqm6ss3dj"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;no tests on PyPI and no tags in repo
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "skrebate" version))
+       (sha256
+        (base32
+         "0n55ghvnv7rxqa5agq6a4892ad0ghha165b0g4ghwr9gqm6ss3dj"))))
+    (build-system pyproject-build-system)
+    ;; There are no tests on PyPI, tests in git repo require an old release of
+    ;; python-scikit-learn
+    (arguments '(#:tests? #f))
     (propagated-inputs
      (list python-numpy python-scipy python-scikit-learn python-joblib))
+    (native-inputs
+     (list python-setuptools-next))
     (home-page "https://epistasislab.github.io/scikit-rebate/")
     (synopsis "Relief-based feature selection algorithms for Python")
     (description "Scikit-rebate is a scikit-learn-compatible Python
