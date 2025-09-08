@@ -5746,36 +5746,24 @@ alpha blending etc).")
 (define-public frei0r-plugins
   (package
     (name "frei0r-plugins")
-    (version "1.7.0")
+    (version "2.4.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://files.dyne.org/frei0r"
-                            "?file=frei0r/old-releases/frei0r-plugins-"
-                            version
-                            ".tar.gz"))
+       (method git-fetch)
+       (file-name (git-file-name name version))
+       (uri (git-reference
+             (url "https://github.com/dyne/frei0r")
+             (commit (string-append "v" version))))
        (sha256
-        (base32
-         "0fjji3060r4fwr7vn91lwfzl80lg3my9lkp94kbyw8xwz7qgh7qv"))))
-    (build-system gnu-build-system)
+        (base32 "0zpn77g7zj6pq99fbs32p7kiffgfislm8g66f67qkay2fxlpb5zp"))))
+    (build-system cmake-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-Makefile
-           (lambda _
-             ;; XXX: The 1.7.0 Makefile looks for files that have slightly different
-             ;; names in the tarball.  Try removing this for future versions.
-             (substitute* "Makefile.in"
-               (("README\\.md ChangeLog TODO AUTHORS")
-                "README.txt ChangeLog.txt TODO.txt AUTHORS.txt"))
-             #t)))))
-    ;; TODO: opencv for additional face detection filters.
-    (inputs
-     (list gavl cairo))
-    (native-inputs
-     (list pkg-config))
-    (home-page "https://www.dyne.org/software/frei0r/")
-    (synopsis "Minimalistic plugin API for video effects")
+     (list
+      #:tests? #f)) ;package does not contain any tests
+    (inputs (list gavl cairo))
+    (native-inputs (list pkg-config))
+    (home-page "https://dyne.org/software/frei0r/")
+    (synopsis "Large collection of free and portable video plugins")
     (description
      "Frei0r is a minimalistic plugin API for video effects.
 The main emphasis is on simplicity for an API that will round up
