@@ -184,7 +184,11 @@ generating bitstreams with Gowin FPGAs.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         (string-append "CXX=" #$(cxx-for-target))
+         (string-append "PREFIX=" #$output))
       #:bootstrap-scripts #~(list "autoconf.sh")))
     (native-inputs (list autoconf bison flex gperf))
     (inputs (list zlib))
