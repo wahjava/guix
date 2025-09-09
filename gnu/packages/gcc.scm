@@ -36,8 +36,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages gcc)
-  #:use-module ((guix licenses)
-                #:select (gpl3+ gpl2+ lgpl2.1+ lgpl2.0+ fdl1.3+))
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bootstrap)
@@ -401,7 +400,7 @@ exec \"$@\" \
         "GCC is the GNU Compiler Collection.  It provides compiler front-ends
 for several languages, including C, C++, Objective-C, Fortran, Java, Ada, and
 Go.  It also includes runtime support libraries for these languages.")
-       (license gpl3+)
+       (license license:gpl3+)
        (home-page "https://gcc.gnu.org/")))))
 
 (define-public gcc-4.7
@@ -1720,7 +1719,7 @@ parametric integer programming, coalescing and parametric vertex
 enumeration.  It also includes an ILP solver based on generalized basis
 reduction, transitive closures on maps (which may encode infinite graphs),
 dependence analysis and bounds on piecewise step-polynomials.")
-    (license lgpl2.1+)))
+    (license license:lgpl2.1+)))
 
 (define-public isl-0.18
   (package
@@ -1786,7 +1785,7 @@ function.  CLooG may help in any situation where scanning polyhedra
 matters.  While the user has full control on generated code quality,
 CLooG is designed to avoid control overhead and to produce a very
 effective code.")
-    (license gpl2+)))
+    (license license:gpl2+)))
 
 (define-public gnu-c-manual
   (package
@@ -1836,4 +1835,4 @@ implemented by the GNU C Compiler (gcc).  As a reference, it is not intended
 to be a tutorial of the language.  Rather, it outlines all of the constructs
 of the language.  Library functions are not included.")
     (home-page "https://www.gnu.org/software/gnu-c-manual/")
-    (license fdl1.3+)))
+    (license license:fdl1.3+)))
