@@ -26,7 +26,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages ci)
-  #:use-module ((guix licenses) #:prefix l:)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -190,7 +190,7 @@
      "Cuirass is a continuous integration tool using GNU Guix.  It is
 intended as a replacement for Hydra.")
     (home-page "https://guix.gnu.org/cuirass/")
-    (license l:gpl3+)))
+    (license license:gpl3+)))
 
 (define-public laminar
   (package
@@ -302,7 +302,7 @@ configuration files and scripts.
 Laminar encourages the use of existing tools such as bash and cron instead of
 reinventing them.")
     (home-page "https://laminar.ohwg.net/")
-    (license l:gpl3+)))
+    (license license:gpl3+)))
 
 (define-public forgejo-runner
   (package
@@ -359,5 +359,5 @@ reinventing them.")
     (description
      "Forgejo Runner is a daemon that connects to a Forgejo instance and runs
 jobs for continuous integration.")
-    (license l:expat)))
+    (license license:expat)))
 
