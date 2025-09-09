@@ -37,12 +37,15 @@
 (define-module (gnu packages suckless)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
@@ -55,9 +58,11 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xorg)
+  #:use-module (gnu packages xdisorg)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -312,6 +317,44 @@ optimising the environment for the application in use and the task performed.")
      "A dynamic menu for X, originally designed for dwm.  It manages large
 numbers of user-defined menu items efficiently.")
     (license license:x11)))
+
+(define-public dmenu-wayland
+  (let ((commit "a380201dff5bfac2dace553d7eaedb6cea6855f9") (revision "0"))
+    (package
+      (name "dmenu-wayland")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/nyyManni/dmenu-wayland")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1d920lzgchqgp9j72hg61qnwr5cbf3knwrn1kwxlqq4id59nz8bn"))))
+      (inputs (list bash-minimal
+                    cairo
+                    pango
+                    glib
+                    libxkbcommon
+                    wayland
+                    wayland-protocols))
+      (native-inputs (list pkg-config))
+      (build-system meson-build-system)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-hardcoded-paths
+                   (lambda* _
+                     (substitute* "dmenu-wl_run"
+                       (("dmenu-wl_path")
+                        (string-append #$output "/bin/dmenu-wl_path"))
+                       (("dmenu-wl ")
+                        (string-append #$output "/bin/dmenu-wl "))))))))
+      (synopsis "Dynamic menu for wayland")
+      (description "Provides dmenu-wl, an efficient dynamic menu for wayland (wlroots).")
+      (home-page "https://github.com/nyyManni/dmenu-wayland")
+      (license license:expat))))
 
 (define-public spoon
   (package
