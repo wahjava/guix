@@ -4881,6 +4881,54 @@ responses.  It is only suitable for use as a \"private\" cache (i.e. for a
 web-browser or an API-client and not for a shared proxy).")
     (license license:expat)))
 
+(define-public go-github-com-grpc-ecosystem-go-grpc-middleware-v2
+  (package
+    (name "go-github-com-grpc-ecosystem-go-grpc-middleware-v2")
+    (version "2.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/grpc-ecosystem/go-grpc-middleware")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ln71gclxw9wi23ai2ph8rzdj1mpb0zj1z1g7y0ivk6c9a93bl98"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packaged separately:
+            ;;
+            ;; - .bingo - fake module
+            ;; - github.com/grpc-ecosystem/go-grpc-middleware/examples/v2
+            ;; - github.com/grpc-ecosystem/go-grpc-middleware/interceptors/logging/examples
+            ;; - github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus
+            (for-each delete-file-recursively
+                      (list ".bingo"
+                            "examples"
+                            "interceptors/logging/examples"
+                            "providers/prometheus"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:embed-files #~(list "authoring.tmpl")
+      #:import-path "github.com/grpc-ecosystem/go-grpc-middleware/v2"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-buf-build-gen-go-bufbuild-protovalidate-protocolbuffers-go
+           go-buf-build-go-protovalidate
+           go-golang-org-x-net
+           go-golang-org-x-oauth2
+           go-google-golang-org-grpc
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/grpc-ecosystem/go-grpc-middleware")
+    (synopsis "Golang gRPC Middlewares")
+    (description
+     "This package provides gRPC Go Middlewares: interceptors,helpers and
+utilities.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-grpc-ecosystem-grpc-gateway-v2
   (package
     (name "go-github-com-grpc-ecosystem-grpc-gateway-v2")
