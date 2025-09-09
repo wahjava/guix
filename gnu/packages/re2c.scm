@@ -20,7 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages re2c)
-  #:use-module (guix licenses)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (guix packages)
@@ -63,4 +63,4 @@ to be wired into virtually any environment.  Instead of exposing a traditional
 @code{yylex()} style API, re2c exposes its internals.  Be sure to take a look
 at the examples, as they cover a lot of real-world cases and shed some light on
 dark corners of the re2c API.")
-    (license public-domain)))
+    (license license:public-domain)))
