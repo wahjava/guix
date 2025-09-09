@@ -210,6 +210,59 @@ so that it is not identified and subsequently blocked by network filtering
 devices.")
       (license license:bsd-2))))
 
+(define-public go-buf-build-go-protovalidate
+  (package
+    (name "go-buf-build-go-protovalidate")
+    (version "0.14.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/bufbuild/protovalidate-go")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1y6c43qm3jd2anvvgz76jxj1398ycc1bf3mzq63an2pin5lf0j6g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:embed-files #~(list "authoring.tmpl")
+      #:import-path "buf.build/go/protovalidate"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-build
+            ;; TODO: Figure out if it's a good idea, without this patch build
+            ;; fails, and I could not find exact commit for corresponded
+            ;; method declarations.
+            ;; See: <https://github.com/bufbuild/protovalidate-go/issues/279>.
+            ;;
+            ;; builder.go:254:38: fieldRules.HasIgnore undefined (type
+            ;; *validate.FieldRules has no field or method HasIgnore)
+            ;;
+            ;; builder.go:256:14: fieldRules.SetIgnore undefined (type
+            ;; *validate.FieldRules has no field or method SetIgnore)
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* "builder.go"
+                  (("&& \\!fieldRules.HasIgnore\\(\\)") "")
+                  (("fieldRules\\.SetIgnore.*") ""))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-buf-build-gen-go-bufbuild-protovalidate-protocolbuffers-go
+           go-github-com-google-cel-go
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/bufbuild/protovalidate-go")
+    (synopsis "Protocol Buffer Validation for Golang")
+    (description
+     "Protovalidate is the semantic validation library for Protobuf.  It
+provides standard annotations to validate common rules on messages and fields,
+as well as the ability to use @url{https://cel.dev, CEL} to write custom
+rules.  It's the next generation of
+@url{https://github.com/bufbuild/protoc-gen-validate, protoc-gen-validate}.")
+    (license license:asl2.0)))
+
 (define-public go-cloud-google-com-go-compute-metadata
   (package
     (name "go-cloud-google-com-go-compute-metadata")
