@@ -35980,7 +35980,22 @@ retry to any Python callable.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1q60an3jv0px7zih19dnwbsqirbbw42wy3hnb79wp9ryys8k7gav"))))
+           "1q60an3jv0px7zih19dnwbsqirbbw42wy3hnb79wp9ryys8k7gav"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              ;; Delete bundled fmemopen.
+              (delete-file-recursively "src/fmemopen")
+              ;; Delete bundled qhull.
+              (delete-file-recursively "src/libqhull")
+              (delete-file "src/Announce.txt")
+              (delete-file "src/Changes.txt")
+              (delete-file "src/CMakeLists.txt")
+              (delete-file "src/COPYING.txt")
+              (delete-file "src/File_id.diz")
+              (delete-file "src/index.htm")
+              (delete-file "src/README.txt")
+              (delete-file "src/REGISTER.txt")))))
       (build-system pyproject-build-system)
       (arguments
        `(#:phases (modify-phases %standard-phases
@@ -35990,6 +36005,7 @@ retry to any Python callable.")
                           (with-directory-excursion "pyhull/tests"
                             (invoke "python" "-m" "unittest"))))))))
       (native-inputs (list python-setuptools python-wheel))
+      (inputs (list qhull))
       (propagated-inputs
        (list python-numpy))
       (home-page "https://github.com/materialsvirtuallab/pyhull")
