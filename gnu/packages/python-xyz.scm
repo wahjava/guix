@@ -35964,26 +35964,41 @@ retry to any Python callable.")
       (license license:mpl2.0))))
 
 (define-public python-pyhull
-  (package
-    (name "python-pyhull")
-    (version "2015.2.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyhull" version))
-       (sha256
-        (base32
-         "091sph52c4yk1jlm5w8xidxpzbia9r7s42bnb23q4m4b56ihmzyj"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://github.com/materialsvirtuallab/pyhull")
-    (synopsis "Python wrapper to Qhull")
-    (description
-     "This package provides a Python wrapper to @uref{http://www.qhull.org/,
+  ;; The 2015.2.1 release release isn't tagged.
+  (let ((commit "4d9d908915adfe0426e47ff569e06d1ba44d55d0")
+        (revision "0"))
+    (package
+      (name "python-pyhull")
+      (version (git-version "2015.2.1" revision commit))
+      (source
+       (origin
+         ;; No tests in pypi package, hence fetching from GitHub.
+         (method git-fetch)
+         (uri (git-reference
+             (url "https://github.com/materialsvirtuallab/pyhull")
+             (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1q60an3jv0px7zih19dnwbsqirbbw42wy3hnb79wp9ryys8k7gav"))))
+      (build-system pyproject-build-system)
+      (arguments
+       `(#:phases (modify-phases %standard-phases
+                    (replace 'check
+                      (lambda* (#:key tests? #:allow-other-keys)
+                        (when tests?
+                          (with-directory-excursion "pyhull/tests"
+                            (invoke "python" "-m" "unittest"))))))))
+      (native-inputs (list python-setuptools python-wheel))
+      (propagated-inputs
+       (list python-numpy))
+      (home-page "https://github.com/materialsvirtuallab/pyhull")
+      (synopsis "Python wrapper to Qhull")
+      (description
+       "This package provides a Python wrapper to @uref{http://www.qhull.org/,
 Qhull} for the computation of the convex hull, Delaunay triangulation, and
 Voronoi diagram.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-opcodes
   ;; There are no tags in this repo, but 'opcodes/__init__.py' specifies a
