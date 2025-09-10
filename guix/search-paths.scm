@@ -55,6 +55,7 @@
             sexp->search-path-specification
             string-tokenize*
             evaluate-search-paths
+            merge-search-paths
             environment-variable-definition
             search-path-definition
             set-search-paths))
@@ -299,6 +300,54 @@ report only settings not already effective."
              (cons spec (string-join path separator)))))))
 
   (filter-map search-path-definition search-paths))
+
+(define (merge-search-paths search-paths)
+  ;; loop through the search paths, if same
+  ;; search path variable
+  (define (merge a b)
+    ;; TODO compatibility checks
+    ;;  - variables are same
+    ;;  - separators are same,
+    ;;    if not, error
+    ;;  - file-type are same
+    ;;    if not, what to do? Should we just make them separate,
+    ;;    or error? Not sure... Or should there be possibility to specify more file types?
+    (search-path-specification
+      (inherit a)
+      (files
+       (append
+        (search-path-specification-files a)
+        (search-path-specification-files b)))
+      (file-pattern
+       (or
+        (and (search-path-specification-file-pattern a)
+             (search-path-specification-file-pattern b)
+             ;; TODO: is this really fine for all cases?
+             (string-append (search-path-specification-file-pattern a) "|"
+                            (search-path-specification-file-pattern b)))
+        (search-path-specification-file-pattern a)
+        (search-path-specification-file-pattern b)))))
+
+  (let loop ((remaining-search-paths search-paths)
+             (collected-search-paths '()))
+    (if (not (null? remaining-search-paths))
+        (let* ((current-search-path (car remaining-search-paths))
+               (current-search-path-variable (search-path-specification-variable current-search-path)))
+          (loop
+           (cdr remaining-search-paths)
+           (if (any (lambda (search-path)
+                      (equal?
+                       (search-path-specification-variable search-path)
+                       current-search-path-variable))
+                    collected-search-paths)
+               (map (lambda (search-path)
+                      (if (equal? (search-path-specification-variable search-path)
+                                  current-search-path-variable)
+                          (merge search-path current-search-path)
+                          search-path))
+                    collected-search-paths)
+               (cons current-search-path collected-search-paths))))
+        collected-search-paths)))
 
 (define* (environment-variable-definition variable value
                                           #:key

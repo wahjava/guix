@@ -748,10 +748,11 @@ of PATTERNS."
 (define (manifest-search-paths manifest)
   "Return the list of search path specifications that apply to MANIFEST,
 including the search path specification for $PATH."
-  (delete-duplicates
-   (cons $PATH
-         (append-map manifest-entry-search-paths
-                     (manifest-entries manifest)))))
+  (merge-search-paths
+   (delete-duplicates
+    (cons $PATH
+          (append-map manifest-entry-search-paths
+                      (manifest-entries manifest))))))
 
 (define* (manifest->code manifest
                          #:key (entry-package-version (const "")))
