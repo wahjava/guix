@@ -36003,7 +36003,14 @@ retry to any Python callable.")
                       (lambda* (#:key tests? #:allow-other-keys)
                         (when tests?
                           (with-directory-excursion "pyhull/tests"
-                            (invoke "python" "-m" "unittest"))))))))
+                            (invoke "python" "-m" "unittest")))))
+                    (add-before 'build 'add-libqhull-to-include-path
+                      (lambda* (#:key inputs #:allow-other-keys)
+                        (setenv "CFLAGS"
+                                (string-append
+                                 "-I"
+                                 (assoc-ref inputs "qhull")
+                                 "/include/libqhull")))))))
       (native-inputs (list python-setuptools python-wheel))
       (inputs (list qhull))
       (propagated-inputs
