@@ -107,8 +107,7 @@
 
 ;;; Commentary:
 ;;;
-;;; This module provides service definitions for the Dovecot POP3 and IMAP
-;;; mail server.
+;;; This module provides service definitions for various mail services.
 ;;;
 ;;; Code:
 
@@ -187,6 +186,10 @@
                    (string-join
                     (map (match-lambda ((k . v) (format #f "~a=~a" k v))) val)
                     " ")))
+
+;;;
+;;; Dovecot.
+;;;
 
 (define-configuration dict-configuration
   (entries
