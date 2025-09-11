@@ -1645,8 +1645,7 @@ use on a given system.")
            parallel
            perl
            pkg-config
-           python-wrapper
-           python-libxml2))
+           python-wrapper))
     (inputs
      (list pcre2))
     (home-page "https://www.gnu.org/software/libredwg/")
