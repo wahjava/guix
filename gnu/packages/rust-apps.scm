@@ -79,6 +79,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages databases)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages engineering)
@@ -214,6 +215,40 @@ low-end hardware and serving many concurrent requests.")
 capable of sustaining any number of domain names in a bunch of original
 alternative zones.")
     (license license:agpl3+)))
+
+(define-public atuin
+  (package
+    (name "atuin")
+    (version "18.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "atuin" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0ylr51crjq55d4m3108bwl0ahlrwrda6m7mgc6xgcnjrj0j23cly"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:cargo-test-flags
+      '(list "--release" "--"
+             ;; These tests requiere a Postgresql database connection.
+             "--skip=sync"
+             "--skip=change_password"
+             "--skip=multi_user_test"
+             "--skip=registration")))
+    (inputs (cons* sqlite
+                   (cargo-inputs 'atuin)))
+    (home-page "https://atuin.sh")
+    (synopsis "Shell history tool")
+    (description "Atuin replaces your existing shell history with a SQLite
+database, and records additional context for your commands.  With this context,
+Atuin gives you faster and better search of your shell history.
+
+Additionally, Atuin (optionally) syncs your shell history between all of your
+machines, fully end-to-end encrypted.")
+    (license license:expat)))
 
 (define-public bat
   (package
