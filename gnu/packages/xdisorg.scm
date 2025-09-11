@@ -634,6 +634,7 @@ avoiding password prompts when X11 forwarding has already been setup.")
   (package
     (name "libxkbcommon")
     (version "1.6.0")
+    (replacement libxkbcommon/fixed)
     (source (origin
               (method url-fetch)
               (uri (string-append "https://xkbcommon.org/download/libxkbcommon-"
@@ -729,6 +730,24 @@ X11 (yet).")
     (native-inputs (modify-inputs (package-native-inputs libxkbcommon)
                      (append xorg-server  ;; Xvfb for tests
                              xkbcomp)))))   ;; xkbcomp for tests
+
+(define libxkbcommon/fixed
+  (package
+    (inherit libxkbcommon-1.8)
+    (version "1.y.0")                   ; y = x + 1 = 11
+    (source (origin
+              (inherit (package-source libxkbcommon))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/xkbcommon/libxkbcommon")
+                    (commit (string-append "xkbcommon-1.11.0"))))
+              (file-name (git-file-name (package-name libxkbcommon) version))
+              (sha256
+               (base32
+                "1swa6rf63c0wi0qq5r661g63yk2iwa9l66148078xkrwcf05sp91"))))
+    (inputs (modify-inputs (package-inputs libxkbcommon)
+              (replace "libxml2" libxml2-next)))
+    (properties '((hidden . #t)))))
 
 (define-public libfakekey
   (package
