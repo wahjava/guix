@@ -3719,7 +3719,9 @@ portable to just about any platform.")
                 (("\"date\"")
                  (format #f "~s" (search-input-file inputs "bin/date"))))))
 
-          #$@(if (target-64bit?)
+          #$@(if (or (target-64bit?)
+                     ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
+                     (target-hurd?))
                  #~()
                  #~((add-after 'unpack 'switch-libc-call
                       (lambda _
