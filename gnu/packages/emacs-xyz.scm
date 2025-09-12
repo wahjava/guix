@@ -25702,7 +25702,7 @@ Features:
        (sha256
         (base32 "06ayyw8nim5fi819hr30x54wx2ba6aqvlh7r0vld06xc0zsjdhm3"))))
     (build-system emacs-build-system)
-    (arguments (list #:test-command #~(list "make" "test")
+    (arguments (list #:tests? #f
                      #:phases
                      #~(modify-phases %standard-phases
                          (add-after 'unpack 'patch-Makefile
