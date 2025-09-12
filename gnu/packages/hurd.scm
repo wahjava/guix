@@ -343,7 +343,8 @@ Hurd-minimal package which are needed for both glibc and GCC.")
                                        "hurd-rumpdisk-no-hd.patch"
                                        "hurd-startup.patch"
                                        "hurd-socket-activation.patch"
-                                       "hurd-streamio-nonblock.patch"))))
+                                       "hurd-streamio-nonblock.patch"
+                                       "hurd-streamio-select.diff"))))
     (version (package-version hurd-headers))
     (arguments
      `(#:tests? #f                      ;no "check" target

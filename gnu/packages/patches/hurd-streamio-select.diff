@@ -1,0 +1,71 @@
+From d6b6fe73c2c3172abc95843665a668a6bd18a6be Mon Sep 17 00:00:00 2001
+From: Yelninei <yelninei@tutamail.com>
+Date: Sun, 21 Sep 2025 01:36:23 +0200
+Subject: [PATCH] streamio (io_select_common): Fix locking global_lock
+
+global_lock is not unlocked at the end of the while loop.
+---
+ trans/streamio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/trans/streamio.c b/trans/streamio.c
+index c6e7229e..d21dc937 100644
+--- a/trans/streamio.c
++++ b/trans/streamio.c
+@@ -572,9 +572,9 @@ io_select_common (struct trivfs_protid *cred,
+ 
+   available = 0;
+ 
++  pthread_mutex_lock (&global_lock);
+   while (1)
+     {
+-      pthread_mutex_lock (&global_lock);
+       if ((*type & SELECT_READ) && buffer_readable (input_buffer))
+ 	available |= SELECT_READ;
+       if ((*type & SELECT_WRITE) &&
+-- 
+2.51.0
+
+
+diff --git a/trans/streamio.c b/trans/streamio.c
+index d21dc937..f7cd442f 100644
+--- a/trans/streamio.c
++++ b/trans/streamio.c
+@@ -190,6 +190,8 @@ error_t dev_write (const void *buf, size_t len, size_t *amount, int nowait);
+    will wait for any activity to cease.  */
+ error_t dev_sync (int wait);
+ 
++static error_t start_input (int nowait);
++static error_t start_output (int nowait);
+ 
+ 
+ static struct argp_option options[] =
+@@ -589,10 +591,25 @@ io_select_common (struct trivfs_protid *cred,
+ 	  return 0;
+ 	}
+ 
+-      if (cred->po->openmodes & O_NONBLOCK)
++      if (*type & SELECT_READ)
+ 	{
+-	  pthread_mutex_unlock (&global_lock);
+-	  return EWOULDBLOCK;
++	  err = start_input(1);
++	  if (err)
++	    {
++	      *type = 0;
++	      pthread_mutex_unlock (&global_lock);
++	      return err;
++	    }
++	}
++      if (*type & SELECT_WRITE)
++	{
++	  err = start_output(1);
++	  if (err)
++	    {
++	      *type = 0;
++	      pthread_mutex_unlock (&global_lock);
++	      return err;
++	    }
+ 	}
+ 
+       ports_interrupt_self_on_port_death (cred, reply);

@@ -1587,6 +1587,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/hurd-socket-activation.patch		\
   %D%/packages/patches/hurd-startup.patch			\
   %D%/packages/patches/hurd-streamio-nonblock.patch		\
+  %D%/packages/patches/hurd-streamio-select.diff		\
   %D%/packages/patches/hwloc-1-test-btrfs.patch			\
   %D%/packages/patches/i7z-gcc-10.patch				\
   %D%/packages/patches/icecat-makeicecat.patch			\
