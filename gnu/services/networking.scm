@@ -3002,7 +3002,7 @@ of the IPFS peer-to-peer storage network.")))
   (config-file keepalived-configuration-config-file ;file-like
                (default #f))
   (shepherd-requirement keepalived-configuration-shepherd-requirement
-                        (default '(networking))))
+                        (default '(networking user-processes))))
 
 (define (keepalived-shepherd-service config)
   (match-record config <keepalived-configuration>
