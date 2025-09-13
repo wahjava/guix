@@ -12961,6 +12961,7 @@ numpy arrays to TIFF, BigTIFF, and ImageJ hyperstack compatible files.")
         ((guix build pyproject-build-system) #:prefix py:)
         (guix build utils))
       #:phases
+      (with-extensions (list (default-guile-json))
       #~(modify-phases %standard-phases
           (replace 'build
             (assoc-ref py:%standard-phases 'build))
@@ -12974,7 +12975,7 @@ numpy arrays to TIFF, BigTIFF, and ImageJ hyperstack compatible files.")
               (assoc-ref py:%standard-phases 'create-entrypoints)
               (assoc-ref py:%standard-phases 'compile-bytecode)))
           (replace 'install
-            (assoc-ref py:%standard-phases 'install)))))
+            (assoc-ref py:%standard-phases 'install))))))
     (propagated-inputs (list python-regex python-requests))
     (inputs (cargo-inputs 'python-tiktoken))
     (native-inputs
