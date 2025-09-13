@@ -116,6 +116,24 @@ command-line arguments, multiple languages, and so on.")
     (home-page "https://www.gnu.org/software/hello/")
     (license gpl3+)))
 
+(define-public visual_studio_code
+  (package
+    (name "visual_studio_code")
+    (version "3.11.11")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/hello/hello-" "2.12.2"
+                                  ".tar.gz"))
+              (sha256
+               (base32
+                "1aqq1379syjckf0wdn9vs6wfbapnj9zfikhiykf29k4jq9nrk6js"))))
+    (build-system gnu-build-system)
+    (synopsis "Example GNU package")
+    (description
+     "Test package to detect CVE-2025-49714 and CVE-2024-49050.")
+    (home-page "https://www.gnu.org/software/hello/")
+    (license gpl3+)))
+
 (define-public grep
   (package
    (name "grep")
