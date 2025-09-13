@@ -49,6 +49,7 @@
             $XDG_DATA_DIRS
             $XML_CATALOG_FILES
 
+            %expected-search-paths
             %gcc-search-paths
             %libxslt-search-paths
 
@@ -204,6 +205,24 @@
    (variable "XDG_DATA_DIRS")
    (files '("share"))))
 
+(define %expected-search-paths
+  (list (search-path-specification
+          (variable "GUIX_LOCPATH")
+          (files '("lib/locale")))
+        (search-path-specification
+          (variable "INFOPATH")
+          (files '("share/info")))
+        (search-path-specification
+          (variable "MANPATH")
+          (files '("share/man")))
+        (search-path-specification
+          (variable "XCURSOR_PATH")
+          (files '("share/icons")))
+        (search-path-specification
+          (variable "XDG_CONFIG_DIRS")
+          (files '("share/etc/xdg")))
+        $XDG_DATA_DIRS))
+
 (define %libxslt-search-paths
   (list $SGML_CATALOG_FILES $XML_CATALOG_FILES))
 
@@ -334,45 +353,33 @@ prefix/suffix."
                                       #:kind kind
                                       #:separator separator))))
 
-(define* (export-search-paths #:key (profile-var "GUIX_PROFILE"))
+(define* (search-path-case search-path #:optional
+                           (profile-var "GUIX_PROFILE"))
+  (match-record search-path <search-path-specification>
+    (variable separator files)
+    (let ((path (string-append "$" profile-var "/" (first files))))
+      (format #f "\
+case \"$~a\" in
+  *$~a*) ;;
+  '') ~a ;;
+  *) ~a=\"~a~a\"
+esac~%"
+              variable path (search-path-definition search-path path)
+              variable path (if separator
+                                (string-append separator "$" variable)
+                                "")))))
+
+(define* (export-search-paths #:key (profile-var "GUIX_PROFILE")
+                              (search-paths %expected-search-paths))
   (format #f "\
 # Fail when '~a' is null.
 [ \"$~a\" ] || return
 [ -f \"$~a/etc/profile\" ] && . \"$~a/etc/profile\"
 # Anticipate some search paths to avoid needing to login again to source
 # a newly created $~a/etc/profile.
-case \"$GUIX_LOCPATH\" in
-  *$GUIX_PROFILE/lib/locale*) ;;
-  '') export GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale\" ;;
-  *) GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale:$GUIX_LOCPATH\"
-esac
-case \"$INFOPATH\" in
-  *$GUIX_PROFILE/share/info*) ;;
-  '') export INFOPATH=\"$GUIX_PROFILE/share/info\" ;;
-  *) INFOPATH=\"$GUIX_PROFILE/share/info:$INFOPATH\"
-esac
-case \"$MANPATH\" in
-  *$GUIX_PROFILE/share/man*) ;;
-  '') export MANPATH=\"$GUIX_PROFILE/share/man\" ;;
-  *) MANPATH=\"$GUIX_PROFILE/share/man:$MANPATH\"
-esac
-case \"$XDG_CONFIG_DIRS\" in
-  *$GUIX_PROFILE/etc/xdg*) ;;
-  '') export XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg\" ;;
-  *) XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg:$XDG_CONFIG_DIRS\"
-esac
-case \"$XCURSOR_PATH\" in
-  *$GUIX_PROFILE/share/icons*) ;;
-  '') export XCURSOR_PATH=\"$GUIX_PROFILE/share/icons\" ;;
-  *) XCURSOR_PATH=\"$GUIX_PROFILE/share/icons:$XCURSOR_PATH\"
-esac
-case \"$XDG_DATA_DIRS\" in
-  *$GUIX_PROFILE/share*) ;;
-  '') export XDG_DATA_DIRS=\"$GUIX_PROFILE/share\" ;;
-  *) XDG_DATA_DIRS=\"$GUIX_PROFILE/share:$XDG_DATA_DIRS\"
-esac
-"
-          profile-var profile-var profile-var profile-var profile-var))
+~a"
+          profile-var profile-var profile-var profile-var profile-var
+          (string-concatenate (map search-path-case search-paths))))
 
 (define* (set-search-paths search-paths directories
                            #:key (setenv setenv))
