@@ -16,6 +16,7 @@
 ;;; Copyright © 2021 raid5atemyhomework <raid5atemyhomework@protonmail.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -34,6 +35,7 @@
 
 (define-module (gnu system)
   #:use-module (guix inferior)
+  #:use-module (guix search-paths)
   #:use-module (guix store)
   #:use-module (guix memoization)
   #:use-module (guix monads)
@@ -1066,23 +1068,12 @@ the /etc directory."
         ;; Startup file for POSIX-compliant login shells, which set system-wide
         ;; environment variables.
         (profile    (mixed-text-file "profile"  "\
-# Crucial variables that could be missing in the profiles' 'etc/profile'
-# because they would require combining both profiles.
-# FIXME: See <http://bugs.gnu.org/20255>.
-export MANPATH=/run/current-system/profile/share/man
-export INFOPATH=/run/current-system/profile/share/info
-export XDG_DATA_DIRS=/run/current-system/profile/share
-export XDG_CONFIG_DIRS=/run/current-system/profile/etc/xdg
-
-# Make sure libXcursor finds cursors installed into user or system profiles.  See <http://bugs.gnu.org/24445>
-export XCURSOR_PATH=$HOME/.icons:/run/current-system/profile/share/icons
-
 # Ignore the default value of 'PATH'.
 unset PATH
 
 # Load the system profile's settings.
 GUIX_PROFILE=/run/current-system/profile ; \\
-. /run/current-system/profile/etc/profile
+. " (plain-file "export-search-paths" (export-search-paths)) "
 
 # Since 'lshd' does not use pam_env, /etc/environment must be explicitly
 # loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
@@ -1097,6 +1088,9 @@ fi
 
 # Prepend privileged programs.
 export PATH=/run/privileged/bin:$PATH
+
+# ~/.icons is a typical Xcursor search path along with $XDG_DATA_HOME/icons.
+XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
 
 # Set the umask, notably for users logging in via 'lsh'.
 # See <http://bugs.gnu.org/22650>.
