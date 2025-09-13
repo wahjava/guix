@@ -84,7 +84,7 @@
 (define %cpe-package-rx
   ;; For applications: "cpe:2.3:a:VENDOR:PACKAGE:VERSION", or sometimes
   ;; "cpe:2.3:a:VENDOR:PACKAGE:VERSION:PATCH-LEVEL".
-  (make-regexp "^cpe:2\\.3:a:([^:]+):([^:]+):([^:]+):([^:]+):"))
+  (make-regexp "^cpe:2\\.3:a:([^:]+):([^:]+):([^:]+):([^:]+):([^:]+):([^:]+):([^:]+):([^:]+)"))
 
 (define (cpe->package-identifier cpe)
   "Converts the Common Platform Enumeration (CPE) string CPE to a package
@@ -95,7 +95,7 @@ Return three #f values if CPE does not look like an application CPE string."
          =>
          (lambda (matches)
            (values (match:substring matches 1)
-                   (match:substring matches 2)
+                   (match:substring matches 8)
                    (match (match:substring matches 3)
                      ("*" '_)
                      (version
