@@ -2287,6 +2287,7 @@ Format (GFF) with Biopython integration.")
         (ice-9 match)
         (ice-9 rdelim))
       #:phases
+      (with-extensions (list (default-guile-json))
       #~(modify-phases %standard-phases
           (add-after 'configure 'set-data-path
             (lambda _
@@ -2381,7 +2382,7 @@ version = ~s
                   (delete-file-recursively
                    (string-append site "/bed_reader/tests"))
                   (delete-file-recursively
-                   (string-append #$output "/.pytest_cache")))))))))
+                   (string-append #$output "/.pytest_cache"))))))))))
     (native-inputs (list python-pytest
                          python-pytest-cov
                          python-pytest-datadir
