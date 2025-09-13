@@ -508,6 +508,45 @@ Python code.")))
 as a theory to clingo from Python code.  It also supports running clingo-dl
 directly from the python command line.")))
 
+(define-public python-clingcon
+  (package
+    (inherit clingcon)
+    (name "python-clingcon")
+    (version (package-version clingcon))
+    (arguments
+     (cons*
+      #:configure-flags
+      #~(list "-DPYCLINGCON_ENABLE=pip"
+              (string-append "-DCMAKE_MODULE_PATH="
+                             #$(this-package-native-input "python-scikit-build")
+                             "/lib/cmake/modules"))
+      #:imported-modules  `(,@%cmake-build-system-modules
+                            (guix build python-build-system))
+      #:modules '((guix build cmake-build-system)
+                  ((guix build python-build-system) #:prefix python:)
+                  (guix build utils))
+      (substitute-keyword-arguments (package-arguments clingcon)
+        ((#:phases phases)
+         #~(modify-phases #$phases
+             (add-after 'install 'install-distinfo
+               (lambda* (#:key inputs outputs #:allow-other-keys)
+                 (with-directory-excursion (python:site-packages inputs outputs)
+                   (let ((dir (string-append "clingcon-" #$version ".dist-info")))
+                     (mkdir-p dir)
+                     (call-with-output-file (string-append dir "/METADATA")
+                       (lambda (port)
+                         (format port "Metadata-Version: 1.1~%")
+                         (format port "Name: clingcon~%")
+                         (format port "Version: ~a~%" #$version))))))))))))
+    (inputs (modify-inputs (package-inputs clingcon)
+              (prepend python-wrapper)))
+    (propagated-inputs (list python-clingo python-cffi))
+    (native-inputs (modify-inputs (package-native-inputs clingcon)
+                     (prepend python-scikit-build)))
+    (synopsis "Python bindings for clingcon")
+    (description "This package allows users to add the clingcon propagator
+as a theory to clingo from Python code.")))
+
 (define-public python-clingox
   (package
     (name "python-clingox")
@@ -586,7 +625,7 @@ are already predefined, but more can be added as logic programs.")
 (define-public python-clorm
   (package
     (name "python-clorm")
-    (version "1.5.0")
+    (version "1.6.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -595,7 +634,7 @@ are already predefined, but more can be added as logic programs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wbxniq60ph7bdaypcaahym7jxmlnm2zhrfmrgrk441i1iaida24"))))
+                "03a7kcyilpvvd6i6njh67vy3zhb3yzi55fhgnffg15j3zflww6fy"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -711,7 +750,7 @@ as logic programs.")
 (define-public python-clinguin
   (package
    (name "python-clinguin")
-   (version "2.1.1")
+   (version "2.7.1")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -720,7 +759,7 @@ as logic programs.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "0wfgrs8h5i5mmd5sbzca2xw57f3d3ni75775wjkaq6sg0zm9sqjs"))
+              "1px0bzbydqqaa7w9b9s90c6sxla8dfa6sp00qqpd9q00zry1fnix"))
             (modules '((guix build utils)))
             (snippet
              #~(begin
@@ -730,7 +769,9 @@ as logic programs.")
                    ;; a package named tk
                    (("tk") "")
                    ;; XXX: python-clingo-dl installs clingodl instead…
-                   (("clingo-dl") "clingodl"))))))
+                   (("clingo-dl") "clingodl")
+                   (("clingexplaid>=1.3.4")
+                    "clingexplaid>=1.3.3"))))))
    (build-system pyproject-build-system)
    (native-inputs
     (list python-setuptools
@@ -738,6 +779,7 @@ as logic programs.")
    (propagated-inputs
     (list python-clingo
           python-clingo-dl
+          python-clingcon
           python-clorm
           python-clingexplaid
           python-clingraph
@@ -762,7 +804,7 @@ which allows user interfaces to be specified entirely as a logic program.")
 (define-public python-clintest
   (package
     (name "python-clintest")
-    (version "0.3.0")
+    (version "0.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -771,7 +813,7 @@ which allows user interfaces to be specified entirely as a logic program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1k8y3pm3w81n2appfl98drv1hpgjjqi2hxb1aa52y2m831lir38s"))))
+                "0lnyajr4y4s7lmr8dyv3gcy0hnl2w4215ma0pljkfg50gljbi62h"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-clingo))
     (native-inputs (list python-pytest python-setuptools python-wheel))
@@ -787,7 +829,7 @@ certain.")
 (define-public python-clingexplaid
   (package
     (name "python-clingexplaid")
-    (version "1.1.0")
+    (version "1.3.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -795,7 +837,7 @@ certain.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "1s80cs3clvz26r7cvjprlk6zip7yqswwhzzwmmrv5mf5p89ymrgm"))))
+               (base32 "1cjk825kh7yav036i2wf3ymj2j5z22vafdgjzg1m4sx3s55y68la"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags #~(list "-k" "not test_main")

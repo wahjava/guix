@@ -2168,14 +2168,14 @@ TCP connection, TLS handshake and so on) in the terminal.")
 (define-public squid
   (package
     (name "squid")
-    (version "6.10")
+    (version "6.12")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "http://www.squid-cache.org/Versions/v6/squid-"
                            version ".tar.xz"))
        (sha256
-        (base32 "19q86j2jd2vwv298ialnhqahl0qjxjdbigi5vmq4gw13wy3v21qb"))))
+        (base32 "0l6bng9irigrcy5q9lalynwpc3czk9lx9994dwk179834sxkmpzk"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
@@ -3779,7 +3779,7 @@ Ethernet and TAP interfaces is supported.  Packet capture is also supported.")
 (define-public hcxtools
   (package
     (name "hcxtools")
-    (version "6.3.5")
+    (version "7.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3787,7 +3787,7 @@ Ethernet and TAP interfaces is supported.  Packet capture is also supported.")
              (url "https://github.com/ZerBea/hcxtools")
              (commit version)))
        (sha256
-        (base32 "0kmgl9q4iq0c5c8hlqmxnzz17nxplmzlnbi3h2q5vz75hn4ccmzi"))
+        (base32 "07j8fcy9fq1i4jns6v1gx85pm34q56022aw391mdzxq5yka7wpjr"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config))
@@ -3813,7 +3813,7 @@ packets from wireless devices for use with hashcat or John the Ripper.")
 (define-public hcxdumptool
   (package
     (name "hcxdumptool")
-    (version "6.3.5")
+    (version "7.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3821,7 +3821,7 @@ packets from wireless devices for use with hashcat or John the Ripper.")
              (url "https://github.com/ZerBea/hcxdumptool")
              (commit version)))
        (sha256
-        (base32 "12q5qzni0ggk76wsprk68l8g07rrgv46xw4ycnpvbj9q71p2f3iw"))
+        (base32 "1h03wdm9rcfa0s59kbd1dv550k7c4rpksw5w5djz5q70i23f25h0"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -4179,7 +4179,7 @@ for interacting with an OpenDHT distributed network.")
 (define-public frrouting
   (package
     (name "frrouting")
-    (version "10.3.1")
+    (version "10.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4188,7 +4188,7 @@ for interacting with an OpenDHT distributed network.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1shlxcmvz9ay83wdk2h23yzhqc79hh47v99kq70rymh1d35wr0p7"))))
+                "0c787iv8lrjh92dgng3m8v0i56fx8ln1mhpmdcy8p03z5lxwqjd4"))))
     (build-system gnu-build-system)
     (inputs
      (list c-ares json-c libcap libxcrypt libyang libelf protobuf-c readline))
@@ -4236,77 +4236,75 @@ powerful route filtering syntax and an easy-to-use configuration interface.")
     (license license:gpl2+)))
 
 (define-public iwd
-  (let ((commit "c4718a53553b8c13cbdd713d3783072589dd1620")
-        (revision "1"))
-    (package
-      (name "iwd")
-      (version (git-version "3.8" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://git.kernel.org/pub/scm/network/wireless/iwd.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1dqmqr63srgr8y5x2nb07hami7vva1zkg9lh1a1ca2pfspjpa8q3"))))
-      (build-system gnu-build-system)
-      (inputs
-       (list dbus ell (package-source ell) openresolv readline))
-      (native-inputs
-       (list autoconf
-             automake
-             libtool
-             pkg-config
-             python
-             python-docutils
-             openssl))
-      (arguments
-       (list #:configure-flags
-             #~(list "--disable-systemd-service"
-                     "--enable-external-ell"
-                     "--enable-hwsim"
-                     "--enable-tools"
-                     "--enable-wired"
-                     "--localstatedir=/var"
-                     (string-append "--with-dbus-datadir=" #$output "/share/")
-                     (string-append "--with-dbus-busdir="
-                                    #$output "/share/dbus-1/system-services"))
-             #:phases
-             #~(modify-phases %standard-phases
-                 (add-after 'unpack 'copy-ell-header-files
-                   ;; Copy into the source tree two of ell's private header files
-                   ;; that it shares with iwd, as is required to build with the
-                   ;; "--enable-external-ell" configure option.  See the
-                   ;; definition of "ell_shared" in iwd's Makefile.am.
-                   (lambda* (#:key inputs #:allow-other-keys)
-                     (let ((ell-header-dir (search-input-directory inputs "/ell"))
-                           (target-dir "ell"))
-                       (mkdir target-dir)
-                       (for-each
-                        (lambda (file-name)
-                          (copy-file (string-append ell-header-dir "/" file-name)
-                                     (string-append target-dir "/" file-name)))
-                        '("asn1-private.h" "useful.h")))))
-                 (add-after 'unpack 'patch-resolvconf-path
-                   (lambda* (#:key inputs #:allow-other-keys)
-                     (substitute* "src/resolve.c"
-                       (("getenv\\(\"PATH\"\\)")
-                        (format #f "\"~a\""
-                                (dirname (search-input-file
-                                          inputs "sbin/resolvconf")))))))
-                 (add-after 'configure 'patch-Makefile
-                   (lambda _
-                     (substitute* "Makefile"
-                       ;; Don't try to 'mkdir /var'.
-                       (("\\$\\(MKDIR_P\\) -m 700") "true")))))))
-      (home-page "https://iwd.wiki.kernel.org/")
-      (synopsis "iNet Wireless Daemon")
-      (description "iwd is a wireless daemon for Linux that aims to replace WPA
+  (package
+    (name "iwd")
+    (version "3.9")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://git.kernel.org/pub/scm/network/wireless/iwd.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0kk88ipi901gibz7275rh6p9hplh5xg00b4bxf3i51wyml3id39m"))))
+    (build-system gnu-build-system)
+    (inputs
+     (list dbus ell (package-source ell) openresolv readline))
+    (native-inputs
+     (list autoconf
+           automake
+           libtool
+           pkg-config
+           python
+           python-docutils
+           openssl))
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-systemd-service"
+                   "--enable-external-ell"
+                   "--enable-hwsim"
+                   "--enable-tools"
+                   "--enable-wired"
+                   "--localstatedir=/var"
+                   (string-append "--with-dbus-datadir=" #$output "/share/")
+                   (string-append "--with-dbus-busdir="
+                                  #$output "/share/dbus-1/system-services"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'copy-ell-header-files
+                 ;; Copy into the source tree two of ell's private header files
+                 ;; that it shares with iwd, as is required to build with the
+                 ;; "--enable-external-ell" configure option.  See the
+                 ;; definition of "ell_shared" in iwd's Makefile.am.
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let ((ell-header-dir (search-input-directory inputs "/ell"))
+                         (target-dir "ell"))
+                     (mkdir target-dir)
+                     (for-each
+                      (lambda (file-name)
+                        (copy-file (string-append ell-header-dir "/" file-name)
+                                   (string-append target-dir "/" file-name)))
+                      '("asn1-private.h" "useful.h")))))
+               (add-after 'unpack 'patch-resolvconf-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/resolve.c"
+                     (("getenv\\(\"PATH\"\\)")
+                      (format #f "\"~a\""
+                              (dirname (search-input-file
+                                        inputs "sbin/resolvconf")))))))
+               (add-after 'configure 'patch-Makefile
+                 (lambda _
+                   (substitute* "Makefile"
+                     ;; Don't try to 'mkdir /var'.
+                     (("\\$\\(MKDIR_P\\) -m 700") "true")))))))
+    (home-page "https://iwd.wiki.kernel.org/")
+    (synopsis "iNet Wireless Daemon")
+    (description "iwd is a wireless daemon for Linux that aims to replace WPA
 Supplicant.  It optimizes resource utilization by not depending on any external
 libraries and instead utilizing features provided by the Linux kernel to the
 maximum extent possible.")
-      (license license:lgpl2.1+))))
+    (license license:lgpl2.1+)))
 
 (define-public iwgtk
   (package
@@ -4934,16 +4932,16 @@ daemon.")
 (define-public nebula
   (package
     (name "nebula")
-    (version "1.9.5")
+    (version "1.9.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/slackhq/nebula")
-                    (commit (string-append "v" version))))
+                     (url "https://github.com/slackhq/nebula")
+                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1slknnrdnf5a2ask11ql3gwnnl6c5359bp8rd712aq30lxa2d4r0"))
+                "0mcyakwr0r5lw6qgzib54v73a1j6ccaxrz3jf6dsh8daqwp5nmcj"))
               ;; Remove windows-related binary blobs and files
               (snippet
                #~(begin
@@ -5012,7 +5010,7 @@ layers.")
 (define-public netdiscover
   (package
    (name "netdiscover")
-   (version "0.20")
+   (version "0.21")
    (source
     (origin
       (method git-fetch)
@@ -5020,7 +5018,7 @@ layers.")
             (url "https://github.com/netdiscover-scanner/netdiscover")
             (commit version)))
       (sha256
-       (base32 "0k0wdrp2phc38lq2fillfj5myjnq2czwx65s4vg8y5har0d7syr3"))
+       (base32 "0c5av6x2wm7gmhh5wc5961ff3l6kzpx95aj076qwn7v6v28psvpj"))
       (file-name (string-append "netdiscover-" version))))
    (arguments
     `(#:tests? #f))                     ; no tests
@@ -5225,21 +5223,24 @@ recording packets that are dropped by the kernel.  It provides the commands
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/openrdap/rdap")
-             (commit (string-append "v" version))))
+              (url "https://github.com/openrdap/rdap")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1w3kwxh3hvkp5x1m6i4ijydmpfpibgf9jkviqrvpcadh335989hn"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:install-source? #f
+      #:import-path "github.com/openrdap/rdap/cmd/rdap"
       #:unpack-path "github.com/openrdap/rdap"
-      #:import-path "github.com/openrdap/rdap/cmd/rdap"))
-    (propagated-inputs (list go-golang-org-x-crypto
-                             go-github-com-mitchellh-go-homedir
-                             go-github-com-jarcoal-httpmock
-                             go-github-com-davecgh-go-spew
-                             go-github-com-alecthomas-kingpin-v2))
+      #:test-subdirs #~(list "../../...")))     ;test whole libary, starting from import-path
+    (native-inputs
+     (list go-github-com-alecthomas-kingpin-v2
+           go-github-com-davecgh-go-spew
+           go-github-com-jarcoal-httpmock
+           go-github-com-mitchellh-go-homedir
+           go-golang-org-x-crypto))
     (home-page "https://www.openrdap.org/")
     (synopsis "Command line RDAP client")
     (description

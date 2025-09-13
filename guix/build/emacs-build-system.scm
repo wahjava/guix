@@ -168,8 +168,6 @@ locations in the store in '.el' files."
 
 (define* (ensure-package-description #:key outputs #:allow-other-keys)
   (define (write-pkg-file name)
-    (define summary-regexp
-      "^;;; [^ ]*\\.el ---[ \t]*\\(.*?\\)[ \t]*\\(-\\*-.*-\\*-[ \t]*\\)?$")
     (define %write-pkg-file-form
       `(progn
         (require 'lisp-mnt)
@@ -188,16 +186,8 @@ locations in the store in '.el' files."
               ;; raises an error if version is invalid
               (and (version-to-list version) version))
             (error "0.0.0"))
-           (or (save-excursion
-                (goto-char (point-min))
-                (and (re-search-forward ,summary-regexp nil t)
-                     (match-string-no-properties 1)))
-               package--default-summary)
-           (let ((require-lines (lm-header-multiline "package-requires")))
-             (and require-lines
-                  (package--prepare-dependencies
-                   (package-read-from-string
-                    (mapconcat 'identity require-lines " ")))))
+           (or (lm-summary) package--default-summary)
+           (lm-package-requires)
            :kind       'single
            :url        (lm-homepage)
            :keywords   (lm-keywords-list)
@@ -209,14 +199,17 @@ locations in the store in '.el' files."
            (build-package-desc-from-library name)
            (concat name "-pkg.el")))
 
-        (condition-case
-         err
-         (let ((name (file-name-base (buffer-file-name))))
-           (generate-package-description-file name)
-           (message (concat name "-pkg.el file generated.")))
-         (error
-          (message "There are some errors during generation of -pkg.el file:")
-          (message "%s" (error-message-string err))))))
+        (let ((name (file-name-base (buffer-file-name)))
+              (backtrace-on-error-noninteractive nil)) ; reduce backtrace noise
+          (condition-case
+           err
+           (progn
+            (generate-package-description-file name)
+            (message (concat name "-pkg.el file generated.")))
+           (error
+            (error
+             "ensure-package-description: could not generate %s-pkg.el: %s"
+             name (error-message-string err)))))))
 
     (unless (file-exists? (string-append name "-pkg.el"))
       (emacs-batch-edit-file (string-append name ".el")

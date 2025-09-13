@@ -1904,10 +1904,7 @@ wallet.")
            help2man
            libtool
            pkg-config))
-    (inputs
-     (list curl
-           libxml++-2
-           opensp))
+    (inputs (list curl libxml++ opensp))
     (home-page "http://libofx.sourceforge.net/")
     (synopsis "Library supporting the Open Financial Exchange format")
     (description
@@ -1920,75 +1917,6 @@ following three utilities are included with the library:
 @item @code{ofxconnect}
 @end enumerate")
     (license license:gpl2+)))
-
-(define-public fulcrum
-  (package
-    (name "fulcrum")
-    (version "1.9.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/cculianu/Fulcrum")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (modules '((guix build utils)))
-              (snippet
-                #~(for-each delete-file-recursively
-                            '("src/Json/simdjson"
-                              "src/bitcoin/secp256k1"
-                              "src/robin_hood"
-                              "src/zmq"
-                              "staticlibs")))
-              (sha256
-               (base32
-                "1110vanl6aczlq25i4ck9j4vr81in5icw4z383wyhjpcy6rwxsw2"))
-              (patches
-               (search-patches "fulcrum-1.9.1-unbundled-libraries.patch"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list #:configure-flags
-           #~(list "CONFIG+=config_without_bundled_cppzmq"
-                   "CONFIG+=config_without_bundled_robin_hood"
-                   "CONFIG+=config_without_bundled_secp256k1"
-                   "LIBS+=-lrocksdb"
-                   #$@(if (target-64bit?) '("LIBS+=-lsimdjson") '())
-                   (format #f "DEFINES+=GIT_COMMIT=\"\\\\\\~s\\\\\\\""
-                           #$version)
-                   (string-append "PREFIX=" #$output))
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'configure
-                 (lambda* (#:key configure-flags #:allow-other-keys)
-                   (apply invoke "qmake" configure-flags))))))
-    (native-inputs (list pkg-config qttools-5))
-    (inputs
-     (append (list cppzmq
-                   jemalloc
-                   python
-                   qtbase-5
-                   robin-hood-hashing
-                   rocksdb
-                   zeromq
-                   zlib)
-             (if (target-64bit?)
-                 (list simdjson-0.6)
-                 '())))
-    (home-page "https://github.com/cculianu/Fulcrum")
-    (synopsis "Payment verification server for Bitcoin-like crypto-currencies")
-    (description
-     "Fulcrum is a @acronym{SPV, Simplified Payment Verification} server for
-Bitcoin-like crypto-currencies.  The server indexes the blockchain of the
-crypto-currency used, and the resulting index can be used by wallets to
-perform queries to keep real-time track of balances.
-
-Supported crypto-currencies:
-
-@itemize
-@item Bitcoin Core.
-@item Bitcoin Cash-like.
-@item Litecoin.
-@end itemize")
-    (license license:gpl3+)))
 
 (define-public flowee
   (package
@@ -2587,7 +2515,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.9.1")
+    (version "4.10.1")
     (source
      (origin
        (method git-fetch)
@@ -2596,7 +2524,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0zdsp6pb4rlbdqanx94rw1rii5jih1szf4rl3nf8fldvjkwkydlf"))
+       (sha256 (base32 "0xbynjw70ydsia2jzw08bq8yrbxi3byvfg7cr49fp288ia1325d3"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively

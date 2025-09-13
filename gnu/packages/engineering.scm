@@ -2051,7 +2051,7 @@ bindings for Python, Java, OCaml and more.")
 (define-public python-platypush
   (package
     (name "python-platypush")
-    (version "1.3.6")
+    (version "1.3.7")
     (source
      (origin
        (method git-fetch)
@@ -2060,7 +2060,7 @@ bindings for Python, Java, OCaml and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1957xkh7n5dhjb1kwhfpncfp6g1g6zgszwcrbj3l9h0gcrxlx8p0"))))
+        (base32 "0nh7107j4j0l65bsqpff0ar1609n5a5lh78d8wjsmylwyg9j9kyk"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2096,6 +2096,7 @@ bindings for Python, Java, OCaml and more.")
                              python-sqlalchemy-2
                              python-tornado
                              python-urllib3
+                             python-watchdog
                              python-websocket-client
                              python-websockets
                              python-werkzeug
@@ -2711,31 +2712,32 @@ simulation.")
 (define-public cutter
   (package
     (name "cutter")
-    (version "2.3.4")
+    (version "2.4.1")                   ;keep in sync with rizin
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/rizinorg/cutter")
              (commit (string-append "v" version))
+             ;; Needed for src/translations.
              (recursive? #t)))
        (modules '((guix build utils)))
        (snippet #~(delete-file-recursively "rizin"))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0d10g1wpw8p8hcxvw5q7ymfdxyrp4xqs6a49lf3gdgnmcpb248ad"))))
+        (base32 "090gfg90k0fn3jiyssdigjgb7xn473hxfm7gpl1rwn3kl6fv7lvw"))))
     (build-system qt-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DCUTTER_USE_BUNDLED_RIZIN=OFF")
+      #:configure-flags
+      #~(list "-DCUTTER_USE_BUNDLED_RIZIN=OFF"
+              "-DCUTTER_ENABLE_PYTHON_BINDINGS=ON"
+              "-DCUTTER_QT=5")
       #:tests? #f)) ;no tests
-    (native-inputs (list pkgconf))
-    (inputs (list libzip
-                  openssl
-                  qtsvg-5
-                  qttools-5
-                  rizin
-                  zlib))
+    (native-inputs
+     (list pkgconf))
+    (inputs
+     (list graphviz libzip openssl qtsvg-5 qttools-5 rizin zlib))
     (home-page "https://cutter.re")
     (synopsis "Software reverse engineering platform")
     (description
@@ -2812,7 +2814,7 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
 (define-public manifold
   (package
     (name "manifold")
-    (version "3.1.1")
+    (version "3.2.1")
     (source
      (origin
        (method git-fetch)
@@ -2821,7 +2823,7 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vipfy68crvik3760jjmsqnyci6rabb26iiw22p2qpb3cj6r683l"))))
+        (base32 "0fy78axwhlk3gpxhmac4gbyvsadky1kzqbh4cv5snahzmi4bixvp"))))
     (build-system cmake-build-system)
     (inputs (list tbb clipper2 assimp python-nanobind googletest))
     (arguments
@@ -3073,8 +3075,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "6a8ab04bfd8bbe5cafab3efb74d2b46cb33fafe7")
-        (version "2025.07.25")
+  (let ((commit "5d6e37dd177d9d9329234cb5d3c0491ab0f23dcd")
+        (version "2025.09.02")
         (revision "0"))
     (package
       (name "openscad")
@@ -3090,7 +3092,7 @@ ontinuous-time and discret-time expressions.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "0qvvi4qjadk2p5v2ca95hkkw0zi9vmzyac8hcxr14ijnk0f1ybd0"))
+          (base32 "1cga32b65wbap59nmw37f75ys3gj9bk09nqzq7949x9kqlal13mx"))
          (file-name (git-file-name name version))))
       (build-system cmake-build-system)
       (arguments
@@ -3223,9 +3225,9 @@ models in the STL and OFF file formats.")
       (license license:gpl2+))))
 
 (define-public pythonscad
-  (let ((commit "e1d49035b8dd4cac187a03f04dd9de9d61972cbf")
+  (let ((commit "228aa7b34821523d0dc413d9421bae204edabefe")
         (version "0.0.0")
-        (revision "1"))
+        (revision "4"))
     (package
       (inherit openscad)
       (name "pythonscad")
@@ -3241,7 +3243,7 @@ models in the STL and OFF file formats.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "1q0ib5iz4l2vpi8208fghgwcfb0n7a0ypm1ch860dl0zd1p4zljz"))
+          (base32 "133anxk4ksi0f8nx15sm564izq2fqni3w72pg54gwrx27zli9cbh"))
          (modules '((guix build utils)))
          (snippet #~(begin
                       ;; Delete all unbundled libraries to replace them with
@@ -5189,15 +5191,16 @@ form, numpad.
 (define-public rizin
   (package
     (name "rizin")
-    (version "0.7.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/rizinorg/rizin/releases/download/v"
-                    version "/rizin-src-v" version ".tar.xz"))
-              (sha256
-               (base32
-                "008jcfbp836g2sya4aqkbkfir6h1xhq0pq53p8w3r16wwl88j4gp"))))
+    (version "0.8.1")                   ;keep in sync with cutter
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/rizinorg/rizin/releases/download/v"
+             version "/rizin-src-v" version ".tar.xz"))
+       (sha256
+        (base32
+         "1hjf180q4ba0cs5ys7vwy5xs1k6195kransj8fn3dp6p4mjiwazg"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -5231,7 +5234,7 @@ form, numpad.
                 (("subdir\\('integration'\\)") ""))
               ;;; Skip failing tests.
               (substitute* "test/unit/meson.build"
-                (("'bin_mach0',\n") "")))))))
+                (("'tokens',\n") "")))))))
     (native-inputs (list pkg-config))
     (inputs
      (list capstone

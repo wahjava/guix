@@ -25,6 +25,8 @@
 ;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2023 Declan Tsien <declantsien@riseup.net>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -55,6 +57,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
@@ -137,7 +140,7 @@
 (define-public emacs-minimal
   (package
     (name "emacs-minimal")
-    (version "30.1")
+    (version "30.2")
     ;; Note: When using (replacement …), ensure that comp-native-version-dir
     ;; stays the same across grafts.
     ;; Run `make check-system TESTS=emacs-native-comp' to ensure that grafts
@@ -148,7 +151,7 @@
                                   version ".tar.xz"))
               (sha256
                (base32
-                "13qkdx515qv7m8b2mpd37p16frs0xgl7bw8xvv397bz6fspc3jkc"))
+                "1nggbgnns7lvxn68gzlcsgwh3bigvrbn45kh6dqia9yxlqc6zwxk"))
               (patches (search-patches "emacs-disable-jit-compilation.patch"
                                        "emacs-exec-path.patch"
                                        "emacs-fix-scheme-indent-function.patch"
@@ -190,6 +193,7 @@
                             "\"~/.guix-home/include\""
                             "\"/run/current-system/profile/include\"")
                       " ")))))))
+    (outputs '("out" "doc"))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -200,7 +204,14 @@
                               " -Wno-error=incompatible-pointer-types")
                            "--with-gnutls=no"
                            "--disable-build-details")
-      #:make-flags #~(list (string-append "SELECTOR=" #$%selector))
+      #:make-flags
+      #~(list (string-append "SELECTOR=" #$%selector)
+              (let ((release-date "2025-08-14 05:04:03"))
+                (string-append "RUN_TEMACS= "
+                               #$(this-package-native-input "libfaketime")
+                               "/bin/faketime -m -f '" release-date "'"
+                               " ./temacs")))
+      #:parallel-build? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'enable-elogind
@@ -209,6 +220,16 @@
                 (("libsystemd") "libelogind"))
               (when (file-exists? "configure")
                 (delete-file "configure"))))
+          (add-after 'unpack 'avoid-sysinfo-call-at-build-time
+            (lambda _
+              ;; This is a useful trick for reproducibility: when we configured
+              ;; with --disable-build-details, (system-name) is nil at build
+              ;; time on the lisp side.
+              ;; Find those places with strace -k -e sysinfo.
+              (substitute* "lisp/jit-lock.el"
+                (("\\(condition-case nil \\(load-average\\) \\(error\\)\\)"
+                  all)
+                 (format #f "(and (system-name) ~a)" all)))))
           (add-after 'unpack 'patch-program-file-names
             (lambda* (#:key inputs #:allow-other-keys)
               ;; Substitute "sh" command.
@@ -292,6 +313,21 @@
                   (("/bin//sh") (search-input-file inputs "bin/sh")))
                 (substitute* "test/lisp/eshell/em-script-tests.el"
                   (("/usr/bin/env") (search-input-file inputs "bin/env"))))))
+          (add-before 'configure 'install-c-source
+            (lambda _
+              (let ((dest (string-append #$output:doc "/share/emacs/c-source"))
+                    (lisp-dir (string-append #$output:doc
+                                             "/share/emacs/site-lisp")))
+                (mkdir-p dest)
+                (copy-recursively "src" dest)
+                (mkdir-p lisp-dir)
+                (with-output-to-file (string-append lisp-dir
+                                                    "/guix-emacs-c-source.el")
+                  (lambda ()
+                    (display
+                     (string-append
+                      "(setq find-function-C-source-directory \"" dest "\")\n\n"
+                      "(provide 'guix-emacs-c-source)")))))))
           (add-after 'install 'install-site-start
             ;; Use 'guix-emacs' in "site-start.el", which is used autoload the
             ;; Elisp packages found in EMACSLOADPATH.
@@ -319,7 +355,10 @@
                       "(when (require 'guix-emacs nil t)\n"
                       "  (guix-emacs-autoload-packages 'no-reload)\n"
                       "  (advice-add 'package-load-all-descriptors"
-                      " :after #'guix-emacs-load-package-descriptors))"))))
+                      " :after #'guix-emacs-load-package-descriptors))\n\n"
+                      ";; The file guix-emacs-c-source.el is available from the"
+                      " 'doc' output.\n"
+                      "(require 'guix-emacs-c-source nil t)"))))
                 ;; Remove the extraneous subdirs.el file, as it causes Emacs to
                 ;; add recursively all the the sub-directories of a profile's
                 ;; share/emacs/site-lisp union when added to EMACSLOADPATH,
@@ -362,7 +401,7 @@
                  (car (find-files "bin" "^emacs-([0-9]+\\.)+[0-9]+$"))
                  "bin/emacs")))))))
     (inputs (list bash-minimal coreutils findutils gawk gzip ncurses sed))
-    (native-inputs (list autoconf pkg-config texinfo))
+    (native-inputs (list autoconf libfaketime pkg-config texinfo))
     (home-page "https://www.gnu.org/software/emacs/")
     (synopsis "The extensible text editor (minimal build for byte-compilation)")
     (description

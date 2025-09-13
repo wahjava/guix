@@ -441,7 +441,7 @@ services.")
                                                      "/share/gtk-doc/html"))))
     (native-inputs (list docbook-xml-4.1.2 gobject-introspection gtk-doc/stable
                          pkg-config))
-    (propagated-inputs (list glib libsoup-minimal-2 libxml2-next))
+    (propagated-inputs (list glib libsoup-minimal-2 libxml2-next-for-grafting))
     (synopsis "Glib library for feeds")
     (description "LibGRSS is a Glib abstraction to handle feeds in RSS, Atom,
 and other formats.")
@@ -1246,7 +1246,7 @@ Library reference documentation.")
      ;; These inputs are required by the pkg-config file.
      (list glib
            libsoup
-           libxml2-next))
+           libxml2-next-for-grafting))
     (synopsis "WebDav server implementation using libsoup")
     (description "PhoDav was initially developed as a file-sharing mechanism for Spice,
 but it is generic enough to be reused in other projects,
@@ -1456,7 +1456,7 @@ a debugging tool, @command{gssdp-device-sniffer}.")
            gsettings-desktop-schemas    ;for ‘org.gnome.system.proxy’.
            gssdp
            libsoup
-           libxml2-next))
+           libxml2-next-for-grafting))
     (synopsis "PnP API for GNOME")
     (description "This package provides GUPnP, an object-oriented framework
 for creating UPnP devices and control points, written in C using
@@ -2041,7 +2041,7 @@ and system administrators.")
       (inputs
        (list graphene
              gtk+
-             libxml2-next
+             libxml2-next-for-grafting
              libxslt
              poppler
              python-minimal
@@ -2091,7 +2091,7 @@ formats like PNG, SVG, PDF and EPS.")
        ("json-glib" ,json-glib)
        ("liboauth" ,liboauth)
        ("libsoup" ,libsoup-minimal-2)
-       ("libxml2" ,libxml2-next)))
+       ("libxml2" ,libxml2-next-for-grafting)))
     (home-page "https://wiki.gnome.org/Projects/libgdata")
     (synopsis "Library for accessing online service APIs")
     (description
@@ -3623,7 +3623,7 @@ XML/CSS rendering engine.")
            zlib))
     (propagated-inputs
      (list glib
-           libxml2-next))
+           libxml2-next-for-grafting))
     (synopsis "G Structured File Library")
     (description "Libgsf aims to provide an efficient extensible I/O abstraction
 for dealing with different structured file formats.")
@@ -4231,7 +4231,7 @@ ported to GTK+.")
     (inputs
      (list python)) ;; needed for the optional libglade-convert program
     (propagated-inputs
-     (list gtk+-2 libxml2-next)) ; required by libglade-2.0.pc
+     (list gtk+-2 libxml2-next-for-grafting)) ; required by libglade-2.0.pc
     (native-inputs
      (list pkg-config))
     (home-page "https://developer.gnome.org/libglade")
@@ -4268,7 +4268,7 @@ widgets built in the loading process.")
                ;; Therefore we must do it.
                (zero? (system (format #f "~a/bin/Xvfb ~a &" xorg-server disp)))))))))
     ;; Mentioned as Required by the .pc file
-    (propagated-inputs (list libxml2-next))
+    (propagated-inputs (list libxml2-next-for-grafting))
     (inputs
      (list popt pangox-compat libgnome libgnomecanvas libglade))
     (native-inputs
@@ -4951,7 +4951,7 @@ GLib and GObject, and integrates JSON with GLib data types.")
        ("libtool" ,libtool)))
     (propagated-inputs
      ;; Required by libxklavier.pc.
-     (list glib libxml2-next))
+     (list glib libxml2-next-for-grafting))
     (inputs
      (list iso-codes/pinned libxi libxkbfile xkbcomp xkeyboard-config))
     (home-page "https://www.freedesktop.org/wiki/Software/LibXklavier/")
@@ -5095,7 +5095,7 @@ libxml to ease remote use of the RESTful API.")
     (inherit rest)
     (propagated-inputs
      (modify-inputs (package-propagated-inputs rest)
-       (replace "libxml2" libxml2-next)))))
+       (replace "libxml2" libxml2-next-for-grafting)))))
 
 (define-public rest-next
   (package
@@ -5201,7 +5201,6 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
 ;;; A minimal version of libsoup used to prevent a cycle with Inkscape.
 (define-public libsoup-minimal
   (package
-    (replacement libsoup-minimal/fixed)
     (name "libsoup-minimal")
     (version "3.6.4")
     (source (origin
@@ -5251,7 +5250,7 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
            libpsl
            nghttp2 ;for pkg-config
            `(,nghttp2 "lib")
-           libxml2
+           libxml2-next-for-grafting
            sqlite
            zlib))
     (inputs
@@ -5264,18 +5263,10 @@ and the GLib main loop, to integrate well with GNOME applications.")
     (license license:lgpl2.0+)
     (properties '((upstream-name . "libsoup")))))
 
-(define-public libsoup-minimal/fixed
-  (package
-    (inherit libsoup-minimal)
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs libsoup-minimal)
-       (replace "libxml2" libxml2-next)))))
-
 ;;; An older variant kept to build the 'rest' package.
 (define-public libsoup-minimal-2
   (package
     (inherit libsoup-minimal)
-    (replacement libsoup-minimal-2/fixed)
     (version "2.74.3")
     (source (origin
               (method url-fetch)
@@ -5301,21 +5292,10 @@ and the GLib main loop, to integrate well with GNOME applications.")
                   (("[ \t]*\\['ssl', true, \\[\\]\\],") ""))))))))
     (native-inputs
      (modify-inputs (package-native-inputs libsoup-minimal)
-       (replace "vala" vala-0.52)))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs libsoup-minimal)
-       (replace "libxml2" libxml2)))))
-
-(define-public libsoup-minimal-2/fixed
-  (package
-    (inherit libsoup-minimal-2)
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs libsoup-minimal-2)
-       (replace "libxml2" libxml2-next)))))
+       (replace "vala" vala-0.52)))))
 
 (define-public libsoup
   (package/inherit libsoup-minimal
-    (replacement #f)
     (name "libsoup")
     (outputs (cons "doc" (package-outputs libsoup-minimal)))
     (arguments
@@ -6076,7 +6056,7 @@ service via the system message bus.")
      (list gtk+
            gdk-pixbuf
            json-glib
-           libxml2-next
+           libxml2-next-for-grafting
            libsoup
            geocode-glib))
     (inputs
@@ -6195,7 +6175,7 @@ settings, themes, mouse settings, and startup of other daemons.")
     (list intltool
           `(,glib "bin") gobject-introspection pkg-config))
    (propagated-inputs
-    (list glib gmime libarchive libgcrypt libxml2-next))
+    (list glib gmime libarchive libgcrypt libxml2-next-for-grafting))
    (inputs
     (list libsoup))
    (home-page "https://projects.gnome.org/totem")
@@ -8179,7 +8159,7 @@ to display dialog boxes from the commandline and shell scripts.")
            libxext
            libxfixes
            libxkbcommon
-           libxml2-next
+           libxml2-next-for-grafting
            libxrandr
            mesa
            pango
@@ -8860,6 +8840,73 @@ to virtual private networks (VPNs) via Fortinet SSLVPN.")
       (license license:gpl2+)
       (properties `((upstream-name . "NetworkManager-fortisslvpn"))))))
 
+(define-public network-manager-l2tp
+  (package
+    (name "network-manager-l2tp")
+    (version "1.20.20")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/nm-l2tp/NetworkManager-l2tp")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0znv57fkg2l7pjbgdn9g3issvf5mb252d8hfm3pxf6wl21cc6rh2"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         "--enable-absolute-paths"
+         "--localstatedir=/var"
+         "--with-gtk4=yes")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'configure 'patch-path
+            (lambda* (#:key inputs #:allow-other-keys #:rest args)
+              (let* ((xl2tpd (search-input-file inputs "/sbin/xl2tpd"))
+                     (ipsec
+                      (search-input-file inputs "/sbin/ipsec"))
+                     (modprobe
+                      (search-input-file inputs "/bin/modprobe")))
+                (for-each
+                 (lambda (file)
+                   (substitute* file
+                     (("/usr/bin/xl2tpd") xl2tpd)
+                     (("/usr/bin/ipsec") ipsec)
+                     (("/sbin/modprobe") modprobe)))
+                 '("shared/utils.c"
+                   "src/nm-l2tp-service.c"))))))))
+    (native-inputs
+     (list gettext-minimal
+           intltool
+           autoconf
+           automake
+           libtool
+           (list glib "bin")
+           pkg-config))
+    (inputs
+     (list gtk+
+           gtk
+           (list gtk "bin")
+           kmod
+           ppp
+           openssl
+           nss
+           libnma
+           libsecret
+           network-manager
+           strongswan
+           xl2tpd))
+    (home-page "https://github.com/nm-l2tp/NetworkManager-l2tp")
+    (synopsis "NetworkManager plugin for L2TP")
+    (description "NetworkManager-l2tp is a VPN plugin for NetworkManager
+and later which provides support for L2TP and L2TP/IPsec (i.e. L2TP over
+IPsec) connections.")
+    (license license:gpl2+)
+    (properties `((upstream-name . "NetworkManager-l2tp")))))
+
 (define-public mobile-broadband-provider-info
   (package
     (name "mobile-broadband-provider-info")
@@ -8926,7 +8973,7 @@ the available networks and allows users to easily switch between them.")
 (define-public libxml++
   (package
     (name "libxml++")
-    (version "5.0.3")
+    (version "5.4.0")
     (source
      (origin
        (method git-fetch)
@@ -8935,10 +8982,10 @@ the available networks and allows users to easily switch between them.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07h11vl0rv8b0w31as5xiirpx17lprkx7fimphy3f5mkwhz8njba"))))
+        (base32 "0gp8irc5ny9i6bw9fp21p8djgksi1s8l5flbn5blisgfpcb2w820"))))
     (build-system gnu-build-system)
     (propagated-inputs
-     (list libxml2-next))                    ;required by .pc file
+     (list libxml2-next-for-grafting))  ;required by .pc file
     (native-inputs
      (list autoconf
            automake
@@ -8958,30 +9005,12 @@ the available networks and allows users to easily switch between them.")
 library.")
     (license license:lgpl2.1+)))
 
-;; This is needed by tascam-gtk
-(define-public libxml++-3
-  (package
-    (inherit libxml++)
-    (name "libxml++")
-    (version "3.2.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/libxmlplusplus/libxmlplusplus")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "07f6l9ka63dnc85npxq5g7bn1ja7lad0w2wixqdlyabdvc4l2hp5"))))
-    (propagated-inputs (modify-inputs (package-propagated-inputs libxml++)
-                         (append glibmm-2.66)))))
-
 ;; This is the last release providing the 2.6 API, hence the name.
 (define-public libxml++-2
   (package
     (inherit libxml++)
     (name "libxml++")
-    (version "2.42.2")
+    (version "2.42.3")
     (source
      (origin
        (method git-fetch)
@@ -8990,7 +9019,7 @@ library.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05slsbhc25z7kwlc28ydl3dfyp7rgbmz1fxj9z6gcvpg3hkghj2m"))))
+        (base32 "0a0q25q275ysfr2ly66nbizkkwxnylsydzy5a8ay0c9cdskd3sc9"))))
     (propagated-inputs (modify-inputs (package-propagated-inputs libxml++)
                          (append glibmm-2.66)))))
 
@@ -13893,7 +13922,7 @@ developed with the aim of being used with the Librem 5 phone.")
            sqlite
            vala))
     (propagated-inputs
-     (list libxml2-next))                    ; required by libgda-5.0.pc
+     (list libxml2-next-for-grafting))  ; required by libgda-5.0.pc
     (home-page "https://gitlab.gnome.org/GNOME/libgda")
     (synopsis "Uniform data access")
     (description

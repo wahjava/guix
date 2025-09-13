@@ -30,6 +30,7 @@
   #:use-module (guix git-download)
   #:use-module (guix download)
   #:use-module (guix build-system go)
+  #:use-module (guix utils)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages golang)
@@ -372,34 +373,6 @@ corresponding to the block.")
      "Package blockservice implements a @code{BlockService} interface that
 provides a single @code{GetBlock/AddBlock} interface that seamlessly retrieves
 data either locally or from a remote peer through the exchange.")
-    (license license:expat)))
-
-(define-public go-github-com-ipfs-go-cid
-  (package
-    (name "go-github-com-ipfs-go-cid")
-    (version "0.4.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ipfs/go-cid")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0gfd5dg0shj2daraai2kkf8sg24jp5cr6dsv857wp4q1ni612a23"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/ipfs/go-cid"))
-    (propagated-inputs
-     (list go-github-com-multiformats-go-multihash
-           go-github-com-multiformats-go-multibase
-           go-github-com-multiformats-go-varint))
-    (home-page "https://github.com/ipfs/go-cid")
-    (synopsis "Content ID v1 implemented in Go")
-    (description
-     "Implementation in Go of the @url{https://github.com/ipld/cid, CID spec}.  It is
-used in @code{go-ipfs} and related packages to refer to a typed hunk of data.")
     (license license:expat)))
 
 (define-public go-github-com-ipfs-go-cidutil
@@ -1843,6 +1816,74 @@ for distributing DNS subdomains with CA-signed TLS certificates to libp2p
 peers.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public go-github-com-libp2p-go-cidranger
+  (package
+    (name "go-github-com-libp2p-go-cidranger")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-cidranger")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05hzlk5hx7qna5znr3q1crr0qb7h8yrv1v96pj015dh0kbdkdaba"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Check if the most of the tests may be enabled:
+      ;; src/github.com/libp2p/go-cidranger/trie_test.go:557:8: cannot use
+      ;; 4294967295 (untyped int constant) as int value in assignment
+      ;; (overflows).
+      #:tests? (and (target-64bit?)
+                    (not (%current-target-system)))
+      #:import-path "github.com/libp2p/go-cidranger"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-detect-race))
+    (home-page "https://github.com/libp2p/go-cidranger")
+    (synopsis "Fast IP to CIDR lookup in Golang")
+    (description
+     "Fast IP to @url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing,
+CIDR} block(s) lookup using trie in Golang, inspired by
+@url{https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux, IPv4
+route lookup Linux}.  Possible use cases include detecting if a IP address is
+from published cloud provider CIDR blocks (e.g. 52.95.110.1 is contained in
+published AWS Route53 CIDR 52.95.110.0/24), IP routing rules, etc.")
+    (license license:expat)))
+
+(define-public go-github-com-libp2p-go-doh-resolver
+  (package
+    (name "go-github-com-libp2p-go-doh-resolver")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-doh-resolver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0asni7f3gd65bjfqz99fqchz9y75cpgmfwkkhsbq0y2dydagw666"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-doh-resolver"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-log-v2
+           go-github-com-miekg-dns
+           go-github-com-multiformats-go-multiaddr-dns))
+    (home-page "https://github.com/libp2p/go-doh-resolver")
+    (synopsis "DNS over HTTPS resolver")
+    (description
+     "This package provides an implementation DNS over HTTPS resolver as
+specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
+    (license license:expat)))
+
 (define-public go-github-com-libp2p-go-libp2p
   (package
     (name "go-github-com-libp2p-go-libp2p")
@@ -2343,6 +2384,35 @@ different types of routers.")
      "This package implements XOR tries.  An XOR trie is a trie for
 equal-length bit strings.  XOR tries support efficient set operations, as well
 as distance-based operations with respect to the XOR metric.")
+    (license license:expat)))
+
+(define-public go-github-com-libp2p-go-socket-activation
+  (package
+    (name "go-github-com-libp2p-go-socket-activation")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-socket-activation")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cqxzmjfg7838xifs07kigys9icardwlj1wl426mzgzmbwn6pg5s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-socket-activation"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-systemd-v22
+           go-github-com-ipfs-go-log
+           go-github-com-multiformats-go-multiaddr))
+    (home-page "https://github.com/libp2p/go-socket-activation")
+    (synopsis "Multiaddr backed systemd socket activation")
+    (description
+     "This package provides access to sockets registered by the system's init
+daemon as described in
+@url{http://0pointer.de/blog/projects/socket-activation}.")
     (license license:expat)))
 
 (define-public go-github-com-whyrusleeping-cbor-gen

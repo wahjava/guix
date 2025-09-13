@@ -75,7 +75,6 @@
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
-  #:use-module (gnu packages ipfs)
   #:use-module (gnu packages prometheus)
   #:use-module (gnu packages specifications)
   #:use-module (gnu packages tls)
@@ -2701,7 +2700,7 @@ used to build IMAP clients and servers.")
 (define-public go-github-com-emersion-go-maildir
   (package
     (name "go-github-com-emersion-go-maildir")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method git-fetch)
@@ -2710,7 +2709,7 @@ used to build IMAP clients and servers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wa7spn3qa7ipmg29vrimw7phyybyaagdalrjklcazjb6rplvwpl"))))
+        (base32 "12zsfrn5dgrav3ihhddn3pwg88r63i18pjrl6y4rxam3g8l7rj5i"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -2919,37 +2918,7 @@ protocol definition.")
 (define-public go-github-com-evanphx-json-patch
   (package
     (name "go-github-com-evanphx-json-patch")
-    (version "4.12.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/evanphx/json-patch")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1z0bmsvzm4nchfbi7h9pdvkfgrnf0fvhn39pgb0q2az8cql58q56"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.23
-      #:import-path "github.com/evanphx/json-patch"))
-    (propagated-inputs
-     (list go-github-com-jessevdk-go-flags go-github-com-pkg-errors))
-    (home-page "https://github.com/evanphx/json-patch")
-    (synopsis "Apply and create JSON (RFC6902 and RFC7386) patches for Golang")
-    (description
-     "@code{jsonpatch} is a library which provides functionality for both
-applying @url{http://tools.ietf.org/html/rfc6902,RFC6902 JSON patches} against
-documents, as well as for calculating & applying
-@url{https://tools.ietf.org/html/rfc7396,RFC7396 JSON merge patches}.")
-    (license license:bsd-3)))
-
-(define-public go-github-com-evanphx-json-patch-v5
-  (package
-    (inherit go-github-com-evanphx-json-patch)
-    (name "go-github-com-evanphx-json-patch-v5")
-    (version "5.9.11")
+    (version "4.13.0")
     (source
      (origin
        (method git-fetch)
@@ -2962,9 +2931,42 @@ documents, as well as for calculating & applying
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/evanphx/json-patch/v5"
-      #:unpack-path "github.com/evanphx/json-patch"))))
+      #:import-path "github.com/evanphx/json-patch"
+      #:unpack-path "github.com/evanphx/json-patch"
+      ;; Tests are not copatible with Go 1.24+.
+      #:test-flags #~(list "-vet=off")))
+    (propagated-inputs
+     (list go-github-com-jessevdk-go-flags
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/evanphx/json-patch")
+    (synopsis "Apply and create JSON (RFC6902 and RFC7386) patches for Golang")
+    (description
+     "@code{jsonpatch} is a library which provides functionality for both
+applying @url{http://tools.ietf.org/html/rfc6902, RFC6902 JSON patches}
+against documents, as well as for calculating & applying
+@url{https://tools.ietf.org/html/rfc7396, RFC7396 JSON merge patches}.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-evanphx-json-patch-v5
+  (package
+    (inherit go-github-com-evanphx-json-patch)
+    (name "go-github-com-evanphx-json-patch-v5")
+    (version "5.9.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/evanphx/json-patch")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sydllg5hsmvwdr1276qzl8v3xsr3jjrimvvgl9096rn3kf3664m"))))
+    (build-system go-build-system)
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-evanphx-json-patch)
+       ((#:import-path "github.com/evanphx/json-patch")
+        "github.com/evanphx/json-patch/v5")))))
 
 (define-public go-github-com-fasthttp-router
   (package
@@ -5151,6 +5153,35 @@ dhcpv6 and dhcpv4
 @end itemize")
     (license license:bsd-3)))
 
+(define-public go-github-com-ipfs-go-cid
+  (package
+    (name "go-github-com-ipfs-go-cid")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-cid")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gfd5dg0shj2daraai2kkf8sg24jp5cr6dsv857wp4q1ni612a23"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-cid"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-multihash
+           go-github-com-multiformats-go-multibase
+           go-github-com-multiformats-go-varint))
+    (home-page "https://github.com/ipfs/go-cid")
+    (synopsis "Content ID v1 implemented in Go")
+    (description
+     "Implementation in Go of the @url{https://github.com/ipld/cid, CID spec}.
+It is used in @code{go-ipfs} and related packages to refer to a typed hunk of
+data.")
+    (license license:expat)))
+
 (define-public go-github-com-jackpal-gateway
   (package
     (name "go-github-com-jackpal-gateway")
@@ -6200,74 +6231,6 @@ to delete records.
 @end itemize")
     (license license:expat)))
 
-(define-public go-github-com-libp2p-go-cidranger
-  (package
-    (name "go-github-com-libp2p-go-cidranger")
-    (version "1.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/libp2p/go-cidranger")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "05hzlk5hx7qna5znr3q1crr0qb7h8yrv1v96pj015dh0kbdkdaba"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      ;; XXX: Check if the most of the tests may be enabled:
-      ;; src/github.com/libp2p/go-cidranger/trie_test.go:557:8: cannot use
-      ;; 4294967295 (untyped int constant) as int value in assignment
-      ;; (overflows).
-      #:tests? (and (target-64bit?)
-                    (not (%current-target-system)))
-      #:import-path "github.com/libp2p/go-cidranger"))
-    (native-inputs
-     (list go-github-com-stretchr-testify))
-    (propagated-inputs
-     (list go-github-com-ipfs-go-detect-race))
-    (home-page "https://github.com/libp2p/go-cidranger")
-    (synopsis "Fast IP to CIDR lookup in Golang")
-    (description
-     "Fast IP to @url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing,
-CIDR} block(s) lookup using trie in Golang, inspired by
-@url{https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux, IPv4
-route lookup Linux}.  Possible use cases include detecting if a IP address is
-from published cloud provider CIDR blocks (e.g. 52.95.110.1 is contained in
-published AWS Route53 CIDR 52.95.110.0/24), IP routing rules, etc.")
-    (license license:expat)))
-
-(define-public go-github-com-libp2p-go-doh-resolver
-  (package
-    (name "go-github-com-libp2p-go-doh-resolver")
-    (version "0.4.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/libp2p/go-doh-resolver")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0asni7f3gd65bjfqz99fqchz9y75cpgmfwkkhsbq0y2dydagw666"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/libp2p/go-doh-resolver"))
-    (native-inputs
-     (list go-github-com-stretchr-testify))
-    (propagated-inputs
-     (list go-github-com-ipfs-go-log-v2
-           go-github-com-miekg-dns
-           go-github-com-multiformats-go-multiaddr-dns))
-    (home-page "https://github.com/libp2p/go-doh-resolver")
-    (synopsis "DNS over HTTPS resolver")
-    (description
-     "This package provides an implementation DNS over HTTPS resolver as
-specified in @url{https://datatracker.ietf.org/doc/html/rfc8484, RFC 8484}.")
-    (license license:expat)))
-
 (define-public go-github-com-libp2p-go-flow-metrics
   (package
     (name "go-github-com-libp2p-go-flow-metrics")
@@ -6440,35 +6403,6 @@ NAT hole-punching, which requires a process to both @code{Listen} and
 @code{Dial} on the same TCP port.  @code{go-reuseport} provides some utilities
 around enabling this behaviour on various operating systems.")
     (license license:isc)))
-
-(define-public go-github-com-libp2p-go-socket-activation
-  (package
-    (name "go-github-com-libp2p-go-socket-activation")
-    (version "0.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/libp2p/go-socket-activation")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1cqxzmjfg7838xifs07kigys9icardwlj1wl426mzgzmbwn6pg5s"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/libp2p/go-socket-activation"))
-    (propagated-inputs
-     (list go-github-com-coreos-go-systemd-v22
-           go-github-com-ipfs-go-log
-           go-github-com-multiformats-go-multiaddr))
-    (home-page "https://github.com/libp2p/go-socket-activation")
-    (synopsis "Multiaddr backed systemd socket activation")
-    (description
-     "This package provides access to sockets registered by the system's init
-daemon as described in
-@url{http://0pointer.de/blog/projects/socket-activation}.")
-    (license license:expat)))
 
 (define-public go-github-com-libp2p-go-yamux-v4
   (package
@@ -7872,32 +7806,6 @@ Object Storage / Rackspace Cloud Files.")
     (description
      "This go library implements some parts of the official
 @url{https://www.inwx.com/en/help/apidoc, INWX XML-RPC API}.")
-    (license license:expat)))
-
-(define-public go-github-com-nwidger-jsoncolor
-  (package
-    (name "go-github-com-nwidger-jsoncolor")
-    (version "0.3.0")
-    (home-page "https://github.com/nwidger/jsoncolor")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url home-page)
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "13rd146pnj7qm70r1333gyd1f61x40nafxlpvdxlci9h7mx8c5p8"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/nwidger/jsoncolor"))
-    (native-inputs
-     (list go-github-com-fatih-color))
-    (synopsis "Colorized JSON marshalling and encoding")
-    (description
-     "@code{jsoncolor} is a drop-in replacement for @code{encoding/json}'s
-@code{Marshal} and @code{MarshalIndent} functions and @code{Encoder} type
-which produce colorized output using github.com/fatih/color.")
     (license license:expat)))
 
 (define-public go-github-com-nytimes-gziphandler
@@ -10965,7 +10873,7 @@ implementation as closely while remaining idiomatic and easy to use.")
 (define-public go-github-com-vishvananda-netlink
   (package
     (name "go-github-com-vishvananda-netlink")
-    (version "1.3.0")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -10974,7 +10882,7 @@ implementation as closely while remaining idiomatic and easy to use.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ckwb1ml7i2ccdd7kzc04s839naf4arlxav2ip5kf4rm4xhba9g7"))))
+        (base32 "0zc18p7mfcfjrpiwgyka8153lfyqrrlqnw7x1zzsfjf961m2cgw3"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -11509,7 +11417,7 @@ It is to used for inputs in other packages.")
 (define-public go-github-com-zitadel-oidc-v3
   (package
     (name "go-github-com-zitadel-oidc-v3")
-    (version "3.39.1")
+    (version "3.43.0")
     (source
      (origin
        (method git-fetch)
@@ -11518,14 +11426,14 @@ It is to used for inputs in other packages.")
               (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vwqr8p75zxyghcjlm5n2d52amgpqagjwnmba9zhvcnd3cqpdjpb"))))
+        (base32 "01cpck1qy91r74q86qkw3dh62zrzwdpqlbzwrxzsv0gpqz5pixc9"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:import-path "github.com/zitadel/oidc/v3"
       #:test-flags
-      #~(list "-skip" (string-join
+      #~(list "-vet=off"
+              "-skip" (string-join
                        ;; Tests requring Internet access.
                        (list "TestDiscover/spotify"
                              "TestIntrospect"
@@ -11551,6 +11459,7 @@ It is to used for inputs in other packages.")
            go-github-com-zitadel-logging
            go-github-com-zitadel-schema
            go-go-opentelemetry-io-otel
+           go-go-opentelemetry-io-otel-trace
            go-golang-org-x-oauth2
            go-golang-org-x-text))
     (home-page "https://github.com/zitadel/oidc")
@@ -11563,16 +11472,16 @@ https://openid.net/developers/how-connect-works/}.")
 (define-public go-gitlab-com-gitlab-org-api-client-go
   (package
     (name "go-gitlab-com-gitlab-org-api-client-go")
-    (version "0.123.0")
+    (version "0.130.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/gitlab-org/api/client-go.git")
-             (commit (string-append "v" version))))
+              (url "https://gitlab.com/gitlab-org/api/client-go")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xrqyqvmaslfr9cj91519qi5f2sd3l2mvipxgjf13vd3v4fchacn"))))
+        (base32 "06bnaja7b0q2wgznqg9rz7kdx5wq70hmdn9ymf2546svwibmz4vk"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -11582,18 +11491,27 @@ https://openid.net/developers/how-connect-works/}.")
               (string-join
                ;; Tests requir network access.
                (list "TestGetMergeRequest"
+                     "TestPagination_Scan2"
+                     "TestPagination_Scan2_Error"
+                     "TestPagination_ScanAndCollect"
+                     "TestPagination_Scan_Error"
+                     "TestPagination_Scan_KeysetBased"
+                     "TestPagination_Scan_OffsetBased"
                      "TestRepositoryFilesService_CreateFile"
                      "TestRepositoryFilesService_DeleteFile"
                      "TestRepositoryFilesService_GetFile"
                      "TestRepositoryFilesService_GetFileBlame"
                      "TestRepositoryFilesService_GetFileMetaData"
                      "TestRepositoryFilesService_GetRawFile"
+                     "TestRepositoryFilesService_GetRawFileMetaData"
                      "TestRepositoryFilesService_UpdateFile"
                      "TestRepositorySubmodulesService_UpdateSubmodule"
+                     "TestTagsService_GetTagSignature"
                      "TestUpdateRepositoryEnvironmentsEscapesURL")
                "|"))))
     (native-inputs
-     (list go-github-com-stretchr-testify))
+     (list go-github-com-stretchr-testify
+           go-go-uber-org-mock))
     (propagated-inputs
      (list go-github-com-google-go-querystring
            go-github-com-hashicorp-go-cleanhttp
@@ -12948,6 +12866,30 @@ the standard @code{context} package to store request-scoped values.")
      "Package grpc implements an RPC system called @code{gRPC}.")
     (license license:asl2.0)))
 
+;; This to satisfy alternative import path, some of the projects still use it
+;; in go.mod.
+(define-public go-gopkg-in-evanphx-json-patch-v4
+  (package/inherit go-github-com-evanphx-json-patch
+    (name "go-gopkg-in-evanphx-json-patch-v4")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-evanphx-json-patch)
+       ((#:import-path "github.com/evanphx/json-patch")
+        "gopkg.in/evanphx/json-patch.v4")
+       ((#:unpack-path "github.com/evanphx/json-patch")
+        "gopkg.in/evanphx/json-patch.v4")
+       ((#:phases _ '%standard-phases)
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'remove-v5-module
+              (lambda* (#:key import-path #:allow-other-keys)
+                (delete-file-recursively
+                 (string-append "src/" import-path "/v5"))))
+            (add-before 'build 'adjust-import-path
+              (lambda* (#:key import-path #:allow-other-keys)
+                (with-directory-excursion (string-append "src/" import-path)
+                  (substitute* (find-files "." "\\.go$")
+                    (("github.com/evanphx/json-patch") import-path)))))))))))
+
 (define-public go-gopkg-in-go-jose-go-jose-v2
   (package
     (inherit go-github-com-go-jose-go-jose-v3)
@@ -13027,17 +12969,17 @@ docs}.")
 (define-public go-k8s-io-kube-openapi
   (package
     (name "go-k8s-io-kube-openapi")
-    (version "0.0.0-20250318190949-c8a335a9a2ff")
+    (version "0.0.0-20250905212525-66792eed8611")
     ;; XXX: Unbundle third_party in pkg.
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/kubernetes/kube-openapi")
-             (commit (go-version->git-ref version))))
+              (url "https://github.com/kubernetes/kube-openapi")
+              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02l2rp1fgraincay5xj9ar3l5v60svq07i6b2hamn74i3xkm3lis"))
+        (base32 "1979alrrlym968jxdcxc1lpm3b13bnkyayg042gk6xn0kb97mqma"))
        ;; XXX: test/integration contains submodule with it's own go.mod.
        (modules '((guix build utils)))
        (snippet
@@ -13054,15 +12996,16 @@ docs}.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:skip-build? #t
-      #:import-path "k8s.io/kube-openapi"))
+      #:import-path "k8s.io/kube-openapi"
+      ;; Tests are not copatible with Go 1.24+.
+      #:test-flags #~(list "-vet=off")))
     (native-inputs
-     (list go-github-com-getkin-kin-openapi
-           go-sigs-k8s-io-randfill
-           go-github-com-onsi-ginkgo-v2
+     (list go-github-com-onsi-ginkgo-v2
            go-github-com-onsi-gomega
-           go-github-com-stretchr-testify))
+           go-github-com-stretchr-testify
+           ;; go-golang-org-x-tools-go-packages-packagestest
+           go-sigs-k8s-io-yaml))
     (propagated-inputs
      (list go-github-com-emicklei-go-restful-v3
            go-github-com-go-openapi-jsonreference
@@ -13073,14 +13016,17 @@ docs}.")
            go-github-com-munnerz-goautoneg
            go-github-com-nytimes-gziphandler
            go-github-com-spf13-pflag
+           go-github-com-stretchr-testify
+           go-go-yaml-in-yaml-v2
+           go-go-yaml-in-yaml-v3
            go-golang-org-x-tools
            go-google-golang-org-protobuf
-           go-gopkg-in-yaml-v3
            go-k8s-io-gengo-v2
            go-k8s-io-klog-v2
            go-k8s-io-utils
            go-sigs-k8s-io-json
-           go-sigs-k8s-io-structured-merge-diff-v4))
+           go-sigs-k8s-io-randfill
+           go-sigs-k8s-io-structured-merge-diff-v6))
     (home-page "https://github.com/kubernetes/kube-openapi")
     (synopsis "Kubernetes OpenAPI spec generation & serving")
     (description
@@ -13502,38 +13448,6 @@ go-github-com-tdewolff-minify-v2 source.")))
      "TLSRouter is a TLS proxy that routes connections to backends based on
 the TLS @acronym{SNI, Server Name Indication} of the TLS handshake.  It
 carries no encryption keys and cannot decode the traffic that it proxies.")))
-
-(define-public gron
-  (package
-    (name "gron")
-    (version "0.7.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/tomnomnom/gron")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1sj34b6yv0qigy3aq7qmwf8bqxp1a8qh9p10lzkpw58s1c0iyh36"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.23
-      #:install-source? #f
-      #:import-path "github.com/tomnomnom/gron"))
-    (native-inputs
-     (list go-github-com-fatih-color
-           go-github-com-mattn-go-colorable
-           go-github-com-nwidger-jsoncolor
-           go-github-com-pkg-errors))
-    (home-page "https://github.com/tomnomnom/gron")
-    (synopsis "Transform JSON to make it easier to grep")
-    (description
-     "This package transforms JSON into discrete assignments to make it easier
-to use line-based tools such as grep to search for what you want and see the
-absolute \"path\" to it.")
-    (license license:expat)))
 
 (define-public swag
   (package/inherit go-github-com-swaggo-swag

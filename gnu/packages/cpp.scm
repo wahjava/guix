@@ -943,7 +943,7 @@ utilities used across the hypr* ecosystem.")
 (define-public hyprlang
   (package
     (name "hyprlang")
-    (version "0.6.3")
+    (version "0.6.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -952,7 +952,7 @@ utilities used across the hypr* ecosystem.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "05p4nghkr0qpqjvcjrgxjqjwswmvg245hmhlcgdacpvdfmn38m4i"))))
+                "080kibsllxfrlck4gix0ygr12gnvf9p9ybi589fsvpab9p9xw857"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -965,9 +965,9 @@ utilities used across the hypr* ecosystem.")
                  (string-append
                   "set(PKG_CONFIG_EXECUTABLE " #$(pkg-config-for-target) ")\n"
                   all))))))))
-    (native-inputs (list gcc-14 pkg-config))
+    (native-inputs (list gcc-15 pkg-config))
     (inputs (list hyprutils))
-    (home-page "https://wiki.hyprland.org/Hypr-Ecosystem/hyprlang/")
+    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprlang/")
     (synopsis "Official implementation library for hypr config language")
     (description
      "This package provides the official implementation for hypr configuration
@@ -977,7 +977,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.8.1")
+    (version "0.8.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -986,7 +986,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15iwcgm6v7y4cm8l9yh3aig31va5xifswm47bind90mac7srar0p"))))
+                "0rzx0anwb68qxrjinxrw1pvlzmjk2bsp79wgnkvg95sdmabxw451"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -3209,20 +3209,6 @@ validation.")
     (home-page "https://github.com/simdjson/simdjson")
     (license license:asl2.0)))
 
-(define-public simdjson-0.6
-  (package
-    (inherit simdjson)
-    (version "0.6.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/simdjson/simdjson")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name (package-name simdjson) version))
-              (sha256
-               (base32
-                "038i9nmk85vpxvs546w6cyci0ppdrrp5wnlv1kffxw29x71a3g5l"))))))
-
 (define-public bloomberg-bde-tools
   (package
     (name "bloomberg-bde-tools")
@@ -4077,6 +4063,115 @@ for C++17 string-view.")
       (synopsis "Collection of string utilities for C++")
       (description "This package provides simple string utilities for C++.")
       (license license:gpl3+))))
+
+(define-public tfel
+  (package
+    (name "tfel")
+    (version "4.2.2") ;Keep in sync with compatible version of mgis
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/thelfer/tfel")
+             (commit (string-append "TFEL-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14br7n76qfh651hvmn1i0ma5lr5ayhvj4ay2182isx26m1j15cfz"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-Denable-portable-build=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Test targets are not build by default. By building these
+          ;; additional targets the majority of tests (over 6000) can
+          ;; be run.
+          (add-after 'build 'build-test-targets
+            (lambda* (#:key tests? parallel-build? #:allow-other-keys)
+              (if tests?
+                  (invoke "make"
+                          "MFrontGenericBehaviours"
+                          "MFrontGenericBehaviours2"
+                          "MFrontGenericBehaviours3"
+                          "-j"
+                          (if parallel-build?
+                              (number->string (parallel-job-count)) "1"))
+                  (format #t "test suite not run~%"))))
+          (replace 'check
+            (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+              (if tests?
+                  (invoke "ctest"
+                          "-R"
+                          "generic"
+                          "-E"
+                          "brick"
+                          "-j"
+                          (if parallel-tests?
+                              (number->string (parallel-job-count)) "1"))
+                  (format #t "test suite not run~%")))))))
+    (home-page "https://thelfer.github.io/tfel/web/index.html")
+    (synopsis "TFEL library and MFront code generator")
+    (description
+     "MFront is a code generator which translates a set of closely
+related domain specific languages into plain C++ on top of the TFEL library.")
+    ;; TFEL/MFront is released under either the GNU GPL licence with linking
+    ;; exception or the CECILL-A licence:
+    (license (list license:gpl3+ license:cecill))))
+
+(define-public mgis
+  (package
+    (name "mgis")
+    (version "2.2") ;Keep in sync with compatible version of tfel
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/thelfer/MFrontGenericInterfaceSupport")
+             (commit (string-append "MFrontGenericInterfaceSupport-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00ij7gaqrzakvc3n6irq5z5b5nd08kik5i87prvnp9604ssa6h8k"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-Denable-doxygen-doc=OFF" "-Denable-portable-build=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Test targets are not build by default. By building these
+          ;; additional targets some tests can be run.
+          (add-after 'build 'build-test-targets
+            (lambda* (#:key tests? parallel-build? #:allow-other-keys)
+              (if tests?
+                  (invoke "make"
+                          "BehaviourTest"
+                          "MFrontGenericBehaviourInterfaceTest"
+                          "MFrontGenericBehaviourInterfaceTest2"
+                          "MFrontGenericBehaviourInterfaceTest3"
+                          "-j"
+                          (if parallel-build?
+                              (number->string (parallel-job-count)) "1"))
+                  (format #t "test suite not run~%"))))
+          (replace 'check
+            (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+              (if tests?
+                  (invoke "ctest" "-R" "MFrontGenericBehaviourInterfaceTest"
+                          "-j"
+                          (if parallel-tests?
+                              (number->string (parallel-job-count)) "1"))
+                  (format #t "test suite not run~%")))))))
+    (inputs (list tfel))
+    (home-page "https://thelfer.github.io/mgis/web/index.html")
+    (synopsis
+     "MFrontGenericInterfaceSupport provides tools to handle MFront behaviours")
+    (description
+     "Those tools are meant to be used by solver developers to e.g. load
+MFront behaviours from external shared libraries and retrieve all relevant
+meta data function.")
+    ;; MFrontGenericInterfaceSupport is released under either the GNU LGPL license
+    ;; or the CECILL-C license:
+    (license (list license:lgpl3 license:cecill-c))))
 
 (define-public tsl-hopscotch-map
   (package

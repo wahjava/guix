@@ -1683,12 +1683,7 @@ is based off of Slim mode.")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs
      (list texinfo))
     (home-page "https://github.com/protesilaos/show-font")
@@ -2540,14 +2535,8 @@ for filesystem and generic servers.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "mct.info" (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (home-page "https://protesilaos.com/emacs/mct")
     (synopsis "Enhancement of the default Emacs minibuffer completion UI")
     (description "Minibuffer and Completions in Tandem, also known as MCT, or
@@ -6189,11 +6178,7 @@ of bibliographic references.")
                             (rename-file f (basename f)))
                           el-files))))
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs" "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs
      (list emacs-compat))
@@ -6273,12 +6258,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/cape")
@@ -14340,15 +14320,8 @@ them easier to distinguish from other, less important buffers.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda* (#:key outputs #:allow-other-keys)
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "embark.info"
-                            (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs
      (list emacs-avy emacs-consult))
@@ -14441,11 +14414,8 @@ interface.")
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda _
-              (invoke "makeinfo" "orderless.texi")
-              (install-file "orderless.info"
-                            (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/oantolin/orderless")
@@ -14478,12 +14448,7 @@ style, or as multiple word prefixes.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/consult")
@@ -14863,12 +14828,7 @@ expansion and overwriting the marked region with a new snippet completion.")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs
      (list emacs-compat))
@@ -20879,14 +20839,8 @@ graph.  (Optional dependencies GraphViz, D3js, to be acquired separately!)
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda* (#:key outputs #:allow-other-keys)
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "logos.info" (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (home-page "https://protesilaos.com/emacs/logos")
     (synopsis "Simple focus mode for Emacs")
     (description "This package provides a simple focus mode which can be
@@ -20926,12 +20880,7 @@ structure, or any other pattern.")
                   inputs
                   "share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga")))))
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (inputs (list ffmpeg sound-theme-freedesktop))
     (home-page "https://protesilaos.com/emacs/tmr/")
@@ -20963,12 +20912,7 @@ using a convenient notation.")
         #:phases
         #~(modify-phases %standard-phases
             (add-before 'install 'makeinfo
-              (lambda _
-                (invoke "emacs"
-                        "--batch"
-                        "--eval=(require 'ox-texinfo)"
-                        "--eval=(find-file \"README.org\")"
-                        "--eval=(org-texinfo-export-to-info)"))))))
+              (lambda _ (emacs-makeinfo))))))
       (native-inputs
        (list texinfo))
       (home-page "https://protesilaos.com/emacs/beframe")
@@ -21423,12 +21367,7 @@ been adapted to also work with mu4e.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list texinfo))
     (propagated-inputs
      (list emacs-compat))
@@ -21854,14 +21793,8 @@ number on the left margin in Emacs.")
       #:tests? #f                       ; no tests
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "lin.info" (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (home-page "https://protesilaos.com/emacs/lin")
     (synopsis "Make Hl Line mode more suitable for selection UIs")
     (description
@@ -28168,14 +28101,8 @@ subscription.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "pulsar.info" (string-append #$output "/share/info")))))))
+          (add-before 'install 'makeinfo
+            (lambda _ (emacs-makeinfo))))))
     (home-page "https://protesilaos.com/emacs/pulsar")
     (synopsis "Pulse highlight line on demand or after running select functions")
     (description "This package temporarily highlights the current line after a
@@ -32864,12 +32791,7 @@ buffer displays recursive dir sizes.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs (list emacs-ert-runner texinfo))
     (home-page "https://protesilaos.com/emacs/dired-preview")
     (synopsis "Automatically preview file at point in Dired")
@@ -39048,7 +38970,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.22")
+    (version "0.25")
     (source
      (origin
        (method git-fetch)
@@ -39057,9 +38979,9 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a7s2z5jpf1zff23wlh8rrdy3hbrhg7p8ybraay9wy4qm00dzbbm"))))
+        (base32 "0jwr4kj6vkkijkjdngmw7l6c929rcxy3b86mfcjk8ahxf0xhcav5"))))
     (build-system emacs-build-system)
-    (arguments (list #:tests? #f)) ; no tests
+    (arguments (list #:tests? #f))      ;depends on exemplify-ert
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
     (home-page "https://codeberg.org/martianh/fj.el")
     (synopsis "Client for Forgejo instances")
@@ -39544,14 +39466,7 @@ Emacs that integrate with major modes like Org-mode.")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'install 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"doc/modus-themes.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "doc/modus-themes.info"
-                            (string-append #$output "/share/info")))))))
+            (lambda _ (emacs-makeinfo))))))
     (home-page "https://protesilaos.com/modus-themes/")
     (synopsis "Accessible themes for Emacs (WCAG AAA standard)")
     (description
@@ -40087,11 +40002,11 @@ service, and connect it with Emacs via inter-process communication.")
       (license license:gpl3+))))
 
 (define-public emacs-telega
-  (let ((commit "ff06f58364375c96477561f265e3dbf55a8ad231")
+  (let ((commit "1cedc1a8c838102b342d537a742e5eab3dfad3ce")
         (revision "0"))
     (package
       (name "emacs-telega")
-      (version (git-version "0.8.452" revision commit))
+      (version (git-version "0.8.522" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -40099,7 +40014,7 @@ service, and connect it with Emacs via inter-process communication.")
                (url "https://github.com/zevlg/telega.el")
                (commit commit)))
          (sha256
-          (base32 "0bircjqj2zm67zspsy2r76zygvkxq6y65f3bchlhhhj1rr19kalh"))
+          (base32 "036k7vnh6i6la1sa854f4l8phx5ymvgqrx6qqpnsssr5yd0a7drb"))
          (file-name (git-file-name "emacs-telega" version))
          (patches
           (search-patches "emacs-telega-path-placeholder.patch"
@@ -42429,15 +42344,8 @@ org-mode templates.")
        (list
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'install 'makeinfo
-              (lambda _
-                (invoke "emacs"
-                        "--batch"
-                        "--eval=(require 'ox-texinfo)"
-                        "--eval=(find-file \"org-glossary.org\")"
-                        "--eval=(org-texinfo-export-to-info)")
-                (install-file "org-glossary.info"
-                              (string-append #$output "/share/info")))))))
+            (add-before 'install 'makeinfo
+              (lambda _ (emacs-makeinfo "org-glossary.org"))))))
       (native-inputs (list texinfo))
       (home-page "https://git.tecosaur.net/tec/org-glossary")
       (synopsis "Interact with glossary-like structures in Org documents")
@@ -43856,12 +43764,7 @@ and preferred services can easily be configured.")
                             (rename-file f (basename f)))
                           el-files))))
           (add-after 'move-source-files 'makeinfo
-            (lambda _
-              (invoke "emacs"
-                      "--batch"
-                      "--eval=(require 'ox-texinfo)"
-                      "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)"))))))
+            (lambda _ (emacs-makeinfo))))))
     (native-inputs
      (list texinfo))
     (propagated-inputs
@@ -44615,16 +44518,10 @@ used with or without Org Modern mode.")
        (list
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'install 'makeinfo
+            (add-before 'install 'makeinfo
               (lambda _
-                (invoke "emacs"
-                        "--batch"
-                        "--eval=(require 'ox-texinfo)"
-                        "--eval=(find-file \"README.org\")"
-                        "--eval=(org-texinfo-export-to-info)")
-                (rename-file "README.info" "org-margin.info")
-                (install-file "org-margin.info"
-                              (string-append #$output "/share/info")))))))
+                (emacs-makeinfo)
+                (rename-file "README.info" "org-margin.info"))))))
       (native-inputs (list texinfo))
       (license license:gpl3+)
       (home-page "https://github.com/rougier/org-margin")
@@ -44744,12 +44641,12 @@ hacker.")
                                               space "\"")))))
                         (add-after 'unpack 'makeinfo
                           (lambda _
-                            (invoke "emacs"
-                             "--batch"
-                             "--eval=(require 'ox-texinfo)"
-                             "--eval=(setq org-export-with-broken-links t)"
-                             "--eval=(find-file \"README.org\")"
-                             "--eval=(org-texinfo-export-to-info)"))))))
+                            (emacs-makeinfo
+                             "README.org"
+                             '(progn
+                               (require 'ox-texinfo)
+                               (setq org-texinfo-with-broken-links t)
+                               (org-texinfo-export-to-info))))))))
     (inputs (list curl))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))

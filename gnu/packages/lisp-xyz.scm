@@ -47,6 +47,7 @@
 ;;; Copyright © 2024 Grigory Shepelev <shegeley@gmail.com>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;; Copyright © 2025 Simen Endsjø <contact@simendsjo.me>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2854,7 +2855,9 @@ cartesian product.")
                  ((".*\"PyParser_SimpleParseStringFlagsFilename\".*") "")
                  ((".*\"PyParser_SimpleParseFile\".*") "")
                  ((".*\"PyParser_SimpleParseFileFlags\".*") "")
-                 ((".*\"PyLong_FromUnicode\".*") "")))))))
+                 ((".*\"PyLong_FromUnicode\".*") "")
+                 ((".*\"PyUnicodeEncodeError_Create\".*") "")
+                 ((".*\"PyUnicodeTranslateError_Create\".*") "")))))))
       (native-inputs
        (list sbcl-cl-fad sbcl-lift sbcl-cl-quickcheck))
       (inputs
@@ -3031,8 +3034,8 @@ Lisp.")
   (sbcl-package->ecl-package sbcl-calm))
 
 (define-public sbcl-cambl
-  (let ((commit "7016d1a98215f82605d1c158e7a16504ca1f4636")
-        (revision "1"))
+  (let ((commit "c21b8afe8869401d618efc9f0ef406a28d89c3b7")
+        (revision "2"))
     (package
       (name "sbcl-cambl")
       (version (git-version "4.0.0" revision commit))
@@ -3042,17 +3045,17 @@ Lisp.")
          (uri (git-reference
                (url "https://github.com/jwiegley/cambl")
                (commit commit)))
-         (file-name (git-file-name "cambl" version))
+         (file-name (git-file-name "cl-cambl" version))
          (sha256
-          (base32 "103mry04j2k9vznsxm7wcvccgxkil92cdrv52miwcmxl8daa4jiz"))))
+          (base32 "1jp0i0pwdvzg689wx2rhm2ajm4w8b55rw6q6jas3498myy2gif4d"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-xlunit))
       (inputs
-       `(("alexandria" ,sbcl-alexandria)
-         ("cl-containers" ,sbcl-cl-containers)
-         ("local-time" ,sbcl-local-time)
-         ("periods" ,sbcl-periods)))
+       (list sbcl-alexandria
+             sbcl-cl-containers
+             sbcl-local-time
+             sbcl-periods))
       (synopsis "Commoditized amounts and balances for Common Lisp")
       (description
        "CAMBL is a Common Lisp library providing a convenient facility for
@@ -4545,8 +4548,8 @@ execution mechanism for Common Lisp.")))
   (sbcl-package->ecl-package sbcl-async-process))
 
 (define-public sbcl-cl-autowrap
-  (let ((revision "2")
-        (commit "a5d71ebd7c21b87f449db1e16ab815750d7c0ea4"))
+  (let ((revision "3")
+        (commit "4bba9e37b59cd191dea150a89aef7245a40b1c9d"))
     ;; no tagged branches
     (package
       (name "sbcl-cl-autowrap")
@@ -4559,17 +4562,25 @@ execution mechanism for Common Lisp.")))
                (commit commit)))
          (file-name (git-file-name "cl-autowrap" version))
          (sha256
-          (base32 "0795c817m1c41cz3ywzzg83z4pgkxdg6si553pay9mdgjvmrwmaw"))))
+          (base32 "1sfvhyrwm9dhxi0y42xp7mx8mvs6lmq3bzxdx34frxni5srcgly0"))))
       (build-system asdf-build-system/sbcl)
-      (arguments
-       `(#:asd-systems '("cl-plus-c" "cl-autowrap")))
       (inputs
-       `(("alexandria" ,sbcl-alexandria)
-         ("cffi" ,sbcl-cffi)
-         ("cl-json" ,sbcl-cl-json)
-         ("cl-ppcre" ,sbcl-cl-ppcre)
-         ("defpackage-plus" ,sbcl-defpackage-plus)
-         ("trivial-features" ,sbcl-trivial-features)))
+       (list libffi
+             sbcl-alexandria
+             sbcl-cffi
+             sbcl-cl-json
+             sbcl-cl-ppcre
+             sbcl-defpackage-plus
+             sbcl-trivial-features))
+      (arguments
+       (list #:asd-systems ''("cl-autowrap" "cl-plus-c" "cl-autowrap/libffi")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "autowrap-libffi/library.lisp"
+                       (("libffi.so")
+                        (search-input-file inputs "lib/libffi.so"))))))))
       (home-page "https://github.com/rpav/cl-autowrap")
       (synopsis "FFI wrapper generator for Common Lisp")
       (description "This is a c2ffi-based wrapper generator for Common Lisp.")
@@ -7431,8 +7442,8 @@ as possible).")
   (sbcl-package->ecl-package sbcl-cl-json-pointer))
 
 (define-public sbcl-cl-ledger
-  (let ((commit "08e0be41795e804cd36142e51756ad0b1caa377b")
-        (revision "1"))
+  (let ((commit "b0174f5634e389fb022ae72cc527a13b719655bd")
+        (revision "2"))
     (package
       (name "sbcl-cl-ledger")
       (version (git-version "4.0.0" revision commit))
@@ -7442,26 +7453,24 @@ as possible).")
          (uri (git-reference
                (url "https://github.com/ledger/cl-ledger")
                (commit commit)))
-         (file-name (git-file-name name version))
+         (file-name (git-file-name "cl-ledger" version))
          (sha256
-          (base32
-           "1via0qf6wjcyxnfbmfxjvms0ik9j8rqbifgpmnhrzvkhrq9pv8h1"))))
+          (base32 "02zg53j8d7lpyafif9kplp6clchz4id429j0dc5w80wvcwfal123"))))
       (build-system asdf-build-system/sbcl)
       (inputs
-       `(("cambl" ,sbcl-cambl)
-         ("cl-ppcre" ,sbcl-cl-ppcre)
-         ("local-time" ,sbcl-local-time)
-         ("periods" ,sbcl-periods)))
+       (list sbcl-cambl
+             sbcl-cl-ppcre
+             sbcl-local-time
+             sbcl-periods))
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-system-definition
-             (lambda _
-               (substitute* "cl-ledger.asd"
-                 (("  :build-operation program-op") "")
-                 (("  :build-pathname \"cl-ledger\"") "")
-                 (("  :entry-point \"ledger::main\"") ""))
-               #t)))))
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-system-definition
+                   (lambda _
+                     (substitute* "cl-ledger.asd"
+                       (("  :build-operation program-op") "")
+                       (("  :build-pathname \"cl-ledger\"") "")
+                       (("  :entry-point \"ledger::main\"") "")))))))
       (synopsis "Common Lisp port of the Ledger accounting system")
       (description
        "CL-Ledger is a Common Lisp port of the Ledger double-entry accounting
@@ -24978,8 +24987,8 @@ table.")
   (sbcl-package->clasp-package sbcl-periodic-table))
 
 (define-public sbcl-periods
-  (let ((commit "60383dcef88a1ac11f82804ae7a33c361dcd2949")
-        (revision "2"))
+  (let ((commit "1494b8f6887c3ce33d0bf094fd7ec7b77d38c998")
+        (revision "3"))
     (package
       (name "sbcl-periods")
       (version (git-version "0.0.2" revision commit))
@@ -24989,14 +24998,13 @@ table.")
          (uri (git-reference
                (url "https://github.com/jwiegley/periods")
                (commit commit)))
-         (file-name (git-file-name name version))
+         (file-name (git-file-name "cl-periods" version))
          (sha256
-          (base32
-           "1ym2j4an9ig2hl210jg91gpf7xfnp6mlhkw3n9kkdnwiji3ipqlk"))))
+          (base32 "1m958891rl3sin6h6pgfjdh6ay1s7kfxbxpqvlnzk9rqid0hcs15"))))
       (build-system asdf-build-system/sbcl)
       (inputs
-       `(("local-time" ,sbcl-local-time)
-         ("series" ,sbcl-series)))
+       (list sbcl-local-time
+             sbcl-series))
       (arguments
        '(#:asd-systems '("periods"
                          "periods-series")))
@@ -27720,8 +27728,8 @@ atlases.")
   (sbcl-package->ecl-package sbcl-sdf))
 
 (define-public sbcl-sdl2
-  (let ((commit "80410b514570ca06894675d4a2a5fc93287ea7b6")
-        (revision "2"))
+  (let ((commit "8c78e68cc5c1477dcd4c81a707e35912c2529536")
+        (revision "3"))
     (package
       (name "sbcl-sdl2")
       (version (git-version "0.0.0" revision commit))
@@ -27733,7 +27741,7 @@ atlases.")
                (commit commit)))
          (file-name (git-file-name "cl-sdl2" version))
          (sha256
-          (base32 "0sjy4k04k0hdhwpr57ns16ag3za0kz4laclbk17i91ql7qdjw9z2"))))
+          (base32 "0ix2nsg2ghmkcfdhwlvgylfijg0nzbadgfch5dgyakmxmiv3rs4k"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        `(#:asd-systems '("sdl2" "sdl2/examples")
@@ -27766,8 +27774,8 @@ C Library.")
   (sbcl-package->ecl-package sbcl-sdl2))
 
 (define-public sbcl-sdl2-image
-  (let ((commit "9c05c806286b66a5d9861ef829cfe68c4f3da077")
-        (revision "1"))
+  (let ((commit "3963be863e1df371b2c3f17f1bc59bc572c5954b")
+        (revision "2"))
     (package
       (name "sbcl-sdl2-image")
       (version (git-version "1.0" revision commit))
@@ -27779,7 +27787,7 @@ C Library.")
                (commit commit)))
          (file-name (git-file-name "cl-sdl2-image" version))
          (sha256
-          (base32 "1nr7mdl125q32m15m8rdlza5kwi7m0birh1cq846pyy6zl1sjms7"))))
+          (base32 "1jzrz3ppr5nbh0w6cvbbpv5x6gdq71a6v2qanvnjvcjs0zwf97iq"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list #:phases
@@ -27842,8 +27850,8 @@ games.")
   (sbcl-package->ecl-package sbcl-sdl2kit))
 
 (define-public sbcl-sdl2-mixer
-  (let ((commit "fdcc7ee7935dd01fd338e22690451db2cf126156")
-        (revision "1"))
+  (let ((commit "580d63402938e073705ab1905b6f9a4b9a48d175")
+        (revision "2"))
     (package
       (name "sbcl-sdl2-mixer")
       (version (git-version "1.0" revision commit))
@@ -27855,7 +27863,7 @@ games.")
                (commit commit)))
          (file-name (git-file-name "cl-sdl2-mixer" version))
          (sha256
-          (base32 "0g6ywb3gqr0rif4z6kkz6m8vyv8nrr5wr1w9sc6d3zypbbnqgbp6"))))
+          (base32 "0d33pmyrcni90qfj0d4hxf97may1bv7i9z4a6rj02dw254n9r9lh"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list #:phases
@@ -27863,8 +27871,13 @@ games.")
                  (add-after 'unpack 'fix-paths
                    (lambda* (#:key inputs #:allow-other-keys)
                      (substitute* "src/library.lisp"
-                       (("libSDL2_mixer-2.0.so.0")
-                        (search-input-file inputs "/lib/libSDL2_mixer-2.0.so.0"))))))))
+                       (("\"libSDL2_mixer-2.0.so.0\" \"libSDL2_mixer\"")
+                        (string-append
+                         "\""
+                         (search-input-file inputs "/lib/libSDL2_mixer-2.0.so.0")
+                         "\" \""
+                         (search-input-file inputs "/lib/libSDL2_mixer.so")
+                         "\""))))))))
       (inputs
        (list sbcl-alexandria
              sbcl-cl-autowrap

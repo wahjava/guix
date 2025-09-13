@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -42,6 +43,72 @@
 ;;;
 ;;; Code:
 
+(define-public go-chroma
+  (package
+    (name "go-chroma")
+    (version "2.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/alecthomas/chroma")
+              (commit (string-append "v" version ))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05w4hnfcxqdlsz7mkc0m3jbp1aj67wzyhq5jh8ldfgnyjnlafia3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:embed-files #~(list ".*\\.xml")
+      #:import-path "github.com/alecthomas/chroma/cmd/chroma"
+      #:unpack-path "github.com/alecthomas/chroma"))
+    (native-inputs
+     (list go-github-com-alecthomas-chroma-v2
+           go-github-com-alecthomas-kong
+           go-github-com-mattn-go-colorable
+           go-github-com-mattn-go-isatty))
+    (home-page "https://github.com/alecthomas/chroma")
+    (synopsis "General purpose syntax highlighter")
+    (description
+     "This package implements a syntax highlighter for a long list of
+programming languages.  It takes source code and other structured text and
+converts it into syntax highlighted HTML, ANSI-coloured text, etc.  Chroma is
+based heavily on @url{http://pygments.org/, Pygments}, and includes
+translators for Pygments lexers and styles.")
+    (license license:expat)))
+
+(define-public go-fxlint
+  (package
+    (name "go-fxlint")
+    (version "0.0.0-20250513223611-0a30575829d4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/uber-go/fx")
+              (commit (go-version->git-ref version
+                                           #:subdir "tools"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "058pnalgm23in7ijz1zakmn5appss5la9v0yzrh8psi8d1rzidsj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:install-source? #f
+      #:import-path "go.uber.org/fx/tools/cmd/fxlint"
+      #:unpack-path "go.uber.org/fx"))
+    (native-inputs
+     (list go-golang-org-x-tools))
+    (home-page "https://go.uber.org/fx")
+    (synopsis "Verify FX events")
+    (description
+     "This Package implements a Go analysis pass that verifies that an
+@code{fxevent.Logger} implementation handles all known fxevent types.  As a
+special case for no-op or fake fxevent.Loggers, it ignores implementations
+that handle none of the event types.")
+    (license license:expat)))
 
 (define-public godef
   (package
@@ -77,7 +144,7 @@ definitions in Go programs.")
 (define-public gomacro
   (package
     (name "gomacro")
-    (version "0.0.0-20240506194242-2ff796e3da10")
+    (version "0.0.0-20250712144029-20095acfbf18")
     (source
      (origin
        (method git-fetch)
@@ -86,7 +153,7 @@ definitions in Go programs.")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17v3vlq5s5mxplzvs5d414shd2mqkfj3jwxzfgq6cnr9hgr4b9kc"))))
+        (base32 "1w7gcrympnxwrscmhwahx3anm2yp1ali8xqh1s23q93gyznzcpj5"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -184,20 +251,19 @@ editor.")
 (define-public gore
   (package
     (name "gore")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/x-motemen/gore")
-             (commit (string-append "v" version))))
+              (url "https://github.com/x-motemen/gore")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0d8ayzni43j1y02g9j2sx1rhml8j1ikbbzmcki2lyi4j0ix5ys7f"))))
+        (base32 "1x67npdwmrpa11xg93756bfbc2mxrbf04pk8dk4i8hx67wr95z0h"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23                      ;required by motemen-go-quickfix
       #:import-path "github.com/x-motemen/gore"
       #:install-source? #f
       #:test-flags
@@ -208,9 +274,11 @@ editor.")
                        (list "TestAction_ArgumentRequired"
                              "TestAction_Clear"
                              "TestAction_CommandNotFound"
+                             "TestAction_Doc"
                              "TestAction_Help"
                              "TestAction_Import"
                              "TestAction_Quit"
+                             "TestAction_Type"
                              "TestSessionEval_AutoImport"
                              "TestSessionEval_CompileError"
                              "TestSessionEval_Const"
@@ -218,6 +286,7 @@ editor.")
                              "TestSessionEval_Declarations"
                              "TestSessionEval_Func"
                              "TestSessionEval_Gomod"
+                             "TestSessionEval_Gomod_AutoImport"
                              "TestSessionEval_Gomod_CompleteImport"
                              "TestSessionEval_Gomod_DeepDir"
                              "TestSessionEval_Gomod_Outside"
@@ -229,6 +298,7 @@ editor.")
                              "TestSessionEval_Struct"
                              "TestSessionEval_TokenError"
                              "TestSessionEval_import"
+                             "TestSession_ExtraFiles"
                              "TestSession_IncludePackage"
                              "TestSession_completeWord")
                        "|"))

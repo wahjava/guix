@@ -35,10 +35,12 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages gps)
+  #:use-module (gnu packages guile)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages nettle)
+  #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
@@ -46,6 +48,7 @@
   #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages web)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system waf)
   #:use-module (guix download)
@@ -167,7 +170,13 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
                    (rename-file "sntp/libevent:build-aux"
                                 "sntp/libevent/build-aux")))))
     (native-inputs (list which pkg-config))
-    (inputs (cons* openssl libevent
+    (inputs (cons* guile-3.0    ; for wrap-script
+                   libevent
+                   openssl
+                   perl
+                   perl-http-tiny
+                   perl-io-socket-ssl
+                   perl-net-ssleay
                    ;; Build with POSIX capabilities support on GNU/Linux.  This allows
                    ;; 'ntpd' to run as non-root (when invoked with '-u'.)
                    (if (target-linux?)
@@ -187,7 +196,32 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
             (lambda _
               (substitute* "tests/libntp/Makefile.in"
                 (("test-decodenetnum\\$\\(EXEEXT\\) ")
-                 "")))))))
+                 ""))))
+          (add-after 'unpack 'update-leap-file-source
+            ;; Follow the text redirect from the IETF.
+            (lambda _
+              (substitute* '("scripts/update-leap/invoke-update-leap.texi"
+                             "scripts/update-leap/update-leap.in")
+                (("https://www.ietf.org/timezones/data/leap-seconds.list")
+                 "https://data.iana.org/time-zones/data/leap-seconds.list"))))
+          (add-after 'unpack 'use-absolute-path-in-files
+            (lambda _
+              (substitute* "scripts/lib/NTP/Util.pm"
+                (("(ntpq_path = ')ntpq(';)" _ first last)
+                 (string-append first #$output "/bin/ntpq" last))
+                (("(sntp_path = ')sntp(';)" _ first last)
+                 (string-append first #$output "/bin/sntp" last)))
+              (substitute* "scripts/calc_tickadj/calc_tickadj.in"
+                (("`tickadj`")
+                 (string-append "`" #$output "/bin/tickadj`")))))
+          (add-after 'install 'adjust-scripts
+            (lambda _
+              (substitute* (string-append #$output "/bin/calc_tickadj")
+                (("/etc/ntp/drift")
+                 "/var/run/ntpd/ntp.drift"))
+              (wrap-script (string-append #$output "/bin/update-leap")
+                `("PERL5LIB" ":" prefix
+                  (,(getenv "PERL5LIB")))))))))
     (build-system gnu-build-system)
     (synopsis "Real time clock synchronization system")
     (description "NTP is a system designed to synchronize the clocks of

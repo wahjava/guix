@@ -2585,12 +2585,12 @@ other HTTP libraries.")
        (method url-fetch)
        (uri (pypi-uri "httpie" version))
        (sha256
-        (base32
-         "140w4mr0w7scpf4j5qm4h475vbwrgxzkdwyygwcmql1r1cgngywb"))))
-    (build-system python-build-system)
+        (base32 "140w4mr0w7scpf4j5qm4h475vbwrgxzkdwyygwcmql1r1cgngywb"))))
+    (build-system pyproject-build-system)
     (arguments
      ;; The tests attempt to access external web servers, so we cannot run them.
      '(#:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-charset-normalizer
            python-colorama
@@ -2611,7 +2611,7 @@ syntax highlighting, wget-like downloads, plugins, and more.  It consists of
 a single http command designed for painless debugging and interaction with
 HTTP servers, RESTful APIs, and web services.")
     ;; This was fixed in 1.0.3.
-    (properties `((lint-hidden-cve . ("CVE-2019-10751"))))
+    (properties `((lint-hidden-cve "CVE-2019-10751")))
     (license license:bsd-3)))
 
 (define-public python-parfive
@@ -3357,21 +3357,22 @@ be written directly in Python without templates.")
   (package
     (name "python-minio")
     (version "7.1.9")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "minio" version))
-              (sha256
-               (base32
-                "02nh865xbf2glxvcy70ir6gkcwqxl119zryfc70q7w0yjvkg64d7"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/minio/minio-py")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01734ki3p7844dya366hy1kvmmgy3xr0l0zbkchnnv4p611510vc"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before 'check 'disable-failing-tests
-                    (lambda _
-                      ;; This test requires network access.
-                      (delete-file "tests/unit/credentials_test.py"))))))
-    (native-inputs
-     (list python-faker python-mock python-nose))
+     (list
+      #:test-flags
+      ;; XXX: requires network access.
+      #~(list "--ignore=tests/unit/credentials_test.py")))
+    (native-inputs (list python-pytest python-setuptools-next))
     (propagated-inputs
      (list python-certifi python-dateutil python-pytz python-urllib3))
     (home-page "https://github.com/minio/minio-py")
@@ -5175,16 +5176,19 @@ APIs.")
     (version "0.7.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "beren" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/teffalump/beren")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1v3mdwfqsyza892zvs124ym9w1bkng1j56b7l4dwfjir3723xcgf"))))
-    (build-system python-build-system)
+        (base32 "19nnvbjx2wypslqklqi0j9fiwypk1a5qwfw1jcabjw03awm1yyrx"))))
+    (build-system pyproject-build-system)
     (arguments
      ;; The test tries to open a connection to a remote server.
      `(#:tests? #f))
-    (propagated-inputs
-     (list python-apiron))
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs (list python-apiron))
     (home-page "https://github.com/teffalump/beren")
     (synopsis "REST client for Orthanc DICOM servers")
     (description
@@ -5273,7 +5277,7 @@ python-requests.")
 (define-public python-requests-unixsocket2
   (package
     (name "python-requests-unixsocket2")
-    (version "0.4.2")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -5281,12 +5285,16 @@ python-requests.")
              (url "https://gitlab.com/thelabnyc/requests-unixsocket2")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0vy0c1xwwmm6xqabhl2j7zqgsldvcs8ar547nk5r9l2yb7gngzjk"))))
+        (base32 "0wb8ckagal9d6lfyl3pf9m45xn1krq6vg8kzciwv12chq9wwh0ra"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-poetry-core python-pytest python-waitress))
+     (list nss-certs-for-test
+           python-hatchling
+           python-pytest
+           python-waitress))
     (propagated-inputs
-     (list python-pbr python-requests))
+     (list python-requests-next
+           python-urllib3-next))
     (home-page "https://gitlab.com/thelabnyc/requests-unixsocket2")
     (synopsis "Talk HTTP via a UNIX domain socket")
     (description
@@ -5446,24 +5454,32 @@ protocol, both client and server for Python asyncio module.
     (license license:asl2.0)))
 
 (define-public python-mohawk
-  (package
-    (name "python-mohawk")
-    (version "1.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "mohawk" version))
-              (sha256
-               (base32
-                "08wppsv65yd0gdxy5zwq37yp6jmxakfz4a2yx5wwq2d222my786j"))))
-    (build-system python-build-system)
-    (native-inputs (list python-mock  python-nose))
-    (propagated-inputs (list python-six))
-    (home-page "https://github.com/kumar303/mohawk")
-    (synopsis "Library for Hawk HTTP authorization")
-    (description
-     "Mohawk is an alternate Python implementation of the Hawk HTTP
+  (let ((commit "b7899166880e890f01cf2531b5686094ba08df8f")
+        (revision "0"))
+    (package
+      (name "python-mohawk")
+      (version (git-version "1.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/kumar303/mohawk")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "00y9fimcj851rk2770wqk61fac9pnxfnzca4fvsci57zw18i50m6"))
+         (patches
+          (search-patches "python-mohawk-pytest.patch"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list #:test-flags #~(list "mohawk/tests.py")))
+      (native-inputs (list python-pytest python-setuptools-next))
+      (home-page "https://github.com/kumar303/mohawk")
+      (synopsis "Library for Hawk HTTP authorization")
+      (description
+       "Mohawk is an alternate Python implementation of the Hawk HTTP
 authorization scheme.")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public python-msal
   (package
@@ -5655,17 +5671,18 @@ supports url redirection and retries, and also gzip and deflate decoding.")
 (define-public python-urllib3-next
   (package
     (inherit python-urllib3)
-    (version "2.3.0")
+    (version "2.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "urllib3" version))
        (sha256
         (base32
-         "0k90y2bbmw87b9wx7lf0ps0wjpjbnk3h61byrrwid1ph7jdl9igq"))))
+         "0q17z6zlpyjv9ax5c3d30qwp9fwhz2sc4gbb7yyd86g4qwrpgi1z"))))
     (native-inputs
-     (list python-hatchling
-           python-hatch-vcs))))
+     (list python-hatch-vcs
+           python-hatchling
+           python-setuptools-scm))))
 
 (define-public python-urllib3-1.25
   (package
@@ -7450,21 +7467,21 @@ users, gradebooks, and more.")
   (package
     (name "python-google")
     (version "3.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "google" version))
-              (sha256
-               (base32
-                "1gncv3l11za0mpxvmpaf5n5j3jzp282rz62yml4ha4z55q930d8l"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f)) ; There are no tests.
-    (propagated-inputs
-     (list python-beautifulsoup4))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "google" version))
+       (sha256
+        (base32 "1gncv3l11za0mpxvmpaf5n5j3jzp282rz62yml4ha4z55q930d8l"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;There are no tests.
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs (list python-beautifulsoup4))
     (home-page "https://breakingcode.wordpress.com/")
     (synopsis "Python bindings to the Google search engine")
-    (description "This package provides Python bindings for using the
-Google search engine.  Its module is called @code{googlesearch}.")
+    (description
+     "This package provides Python bindings for using the Google search
+engine.  Its module is called @code{googlesearch}.")
     (license license:bsd-3)))
 
 (define-public python-google-api-client
@@ -7618,21 +7635,33 @@ underlies Mozilla Persona.")
 (define-public python-pyfxa
   (package
     (name "python-pyfxa")
-    (version "0.6.0")
+    (version "0.8.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "PyFxA" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/mozilla/PyFxA")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0axl16fyrz2r88gnw4b12mk7dpkqscv8c4wsc1y5hicl7bsbc4fm"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f)) ; 17 tests require network access
+        (base32 "11iaw50x5ic9cqp3jwkvhk8mz00dhg8xhl1kkx45zrb8nnrfw2vs"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; These tests require network access
+      #:test-flags #~(list "--ignore=fxa/tests/test_core.py")))
     (propagated-inputs
-     (list python-cryptography python-hawkauthlib python-pybrowserid
-           python-requests python-six))
+     (list python-cryptography
+           python-pyjwt
+           python-parameterized
+           python-hawkauthlib
+           python-requests))
     (native-inputs
-     (list python-grequests python-mock python-responses python-unittest2))
+     (list python-grequests
+           python-hatchling
+           python-mock
+           python-pytest
+           python-responses))
     (home-page "https://github.com/mozilla/PyFxA")
     (synopsis "Firefox Accounts client library for Python")
     (description
@@ -9603,36 +9632,43 @@ over IMAP:
 (define-public python-giturlparse
   (package
     (name "python-giturlparse")
-    (version "0.10.0")
+    (version "0.12.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "giturlparse" version))
-        (sha256
-         (base32 "0dxk7sqy8ibaqdl6jzxd0ac1p7shzp4p9f3lhkd7qw9h3llsp595"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nephila/giturlparse")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fdbxp176p17sn5xc1418mz2vk00hlcsd5qmi2fdcfphqal6raan"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools-next))
     (home-page "https://github.com/nephila/giturlparse")
     (synopsis "Git URL parsing module")
-    (description "This package provides a git URL parsing module which supports
-parsing and rewriting of remote git URLs from various hosting providers.")
+    (description
+     "This package provides a git URL parsing module which supports parsing
+and rewriting of remote git URLs from various hosting providers.")
     (license license:asl2.0)))
 
 (define-public python-hstspreload
   (package
     (name "python-hstspreload")
-    (version "2020.10.20")
+    (version "2025.1.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "hstspreload" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sethmlarson/hstspreload")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1qah80p2xlib1rhivvdj9v5y3girxrj7dwp1mnh8mwaj5wy32y8a"))))
-    (build-system python-build-system)
-    (home-page
-     "https://github.com/sethmlarson/hstspreload")
-    (synopsis
-     "Chromium HSTS Preload list as a Python package")
+        (base32 "02mdzhgdz3sprgc26qb084zy639h2zw2yc8d2vm1r18ap9k51ayq"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ; tests require external resources.
+    (native-inputs (list python-setuptools-next))
+    (home-page "https://github.com/sethmlarson/hstspreload")
+    (synopsis "Chromium HSTS Preload list as a Python package")
     (description
      "@code{python-hstspreload} contains Chromium HSTS Preload list
 as a Python package.")
@@ -9987,11 +10023,12 @@ SOCKS5(h), HTTP tunnel).")
        (method url-fetch)
        (uri (pypi-uri "azure-storage-nspkg" version))
        (sha256
-        (base32
-         "049qcmgshz7dj9yaqma0fwcgbxwddgwyfcw4gmv45xfmaa3bwfvg"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-azure-nspkg))
+        (base32 "049qcmgshz7dj9yaqma0fwcgbxwddgwyfcw4gmv45xfmaa3bwfvg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))         ;no tests in PyPI archive
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs (list python-azure-nspkg))
     (home-page "https://github.com/Azure/azure-storage-python")
     (synopsis "Microsoft Azure Storage Namespace package")
     (description
@@ -10526,16 +10563,18 @@ real-life projects with legacy data and diverse storage providers.")
 (define-public python-mwparserfromhell
   (package
     (name "python-mwparserfromhell")
-    (version "0.6.3")
+    (version "0.7.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "mwparserfromhell" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/earwig/mwparserfromhell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0zh9zaqbac18s7mivqk8am9xw97lfkgcj9hhxj0d4208pkqpkmqs"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest python-pytest-runner))
+        (base32 "083ir0nccm14431mmn243862gq731ww98fwpd95zm1yccvpzdy68"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools-next))
     (home-page "https://github.com/earwig/mwparserfromhell")
     (synopsis "Python parser for MediaWiki wikicode")
     (description
@@ -10673,11 +10712,15 @@ standard library and supported by default in Quart.")
     (version "1.2.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "ajsonrpc" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pavlov99/ajsonrpc")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "17x1a4r4l428mhwn53abki9gzdzq3halyr4lj48fw3dzy0caq6vr"))))
-    (build-system python-build-system)
+        (base32 "0c7jxfkv5q2m95j54dn650gcvdbpag2qcki7phvmrwsgb36w09kd"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-quart
            python-sanic
@@ -11568,50 +11611,54 @@ Grid5000 resources interactively using the embedded shell.")
   (package
     (name "python-enoslib")
     (version "8.0.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://gitlab.inria.fr/discovery/enoslib")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               "0vs6b0bnlv95mzv0rjbxqwrhzkgjkn91gqipgwdf7y4ffpz8nybg")))
-    (build-system python-build-system)
-    (native-inputs (list python-wheel python-pytest python-ddt
-                         python-freezegun))
-    (propagated-inputs (list ansible
-                             python-cryptography
-                             python-grid5000
-                             python-jsonschema
-                             python-netaddr
-                             python-packaging
-                             python-requests
-                             python-rich
-                             python-sshtunnel
-                             python-pytz))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.inria.fr/discovery/enoslib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256 "0vs6b0bnlv95mzv0rjbxqwrhzkgjkn91gqipgwdf7y4ffpz8nybg")))
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        ;; Otherwise Ansible fails to create its config directory.
-                        (setenv "HOME" "/tmp")
-                        ;; Ignoring the tests requiring an extra dependency (iotlabcli)
-                        (invoke "pytest" "enoslib/tests/unit"
-                                "--ignore"
-                                "enoslib/tests/unit/infra/test_utils.py"
-                                "--ignore-glob"
-                                "enoslib/tests/unit/infra/enos_iotlab/*"))))
-                  ;; Disable the sanity check, which fails with the following error:
-                  ;;
-                  ;; ContextualVersionConflict(rich 12.4.1
-                  ;; (/gnu/store/...-python-rich-12.4.1/lib/python3.9/site-packages),
-                  ;; Requirement.parse('rich[jupyter]~=12.0.0'), {'enoslib'})
-                  ;;
-                  ;; The optional jupyter dependency of rich isn't critical for
-                  ;; EnOSlib to work
-                  (delete 'sanity-check))))
-
+     (list
+      #:test-flags
+      #~(list "enoslib/tests/unit"
+              "--ignore" "enoslib/tests/unit/infra/test_utils.py"
+              "--ignore-glob" "enoslib/tests/unit/infra/enos_iotlab/*")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Otherwise Ansible fails to create its config directory.
+                (setenv "HOME" "/tmp"))))
+          ;; Disable the sanity check, which fails with the following error:
+          ;;
+          ;; ContextualVersionConflict(rich 12.4.1
+          ;; (/gnu/store/...-python-rich-12.4.1/lib/python3.9/site-packages),
+          ;; Requirement.parse('rich[jupyter]~=12.0.0'), {'enoslib'})
+          ;;
+          ;; The optional jupyter dependency of rich isn't critical for
+          ;; EnOSlib to work
+          (delete 'sanity-check))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-ddt
+           python-freezegun
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list ansible
+           python-cryptography
+           python-grid5000
+           python-jsonschema
+           python-netaddr
+           python-packaging
+           python-requests
+           python-rich
+           python-sshtunnel
+           python-pytz))
     (home-page "https://discovery.gitlabpages.inria.fr/enoslib/index.html")
     (synopsis "Deploy distributed testbeds on a variety of platforms")
     (description

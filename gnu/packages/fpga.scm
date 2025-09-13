@@ -129,7 +129,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.56")
+    (version "0.57")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -138,7 +138,7 @@ formal verification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0wy42qd0dl58icw3nklgns5zrr1inj8br40vwcpwiz1pkfg3gl0j"))))
+                "191hsznsmsjn8100n50qsh3ng8wgrnyfhr7qcnb8yskiwqp37pjh"))))
     (home-page "https://github.com/YosysHQ/abc/")
     (description "ABC is a program for sequential logic synthesis and
 formal verification.  This is the Yosyshq fork of ABC.")
@@ -147,7 +147,7 @@ formal verification.  This is the Yosyshq fork of ABC.")
 (define-public apycula
   (package
     (name "apycula")
-    (version "0.23")
+    (version "0.24")
     ;; The pypi tar.gz file includes the necessary .pickle files, not available
     ;; in the home-page repository.
     (source
@@ -155,7 +155,7 @@ formal verification.  This is the Yosyshq fork of ABC.")
        (method url-fetch)
        (uri (pypi-uri "apycula" version))
        (sha256
-        (base32 "1kk9hi8zhdp1am5vj716lwlmrs31lxrwhdbbc4qsad470dcjqs57"))))
+        (base32 "1mlasq8lf90jcdwp4sk5a834bbmnnfxk2gswwcw83ypg75lli1gw"))))
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;requires Gowin EDA tools
     (inputs (list python-crc))
@@ -175,17 +175,28 @@ generating bitstreams with Gowin FPGAs.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/steveicarus/iverilog")
-             (commit
-              (string-append "v" (string-replace-substring version "." "_")))))
+              (url "https://github.com/steveicarus/iverilog")
+              (commit
+               (string-append "v" (string-replace-substring version "." "_")))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1cm3ksxyyp8ihs0as5c2nk3a0y2db8dmrrw0f9an3sl255smxn17"))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:make-flags #~(list (string-append "PREFIX=" #$output))
-      #:bootstrap-scripts #~(list "autoconf.sh")))
+      #:bootstrap-scripts #~(list "autoconf.sh")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'ensure-native-baked-CC/CXX
+                     (lambda _
+                       ;; The compilers used to build are retained in
+                       ;; bin/iverilog-vpi, which is a Makefile
+                       ;; script. Normalize these to just 'gcc' and 'g++' to
+                       ;; avoid having these set to cross compilers.
+                       (substitute* "Makefile.in"
+                         (("s;@IVCC@;\\$\\(CC);")
+                          "s;@IVCC@;gcc;")
+                         (("s;@IVCXX@;\\$\\(CXX);")
+                          "s;@IVCXX@;g++;")))))))
     (native-inputs (list autoconf bison flex gperf))
     (inputs (list zlib))
     (home-page "https://steveicarus.github.io/iverilog/")
@@ -210,7 +221,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.56")
+    (version "0.57")
     (source
      (origin
        (method git-fetch)
@@ -218,7 +229,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1q74hm1z0m08r9amz982a9ylcwz2mbg3hqarprwj775wkrbv81h7"))
+        (base32 "0bix5zlv9zp9fxqpn9l9bdw65xrgih5w0csq1xkkhm2c7p3vqjbb"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -603,22 +614,37 @@ Python program.")
       (license license:bsd-2))))
 
 (define-public python-myhdl
-  (package
-    (name "python-myhdl")
-    (version "0.11.51")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "myhdl" version))
-        (sha256
+  (let ((commit "7dc29c242cd33cb835c336a81ffc3a461eaa92f4")
+        (revision "0"))
+    (package
+      (name "python-myhdl")
+      (version (git-version "0.11" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/myhdl/myhdl/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
           (base32
-            "0b360smk2m60vhxdi837hz75m0pnms477wkn9gh6m4v3nih1v4cx"))))
-    (build-system python-build-system)
-    (home-page "http://www.myhdl.org/")
-    (synopsis "Python as a Hardware Description Language")
-    (description "This package provides a library to turn Python into
+           "1b91yvr0ksrw3bx61i7914caf8pyks9c242kwmj4l12zjd06mp56"))))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "make" "iverilog" "core")))))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list iverilog python-setuptools-next python-pytest))
+      (home-page "http://www.myhdl.org/")
+      (synopsis "Python as a Hardware Description Language")
+      (description "This package provides a library to turn Python into
 a hardware description and verification language.")
-    (license license:lgpl2.1+)))
+      (license license:lgpl2.1+))))
 
 (define-public python-vunit
   (package
@@ -768,7 +794,7 @@ using different abstraction levels.")
 (define-public verilator
   (package
     (name "verilator")
-    (version "5.034")
+    (version "5.040")
     (source
      (origin
        (method git-fetch)
@@ -777,18 +803,18 @@ using different abstraction levels.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14alpa2z4fqbbsyx67dz50nqcvfis8pha84545h28xmglrzm13yn"))))
+        (base32 "0xw2w7fikli3jffwd819rx8bwbh3zsymhrn3zbq34glklff07rsb"))))
     (native-inputs
      (list autoconf
            automake
            bison
-           flex
-           help2man
-           gettext-minimal
-           python
-           ;; And a couple of extras for the test suite:
            cmake-minimal
+           flex
            gdb/pinned
+           gettext-minimal
+           help2man
+           python-distro
+           python-minimal
            which))
     (inputs
      (list perl python systemc))
@@ -803,6 +829,9 @@ using different abstraction levels.")
             (lambda _
               (substitute* "bin/verilator"
                 (("/bin/echo") "echo"))))
+          (add-before 'check 'set-SYSTEMC_ROOT
+            (lambda _
+              (setenv "SYSTEMC_ROOT" #$(this-package-input systemc))))
           (add-before 'check 'disable-gdb-safe-path
             (lambda _
               (setenv "HOME" (getcwd))

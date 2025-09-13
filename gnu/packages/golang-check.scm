@@ -1120,6 +1120,38 @@ Node @code{nock} library, it has features like:
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-hexops-autogold-v2
+  (package
+    (name "go-github-com-hexops-autogold-v2")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hexops/autogold")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15ih02l1c9z55ixrl39v0g3fv38nwl578bdjnygl14rbh5dqac0y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hexops/autogold/v2"))
+    (propagated-inputs
+     (list go-github-com-fatih-color
+           go-github-com-hexops-gotextdiff
+           go-github-com-hexops-valast
+           go-github-com-nightlyone-lockfile
+           go-golang-org-x-tools))
+    (home-page "https://github.com/hexops/autogold")
+    (synopsis "Automatically update Go tests")
+    (description
+     "Package autogold makes @code{go test -update} automatically update Go
+tests (golden files and Go values in e.g. @code{foo_test.go}).")
+    ;; Dual license.
+    (license (list license:asl2.0
+                   license:expat))))
+
 (define-public go-github-com-hexops-gotextdiff
   (package
     (name "go-github-com-hexops-gotextdiff")
@@ -1141,6 +1173,39 @@ Node @code{nock} library, it has features like:
     (description
      "This package provides a library to generate unified diffs.")
     (license license:bsd-3)))
+
+(define-public go-github-com-hexops-valast
+  (package
+    (name "go-github-com-hexops-valast")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/hexops/valast")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pn08if4zz7gm0g4l9wsg1psqkbqa9i0g5wnba7jr2c23253xplf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f       ;cycles with go-github-com-hexops-autogold
+      #:import-path "github.com/hexops/valast"))
+    (propagated-inputs
+     (list go-golang-org-x-tools
+           go-mvdan-cc-gofumpt))
+    (home-page "https://github.com/hexops/valast")
+    (synopsis "Convert Go values to their AST")
+    (description
+     "This package implements a functionality to converts Go values at runtime
+into their @@code{go/ast} equivalent,which may be used in debugging and
+testing, as a more comprehensive and configurable version of the @code{fmt}
+package's @code{%+v} and @code{%#v} formatting directives. It is similar to
+e.g. @code{repr} in Python.")
+    ;; Dual license.
+    (license (list license:asl2.0
+                   license:expat))))
 
 (define-public go-github-com-hydrogen18-memlistener
   (package
@@ -2942,7 +3007,7 @@ advanced Go linter.")
 (define-public go-pgregory-net-rapid
   (package
     (name "go-pgregory-net-rapid")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -2951,19 +3016,11 @@ advanced Go linter.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1alyhcbdq6113sfymx7xxmxpcbgvkaipsn15cgjrcqrx8ks1hm5i"))))
+        (base32 "0jifhk3kz071m1qgc3jsswmy3512fsx2nqi157xq3r0vqf2jsgqr"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "pgregory.net/rapid"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'remove-failing-tests
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                ;; Remove test file failing on go-1.21, see
-                ;; <https://github.com/flyingmutant/rapid/issues/68>.
-                (delete-file "strings_example_test.go")))))))
+      #:import-path "pgregory.net/rapid"))
     (home-page "https://pgregory.net/rapid/")
     (synopsis "Go property-based testing library")
     (description

@@ -239,7 +239,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/dezyne.scm			\
   %D%/packages/decker.scm			\
   %D%/packages/dhall.scm			\
-  %D%/packages/dictd.scm			\
   %D%/packages/dotnet.scm			\
   %D%/packages/dictionaries.scm			\
   %D%/packages/diffoscope.scm			\
@@ -370,7 +369,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/hugs.scm				\
   %D%/packages/hunspell.scm				\
   %D%/packages/hurd.scm				\
-  %D%/packages/hyperledger.scm			\
   %D%/packages/i2p.scm				\
   %D%/packages/ibus.scm				\
   %D%/packages/icu4c.scm			\
@@ -2055,6 +2053,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-feedparser-missing-import.patch	\
   %D%/packages/patches/python-louvain-fix-test.patch		\
   %D%/packages/patches/python-matplotlib-fix-legend-loc-best-test.patch	\
+  %D%/packages/patches/python-mohawk-pytest.patch	\
   %D%/packages/patches/python-numpy-gcc-14.patch		\
   %D%/packages/patches/python-random2-getrandbits-test.patch		\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\
@@ -2204,14 +2203,12 @@ dist_patch_DATA =						\
   %D%/packages/patches/qemu-fix-test-virtio-version.patch       \
   %D%/packages/patches/qrcodegen-cpp-cmake.patch		\
   %D%/packages/patches/qtbase-absolute-runpath.patch		\
-  %D%/packages/patches/qtbase-fix-thread-test.patch             \
   %D%/packages/patches/qtbase-qmake-fix-includedir.patch 	\
   %D%/packages/patches/qtbase-qmlimportscanner-qml-import-path.patch 	\
   %D%/packages/patches/qtbase-moc-ignore-gcc-macro.patch	\
   %D%/packages/patches/qtbase-qmake-use-libname.patch		\
   %D%/packages/patches/qtbase-5-use-TZDIR.patch			\
   %D%/packages/patches/qtscript-disable-tests.patch		\
-  %D%/packages/patches/qtwebengine-fix-system-libvpx.patch	\
   %D%/packages/patches/quagga-reproducible-build.patch          \
   %D%/packages/patches/quickswitch-fix-dmenu-check.patch	\
   %D%/packages/patches/quilt-grep-compat.patch 			\
@@ -2219,6 +2216,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/qtwayland-dont-recreate-callbacks.patch	\
   %D%/packages/patches/qtwayland-cleanup-callbacks.patch	\
   %D%/packages/patches/qtwayland-update-wayland-xml.patch	\
+  %D%/packages/patches/qtwebengine-fix-dependencies.patch       \
+  %D%/packages/patches/qtwebsockets-6.9-fix-tst_QWebSocket.patch\
   %D%/packages/patches/rabbitmq-defaults.patch		\
   %D%/packages/patches/ragel-char-signedness.patch		\
   %D%/packages/patches/randomjungle-disable-static-build.patch	\
@@ -2239,6 +2238,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/racket-chez-scheme-bin-sh.patch		\
   %D%/packages/patches/racket-launcher-config-dir.patch		\
   %D%/packages/patches/racket-rktio-bin-sh.patch		\
+  %D%/packages/patches/re2c-Use-maximum-alignment.patch         \
   %D%/packages/patches/reduce-unbundle-libffi.patch             \
   %D%/packages/patches/remake-impure-dirs.patch			\
   %D%/packages/patches/restartd-update-robust.patch             \
@@ -2273,6 +2273,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/sajson-for-gemmi-numbers-as-strings.patch	\
   %D%/packages/patches/sajson-build-with-gcc10.patch		\
   %D%/packages/patches/sbc-fix-build-non-x86.patch		\
+  %D%/packages/patches/sbcl-fix-arm64-shared-lib.patch		\
   %D%/packages/patches/sbcl-aserve-add-HTML-5-elements.patch	\
   %D%/packages/patches/sbcl-aserve-fix-rfe12668.patch	\
   %D%/packages/patches/sbcl-burgled-batteries3-fix-signals.patch	\
@@ -2385,9 +2386,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/uftrace-fix-tests.patch			\
   %D%/packages/patches/ultrastar-deluxe-no-freesans.patch		\
   %D%/packages/patches/ungoogled-chromium-extension-search-path.patch	\
-  %D%/packages/patches/ungoogled-chromium-ffmpeg-compat.patch	\
+  %D%/packages/patches/ungoogled-chromium-nullptr_t.patch       \
   %D%/packages/patches/ungoogled-chromium-RUNPATH.patch		\
-  %D%/packages/patches/ungoogled-chromium-system-ffmpeg.patch	\
   %D%/packages/patches/ungoogled-chromium-system-nspr.patch	\
   %D%/packages/patches/unknown-horizons-python-3.8-distro.patch	\
   %D%/packages/patches/unknown-horizons-python-3.9.patch	\

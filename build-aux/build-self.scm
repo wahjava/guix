@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014, 2016, 2017, 2018, 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014, 2016-2021, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,7 +22,7 @@
   #:use-module (guix ui)
   #:use-module (guix config)
   #:use-module (guix modules)
-  #:use-module (guix build-system gnu)
+  #:use-module ((guix self) #:select (make-config.scm))
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-34)
@@ -46,145 +46,6 @@
 ;;;
 ;;; Code:
 
-
-;;;
-;;; Generating (guix config).
-;;;
-;;; This is copied from (guix self) because we cannot assume (guix self) is
-;;; available at this point.
-;;;
-
-(define %persona-variables
-  ;; (guix config) variables that define Guix's persona.
-  '(%guix-package-name
-    %guix-version
-    %guix-bug-report-address
-    %guix-home-page-url))
-
-(define %config-variables
-  ;; (guix config) variables corresponding to Guix configuration.
-  (letrec-syntax ((variables (syntax-rules ()
-                               ((_)
-                                '())
-                               ((_ variable rest ...)
-                                (cons `(variable . ,variable)
-                                      (variables rest ...))))))
-    (variables %localstatedir %storedir %sysconfdir %system)))
-
-(define* (make-config.scm #:key gzip xz bzip2
-                          (package-name "GNU Guix")
-                          (package-version "0")
-                          (bug-report-address "bug-guix@gnu.org")
-                          (home-page-url "https://guix.gnu.org"))
-
-  ;; Hack so that Geiser is not confused.
-  (define defmod 'define-module)
-
-  (scheme-file "config.scm"
-               #~(begin
-                   (#$defmod (guix config)
-                     #:export (%guix-package-name
-                               %guix-version
-                               %guix-bug-report-address
-                               %guix-home-page-url
-                               %store-directory
-                               %state-directory
-                               %store-database-directory
-                               %config-directory
-                               %libz
-                               %gzip
-                               %bzip2
-                               %xz))
-
-                   ;; XXX: Work around <http://bugs.gnu.org/15602>.
-                   (eval-when (expand load eval)
-                     #$@(map (match-lambda
-                               ((name . value)
-                                #~(define-public #$name #$value)))
-                             %config-variables)
-
-                     (define %store-directory
-                       (or (and=> (getenv "NIX_STORE_DIR") canonicalize-path)
-                           %storedir))
-
-                     (define %state-directory
-                       ;; This must match `NIX_STATE_DIR' as defined in
-                       ;; `nix/local.mk'.
-                       (or (getenv "GUIX_STATE_DIRECTORY")
-                           (string-append %localstatedir "/guix")))
-
-                     (define %store-database-directory
-                       (or (getenv "GUIX_DATABASE_DIRECTORY")
-                           (string-append %state-directory "/db")))
-
-                     (define %config-directory
-                       ;; This must match `GUIX_CONFIGURATION_DIRECTORY' as
-                       ;; defined in `nix/local.mk'.
-                       (or (getenv "GUIX_CONFIGURATION_DIRECTORY")
-                           (string-append %sysconfdir "/guix")))
-
-                     (define %guix-package-name #$package-name)
-                     (define %guix-version #$package-version)
-                     (define %guix-bug-report-address #$bug-report-address)
-                     (define %guix-home-page-url #$home-page-url)
-
-                     (define %gzip
-                       #+(and gzip (file-append gzip "/bin/gzip")))
-                     (define %bzip2
-                       #+(and bzip2 (file-append bzip2 "/bin/bzip2")))
-                     (define %xz
-                       #+(and xz (file-append xz "/bin/xz")))))))
-
-
-;;;
-;;; 'gexp->script'.
-;;;
-;;; This is our own variant of 'gexp->script' with an extra #:module-path
-;;; parameter, which was unavailable in (guix gexp) until commit
-;;; 1ae16033f34cebe802023922436883867010850f (March 2018.)
-;;;
-
-(define (load-path-expression modules path)
-  "Return as a monadic value a gexp that sets '%load-path' and
-'%load-compiled-path' to point to MODULES, a list of module names.  MODULES
-are searched for in PATH."
-  (mlet %store-monad ((modules  (imported-modules modules
-                                                  #:module-path path))
-                      (compiled (compiled-modules modules
-                                                  #:module-path path)))
-    (return (gexp (eval-when (expand load eval)
-                    (set! %load-path
-                      (cons (ungexp modules) %load-path))
-                    (set! %load-compiled-path
-                      (cons (ungexp compiled)
-                            %load-compiled-path)))))))
-
-(define* (gexp->script name exp
-                       #:key (guile (default-guile))
-                       (module-path %load-path))
-  "Return an executable script NAME that runs EXP using GUILE, with EXP's
-imported modules in its search path."
-  (mlet %store-monad ((set-load-path
-                       (load-path-expression (gexp-modules exp)
-                                             module-path)))
-    (gexp->derivation name
-                      (gexp
-                       (call-with-output-file (ungexp output)
-                         (lambda (port)
-                           ;; Note: that makes a long shebang.  When the store
-                           ;; is /gnu/store, that fits within the 128-byte
-                           ;; limit imposed by Linux, but that may go beyond
-                           ;; when running tests.
-                           (format port
-                                   "#!~a/bin/guile --no-auto-compile~%!#~%"
-                                   (ungexp guile))
-
-                           (write '(ungexp set-load-path) port)
-                           (write '(ungexp exp) port)
-                           (chmod port #o555))))
-                      #:module-path module-path)))
-
-
 (define (date-version-string)
   "Return the current date and hour in UTC timezone, for use as a poor
 person's version identifier."
@@ -192,50 +53,8 @@ person's version identifier."
   (date->string (current-date 0) "~Y~m~d.~H"))
 
 (define guile-gcrypt
-  ;; The host Guix may or may not have 'guile-gcrypt', which was introduced in
-  ;; August 2018.  If it has it, it's at least version 0.1.0, which is good
-  ;; enough.  If it doesn't, specify our own package because the target Guix
-  ;; requires it.
+  ;; The 'guile-gcrypt' package from the host Guix.
   (match (find-best-packages-by-name "guile-gcrypt" #f)
-    (()
-     (package
-       (name "guile-gcrypt")
-       (version "0.1.0")
-       (home-page "https://notabug.org/cwebber/guile-gcrypt")
-       (source (origin
-                 (method url-fetch)
-                 (uri (string-append home-page "/archive/v" version ".tar.gz"))
-                 (sha256
-                  (base32
-                   "1gir7ifknbmbvjlql5j6wzk7bkb5lnmq80q59ngz43hhpclrk5k3"))
-                 (file-name (string-append name "-" version ".tar.gz"))))
-       (build-system gnu-build-system)
-       (arguments
-        ;; The 'bootstrap' phase appeared in 'core-updates', which was merged
-        ;; into 'master' ca. June 2018.
-        '(#:phases (modify-phases %standard-phases
-                     (delete 'bootstrap)
-                     (add-before 'configure 'bootstrap
-                       (lambda _
-                         (unless (zero? (system* "autoreconf" "-vfi"))
-                           (error "autoreconf failed"))
-                         #t)))))
-       (native-inputs
-        `(("pkg-config" ,(specification->package "pkg-config"))
-          ("autoconf" ,(specification->package "autoconf"))
-          ("automake" ,(specification->package "automake"))
-          ("texinfo" ,(specification->package "texinfo"))))
-       (inputs
-        `(("guile" ,(specification->package "guile"))
-          ("libgcrypt" ,(specification->package "libgcrypt"))))
-       (synopsis "Cryptography library for Guile using Libgcrypt")
-       (description
-        "Guile-Gcrypt provides a Guile 2.x interface to a subset of the
-GNU Libgcrypt crytographic library.  It provides modules for cryptographic
-hash functions, message authentication codes (MAC), public-key cryptography,
-strong randomness, and more.  It is implemented using the foreign function
-interface (FFI) of Guile.")
-       (license #f)))                             ;license:gpl3+
     ((package . _)
      package)))
 

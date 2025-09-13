@@ -3,7 +3,7 @@
 ;;; Copyright © 2014, 2015, 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2015, 2016, 2017, 2019, 2021 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2023 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015-2018, 2020-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2018, 2020-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Carlos Sánchez de La Lama <csanchezdll@gmail.com>
 ;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2020, 2022 Marius Bakke <marius@gnu.org>
@@ -110,7 +110,7 @@ where the OS part is overloaded to denote a specific ABI---into GCC
          ;; TODO: Add `arm.*-gnueabi', etc.
          '())))
 
-(define-public gcc-4.7
+(define-public gcc-base
   (let* ((stripped? #t)      ;whether to strip the compiler, not the libraries
          (maybe-target-tools
           (lambda ()
@@ -200,18 +200,7 @@ where the OS part is overloaded to denote a specific ABI---into GCC
 
        (arguments
         `(#:out-of-source? #t
-          #:configure-flags ,(let ((flags (configure-flags))
-                                   (version (package-version this-package)))
-                               ;; GCC 11.3.0 defaults to C++17 which is partly
-                               ;; incompatible with some earlier versions.
-                               ;; Force an earlier C++ standard while building.
-                               (cond
-                                 ((version-prefix? "4.8" version)
-                                  `(cons "CXX=g++ -std=c++03" ,flags))
-                                 ((or (version-prefix? "4.9" version)
-                                      (version-prefix? "5" version))
-                                  `(cons "CXX=g++ -std=c++11" ,flags))
-                                 (else flags)))
+          #:configure-flags ,(configure-flags)
 
           #:make-flags
           ;; None of the flags below are needed when doing a Canadian cross.
@@ -413,11 +402,68 @@ exec \"$@\" \
 for several languages, including C, C++, Objective-C, Fortran, Java, Ada, and
 Go.  It also includes runtime support libraries for these languages.")
        (license gpl3+)
-       (supported-systems (delete "aarch64-linux" %supported-systems))
        (home-page "https://gcc.gnu.org/")))))
 
+(define-public gcc-4.7
+  (package (inherit gcc-base)
+    (version "4.7.4")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/gcc/gcc-"
+                                  version "/gcc-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "10k2k71kxgay283ylbbhhs51cl55zn2q38vj5pk4k950qdnirrlj"))
+              (patches (search-patches "gcc-4-compile-with-gcc-5.patch"
+                                       "gcc-fix-texi2pod.patch"))
+              (modules '((guix build utils)))
+              ;; This is required for building with glibc-2.26.
+              ;; https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81712
+              (snippet
+               '(for-each
+                 (lambda (dir)
+                   (substitute* (string-append "libgcc/config/"
+                                               dir "/linux-unwind.h")
+                     (("struct ucontext") "ucontext_t")))
+                 '("alpha" "bfin" "i386" "m68k"
+                   "pa" "sh" "tilepro" "xtensa")))))
+    (arguments
+     ;; Since 'arguments' is a function of the package's version, define
+     ;; 'parent' such that the 'arguments' thunk gets to see the right
+     ;; version.
+     (let ((parent (package
+                     (inherit gcc-base)
+                     (version (package-version this-package)))))
+       (if (%current-target-system)
+           (package-arguments parent)
+           ;; For native builds of some GCC versions the C++ include path needs to
+           ;; be adjusted so it does not interfere with GCC's own build processes.
+           (substitute-keyword-arguments (package-arguments parent)
+             ((#:modules modules %default-gnu-modules)
+              `((srfi srfi-1)
+                ,@modules))
+             ((#:phases phases)
+              `(modify-phases ,phases
+                 (add-after 'set-paths 'adjust-CPLUS_INCLUDE_PATH
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (let ((libc (assoc-ref inputs "libc"))
+                           (gcc (assoc-ref inputs  "gcc")))
+                       (setenv "CPLUS_INCLUDE_PATH"
+                               (string-join (fold delete
+                                                  (string-split (getenv "CPLUS_INCLUDE_PATH")
+                                                                #\:)
+                                                  (list (string-append libc "/include")
+                                                        (string-append gcc "/include/c++")))
+                                            ":"))
+                       (format #t
+                               "environment variable `CPLUS_INCLUDE_PATH' changed to ~a~%"
+                               (getenv "CPLUS_INCLUDE_PATH")))))))))))
+    (supported-systems (fold delete %supported-systems
+                             '("aarch64-linux" "riscv64-linux"
+                               "powerpc64le-linux" "x86_64-gnu")))))
+
 (define-public gcc-4.8
-  (package (inherit gcc-4.7)
+  (package (inherit gcc-base)
     (version "4.8.5")
     (source (origin
               (method url-fetch)
@@ -446,16 +492,20 @@ Go.  It also includes runtime support libraries for these languages.")
      ;; 'parent' such that the 'arguments' thunk gets to see the right
      ;; version.
      (let ((parent (package
-                     (inherit gcc-4.7)
+                     (inherit gcc-base)
                      (version (package-version this-package)))))
        (if (%current-target-system)
-           (package-arguments parent)
-           ;; For native builds of some GCC versions the C++ include path needs to
-           ;; be adjusted so it does not interfere with GCC's own build processes.
+           (substitute-keyword-arguments (package-arguments parent)
+            ((#:configure-flags flags '())
+             `(cons "CXX=g++ -std=c++03" ,flags)))
            (substitute-keyword-arguments (package-arguments parent)
              ((#:modules modules %default-gnu-modules)
               `((srfi srfi-1)
                 ,@modules))
+             ((#:configure-flags flags '())
+              `(cons "CXX=g++ -std=c++03" ,flags))
+             ;; For native builds of some GCC versions the C++ include path needs to
+             ;; be adjusted so it does not interfere with GCC's own build processes.
              ((#:phases phases)
               `(modify-phases ,phases
                  (add-after 'set-paths 'adjust-CPLUS_INCLUDE_PATH
@@ -472,13 +522,14 @@ Go.  It also includes runtime support libraries for these languages.")
                        (format #t
                                "environment variable `CPLUS_INCLUDE_PATH' changed to ~a~%"
                                (getenv "CPLUS_INCLUDE_PATH")))))))))))
-    (supported-systems %supported-systems)
+    (supported-systems (fold delete %supported-systems
+                             '("riscv64-linux" "x86_64-gnu")))
     (inputs
-     (modify-inputs (package-inputs gcc-4.7)
+     (modify-inputs (package-inputs gcc-base)
        (prepend isl-0.11 cloog)))))
 
 (define-public gcc-4.9
-  (package (inherit gcc-4.8)
+  (package (inherit gcc-base)
     (version "4.9.4")
     (source (origin
               (method url-fetch)
@@ -505,9 +556,49 @@ Go.  It also includes runtime support libraries for these languages.")
                      (("struct ucontext") "ucontext_t")))
                  '("aarch64" "alpha" "bfin" "i386" "m68k" "nios2"
                    "pa" "sh" "tilepro" "xtensa")))))
+    (arguments
+     ;; Since 'arguments' is a function of the package's version, define
+     ;; 'parent' such that the 'arguments' thunk gets to see the right
+     ;; version.
+     (let ((parent (package
+                     (inherit gcc-base)
+                     (version (package-version this-package)))))
+       (if (%current-target-system)
+           (substitute-keyword-arguments (package-arguments parent)
+            ((#:configure-flags flags '())
+             `(cons "CXX=g++ -std=c++11" ,flags)))
+           (substitute-keyword-arguments (package-arguments parent)
+             ((#:modules modules %default-gnu-modules)
+              `((srfi srfi-1)
+                ,@modules))
+             ((#:configure-flags flags '())
+              `(cons "CXX=g++ -std=c++11" ,flags))
+             ;; For native builds of some GCC versions the C++ include path needs to
+             ;; be adjusted so it does not interfere with GCC's own build processes.
+             ((#:phases phases)
+              `(modify-phases ,phases
+                 (add-after 'set-paths 'adjust-CPLUS_INCLUDE_PATH
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (let ((libc (assoc-ref inputs "libc"))
+                           (gcc (assoc-ref inputs  "gcc")))
+                       (setenv "CPLUS_INCLUDE_PATH"
+                               (string-join (fold delete
+                                                  (string-split (getenv "CPLUS_INCLUDE_PATH")
+                                                                #\:)
+                                                  (list (string-append libc "/include")
+                                                        (string-append gcc "/include/c++")))
+                                            ":"))
+                       (format #t
+                               "environment variable `CPLUS_INCLUDE_PATH' changed to ~a~%"
+                               (getenv "CPLUS_INCLUDE_PATH")))))))))))
     ;; Override inherited texinfo-5 with latest version.
     (native-inputs (list perl ;for manpages
-                         texinfo))))
+                         texinfo))
+    (inputs
+     (modify-inputs (package-inputs gcc-base)
+       (prepend isl-0.11 cloog)))
+    (supported-systems (fold delete %supported-systems
+                             '("riscv64-linux" "x86_64-gnu")))))
 
 (define gcc-canadian-cross-objdump-snippet
   ;; Fix 'libcc1/configure' error when cross-compiling GCC.  Without that,
@@ -523,7 +614,7 @@ Go.  It also includes runtime support libraries for these languages.")
 (define-public gcc-5
   ;; Note: GCC >= 5 ships with .info files but 'make install' fails to install
   ;; them in a VPATH build.
-  (package (inherit gcc-4.9)
+  (package (inherit gcc-base)
     (version "5.5.0")
     (source (origin
               (method url-fetch)
@@ -549,14 +640,51 @@ Go.  It also includes runtime support libraries for these languages.")
                                        "gcc-5-fix-powerpc64le-build.patch"))
               (modules '((guix build utils)))
               (snippet gcc-canadian-cross-objdump-snippet)))
+    (arguments
+     ;; Since 'arguments' is a function of the package's version, define
+     ;; 'parent' such that the 'arguments' thunk gets to see the right
+     ;; version.
+     (let ((parent (package
+                     (inherit gcc-base)
+                     (version (package-version this-package)))))
+       (substitute-keyword-arguments (package-arguments parent)
+         ((#:modules modules %default-gnu-modules)
+          `((srfi srfi-1)
+            ,@modules))
+         ((#:configure-flags flags '())
+          `(cons "CXX=g++ -std=c++11" ,flags))
+         ;; For native builds of some GCC versions the C++ include path needs to
+         ;; be adjusted so it does not interfere with GCC's own build processes.
+         ((#:phases phases)
+          (if (%current-target-system)
+              phases
+              `(modify-phases ,phases
+                 (add-after 'set-paths 'adjust-CPLUS_INCLUDE_PATH
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (let ((libc (assoc-ref inputs "libc"))
+                           (gcc (assoc-ref inputs  "gcc")))
+                       (setenv "CPLUS_INCLUDE_PATH"
+                               (string-join (fold delete
+                                                  (string-split (getenv "CPLUS_INCLUDE_PATH")
+                                                                #\:)
+                                                  (list (string-append libc "/include")
+                                                        (string-append gcc "/include/c++")))
+                                            ":"))
+                       (format #t
+                               "environment variable `CPLUS_INCLUDE_PATH' changed to ~a~%"
+                               (getenv "CPLUS_INCLUDE_PATH")))))))))))
+    (native-inputs (list perl ;for manpages
+                         texinfo))
     (inputs
-     (modify-inputs (package-inputs gcc-4.7)
+     (modify-inputs (package-inputs gcc-base)
        (prepend ;; GCC5 needs <isl/band.h> which is removed in later versions.
-                isl-0.18)))))
+                isl-0.18)))
+    (supported-systems (fold delete %supported-systems
+                             '("riscv64-linux" "x86_64-gnu")))))
 
 (define-public gcc-6
   (package
-    (inherit gcc-5)
+    (inherit gcc-base)
     (version "6.5.0")
     (source (origin
               (method url-fetch)
@@ -572,9 +700,8 @@ Go.  It also includes runtime support libraries for these languages.")
                                        "gcc-6-source-date-epoch-2.patch"
                                        "gcc-5.0-libvtv-runpath.patch"))))
 
-    ;; GCC 4.9 and 5 has a workaround that is not needed for GCC 6 and later.
-    (arguments (package-arguments gcc-4.7))
-
+    (native-inputs (list perl ;for manpages
+                         texinfo))
     (inputs
      `(("isl" ,isl)
 
@@ -583,7 +710,7 @@ Go.  It also includes runtime support libraries for these languages.")
        ;; <https://bugs.gnu.org/42392>.
        ("libstdc++" ,(make-libstdc++-headers this-package))
 
-       ,@(package-inputs gcc-4.7)))))
+       ,@(package-inputs gcc-base)))))
 
 (define %gcc-7.5-aarch64-micro-architectures
   ;; Suitable '-march' values for GCC 7.5 (info "(gcc) AArch64 Options").
@@ -704,7 +831,7 @@ Go.  It also includes runtime support libraries for these languages.")
 
 (define-public gcc-7
   (package
-    (inherit gcc-6)
+    (inherit gcc-base)
     (version "7.5.0")
     (source (origin
               (method url-fetch)
@@ -718,6 +845,17 @@ Go.  It also includes runtime support libraries for these languages.")
                                        "gcc-7-libsanitizer-fsconfig-command.patch"
                                        "gcc-5.0-libvtv-runpath.patch"
                                        "gcc-libstdc++-newer-gcc.patch"))))
+    (native-inputs (list perl ;for manpages
+                         texinfo))
+    (inputs
+     `(("isl" ,isl)
+
+       ;; XXX: This gross hack allows us to have libstdc++'s <bits/c++config.h>
+       ;; in the search path, thereby avoiding misconfiguration of libstdc++:
+       ;; <https://bugs.gnu.org/42392>.
+       ("libstdc++" ,(make-libstdc++-headers this-package))
+
+       ,@(package-inputs gcc-base)))
     (description
      "GCC is the GNU Compiler Collection.  It provides compiler front-ends
 for several languages, including C, C++, Objective-C, Fortran, Ada, and Go.

@@ -13,18 +13,20 @@
 ;;; Copyright © 2017,2019 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2017 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2017 Alex Vong <alexvong1995@gmail.com>
-;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2019, 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2018 Meiyo Peng <meiyo.peng@gmail.com>
 ;;; Copyright © 2019 Yoshinori Arai <kumagusu08@gmail.com>
 ;;; Copyright © 2019 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2019 Wiktor Żelazny <wzelazny@vurv.cz>
+;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Jean-Baptiste Volatier <jbv@pm.me>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2021 Bonface Munyoki Kilyungi <me@bonfacemunyoki.com>
 ;;; Copyright © 2022 Gabriel Wicki <gabriel@erlikon.ch>
+;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022 M <matf@disr.it>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2023 Reza Housseini <reza@housseini.me>
@@ -78,6 +80,7 @@
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages java)
   #:use-module (gnu packages julia)
@@ -1434,6 +1437,38 @@ formats (e.g. Bibtex, RIS, etc.) using a common XML intermediate.")
 reading and writing CSV and TSV files.")
     (license license:expat)))
 
+(define-public gron
+  (package
+    (name "gron")
+    (version "0.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tomnomnom/gron")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sj34b6yv0qigy3aq7qmwf8bqxp1a8qh9p10lzkpw58s1c0iyh36"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/tomnomnom/gron"
+      #:test-flags #~(list "-vet=off")))
+    (native-inputs
+     (list go-github-com-fatih-color
+           go-github-com-mattn-go-colorable
+           go-github-com-nwidger-jsoncolor
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/tomnomnom/gron")
+    (synopsis "Transform JSON to make it easier to grep")
+    (description
+     "This package transforms JSON into discrete assignments to make it easier
+to use line-based tools such as grep to search for what you want and see the
+absolute \"path\" to it.")
+    (license license:expat)))
+
 (define-public opencc
   (package
     (name "opencc")
@@ -1609,20 +1644,19 @@ of a Unix terminal to HTML code.")
 (define-public vale
   (package
     (name "vale")
-    (version "3.11.2")
+    (version "3.12.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/errata-ai/vale")
-             (commit (string-append "v" version))))
+              (url "https://github.com/errata-ai/vale")
+              (commit (string-append "v" version))))
        (sha256
-        (base32 "04xgya706ljnbb7kh3kip0p9z67hpw55p7vfa0bl1nnd0is4q07g"))
+        (base32 "1w6216ap8sds6279h39ksjv27hakzahjmzlvbnsl67lwvldbqvcg"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
       #:install-source? #f
       #:embed-files #~(list ".*\\.gob")
       #:import-path "github.com/errata-ai/vale/cmd/vale"
@@ -1760,16 +1794,16 @@ JSON for post-processing
 (define-public miller
   (package
     (name "miller")
-    (version "6.13.0")
+    (version "6.15.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/johnkerl/miller")
-             (commit (go-version->git-ref version))))
+              (url "https://github.com/johnkerl/miller")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1w8ibmywsr9jsmmqrcvc0j7fx5vkdbwamizn4vim9xys807kmjsj"))))
+        (base32 "00k4gxlbdpnmy9r0qyfa72p7f29qbzzvxniilira3yj85k5rmrxg"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1789,17 +1823,15 @@ JSON for post-processing
            go-github-com-johnkerl-lumin
            go-github-com-kballard-go-shellquote
            go-github-com-klauspost-compress
+           go-github-com-kshedden-statmodel
            go-github-com-lestrrat-go-strftime
            go-github-com-mattn-go-isatty
-           ;; Optional, not packed in Guix
-           ;; go-github-com-nine-lives-later-go-windows-terminal-sequences
            go-github-com-pkg-profile
            go-github-com-stretchr-testify
            go-golang-org-x-sys
            go-golang-org-x-term
            go-golang-org-x-text
            python-wrapper
-           python-mkdocs-material
            ruby))
     (home-page "https://miller.readthedocs.io/")
     (synopsis "Text-formatted data processing tool")

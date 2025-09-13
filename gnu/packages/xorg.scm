@@ -5248,7 +5248,7 @@ by the Xorg server.")
 (define-public xorg-server
   (package
     (name "xorg-server")
-    (version "21.1.15")
+    (version "21.1.18")
     (source
      (origin
        (method url-fetch)
@@ -5256,7 +5256,7 @@ by the Xorg server.")
                            "/xserver/xorg-server-" version ".tar.xz"))
        (sha256
         (base32
-         "12g0g9ksswzx1kgn23gvrpa570fnpkdkmw1dfqjjg4422a884744"))
+         "0lk3268gzpll547zvaa64rdhs4z89d7w567lbd55swl71n9x2y68"))
        (patches
         (list
          ;; See:
@@ -5367,13 +5367,23 @@ communicates with the user via graphical controls such as buttons and
 draggable titlebars and borders.")
     (license license:x11)))
 
-;; This package is intended to be used when building GTK+.
+;; This package is intended to be used when building GTK+ qtbase (via
+;; xvfb-run-for-tests).
 ;; Note: It's currently marked as "hidden" to avoid having two non-eq?
 ;; packages with the same name and version.
 (define-public xorg-server-for-tests
   (hidden-package
    (package
-     (inherit xorg-server))))
+     (inherit xorg-server)
+     (version "21.1.15")
+     (source
+      (origin
+        (inherit (package-source xorg-server))
+        (uri (string-append "https://xorg.freedesktop.org/archive/individual"
+                            "/xserver/xorg-server-" version ".tar.xz"))
+        (sha256
+         (base32
+          "12g0g9ksswzx1kgn23gvrpa570fnpkdkmw1dfqjjg4422a884744")))))))
 
 ;;; XXX: Not really at home, but unless we break the inheritance between
 ;;; tigervnc-server and xorg-server, it must live here to avoid cyclic module
@@ -5678,7 +5688,7 @@ EGLStream families of extensions.")
 (define-public xorg-server-xwayland
   (package
     (name "xorg-server-xwayland")
-    (version "24.1.6")
+    (version "24.1.8")
     (source
      (origin
        (method url-fetch)
@@ -5686,7 +5696,7 @@ EGLStream families of extensions.")
                            "/xserver/xwayland-" version ".tar.xz"))
        (sha256
         (base32
-         "1myjakbmnw6w8vx4fyw48sc3iy9cb6vlwr0im4az9gbblcn62zkk"))))
+         "01wr356pgh7k9jg1zrd73fpyy8pmbansfsy1jf1fp77dr1bqv468"))))
     (inputs (list font-dejavu
                   dbus
                   egl-wayland
@@ -7066,14 +7076,14 @@ box, and a calendar.  It uses GTK+, and will match your desktop theme.")
 (define-public xvfb-run
   (package
     (name "xvfb-run")
-    (version "21.1.7-1")
+    (version "21.1.18-2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://debian/pool/main/x/xorg-server/"
                            "xorg-server_" version ".diff.gz"))
        (sha256
-        (base32 "1073m4gzn8yv9kn70fbyq8a2xckgz0wljjr2w7i2bsrg767h29gd"))))
+        (base32 "1775i47yyvpzg5gb3cdyc260bzr802i15vdlw0qnrl030li53yj2"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -7082,11 +7092,11 @@ box, and a calendar.  It uses GTK+, and will match your desktop theme.")
           (replace 'unpack
             ;; Apply the source patch to an empty directory.
             (lambda* (#:key inputs #:allow-other-keys)
-              (let*  ((diff.gz (basename #$source))
+              (let*  ((diff.gz (basename #$(package-source this-package)))
                       (diff (substring diff.gz 0 (string-rindex diff.gz #\.))))
                 (mkdir "source")
                 (chdir "source")
-                (copy-file #$source diff.gz)
+                (copy-file #$(package-source this-package) diff.gz)
                 (invoke "gunzip" diff.gz)
                 (invoke "patch" "-Np1" "-i" diff)
                 (chdir "debian/local"))))
@@ -7140,6 +7150,24 @@ an existing user-specified one, writes a cookie to it, and then starts the
 the server and cleaning up before returning the exit status of the command.")
     (license (list license:x11          ; the script
                    license:gpl2+))))    ; the man page
+
+;; This package is intended to be used when building qtbase, like
+;; xorg-server-for-tests.
+(define-public xvfb-run-for-tests
+  (hidden-package
+   (package
+     (inherit xvfb-run)
+     (version "21.1.7-1")
+     (source
+      (origin
+        (inherit (package-source xvfb-run))
+        (uri (string-append "mirror://debian/pool/main/x/xorg-server/"
+                            "xorg-server_" version ".diff.gz"))
+        (sha256
+         (base32 "1073m4gzn8yv9kn70fbyq8a2xckgz0wljjr2w7i2bsrg767h29gd"))))
+     (inputs
+      (modify-inputs (package-inputs xvfb-run)
+        (replace "xorg-server" xorg-server-for-tests))))))
 
 (define-public xwayland-run
   (package

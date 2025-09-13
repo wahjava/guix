@@ -1052,26 +1052,30 @@ to aid in debugging.")
 (define-public delve
   (package
     (name "delve")
-    (version "1.25.1")
+    (version "1.25.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/go-delve/delve")
-             (commit (string-append "v" version))))
+              (url "https://github.com/go-delve/delve")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0rfpgh9ijb0lcyrfscxb3k1552wwhqj0jxv5zfyrsfm1n6j8dc93"))
+         "1b6vp6m4vjx4wfs1djhpizvz40s563jwld9lgjq82svaiilrmlqa"))
        (snippet
         #~(begin (use-modules (guix build utils))
                  (delete-file-recursively "vendor")))))
     (build-system go-build-system)
     (arguments
-     (list #:tests? #f ;XXX: Some tests fail, check why.
-           #:import-path "github.com/go-delve/delve/cmd/dlv"
-           #:unpack-path "github.com/go-delve/delve"
-           #:install-source? #f))
+     (list
+      #:install-source? #f
+      #:import-path "github.com/go-delve/delve/cmd/dlv"
+      #:unpack-path "github.com/go-delve/delve"
+      ;; [1] Want mod github.com/go-delve/delve and dep
+      ;; github.com/google/go-dap in the output.
+      ;; [2] Output of go tool nm contains MethodByName.
+      #:test-flags #~(list "-skip" "TestVersion|TestDeadcodeEliminated")))
     (native-inputs
      (list go-github-com-cilium-ebpf
            go-github-com-cosiner-argv

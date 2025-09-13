@@ -35,6 +35,7 @@
   #:use-module (gnu packages networking)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages search)
@@ -46,6 +47,7 @@
   #:use-module (gnu packages xorg)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -414,19 +416,19 @@ the Sugar Toolkit.")
     (package
       (name "sugar-block-party-activity")
       (version (git-version "12" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/block-party-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0zinqhwmvyvk1zvs28dr71p68vb6widn4v3zp35zlzj4ayyn5rvx"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/block-party-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0zinqhwmvyvk1zvs28dr71p68vb6widn4v3zp35zlzj4ayyn5rvx"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -434,11 +436,14 @@ the Sugar Toolkit.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       (propagated-inputs
        (list gtk+
              gstreamer
@@ -454,19 +459,19 @@ a Tetris-like game.")
   (package
     (name "sugar-browse-activity")
     (version "208")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/sugarlabs/browse-activity")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1lxwkwz7bz8vd0jgsgvlwdm6gkrmzcmwlyqvp12j2jk5mpr4fp44"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sugarlabs/browse-activity")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lxwkwz7bz8vd0jgsgvlwdm6gkrmzcmwlyqvp12j2jk5mpr4fp44"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:test-flags #~(list "check")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-reference-to-gschema-compiler
@@ -479,7 +484,9 @@ a Tetris-like game.")
               (substitute* "activity/activity.info"
                 (("exec = sugar-activity3")
                  (string-append "exec = "
-                                (search-input-file inputs "/bin/sugar-activity3"))))))
+                                (search-input-file inputs
+                                                   "/bin/sugar-activity3"))))))
+          (delete 'build)
           (replace 'install
             (lambda _
               (setenv "HOME" "/tmp")
@@ -496,14 +503,12 @@ a Tetris-like game.")
            sugar-toolkit-gtk3
            telepathy-glib
            webkitgtk-for-gtk3))
-    (inputs
-     (list (list glib "bin")))
-    (native-inputs
-     (list gettext-minimal))
+    (inputs (list (list glib "bin")))
+    (native-inputs (list gettext-minimal python-setuptools-next))
     (home-page "https://help.sugarlabs.org/browse.html")
     (synopsis "Sugar activity to browse the internet")
     (description "Browse is a web browser activity for the Sugar desktop.")
-    (license (list license:cc0       ;metadata
+    (license (list license:cc0 ;metadata
                    license:lgpl2.0+
                    license:gpl2+
                    license:gpl3+))))
@@ -514,19 +519,19 @@ a Tetris-like game.")
     (package
       (name "sugar-cellgame-activity")
       (version (git-version "5" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/cellgame")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "09dxq06dr43i3g8im4j1xffl19rzr1pwbixwgb0kipnmbx8pln5c"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/cellgame")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "09dxq06dr43i3g8im4j1xffl19rzr1pwbixwgb0kipnmbx8pln5c"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -534,7 +539,8 @@ a Tetris-like game.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (add-after 'unpack 'inject-load-path
               (lambda _
                 (substitute* "activity.py"
@@ -548,18 +554,16 @@ for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
         sys.path.insert(1, directory)
 import pygame
 ")))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
       ;; All these libraries are accessed via gobject introspection.
-      (propagated-inputs
-       (list gtk+
-             sugar-toolkit-gtk3))
+      (propagated-inputs (list gtk+ sugar-toolkit-gtk3))
       (inputs (list python-pygame))
-      (native-inputs
-       (list gettext-minimal))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://github.com/sugarlabs/cellgame")
       (synopsis "Cell game for Sugar")
       (description "This game for the Sugar desktop is based on the mechanisms
@@ -574,19 +578,19 @@ present in gene regulatory networks.")
     (package
       (name "sugar-chat-activity")
       (version (git-version "86" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/chat")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1gp1ljazm119hqzwz0rkr6k588ngd68manndm808pj5vgbv7qsdq"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/chat")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1gp1ljazm119hqzwz0rkr6k588ngd68manndm808pj5vgbv7qsdq"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -594,7 +598,9 @@ present in gene regulatory networks.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
@@ -610,8 +616,7 @@ present in gene regulatory networks.")
              python-pygobject
              sugar-toolkit-gtk3
              telepathy-glib))
-      (native-inputs
-       (list gettext-minimal))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://help.sugarlabs.org/chat.html")
       (synopsis "Sugar activity to chat")
       (description "Chat is an activity used to exchange messages with friends
@@ -624,19 +629,19 @@ or classmates.")
     (package
       (name "sugar-classify-cats-activity")
       (version (git-version "2" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/classify-cats")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "101drh1dqgr9qsz3r1fzkcn5h6z720zskaqnz2aixzp2ybvh17wk"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/classify-cats")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "101drh1dqgr9qsz3r1fzkcn5h6z720zskaqnz2aixzp2ybvh17wk"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -644,7 +649,9 @@ or classmates.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
@@ -657,8 +664,7 @@ or classmates.")
              gtk+
              python-pygobject
              sugar-toolkit-gtk3))
-      (native-inputs
-       (list gettext-minimal))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://github.com/sugarlabs/classify-cats")
       (synopsis "Classify cats based on various criteria")
       (description "This is a Sugar activity where players classify cats based
@@ -671,19 +677,19 @@ on various criteria.")
     (package
       (name "sugar-commander-activity")
       (version (git-version "11" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/sugar-commander")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "02n5wqh9cwr3jnjaxyd9kxcls4h3fdhhxdcyvvxmya08h20idvgd"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/sugar-commander")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "02n5wqh9cwr3jnjaxyd9kxcls4h3fdhhxdcyvvxmya08h20idvgd"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -691,7 +697,8 @@ on various criteria.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (add-after 'unpack 'inject-load-path
               (lambda _
                 (substitute* "sugarcommander.py"
@@ -705,6 +712,7 @@ for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
         sys.path.insert(1, directory)
 import logging
 ")))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
@@ -719,16 +727,16 @@ import logging
              python-pygobject
              sugar-toolkit-gtk3))
       (inputs (list python-pygame))
-      (native-inputs
-       (list gettext-minimal))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://github.com/sugarlabs/sugar-commander")
       (synopsis "Manage your Sugar journal")
-      (description "Sugar-commander lets you import items from removable
-devices like USB drives and SD cards using a familiar hierarchical view of
-files on these devices, as opposed to the flattened Journal view that the
-Sugar Journal gives to these devices.  It also enables you to see how much
-disk space each Journal entry uses, generates thumbnails, and does other
-things to enhance your use of the Journal.")
+      (description
+       "Sugar-commander lets you import items from removable devices like USB
+drives and SD cards using a familiar hierarchical view of files on these
+devices, as opposed to the flattened Journal view that the Sugar Journal gives
+to these devices.  It also enables you to see how much disk space each Journal
+entry uses, generates thumbnails, and does other things to enhance your use of
+the Journal.")
       (license license:gpl2+))))
 
 (define-public sugar-help-activity
@@ -737,19 +745,19 @@ things to enhance your use of the Journal.")
     (package
       (name "sugar-help-activity")
       (version (git-version "20" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/help-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0awjbqyc9f74dx0d7fgjk42vfsygxr8jhwqiv4hpggqcawc02xv8"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/help-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0awjbqyc9f74dx0d7fgjk42vfsygxr8jhwqiv4hpggqcawc02xv8"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'use-newer-webkit
@@ -762,22 +770,23 @@ things to enhance your use of the Journal.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (replace 'build
-              (lambda _ (invoke "make" "html")))
+              (lambda _
+                (invoke "make" "html")))
             (replace 'install
               (lambda _
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
       (native-inputs
-       (list sugar-toolkit-gtk3
-             python-sphinx))
-      (propagated-inputs
-       (list webkitgtk-for-gtk3))
+       (list sugar-toolkit-gtk3 python-sphinx python-setuptools-next))
+      (propagated-inputs (list webkitgtk-for-gtk3))
       (home-page "https://github.com/sugarlabs/help-activity")
       (synopsis "Sugar activity for accessing documentation and manuals")
-      (description "This is an activity for the Sugar environment which aims
-to provide users with easy access to documentation and manuals.")
+      (description
+       "This is an activity for the Sugar environment which aims to provide
+users with easy access to documentation and manuals.")
       (license license:gpl3+))))
 
 (define-public sugar-jukebox-activity
@@ -786,19 +795,19 @@ to provide users with easy access to documentation and manuals.")
     (package
       (name "sugar-jukebox-activity")
       (version (git-version "36" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/jukebox-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1c8g4h52jnwzk5vlkrkm8j0p5dbrjqd8hv3bdz5rp39w9in3skzk"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/jukebox-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1c8g4h52jnwzk5vlkrkm8j0p5dbrjqd8hv3bdz5rp39w9in3skzk"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -806,25 +815,28 @@ to provide users with easy access to documentation and manuals.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
       (propagated-inputs
        (list gtk+
              gstreamer
              gst-plugins-base
              sugar-toolkit-gtk3))
-      (inputs
-       (list gettext-minimal))
+      (inputs (list gettext-minimal))
       (home-page "https://help.sugarlabs.org/jukebox.html")
       (synopsis "Media player for the Sugar learning environment")
-      (description "Jukebox is the media player to play different kinds of
-audio and video files including online streams.  It also supports playlists
-like @file{.m3u} and @file{.pls}.")
+      (description
+       "Jukebox is the media player to play different kinds of audio and video
+files including online streams.  It also supports playlists like @file{.m3u}
+and @file{.pls}.")
       (license license:gpl2+))))
 
 (define-public sugar-log-activity
@@ -833,36 +845,44 @@ like @file{.m3u} and @file{.pls}.")
     (package
       (name "sugar-log-activity")
       (version (git-version "42" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/log-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0pacd677gfhyym153x5grwimk8wgm4c9k0a463pq6fdrhm1g5wpc"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/log-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0pacd677gfhyym153x5grwimk8wgm4c9k0a463pq6fdrhm1g5wpc"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-locations
               (lambda* (#:key inputs #:allow-other-keys)
                 (substitute* "logcollect.py"
                   (("'/sbin/ifconfig'")
-                   (string-append "'" (search-input-file inputs "/bin/ifconfig") "'"))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/ifconfig")
+                                  "'"))
                   (("'/sbin/route")
-                   (string-append "'" (search-input-file inputs "/bin/route")))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/route")))
                   (("'/bin/df")
-                   (string-append "'" (search-input-file inputs "/bin/df")))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/df")))
                   (("'/bin/ps")
-                   (string-append "'" (search-input-file inputs "/bin/ps")))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/ps")))
                   (("'/usr/bin/free")
-                   (string-append "'" (search-input-file inputs "/bin/free")))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/free")))
                   (("'/usr/bin/top")
-                   (string-append "'" (search-input-file inputs "/bin/top")))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/top")))
                   (("'/usr/share/sugar/activities")
                    "'/run/current-system/profile/share/sugar/activities"))))
             (add-after 'unpack 'patch-launcher
@@ -870,23 +890,22 @@ like @file{.m3u} and @file{.pls}.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
       ;; All these libraries are accessed via gobject introspection.
-      (propagated-inputs
-       (list gtk+
-             sugar-toolkit-gtk3))
-      (inputs
-       (list coreutils net-tools procps))
-      (native-inputs
-       (list gettext-minimal))
+      (propagated-inputs (list gtk+ sugar-toolkit-gtk3))
+      (inputs (list coreutils net-tools procps))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://help.sugarlabs.org/log.html")
       (synopsis "Log activity for the Sugar learning environment")
-      (description "Log is part of the Sugar desktop.  Log is used when
+      (description
+       "Log is part of the Sugar desktop.  Log is used when
 looking for why an activity or Sugar is not working properly.")
       (license license:gpl2+))))
 
@@ -894,19 +913,20 @@ looking for why an activity or Sugar is not working properly.")
   (package
     (name "sugar-maze-activity")
     (version "32")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/sugarlabs/maze-activity")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0506mwxy3agyxlilb5v3pn29pg45lzaxm8rhj9azm58irs3wdmnq"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sugarlabs/maze-activity")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0506mwxy3agyxlilb5v3pn29pg45lzaxm8rhj9azm58irs3wdmnq"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:test-flags
+      #~(list "check")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-launcher
@@ -914,18 +934,18 @@ looking for why an activity or Sugar is not working properly.")
               (substitute* "activity/activity.info"
                 (("exec = sugar-activity3")
                  (string-append "exec = "
-                                (search-input-file inputs "/bin/sugar-activity3"))))))
+                                (search-input-file inputs
+                                                   "/bin/sugar-activity3"))))))
+          (delete 'build)
           (replace 'install
             (lambda _
               (setenv "HOME" "/tmp")
               (invoke "python" "setup.py" "install"
                       (string-append "--prefix=" #$output)))))))
+    (native-inputs (list python-setuptools-next))
     ;; All these libraries are accessed via gobject introspection.
-    (propagated-inputs
-     (list gtk+
-           telepathy-glib))
-    (inputs
-     (list sugar-toolkit-gtk3 gettext-minimal))
+    (propagated-inputs (list gtk+ telepathy-glib))
+    (inputs (list sugar-toolkit-gtk3 gettext-minimal))
     (home-page "https://github.com/sugarlabs/maze-activity")
     (synopsis "Simple maze game for the Sugar learning environment")
     (description "Try to make your way through an increasingly difficult path,
@@ -938,19 +958,20 @@ or you can also play with a friend!")
     (package
       (name "sugar-physics-activity")
       (version (git-version "35" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/physics")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0yzq4cbgcngf1ayi4bsn04l3mz6pnayd6db9bv0v9xfrpjmffvyk"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/physics")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0yzq4cbgcngf1ayi4bsn04l3mz6pnayd6db9bv0v9xfrpjmffvyk"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -958,7 +979,8 @@ or you can also play with a friend!")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (add-after 'unpack 'inject-load-path
               (lambda _
                 (substitute* "activity.py"
@@ -971,26 +993,24 @@ for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
     except ValueError:
         sys.path.insert(1, directory)
 ")))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
-      (propagated-inputs
-       (list gtk+
-             gdk-pixbuf))
-      (inputs
-       (list python-pybox2d
-             python-pygame
-             sugar-toolkit-gtk3
-             gettext-minimal))
+      (propagated-inputs (list gtk+ gdk-pixbuf))
+      (inputs (list python-pybox2d python-pygame sugar-toolkit-gtk3
+                    gettext-minimal))
       (home-page "https://github.com/sugarlabs/physics")
       (synopsis "Physical world simulator and playground")
-      (description "Physics is a physical world simulator and playground---you
-can add squares, circles, triangles, or draw your own shapes, and see them
-come to life with forces (think gravity, Newton!), friction (scrrrrape), and
-inertia (ahh, slow down!).")
+      (description
+       "Physics is a physical world simulator and playground---you can add
+squares, circles, triangles, or draw your own shapes, and see them come to
+life with forces (think gravity, Newton!), friction (scrrrrape), and inertia
+(ahh, slow down!).")
       (license license:gpl3+))))
 
 (define-public sugar-portfolio-activity
@@ -999,19 +1019,19 @@ inertia (ahh, slow down!).")
     (package
       (name "sugar-portfolio-activity")
       (version (git-version "52" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/portfolio-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1zaab7ara40imkd85hilslc4rqyjsgkzrcngsrw99dryl9n4mx1p"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/portfolio-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zaab7ara40imkd85hilslc4rqyjsgkzrcngsrw99dryl9n4mx1p"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:tests? #false ;there are none
+        #:tests? #f ;there are none
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1019,12 +1039,15 @@ inertia (ahh, slow down!).")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
       (propagated-inputs
        (list cairo
@@ -1039,8 +1062,7 @@ inertia (ahh, slow down!).")
              sugar-datastore
              sugar-toolkit-gtk3
              telepathy-glib))
-      (inputs
-       (list gettext-minimal))
+      (inputs (list gettext-minimal))
       (home-page "https://github.com/sugarlabs/portfolio-activity")
       (synopsis "Portfolio for the Sugar Journal")
       (description "The Portfolio activity creates a slide show from Sugar
@@ -1051,17 +1073,19 @@ Journal entries that have been ‘starred’.")
   (package
     (name "sugar-read-activity")
     (version "124")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://download.sugarlabs.org/sources/sucrose/fructose/"
-                                  "Read/Read-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1hla80vclprqzahr8yfnin09spv4mab7il6a00ilz4anyahrzgzy"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://download.sugarlabs.org/sources/sucrose/fructose/"
+             "Read/Read-" version ".tar.bz2"))
+       (sha256
+        (base32 "1hla80vclprqzahr8yfnin09spv4mab7il6a00ilz4anyahrzgzy"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:test-flags
+      #~(list "check")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-launcher
@@ -1069,27 +1093,29 @@ Journal entries that have been ‘starred’.")
               (substitute* "activity/activity.info"
                 (("exec = sugar-activity3")
                  (string-append "exec = "
-                                (search-input-file inputs "/bin/sugar-activity3"))))))
+                                (search-input-file inputs
+                                                   "/bin/sugar-activity3"))))))
+          (delete 'build)
           (replace 'install
             (lambda _
               (setenv "HOME" "/tmp")
               (invoke "python" "setup.py" "install"
                       (string-append "--prefix=" #$output)))))))
+    (native-inputs (list python-setuptools-next))
     ;; All these libraries are accessed via gobject introspection.
     (propagated-inputs
      (list evince
            gtk+
            sugar-toolkit-gtk3
            webkitgtk-for-gtk3))
-    (inputs
-     (list gettext-minimal))
+    (inputs (list gettext-minimal))
     (home-page "https://help.sugarlabs.org/read.html")
     (synopsis "Read PDF and TXT files in the Sugar learning environment")
-    (description "The Read activity allows the laptop to act as a book
-reader.  It has a simple interface, and will view many kinds of text and
-image-based book-like materials.  It will have particular strengths in
-handheld mode, with extremely low power consumption and simple navigation
-controls.")
+    (description
+     "The Read activity allows the laptop to act as a book reader.  It has a
+simple interface, and will view many kinds of text and image-based book-like
+materials.  It will have particular strengths in handheld mode, with extremely
+low power consumption and simple navigation controls.")
     (license license:gpl2+)))
 
 (define-public sugar-river-crossing-activity
@@ -1098,19 +1124,20 @@ controls.")
     (package
       (name "sugar-river-crossing-activity")
       (version (git-version "1" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/river-crossing-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0h7c3i288vwz249figw3jwyylwhlh9qlgjhlbs902ldpmib0k237"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/river-crossing-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0h7c3i288vwz249figw3jwyylwhlh9qlgjhlbs902ldpmib0k237"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1118,7 +1145,8 @@ controls.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (add-after 'unpack 'inject-load-path
               (lambda _
                 (substitute* "activity.py"
@@ -1132,24 +1160,23 @@ for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
         sys.path.insert(1, directory)
 import pygame
 ")))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; These libraries are accessed via gobject introspection.
-      (propagated-inputs
-       (list gtk+))
-      (inputs
-       (list python-pygame
-             sugar-toolkit-gtk3
-             gettext-minimal))
+      (propagated-inputs (list gtk+))
+      (inputs (list python-pygame sugar-toolkit-gtk3 gettext-minimal))
       (home-page "https://github.com/sugarlabs/river-crossing-activity")
       (synopsis "Puzzle game for Sugar desktop")
-      (description "A farmer is to ferry across a river a goat, a cabbage, and
-a wolf.  The boat allows the farmer to carry only one of the three at a time.
-Without supervision, the goat will gobble the cabbage whereas the wolf will
-not hesitate to feast on the goat.")
+      (description
+       "A farmer is to ferry across a river a goat, a cabbage, and a wolf.
+The boat allows the farmer to carry only one of the three at a time. Without
+supervision, the goat will gobble the cabbage whereas the wolf will not
+hesitate to feast on the goat.")
       (license license:gpl3+))))
 
 (define-public sugar-terminal-activity
@@ -1158,19 +1185,20 @@ not hesitate to feast on the goat.")
     (package
       (name "sugar-terminal-activity")
       (version (git-version "47" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/terminal-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "11p7rrnlaw374h3qravhp915vdblvn07i2mnrzn7mhapkwvkg4h5"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/terminal-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "11p7rrnlaw374h3qravhp915vdblvn07i2mnrzn7mhapkwvkg4h5"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1178,19 +1206,18 @@ not hesitate to feast on the goat.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
-      (propagated-inputs
-       (list gtk+
-             vte/gtk+-3
-             sugar-toolkit-gtk3))
-      (inputs
-       (list gettext-minimal))
+      (propagated-inputs (list gtk+ vte/gtk+-3 sugar-toolkit-gtk3))
+      (inputs (list gettext-minimal))
       (home-page "https://help.sugarlabs.org/terminal.html")
       (synopsis "Terminal activity for the Sugar learning environment")
       (description "Terminal is a full-screen text mode program that provides
@@ -1203,19 +1230,20 @@ a Command-Line Interface (CLI) to the system.")
     (package
       (name "sugar-turtleart-activity")
       (version (git-version "202" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/turtleart-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "11agqyahjhxb7bakzix63lazcbin0jfiypqx0sm2i85bsl30fp7y"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/turtleart-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "11agqyahjhxb7bakzix63lazcbin0jfiypqx0sm2i85bsl30fp7y"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1223,7 +1251,8 @@ a Command-Line Interface (CLI) to the system.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             (add-after 'unpack 'patch-locations
               (lambda _
                 (substitute* "setup.py"
@@ -1239,11 +1268,13 @@ a Command-Line Interface (CLI) to the system.")
                                "pysamples/speak.py"
                                "TurtleArt/tacollaboration.py")
                   (("'espeak")
-                   (string-append "'" (search-input-file inputs "/bin/espeak"))))
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/espeak"))))
                 (substitute* '("pysamples/csound.py"
                                "plugins/turtle_blocks_extras/turtle_blocks_extras.py")
                   (("'csound '")
-                   (string-append "'" (search-input-file inputs "/bin/csound")
+                   (string-append "'"
+                                  (search-input-file inputs "/bin/csound")
                                   " '")))
                 (substitute* '("plugins/turtle_blocks_extras/turtle_blocks_extras.py"
                                "pysamples/speak.py"
@@ -1254,12 +1285,15 @@ a Command-Line Interface (CLI) to the system.")
                 (substitute* "pysamples/sinewave.py"
                   (("'speaker-test")
                    (string-append "'"
-                                  (search-input-file inputs "/bin/speaker-test"))))))
+                                  (search-input-file inputs
+                                                     "/bin/speaker-test"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
       (propagated-inputs
        (list gstreamer
@@ -1275,12 +1309,13 @@ a Command-Line Interface (CLI) to the system.")
              sugar-toolkit-gtk3))
       (home-page "https://help.sugarlabs.org/en/turtleart.html")
       (synopsis "Block-based Logo programming environment")
-      (description "Turtle Art, also known as Turtle Blocks, is an activity
-with a Logo-inspired graphical “turtle” that draws colorful art based on
+      (description
+       "Turtle Art, also known as Turtle Blocks, is an activity with a
+Logo-inspired graphical “turtle” that draws colorful art based on
 snap-together visual programming elements.  Its “low floor” provides an easy
-entry point for beginners.  It also has “high ceiling” programming, graphics,
-mathematics, and Computer Science features which will challenge the more
-adventurous student.")
+entry point for beginners.  It also has “high ceiling” programming,
+graphics,mathematics, and Computer Science features which will challenge the
+more adventurous student.")
       (license license:expat))))
 
 (define-public sugar-turtlepond-activity
@@ -1289,19 +1324,20 @@ adventurous student.")
     (package
       (name "sugar-turtlepond-activity")
       (version (git-version "10" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/turtlepond")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0j7jzbwi2aph312f5dazmwgxqzh458b4yzz8mvrdxpr91ksxd4h4"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/turtlepond")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0j7jzbwi2aph312f5dazmwgxqzh458b4yzz8mvrdxpr91ksxd4h4"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1309,7 +1345,8 @@ adventurous student.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
             #;
             (add-after 'unpack 'inject-load-path
               (lambda _
@@ -1324,6 +1361,7 @@ for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
         sys.path.insert(1, directory)
 import logging
 ")))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
@@ -1337,8 +1375,7 @@ import logging
              gtk+
              python-pygobject
              sugar-toolkit-gtk3))
-      (native-inputs
-       (list gettext-minimal))
+      (native-inputs (list gettext-minimal python-setuptools-next))
       (home-page "https://github.com/sugarlabs/turtlepond")
       (synopsis "Turtle-based strategy game")
       (description "Turtle in a Pond is a strategy game.  The goal is to
@@ -1349,19 +1386,20 @@ surround the turtle before it runs off the screen.")
   (package
     (name "sugar-typing-turtle-activity")
     (version "32")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/sugarlabs/typing-turtle-activity")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0shadv9wgddjvl97kvsqb8iw1wmmfw5lzcqk78hd70pzvh4c1hmd"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sugarlabs/typing-turtle-activity")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0shadv9wgddjvl97kvsqb8iw1wmmfw5lzcqk78hd70pzvh4c1hmd"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:test-flags
+      #~(list "check")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-reference-to-executables
@@ -1374,20 +1412,22 @@ surround the turtle before it runs off the screen.")
               (substitute* "activity/activity.info"
                 (("exec = sugar-activity3")
                  (string-append "exec = "
-                                (search-input-file inputs "/bin/sugar-activity3"))))))
+                                (search-input-file inputs
+                                                   "/bin/sugar-activity3"))))))
+          (delete 'build)
           (replace 'install
             (lambda _
               (invoke "python" "setup.py" "install"
                       (string-append "--prefix=" #$output)))))))
     (native-inputs
-     (list gettext-minimal sugar-toolkit-gtk3))
-    (inputs
-     (list setxkbmap))
+     (list gettext-minimal sugar-toolkit-gtk3 python-setuptools-next))
+    (inputs (list setxkbmap))
     (home-page "https://help.sugarlabs.org/en/typing_turtle.html")
     (synopsis "Learn typing")
-    (description "Need some help typing?  In this activity for the Sugar
-environment you will learn the best way to hold your hands in order for you to
-become a faster typist.")
+    (description
+     "Need some help typing?  In this activity for the Sugar environment you
+will learn the best way to hold your hands in order for you to become a faster
+typist.")
     (license license:gpl3+)))
 
 (define-public sugar-write-activity
@@ -1396,19 +1436,20 @@ become a faster typist.")
     (package
       (name "sugar-write-activity")
       (version (git-version "101" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/sugarlabs/write-activity")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0lw34hf31fyfvqilzlmcz3c7zki0iqkn1zp2sv3dih016gwqg5pw"))))
-      (build-system python-build-system)
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sugarlabs/write-activity")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0lw34hf31fyfvqilzlmcz3c7zki0iqkn1zp2sv3dih016gwqg5pw"))))
+      (build-system pyproject-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:test-flags
+        #~(list "check")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-launcher
@@ -1416,12 +1457,15 @@ become a faster typist.")
                 (substitute* "activity/activity.info"
                   (("exec = sugar-activity3")
                    (string-append "exec = "
-                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+                                  (search-input-file inputs
+                                                     "/bin/sugar-activity3"))))))
+            (delete 'build)
             (replace 'install
               (lambda _
                 (setenv "HOME" "/tmp")
                 (invoke "python" "setup.py" "install"
                         (string-append "--prefix=" #$output)))))))
+      (native-inputs (list python-setuptools-next))
       ;; All these libraries are accessed via gobject introspection.
       (propagated-inputs
        (list abiword
@@ -1429,12 +1473,11 @@ become a faster typist.")
              gtk+
              libgsf
              telepathy-glib))
-      (inputs
-       (list sugar-toolkit-gtk3
-             gettext-minimal))
+      (inputs (list sugar-toolkit-gtk3 gettext-minimal))
       (home-page "https://help.sugarlabs.org/write.html")
       (synopsis "Word processor for Sugar desktop")
-      (description "Write is a word processor activity for the Sugar desktop.
-Write embeds the AbiWord word processor, and can be used to write and edit
-text documents.")
+      (description
+       "Write is a word processor activity for the Sugar desktop. Write embeds
+the AbiWord word processor, and can be used to write and edit text
+documents.")
       (license license:gpl2+))))

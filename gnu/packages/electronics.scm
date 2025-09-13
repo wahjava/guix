@@ -56,6 +56,7 @@
   #:use-module (gnu packages engineering)
   #:use-module (gnu packages embedded)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages fpga)
   #:use-module (gnu packages gawk)
@@ -370,7 +371,7 @@ supported devices, as well as input/output file format support.")
 (define-public m8c
   (package
     (name "m8c")
-    (version "2.0.0")
+    (version "2.1.0")
     (source
      (origin
        (method git-fetch)
@@ -379,19 +380,17 @@ supported devices, as well as input/output file format support.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1x6klsqgy6j2b6cvkk386jmb0nbcpsrr36ji6cfwd3039wx657i8"))))
-    (build-system gnu-build-system)
+        (base32 "1vv0m4ry23nns5a47m2n9k6i3wly2jjc5n1j3l7sh1m480ga3d42"))))
+    (build-system cmake-build-system)
     (arguments
      (list
-      #:make-flags #~(list (string-append "PREFIX=" #$output))
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'configure))
-      #:tests? #f)) ;no tests
+      #:tests? #f                       ;no tests
+      #:configure-flags
+      #~(list "-DUSE_LIBSERIALPORT=ON")))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list libserialport sdl3))
+     (list libdecor libserialport sdl3))
     (home-page "https://github.com/laamaa/m8c")
     (synopsis "Cross-platform M8 tracker headless client")
     (description
@@ -407,62 +406,6 @@ which allows one to install the M8 firmware on any Teensy.")
                    license:expat
                    license:public-domain
                    license:zlib))))
-
-(define-public minipro
-  ;; When built from a Git repo, minipro expects GIT_DATE to be set to the
-  ;; value of `git show -s --format=%ci'.  When updating the package, run this
-  ;; in a checkout and put the value here.
-  (let* ((date "2025-04-13 21:54:38 -0700"))
-    (package
-      (name "minipro")
-      (version "0.7.3")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://gitlab.com/DavidGriffith/minipro.git")
-               (commit version)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1525rn5h73xism16vmivd3cz93g8w76h24f0yvbpc35ydc3fkqf7"))))
-      (native-inputs (list pkg-config which))
-      (inputs (list libusb zlib))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        #:tests? #f ; no test suite
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'configure) ; No ./configure script
-            (add-before 'build 'fix-makefile
-              (lambda _
-                ;; Fix some git related variables that minipro expects
-                (substitute* "Makefile"
-                  (("GIT_BRANCH = .*")
-                   (string-append "GIT_BRANCH = \"master\"\n"))
-                  (("GIT_HASH = .*")
-                   (string-append "GIT_HASH = \"" #$version "\"\n"))
-                  (("GIT_DATE = .*")
-                   (string-append "GIT_DATE = \"" #$date "\"\n"))))))
-        #:make-flags
-        #~(list (string-append "VERSION=" #$version)
-                (string-append "PREFIX=" #$output)
-                (string-append "UDEV_DIR=" #$output "/lib/udev")
-                (string-append "COMPLETIONS_DIR=" #$output
-                               "/share/bash-completion/completions"))))
-      (synopsis "Controls the TL866xx series of chip programmers")
-      (description
-       "minipro is designed to program or read the contents of
-chips supported by the TL866xx series of programmers.  This includes many
-microcontrollers, ROMs, EEPROMs and PLDs.
-
-To use this program without root privileges you must install the necessary udev
-rules.  This can be done by extending @code{udev-service-type} in your
-@code{operating-system} configuration with this package.  E.g.:
-@code{(udev-rules-service 'minipro minipro #:groups '(\"plugdev\")}.
-Additionally your user must be member of the @code{plugdev} group.")
-      (home-page "https://gitlab.com/DavidGriffith/minipro")
-      (license license:gpl3+))))
 
 (define-public openboardview
   (package
@@ -1029,7 +972,7 @@ to enforce it.")
 (define-public qucsator-rf
   (package
     (name "qucsator-rf")
-    (version "1.0.6")                   ;required by qucs-s, keep in sync
+    (version "1.0.7")                   ;required by qucs-s, keep in sync
     (source
      (origin
        (method git-fetch)
@@ -1039,7 +982,7 @@ to enforce it.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0fx0kzj6hn0094jnvn6b1zqwjnkmd79xdr0zdyz5lmsyixlmxmvk"))))
+         "1qyih418r0jcrpk1ja4p7v9v5iqvri8iszg7s3vaf1d2agwblzb4"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1089,16 +1032,17 @@ input and outputs an XML dataset.")
 (define-public qucs-s
   (package
     (name "qucs-s")
-    (version "25.1.2")                  ;update qucsator-rf accordingly
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/ra3xdh/qucs_s")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "07wrpqgbj77rmh1yxy233lk1y4ys1x0721b3jsldp058dcgf24zv"))))
+    (version "25.2.0")                  ;update qucsator-rf accordingly
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ra3xdh/qucs_s")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0328irynm8vy4xjdip5286fd8nag1zdp0p6rcbhdhp4fca6wp5ak"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1304,7 +1248,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.56")
+    (version "0.57")
     (source
      (origin
        (method git-fetch)

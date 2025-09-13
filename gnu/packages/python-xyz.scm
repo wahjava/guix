@@ -2141,21 +2141,20 @@ decorators, including variants of the Python standard library's
 (define-public python-colorcet
   (package
     (name "python-colorcet")
-    (version "3.1.0")
+    (version "3.1.1a1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "colorcet" version))
        (sha256
-        (base32 "1sx4m5xbz1k8bm8cr2f3x21dip167k7c1nv35npqla52h76v6899"))))
+        (base32 "1h15wdgha1cpj5a9p2dy9d8qdqnl5j1a0ylc7wilcfhvnfzcgp08"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-nbval
                          python-packaging
                          python-pytest
-                         python-pytest-cov
                          python-pytest-mpl
-                         python-setuptools
-                         python-wheel))
+                         python-setuptools-next
+                         python-setuptools-scm))
     (home-page "https://colorcet.holoviz.org/")
     (synopsis "Collection of perceptually uniform colormaps")
     (description "Colorcet is a collection of perceptually accurate 256-color
@@ -3208,7 +3207,7 @@ configuration file.")
 (define-public python-pytooling
   (package
     (name "python-pytooling")
-    (version "8.5.0")
+    (version "8.7.0")
     (source
      (origin
        (method git-fetch)
@@ -3217,7 +3216,7 @@ configuration file.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r4c7wyvqhpxdkfw9akff4ki4azbvamzs9mkb61005wx4qr3a1rr"))))
+        (base32 "084zd009f280rhkry0vnzlrx21qv6djf3wda1l859z7iv592lwmq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -13781,6 +13780,34 @@ def get_requires_for_build_sdist(config_settings=None):
 @code{importlib.resources} module for Python 2.7, and Python 3.")
     (license license:asl2.0)))
 
+(define-public python-importlib-resources-6
+  (package/inherit python-importlib-resources
+    (version "6.4.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "importlib_resources" version))
+              (sha256
+               (base32
+                "0ic177y1j3v0zd7fzdg7x2h4c56f7i7xiccfg7is8v04p19v9cnd"))))
+    (native-inputs
+     (list python-jaraco-collections
+           python-jaraco-test
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (arguments
+     (cons*
+      #:test-flags
+      ;; AttributeError: module 'zipp' has no attribute 'CompleteDirs'
+      #~(list "--ignore=importlib_resources/tests/test_contents.py"
+              "--ignore=importlib_resources/tests/test_files.py"
+              "--ignore=importlib_resources/tests/test_open.py"
+              "--ignore=importlib_resources/tests/test_path.py"
+              "--ignore=importlib_resources/tests/test_read.py"
+              "--ignore=importlib_resources/tests/test_resource.py")
+      (package-arguments python-importlib-resources)))))
+
 (define-public python-importlib-metadata
   (package
     (name "python-importlib-metadata")
@@ -17809,18 +17836,20 @@ tasks, sockets, files, locks, and queues.")
 (define-public python-tables
   (package
     (name "python-tables")
-    (version "3.10.1")
+    (version "3.10.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tables" version))
        (sha256
         (base32
-         "1kr6y4qivqy462gva4bqym3x4alhxijfqjplxax3gh5r6k3pm82a"))
+         "0469jrkmp0qv8cmlqkizm3b8imyc97mk9pfn66ldpyl6f4m82i15"))
        (snippet '(begin
                    (use-modules (guix build utils))
+                   ;; TODO: Unbundle.
+                   ;; (delete-file-recursively "hdf5-blosc")
                    (delete-file-recursively "c-blosc")))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -17839,25 +17868,48 @@ tasks, sockets, files, locks, and queues.")
                                 "\""
                                 (search-input-file inputs "/lib/libblosc2.so")
                                 "\",\n" m)))))
-          (add-before 'build 'set-LD_LIBRARY_PATH
+          (add-before 'build 'pre-build
             (lambda _
-              ;; The setup.py build system makes use of ctypes.CDLL, which
-              ;; uses dlopen, which looks up library names from standard
-              ;; locations or LD_LIBRARY_PATH.
-              (setenv "LD_LIBRARY_PATH" (getenv "LIBRARY_PATH"))))
+              (invoke "make" "distclean")       ;Regenerate C code with Cython
+              (setenv "BLOSC2_DIR" #$(this-package-input "cblosc2"))
+              (setenv "BLOSC_DIR" #$(this-package-input "c-blosc"))
+              (setenv "BZIP2_DIR" #$(this-package-input "bzip2"))
+              (setenv "HDF5_DIR" #$(this-package-input "hdf5"))
+              (setenv "LZO_DIR" #$(this-package-input "lzo"))))
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "HOME" "/tmp")))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                (invoke "python" "setup.py" "check")))))))
+                (with-directory-excursion "/tmp"
+                  ;; Performing only a light (yet comprehensive) subset of the
+                  ;; test suite.  If you want a more complete test, try
+                  ;; passing the --heavy flag to this script (or set the
+                  ;; 'heavy' parameter in case you are using tables.test()
+                  ;; call).  The whole suite will take more than 4 hours to
+                  ;; complete on a relatively modern CPU and around 512 MB of
+                  ;; main memory.
+                  (invoke "python" "-m" "tables.tests.test_all"))))))))
+    (native-inputs
+     (list pkg-config
+           python-cython
+           python-pytest
+           python-setuptools-next
+           python-sphinx))
+    (inputs
+     (list bzip2
+           c-blosc
+           c-blosc2
+           hdf5
+           lzo))
     (propagated-inputs
      (list python-blosc2
-           python-numpy
            python-numexpr
+           python-numpy
            python-packaging
            python-py-cpuinfo
            python-typing-extensions))
-    (native-inputs (list pkg-config python-cython))
-    (inputs (list c-blosc c-blosc2 hdf5-1.10 bzip2 lzo zlib))
     (home-page "https://www.pytables.org/")
     (synopsis "Hierarchical datasets for Python")
     (description "PyTables is a package for managing hierarchical datasets and
@@ -17992,31 +18044,33 @@ structures.")
       (source
        (origin
          (method git-fetch)
-         (uri (git-reference (url home-page)
-                             (commit commit)))
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
          (file-name (git-file-name name version))
          (sha256
           (base32 "1dmr85plx8zr6s14ym3r32g6crwxghkval5a24ah90ijx4dbn5q5"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
       (arguments
-       `(#:use-setuptools? #f           ; no setup.py
-         #:tests? #f                    ; no test suite
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'build)
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin"))
-                      (share (string-append out "/share")))
-                 (mkdir-p share)
-                 (substitute* "wfetch/wfetch.py"
-                   (("os.sep, 'opt', 'wfetch'") (string-append "'" share "'")))
-                 ; The documentation expects the executable to be named
-                 ; 'wfetch', not 'wfetch.py'.
-                 (rename-file "wfetch/wfetch.py" "wfetch/wfetch")
-                 (install-file "wfetch/wfetch" bin)
-                 (copy-recursively "wfetch/icons" share)))))))
+       (list
+        #:tests? #f ;no test suite
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build)
+            (replace 'install
+              (lambda _
+                (let ((bin (string-append #$output "/bin"))
+                      (share (string-append #$output "/share")))
+                  (mkdir-p share)
+                  (substitute* "wfetch/wfetch.py"
+                    (("os.sep, 'opt', 'wfetch'")
+                     (string-append "'" share "'")))
+                  ;; The documentation expects the executable to be named
+                  ;; 'wfetch', not 'wfetch.py'.
+                  (rename-file "wfetch/wfetch.py" "wfetch/wfetch")
+                  (install-file "wfetch/wfetch" bin)
+                  (copy-recursively "wfetch/icons" share)))))))
+      (native-inputs (list python-setuptools-next))
       (inputs (list python-pyowm python-fire python-termcolor python-requests))
       (synopsis "Command-line tool to display weather info")
       (description
@@ -18027,7 +18081,8 @@ To use it, you must first run:
 
 @example
 export WEATHER_CLI_API=@var{your OpenWeatherMap API key}
-@end example\n")
+@end example
+")
       (license license:gpl3+))))
 
 (define-public python-get-version
@@ -22233,19 +22288,26 @@ the same purpose: to provide Python bindings for libmagic.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0rdgwwmmp8mdxc84bxq6k9a7v7z2qgc3df47djzs2b84gw81dglx"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'hide-wrapping
-                 (lambda _
-                   (substitute* "S3/MultiPart.py"
-                     (("sys\\.argv\\[0\\]") "\"s3cmd\""))
-                   (substitute* "s3cmd"
-                     (("optparser\\.get_prog_name\\(\\)") "\"s3cmd\"")))))))
-    (inputs
-     (list python-dateutil
-           python-magic))
+     (list
+      #:tests? #f                       ; XXX: Tests require network access.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'hide-wrapping
+            (lambda _
+              (substitute* "S3/MultiPart.py"
+                (("sys\\.argv\\[0\\]")
+                 "\"s3cmd\""))
+              (substitute* "s3cmd"
+                (("optparser\\.get_prog_name\\(\\)")
+                 "\"s3cmd\""))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "run-tests.py")))))))
+    (native-inputs (list python-setuptools-next))
+    (inputs (list python-dateutil python-magic))
     (home-page "https://s3tools.org/s3cmd")
     (synopsis "Command line tool for S3-compatible storage services")
     (description
@@ -24184,18 +24246,24 @@ as well.")
   (package
     (name "ptpython")
     (version "3.0.20")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "ptpython" version))
-              (sha256
-               (base32
-                "1mjfyr5gwrs1qbizh6nki0nv6hahmg8mhhqxi1qc6pfa4znlrzga"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jonathanslenders/ptpython")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qbj7d4qkzl8l05kpmm19953lmqk379i17ab8g3sfnmfpsy3ji5m"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)) ;there are no tests
+     (list
+      ;; XXX: There is a tests/run_tests.py file but all it does is a
+      ;; sanity check.
+      #:tests? #f))
+    (native-inputs (list python-setuptools-next))
     (propagated-inputs
-     (list python-appdirs python-black python-jedi python-prompt-toolkit
-           python-pygments))
+     (list python-appdirs python-jedi python-prompt-toolkit python-pygments))
     (home-page "https://github.com/jonathanslenders/ptpython")
     (synopsis "Python Read-Eval-Print-Loop with nice IDE-like features")
     (description
@@ -24893,35 +24961,47 @@ numbers, real numbers, mixed types and more, and comes with a shell command
 
 (define-public glances
   (package
-  (name "glances")
-  (version "4.1.1")
-  (source
-    (origin
-      (method url-fetch)
-      (uri (pypi-uri "glances" version))
-      (sha256
-        (base32 "10yjwbmwv2x4x1n3hr1631m8l6l9w8fa7rnvfz1vmzkjs199ihib"))
-      (modules '((guix build utils)))
-      (snippet
-       '(begin
-          ;; Glances phones PyPI for weekly update checks by default.
-          ;; Disable these.  The user can re-enable them if desired.
-          (substitute* "glances/outdated.py"
-            (("^(.*)self\\.load_config\\(config\\)\n" line indentation)
-             (string-append indentation
-                            "self.args.disable_check_update = True\n"
-                            line)))
-          #t))))
-  (build-system python-build-system)
-  (propagated-inputs
-   (list python-defusedxml python-orjson python-packaging python-psutil))
-  (home-page "https://github.com/nicolargo/glances")
-  (synopsis "Cross-platform curses-based monitoring tool")
-  (description
-    "Glances is a curses-based monitoring tool for a wide variety of platforms.
+    (name "glances")
+    (version "4.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/nicolargo/glances")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00xyixi3wrajmkmqgd1rlaqypi6c1wskm6q0xbrw2k1zc7wi3kxl"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-update-checks
+            (lambda _
+              ;; Glances phones PyPI for weekly update checks by default.
+              ;; Disable these.  The user can re-enable them if desired.
+              (substitute* "glances/outdated.py"
+                (("^(.*)self\\.load_config\\(config\\)\n" line
+                  indentation)
+                 (string-append indentation
+                                "self.args.disable_check_update = True\n"
+                                line)))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; XXX: Taken from tox.ini.
+                (invoke "python" "unittest-core.py")))))))
+    (native-inputs (list python-pytest python-setuptools-next))
+    (propagated-inputs (list python-defusedxml python-orjson python-packaging
+                             python-psutil))
+    (home-page "https://github.com/nicolargo/glances")
+    (synopsis "Cross-platform curses-based monitoring tool")
+    (description
+     "Glances is a curses-based monitoring tool for a wide variety of platforms.
      Glances uses the PsUtil library to get information from your system.  It
      monitors CPU, load, memory, network bandwidth, disk I/O, disk use, and more.")
-  (license license:lgpl3+)))
+    (license license:lgpl3+)))
 
 (define-public python-graphql-core
   (package
@@ -28350,6 +28430,34 @@ syntax validity, but for weirdnesses like key repetition and cosmetic problems
 such as lines length, trailing spaces, indentation, etc.")
     (license license:gpl3+)))
 
+(define-public python-yamlordereddictloader
+  (package
+    (name "python-yamlordereddictloader")
+    (version "0.4.2")
+    (home-page "https://github.com/fmenabe/python-yamlordereddictloader")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1rwvasdmfq7lbd2bm7vmx759fv535cp5ndyhf845fqd86mr7a94c"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-pyyaml))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (synopsis "Loader and a dumper for PyYAML")
+    (description "yamlordereddictloader is a python package that provides a
+loader and a dumper for PyYAML allowing to keep items order when loading a
+file (by putting them in OrderedDict objects) and to manage OrderedDict
+objects when dumping to a file.")
+    (license license:expat)))
+
 (define-public python-yapf
   (package
     (name "python-yapf")
@@ -29006,23 +29114,23 @@ jmerle/competitive-companion.")
     (version "11.5.1")
     ;; Source distributions are not uploaded to PyPI.
     ;; https://pypi.org/project/online-judge-tools/11.5.1/#files
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/online-judge-tools/oj")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0zkzmmjgjb6lyrzq1ip54cpnp7al9a7mcyjyi5vx58bvnx3q0c6m"))
-              (patches (search-patches "online-judge-tools.patch"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/online-judge-tools/oj")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zkzmmjgjb6lyrzq1ip54cpnp7al9a7mcyjyi5vx58bvnx3q0c6m"))
+       (patches (search-patches "online-judge-tools.patch"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        ;; These tests require network connections
-                        (add-after 'unpack 'remove-failing-test
-                          (lambda _
-                            (delete-file "tests/command_version.py") #t)))))
+     (list
+      #:test-flags
+      ;; These tests require network connections
+      #~(list "--ignore=tests/command_version.py")))
+    (native-inputs (list python-pytest python-setuptools-next))
     (inputs (list time))
     (propagated-inputs (list python-online-judge-api-client python-colorama
                              python-requests))
@@ -29159,12 +29267,24 @@ compatible with @code{asyncio}.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/miracle2k/python-glob2")
-             (commit (string-append "v" version))))
+              (url "https://github.com/miracle2k/python-glob2")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "160nh2ay9lw2hi0rixpzb2k87r6ql56k0j2cm87lqz8xc8zbw919"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-tests-for-pytest8
+            ;; See: <https://github.com/miracle2k/python-glob2/issues/30>.
+            (lambda _
+              (substitute* "test.py"
+                (("setup\\(") "setup_method(")
+                (("teardown\\(") "teardown_method("))
+              (rename-file "test.py" "glob2_test.py"))))))
+    (native-inputs (list python-pytest python-setuptools-next))
     (home-page "https://github.com/miracle2k/python-glob2/")
     (synopsis "Extended Version of the python buildin glob module")
     (description "This is an extended version of the Python
@@ -31515,17 +31635,21 @@ repository is provided via Python API and as a compressed JSON file.")
     ;; This is a command-line tool, so no "python-" prefix.
     (name "jube")
     (version "2.6.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "http://apps.fz-juelich.de/jsc/jube/jube2/download.php?version="
-                    version))
-              (sha256
-               (base32
-                "0r5d2gdqa0f4c468q3k25ycw1k2g76gg8fyiln4ni98fvfsbx3il"))
-              (file-name (string-append "jube-" version ".tar.gz"))))
-    (build-system python-build-system)
-    (native-inputs (list python-pyyaml)) ; pyyaml is needed for tests
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "http://apps.fz-juelich.de/jsc/jube/jube2/download.php?version="
+             version))
+       (sha256
+        (base32 "0r5d2gdqa0f4c468q3k25ycw1k2g76gg8fyiln4ni98fvfsbx3il"))
+       (file-name (string-append "jube-" version ".tar.gz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))                     ; No tests.
+    (propagated-inputs (list python-pyyaml))
+    (native-inputs (list python-setuptools-next))
     (home-page "https://apps.fz-juelich.de/jsc/jube/jube2/docu/index.html")
     (synopsis "Benchmarking environment")
     (description
@@ -32583,50 +32707,49 @@ with features similar to the @command{wget} utility.")
     (name "offlate")
     (version "0.6.1")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://framagit.org/tyreunom/offlate")
-               (commit version)))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "1sx5cv8pamyw1m089b6x8ykaxdkx26jk9cblhbzlf0m3ckz52jik"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://framagit.org/tyreunom/offlate")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sx5cv8pamyw1m089b6x8ykaxdkx26jk9cblhbzlf0m3ckz52jik"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; No tests
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'generate-fonts
-           (lambda _
-             (invoke "make" "fonts")))
-         (add-before 'build 'generate-translations
-           (lambda _
-             (invoke "make" "update-langs"))))))
+     (list
+      #:tests? #f                       ; No tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'generate-fonts
+            (lambda _
+              (invoke "make" "fonts")))
+          (add-before 'build 'generate-translations
+            (lambda _
+              (invoke "make" "update-langs"))))))
     (propagated-inputs
-      (list python-android-stringslib
-            python-dateutil
-            python-gitlab
-            python-lxml
-            python-polib
-            python-pycountry
-            python-pyenchant
-            python-pygit2
-            python-pygithub
-            python-pyqt
-            python-requests
-            python-ruamel.yaml
-            python-translate-toolkit
-            python-translation-finder
-            python-watchdog))
-    (native-inputs
-     (list qttools-5 fontforge))
+     (list python-android-stringslib
+           python-dateutil
+           python-gitlab
+           python-lxml
+           python-polib
+           python-pycountry
+           python-pyenchant
+           python-pygit2
+           python-pygithub
+           python-pyqt
+           python-requests
+           python-ruamel.yaml
+           python-translate-toolkit
+           python-translation-finder
+           python-watchdog))
+    (native-inputs (list qttools-5 fontforge python-setuptools-next))
     (home-page "https://framagit.org/tyreunom/offlate")
     (synopsis "Offline translation interface for online translation tools")
-    (description "Offlate offers a unified interface for different translation
-file formats, as well as many different online translation platforms.  You can
-use it to get work from online platforms, specialized such as the Translation
+    (description
+     "Offlate offers a unified interface for different translation file
+formats, as well as many different online translation platforms.  You can use
+it to get work from online platforms, specialized such as the Translation
 Project, or not such a gitlab instance when your upstream doesn't use any
 dedicated platform.  The tool proposes a unified interface for any format and
 an upload option to send your work back to the platform.")
@@ -33548,24 +33671,17 @@ dictionaries.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0agq171cz7y10cknjypwrvsvikja3w9d28hlr3kw5k2sdvfqnpam"))))
-    (build-system python-build-system)
+        (base32 "0agq171cz7y10cknjypwrvsvikja3w9d28hlr3kw5k2sdvfqnpam"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'fix-home-directory
-           (lambda _
-             ;; Tests fail with "Permission denied: '/homeless-shelter'".
-             (setenv "HOME" "/tmp"))))
-       ;; Tests fail with "Uncaught Python exception: python: undefined
-       ;; symbol: objc_getClass".
-       #:tests? #f))
-    (propagated-inputs
-     (list python-pyqt))
+     (list
+      #:test-flags
+      #~(list "--ignore-glob=pyzo/yoton/tests/*"     ; XXX: yoton is outdated.
+              "--ignore=pyzo/codeeditor/_test.py"))) ; XXX: cannot import qt.
+    (native-inputs (list python-pytest python-setuptools-next))
+    (propagated-inputs (list python-pyqt))
     (home-page "https://pyzo.org")
-    (synopsis
-     "Python IDE for scientific computing")
+    (synopsis "Python IDE for scientific computing")
     (description
      "Pyzo is a Python IDE focused on interactivity and introspection,
 which makes it very suitable for scientific computing.  Its practical
@@ -36817,25 +36933,27 @@ key-value pairs from a @code{.env} file and set them as environment variables.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "1vq96b7n16d932nyfhnzwdwxff0zrqanidmwr4cxj2p67ad9y3w7"))))
-      (build-system python-build-system)
+          (base32 "1vq96b7n16d932nyfhnzwdwxff0zrqanidmwr4cxj2p67ad9y3w7"))))
+      (build-system pyproject-build-system)
       (arguments
-       `(#:tests? #f                    ; no tests
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'build)
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((bindir (string-append (assoc-ref outputs "out") "/bin"))
-                      (binary (string-append bindir "/date2name")))
-                 (mkdir-p bindir)
-                 (copy-file "date2name/__init__.py" binary)
-                 (chmod binary #o555)))))))
+       (list
+        #:tests? #f ;no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'build)
+            (replace 'install
+              (lambda _
+                (let* ((bindir (string-append #$output "/bin"))
+                       (binary (string-append bindir "/date2name")))
+                  (mkdir-p bindir)
+                  (copy-file "date2name/__init__.py" binary)
+                  (chmod binary #o555)))))))
+      (native-inputs (list python-setuptools-next))
       (synopsis "Handling time-stamps and date-stamps in file names")
-      (description "By default, date2name gets the modification time of matching
-files and directories and adds a datestamp in standard ISO 8601+ format
-YYYY-MM-DD at the beginning of the file or directory name.")
+      (description
+       "By default, date2name gets the modification time of matching files and
+directories and adds a datestamp in standard ISO 8601+ format YYYY-MM-DD at
+the beginning of the file or directory name.")
       (home-page "https://github.com/novoid/date2name")
       (license license:gpl3+))))
 
@@ -37761,20 +37879,22 @@ and has plugins for many other formats.")
     (name "nbss-upload")
     (version "0.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "nbss-upload" version))
-        (sha256
-          (base32 "0jhyfm7w2ssknmh9789fmpnf79xr7sxbdcjwak6hfha6qparvk38"))))
-    (build-system python-build-system)
-    (propagated-inputs
-      (list python-requests))
-    (arguments
-     `(#:tests? #f)) ;no tests
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/notebook-sharing-space/nbss-upload")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cxj4zqcxzi3c5kw649jxmdpnbyrkrwx4licxdg6zc317v8gxw54"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;no tests
+    (native-inputs (list python-setuptools-next))
+    (propagated-inputs (list python-requests))
     (home-page "https://github.com/notebook-sharing-space/nbss-upload")
     (synopsis "Upload notebooks to a notebooksharing.space instance")
     (description
-"Upload notebooks as @code{.ipynb}, @code{.rmd}, and @code{.html} to a
+     "Upload notebooks as @code{.ipynb}, @code{.rmd}, and @code{.html} to a
 notebooksharing.space instance.")
     (license license:bsd-3)))
 
@@ -39537,18 +39657,18 @@ window managers.")
   (package
     (name "i3-autotiling")
     (version "1.9.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/nwg-piotr/autotiling")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0ag3zz4r3cwpj769m2aw3l8yj93phsydzfz02dig5z81cc025rck"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nwg-piotr/autotiling")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ag3zz4r3cwpj769m2aw3l8yj93phsydzfz02dig5z81cc025rck"))))
+    (build-system pyproject-build-system)
     (arguments (list #:tests? #f))      ;no tests
-    (native-inputs (list python-wheel))
+    (native-inputs (list python-setuptools-next))
     (propagated-inputs (list python-i3ipc))
     (home-page "https://github.com/nwg-piotr/autotiling")
     (synopsis "Automatically tile windows in i3 and Sway")

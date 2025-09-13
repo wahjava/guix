@@ -4,7 +4,6 @@
 ;;; Copyright © 2016, 2017, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2018 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2018 Mark Meyer <mark@ofosos.org>
 ;;; Copyright © 2018 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2018 Fis Trivial <ybbs.daans@hotmail.com>
@@ -1458,7 +1457,7 @@ storing tensors safely.")
   (package
     (inherit sentencepiece)
     (name "python-sentencepiece")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -1466,7 +1465,8 @@ storing tensors safely.")
           (add-after 'unpack 'chdir
             (lambda _
               (chdir "python"))))))
-    (native-inputs (list pkg-config protobuf))
+    (native-inputs
+     (list pkg-config protobuf python-pytest python-setuptools-next))
     (propagated-inputs (list sentencepiece))
     (synopsis "SentencePiece python wrapper")
     (description "This package provides a Python wrapper for the SentencePiece
@@ -1938,48 +1938,6 @@ standard with complete implementation of all ONNX operators, and
 supports all ONNX releases (1.2+) with both future and backwards
 compatibility.")
     (license license:expat)))
-
-(define-public rxcpp
-  (package
-    (name "rxcpp")
-    (version "4.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ReactiveX/RxCpp")
-             (commit (string-append "v" version))))
-       (sha256
-        (base32 "1blyjjw6szd74pckdc15ham9i48xf0vwwz5nhl9vyjfq8z7w3piy"))
-       (file-name (git-file-name name version))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-werror
-           (lambda _
-             (substitute* (find-files ".")
-               (("-Werror") ""))
-             #t))
-         (replace 'check
-           (lambda _
-             (invoke "ctest"))))))
-    (native-inputs
-     (list catch-framework))
-    (home-page "https://reactivex.io/")
-    (synopsis "Reactive Extensions for C++")
-    (description
-     "The Reactive Extensions for C++ (RxCpp) is a library of algorithms for
-values-distributed-in-time.  ReactiveX is a library for composing asynchronous
-and event-based programs by using observable sequences.
-
-It extends the observer pattern to support sequences of data and/or events and
-adds operators that allow you to compose sequences together declaratively while
-abstracting away concerns about things like low-level threading,
-synchronization, thread-safety, concurrent data structures, and non-blocking
-I/O.")
-    (license license:asl2.0)))
-
 
 (define-public gemmlowp
   (let ((commit "08e4bb339e34017a0835269d4a37c4ea04d15a69")
@@ -2494,18 +2452,24 @@ Neighbor Embedding (t-SNE), a popular dimensionality-reduction algorithm for
 visualizing high-dimensional data sets.")
     (license license:bsd-3)))
 
+;; XXX: Potentially it is an abandonware, no releases or any updates since
+;; 2021, consider to remove when become incompatible with propagated inputs.
 (define-public python-scikit-rebate
   (package
     (name "python-scikit-rebate")
     (version "0.62")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "skrebate" version))
-              (sha256
-               (base32
-                "0n55ghvnv7rxqa5agq6a4892ad0ghha165b0g4ghwr9gqm6ss3dj"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;no tests on PyPI and no tags in repo
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "skrebate" version))
+       (sha256
+        (base32 "0n55ghvnv7rxqa5agq6a4892ad0ghha165b0g4ghwr9gqm6ss3dj"))))
+    (build-system pyproject-build-system)
+    ;; There are no tests on PyPI, tests in git repo require an old release of
+    ;; python-scikit-learn
+    (arguments '(#:tests? #f))
+    (native-inputs
+     (list python-setuptools-next))
     (propagated-inputs
      (list python-numpy python-scipy python-scikit-learn python-joblib))
     (home-page "https://epistasislab.github.io/scikit-rebate/")
@@ -4201,11 +4165,11 @@ in a fast and accurate way.")
        (sha256
         (base32
          "1k8szlpm19rcwcxdny9qdm3gmaqq8akb4xlvrzyz8c2d679aak6l"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-ipython python-numpy python-pandas python-scipy))
     (native-inputs
-     (list python-nose))
+     (list python-nose python-setuptools-next))
     (home-page "https://github.com/interpretable-ml/iml")
     (synopsis "Interpretable Machine Learning (iML) package")
     (description "Interpretable ML (iML) is a set of data type objects,
@@ -5942,24 +5906,37 @@ and common image transformations for computer vision.")
     (license license:bsd-3)))
 
 (define-public python-torchfile
-  (package
-    (name "python-torchfile")
-    (version "0.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "torchfile" version))
-              (sha256
-               (base32
-                "0vhklj6krl9r0kdynb4kcpwp8y1ihl2zw96byallay3k9c9zwgd5"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #false)) ;there are no tests
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://github.com/bshillingford/python-torchfile")
-    (synopsis "Torch7 binary serialized file parser")
-    (description "This package enables you to deserialize Lua torch-serialized objects from
-Python.")
-    (license license:bsd-3)))
+  ;; Latest release is nine years old.
+  (let ((commit "fbd434a5b5562c88b91a95e6476e11dbb7735436")
+        (revision "0"))
+    (package
+      (name "python-torchfile")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/bshillingford/python-torchfile/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1f03ks5n3i3cdh16wx5ysxsxh0ai9vpf0k5pdx759vf31f4niz36"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "python3" "tests.py")))))))
+      (propagated-inputs
+       (list python-numpy python-setuptools-next))
+      (home-page "https://github.com/bshillingford/python-torchfile")
+      (synopsis "Torch7 binary serialized file parser")
+      (description "This package enables you to deserialize Lua
+torch-serialized objects from Python.")
+      (license license:bsd-3))))
 
 (define-public python-geomloss
   (package
@@ -6356,23 +6333,25 @@ algorithm for dense (LAPJV) or sparse (LAPMOD) matrices.")
 (define-public python-visdom
   (package
     (name "python-visdom")
-    (version "0.1.8.9")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "visdom" version))
-              (sha256
-               (base32
-                "09kiczx2i5asqsv214fz7sx8wlyldgbqvxwrd0alhjn24cvx4fn7"))))
-    (build-system python-build-system)
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "visdom" version))
+       (sha256
+        (base32 "0x05faxh45bh1zz8afjhzjy49jrqv4dkhaw1ainhajl1r39i3ac4"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;tests require launching the server
+    (native-inputs
+     (list python-setuptools-next))
     (propagated-inputs
      (list python-jsonpatch
+           python-networkx
            python-numpy
            python-pillow
-           python-pyzmq
            python-requests
            python-scipy
            python-six
-           python-torchfile
            python-tornado
            python-websocket-client))
     (home-page "https://github.com/fossasia/visdom")

@@ -40,7 +40,7 @@
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 David Elsing <david.elsing@posteo.net>
-;;; Copyright © 2022-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Luis Felipe López Acevedo <luis.felipe.la@protonmail.com>
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
@@ -57,6 +57,7 @@
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
+;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -358,7 +359,7 @@ source code editors and IDEs.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/mrtazz/checkmake")
+             (url "https://github.com/checkmake/checkmake")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
@@ -387,12 +388,38 @@ source code editors and IDEs.")
            go-github-com-olekukonko-tablewriter-0.0.5
            go-github-com-stretchr-testify
            go-md2man))
-    (home-page "https://github.com/mrtazz/checkmake")
+    (home-page "https://github.com/checkmake/checkmake")
     (synopsis "Linter and analyzer for @file{Makefile}")
     (description
      "@samp{checkmake} is an experimental tool for linting and checking
 Makefiles.  It allows for a set of configurable rules being run
 against a @file{Makefile} or a set of @file{*.mk} files.")
+    (license license:expat)))
+
+(define-public mbake
+  (package
+    (name "mbake")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mbake" version))
+       (sha256
+        (base32 "1badaaw5cxbca7fqahjm6j5yk6mmcakc4772q9gdrr84jx9wjd67"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-rich
+           python-typer))
+    (home-page "https://github.com/EbodShojaei/bake")
+    (synopsis "Makefile formatter and linter")
+    (description
+     "@command{mbake} is a Makefile formatter and linter,which is configurable
+via a TOML file.  It intelligently deals with @code{.PHONY} declarations and
+line continuations, and ensures consistent formatting and style for your
+Makefile.")
     (license license:expat)))
 
 (define-public clitest
@@ -1185,19 +1212,20 @@ similar to unit tests.")
 (define-public gotestsum
   (package
     (name "gotestsum")
-    (version "1.12.2")
+    (version "1.12.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/gotestyourself/gotestsum")
-             (commit (string-append "v" version))))
+              (url "https://github.com/gotestyourself/gotestsum")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02q251j5kf2874vnvmbfc0ncnwssq459s8mf9f50cymqkpqbx0lp"))))
+        (base32 "1pj2d2rjab1zdzrc88ksf2v09fk9is9hg4rn6grcyaq76b8l3jcg"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:install-source? #f
       #:import-path "gotest.tools/gotestsum"
       #:test-flags
       #~(list "-skip"
@@ -1225,11 +1253,11 @@ similar to unit tests.")
            go-golang-org-x-term
            go-golang-org-x-tools
            go-gotest-tools-v3))
-    (synopsis "Go test runner with output optimized for humans")
-    (description "This package provides a @code{go test} runner with output
-optimized for humans, JUnit XML for CI integration, and a summary of the
-test results.")
     (home-page "https://github.com/gotestyourself/gotestsum")
+    (synopsis "Go test runner with output optimized for humans")
+    (description
+     "This package provides a @code{go test} runner with output optimized for
+humans, JUnit XML for CI integration, and a summary of the test results.")
     (license license:asl2.0)))
 
 (define-public greatest
@@ -1412,16 +1440,16 @@ but it works for any C/C++ project.")
 (define-public actionlint
   (package
     (name "actionlint")
-    (version "1.7.6")
+    (version "1.7.7")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/rhysd/actionlint")
-             (commit (string-append "v" version))))
+              (url "https://github.com/rhysd/actionlint")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1waq9v48pbys8b8qmmvl0wi77jzri033fh8194gcwfzipvxb6y9l"))))
+        (base32 "0xbsrcvklxn0lppikabwrizav945jk85d0mz16zc3spxc80plrvn"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1430,7 +1458,8 @@ but it works for any C/C++ project.")
       #~(list (string-append
                "-ldflags=-X github.com/rhysd/actionlint.version=" #$version))
       #:import-path "github.com/rhysd/actionlint/cmd/actionlint"
-      #:unpack-path "github.com/rhysd/actionlint"))
+      #:unpack-path "github.com/rhysd/actionlint"
+      #:test-subdirs #~(list "../../"))) ;test from project's root
     ;; XXX: Install Man page, wrap with shellcheck and pyflakes.
     (native-inputs
      (list go-github-com-bmatcuk-doublestar-v4

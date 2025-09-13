@@ -3731,6 +3731,45 @@ annotation, provides Python genomic feature search and sequence retrieval from
 the managed genomes, STAR indexing and mapping and more.")
       (license license:gpl3+))))
 
+(define-public python-pybiomart
+  (package
+    (name "python-pybiomart")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pybiomart" version))
+       (sha256
+        (base32 "1znq4msa0ibjxk1yirbrfd09w9zfn0jrgna6qrq0d0i1p46w5sp9"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-future
+           python-pandas
+           python-requests
+           python-requests-cache))
+    (native-inputs
+     (list python-bumpversion
+           python-pytest
+           python-pytest-cov
+           python-pytest-helpers-namespace
+           python-pytest-mock
+           python-coveralls
+           python-setuptools
+           python-sphinx
+           python-sphinx-autobuild
+           python-sphinx-rtd-theme
+           python-wheel))
+    (arguments
+     (list
+      #:test-flags
+      ;; Attempts to access the web.
+      #~(list "--ignore=tests/test_dataset.py")))
+    (home-page "https://github.com/jrderuiter/pybiomart")
+    (synopsis "A simple pythonic interface to biomart")
+    (description
+     "Pybiomart provides a simple pythonic interface to biomart.")
+    (license license:expat)))
+
 (define-public python-pygam
   (package
     (name "python-pygam")
@@ -3739,8 +3778,8 @@ the managed genomes, STAR indexing and mapping and more.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/dswah/pyGAM")
-             (commit (string-append "v" version))))
+              (url "https://github.com/dswah/pyGAM")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1bv404idswsm2ay3yziq1i2cbydq4f3vjav5s4i15bgd13k7zvim"))))
@@ -4548,6 +4587,196 @@ into separate processes; and more.")
                 (("self.tests.append\\(\"doctest\"\\)") "")
                 (("opt == \"--offline\"") "True")))))))))
 
+(define-public python-scanrbp
+  (package
+    (name "python-scanrbp")
+    (version "0.3")
+    (home-page "https://github.com/grexor/scanrbp")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit "cdc3587cfdb3bc1c68154ce8538b8c985099eb9f")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1bv25qhr1dwym2j7llsd3ggnjb9l3h4bchng7bp7cq57s9g0bnjz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-biopython
+           python-matplotlib
+           python-pybio
+           python-scipy
+           python-seaborn))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-HOME
+            (lambda _ (setenv "HOME" "/tmp")))
+          (add-before 'check 'copy-data
+            (lambda _
+              (let ((data-dir (string-append (getenv "HOME") "/scanRBP_data"))
+                    (data-file "data/data.tar.gz"))
+                (mkdir-p data-dir)
+                (copy-file
+                 data-file
+                 (string-append data-dir "/" (basename data-file)))))))))
+    (synopsis "Tool for creating a RNA RBP heatmap in Python")
+    (description "python-scanrbp is a Python package that provides the scanRBP
+tool that loads RNA-protein binding motif PWM and computes the log-odds scores
+for all the loaded RBPs across a given genomic sequence and draws a heatmap of
+the scores.")
+    (license license:gpl3)))
+
+(define-public python-splicekit
+  (package
+    (name "python-splicekit")
+    (version "0.7")
+    (home-page "https://github.com/bedapub/splicekit")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit "ded5dbec16b45e0df44750d9ae021ae2416ff921")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "04l244qagbplksqp81w2s60pkymyhjq389xmqwsyc0n4q6b054h2"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-beautifulsoup4
+           python-dateutil
+           python-levenshtein
+           python-logomaker
+           python-numpy
+           python-pandas
+           python-plotly
+           python-psutil
+           python-pybio
+           python-pysam
+           python-rangehttpserver
+           python-requests
+           python-scanrbp))
+    (native-inputs
+     (list python-setuptools
+           python-wheel
+           snakemake))
+    (arguments
+     (list
+      #:tests? #false                   ;There are no tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-requirements
+            (lambda _
+              (substitute* "setup.py"
+                ;; bs4 is an alternative name for beautifulsoup4, only used to
+                ;; avoid name squatting on pypi.
+                (("bs4") "beautifulsoup4")
+                ;; levenshtein can only be found as python-levenshtein
+                (("levenshtein") "python-levenshtein"))))
+          ;; fireducks seems to be a binary-only python-panda replacement
+          (add-after 'unpack 'remove-fireducks
+            (lambda _
+              (substitute* '("Snakefile"
+                             "splicekit/core/delta_dar.py"
+                             "splicekit/core/juan.py"
+                             "splicekit/core/motifs.py"
+                             "splicekit/judge/__init__.py")
+                (("import fireducks.pandas as pd") "import pandas as pd"))
+              (substitute* "splicekit.yaml"
+                ((".*fireducks.*") "")))))))
+    (synopsis "Python toolkit for splicing analysis from short-read RNA-seq")
+    (description "Splicekit is a modular platform for splicing analysis from
+short-read RNA-seq datasets.  The platform also integrates pybio for genomic
+operations and scanRBP for RNA-protein binding studies.  The whole analysis is
+self-contained (one single directory) and the platform is written in Python,
+in a modular way.")
+    (license license:gpl3)))
+
+(define-public python-presto
+  (package
+    (name "python-presto")
+    (version "0.7.6")
+    (home-page "https://github.com/immcantation/presto")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1mcngwrxiw8r1j26r5crf7j0dscvhg3b8g1is3j3vq5jpnyn8jmz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list muscle
+           python-biopython
+           python-numpy
+           python-pandas
+           python-pyyaml
+           python-scipy
+           vsearch))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (arguments
+     (list
+      #:build-backend "setuptools.build_meta"
+      #:test-flags
+      ;; FileNotFoundError: [Errno 2] No such file or directory: 'cd-hit-est'
+      '(list "--ignore=tests/test_ClusterSets.py")))
+    (synopsis "The REpertoire Sequencing TOolkit")
+    (description "Presto is a python toolkit for processing raw reads from
+high-throughput sequencing of B cell and T cell repertoires.")
+    (license license:agpl3)))
+
+(define-public python-changeo
+  (package
+    (name "python-changeo")
+    (version "1.3.4")
+    (home-page "https://github.com/immcantation/changeo")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1230bb7672n6nqkrw2fvrprknchhlvvxb76l1r4g6ybrq0g7l0rb"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-airr
+           python-biopython
+           python-importlib-resources-6
+           python-numpy
+           python-packaging
+           python-pandas
+           python-presto
+           python-pyyaml
+           python-scipy))
+    (native-inputs
+     (list python-airr
+           python-setuptools
+           python-wheel))
+    (arguments
+     (list
+      #:build-backend "setuptools.build_meta"))
+    (synopsis "Repertoire clonal assignment toolkit")
+    (description "Change-O is a collection of tools for processing the output
+of V(D)J alignment tools, assigning clonal clusters to immunoglobulin (Ig)
+sequences, and reconstructing germline sequences.")
+    (license license:gpl3)))
+
 (define-public python-fastalite
   (package
     (name "python-fastalite")
@@ -4736,6 +4965,52 @@ consensus sequences.")
     (description "CIRI-long is a package for circular RNA identification using
 long-read sequencing data.")
     (license license:expat)))
+
+(define-public python-circe
+  (package
+    (name "python-circe")
+    (version "0.3.8")
+    (home-page "https://github.com/cantinilab/circe")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url home-page)
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "050zwg6qvd6sa4xd41sn4gigwmyfn0v6r93j5kvpbxklq4144q15"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-anndata
+           python-dask
+           python-distributed
+           python-joblib
+           python-numpy
+           python-pandas
+           python-rich
+           python-scanpy
+           python-scikit-learn))
+    (inputs
+     (list lapack openblas))
+    (native-inputs
+     (list python-cython
+           python-setuptools
+           python-pybiomart
+           python-wheel))
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         ;; Numba needs a writable dir to cache functions.
+         (add-before 'build 'set-numba-cache-dir
+           (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (synopsis "Cis-regulatory interactions between chromatin regions")
+    (description "Circe is a Python package for inferring co-accessibility
+networks from single-cell ATAC-seq data, using skggm for the graphical lasso
+and python-scanpy for data processing.")
+    (license license:gpl3)))
 
 (define-public qtltools
   (package
@@ -7409,6 +7684,34 @@ sequences.  TRUST4 then realigns the contigs to IMGT reference gene sequences to
 identify the corresponding gene and CDR3 details.  TRUST4 supports both single-end
 and paired-end bulk or single-cell sequencing data with any read length.")
     (license license:gpl3)))
+
+(define-public python-airr
+  (package
+    (name "python-airr")
+    (version "1.5.1")
+    (home-page "https://pypi.org/project/airr/")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "airr" version))
+       (sha256
+        (base32
+         "0jbigfdwa23xv5riw0ljdfq2qwg1b2fav2kfi81zxd1g1jprxy3i"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-pandas
+           python-pyyaml
+           python-yamlordereddictloader))
+    (native-inputs
+     (list python-jsondiff
+           python-setuptools
+           python-wheel))
+    (synopsis "Data Representation Standard library for antibody and TCR sequences")
+    (description "Python-airr provides a library by the AIRR community to for
+describing, reporting, storing, and sharing adaptive immune receptor
+repertoire (AIRR) data, such as sequences of antibodies and T cell
+receptors (TCRs).")
+    (license license:cc-by4.0)))
 
 (define-public diamond
   (package

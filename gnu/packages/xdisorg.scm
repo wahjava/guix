@@ -249,7 +249,7 @@ command line, without displaying a keyboard at all.")
 (define-public aquamarine
   (package
     (name "aquamarine")
-    (version "0.9.2")
+    (version "0.9.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -258,7 +258,7 @@ command line, without displaying a keyboard at all.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0cwbd9cdbg40frhircwfbaxdqh11s8jqq9dqy228j9zvb27y2b72"))))
+                "01z6acbj76szxb6s2wlh6v2cp9bkcaxpswqdr138wld5x6nqzrrw"))))
     (build-system cmake-build-system)
     (arguments
      (list ;; TODO: Figure out what's expected in the test environment.
@@ -432,7 +432,7 @@ with X11 or Wayland, or in a text terminal with ncurses.")
 (define-public cliphist
   (package
     (name "cliphist")
-    (version "0.5.0")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
@@ -441,7 +441,7 @@ with X11 or Wayland, or in a text terminal with ncurses.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cbhrw9vk8c0in9yyhlp0k9rldgjwbcj00d7vqh69p3igznhdgsk"))))
+        (base32 "0lhfq67bsmlajxlkz0dhj5hym7w376vqjk05yccd42fqd1nr32dl"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -2228,7 +2228,7 @@ Extensions, Shortcuts, File browser mode and Custom Color Themes.")
 (define-public rofi
   (package
     (name "rofi")
-    (version "1.7.8")
+    (version "2.0.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/davatorium/rofi/"
@@ -2236,17 +2236,8 @@ Extensions, Shortcuts, File browser mode and Custom Color Themes.")
                                   version "/rofi-" version ".tar.xz"))
               (sha256
                (base32
-                "0pk5a38rhci6mm0p9zjrmb7ixczhbdwqirw840h682rf9660mn9a"))
-              (snippet
-               #~(begin
-                   ;; Delete pre-generated files.
-                   (for-each delete-file
-                             (list "lexer/theme-lexer.c"
-                                   "lexer/theme-parser.c"
-                                   "lexer/theme-parser.h"
-                                   "resources/resources.c"
-                                   "resources/resources.h"))))))
-    (build-system gnu-build-system)
+                "13cd39973aahijhcgayq6345snw08sqjk8yf6la9mvw9y4kywmba"))))
+    (build-system meson-build-system)
     (native-inputs
      (list bison
            check
@@ -2259,6 +2250,8 @@ Extensions, Shortcuts, File browser mode and Custom Color Themes.")
            libxcb
            libxkbcommon
            startup-notification
+           wayland
+           wayland-protocols
            xcb-util
            xcb-util-cursor
            xcb-util-keysyms
@@ -2289,28 +2282,7 @@ by name.")
     (license license:expat)))
 
 (define-public rofi-wayland
-  (let ((base rofi))
-    (package
-      (inherit rofi)
-      (name "rofi-wayland")
-      (version "1.7.8+wayland1")
-      (source (origin
-                (method url-fetch)
-                (uri (string-append "https://github.com/lbonn/rofi"
-                                    "/releases/download/" version
-                                    "/rofi-" version ".tar.xz"))
-                (sha256
-                 (base32
-                  "0wr6qdyd9wkgqaa4vq8czz4fd2shngbw83b2ll284ahm3mwhq2da"))))
-      (build-system meson-build-system)
-      (inputs
-       (modify-inputs (package-inputs base)
-         (append wayland wayland-protocols)))
-      (description
-       "Rofi is a minimalist application launcher.  It memorizes which
-applications you regularly use and also allows you to search for an
-application by name.  This package, @code{rofi-wayland}, provides additional
-wayland support."))))
+  (deprecated-package "rofi-wayland" rofi))
 
 (define-public rofi-calc
   (package
@@ -3560,7 +3532,7 @@ After selection, the clip is put onto the PRIMARY and CLIPBOARD X selections.")
 (define-public clipman
   (package
     (name "clipman")
-    (version "1.6.2")
+    (version "1.6.4")
     (source
      (origin
        (method git-fetch)
@@ -3569,7 +3541,7 @@ After selection, the clip is put onto the PRIMARY and CLIPBOARD X selections.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "033l2hy46r2zjy8dllcmkjxidhnqac9kfh4wkq9hfvim9imp5a4m"))))
+        (base32 "05hsv0v69pn79adx8lz9fzb19qr27finiq7xb4ag4b8m4pibprcj"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -3583,8 +3555,8 @@ After selection, the clip is put onto the PRIMARY and CLIPBOARD X selections.")
                 (("\"wl-copy\"")
                  (string-append "\"" (which "wl-copy") "\""))))))))
     (inputs
-     (list go-github-com-kballard-go-shellquote
-           go-gopkg-in-alecthomas-kingpin-v2
+     (list go-github-com-alecthomas-kingpin-v2
+           go-github-com-kballard-go-shellquote
            libnotify
            wl-clipboard))
     (synopsis "Basic clipboard manager with support for persisting copy buffers")
@@ -3904,7 +3876,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprcursor
   (package
     (name "hyprcursor")
-    (version "0.1.12")
+    (version "0.1.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3913,10 +3885,10 @@ This package is the fork of hsetroot by Hyriand.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1blclwsk0p0990pk1ac9kvnlpafb6kh2knimb8bm25hqpr0xxy92"))))
+                "08vqkyfws2v4w0631xij4qbnncmci3vs0iyw0373zvsqy1nrm2ll"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;TODO: No themes currently packaged.
-    (native-inputs (list gcc-14 pkg-config))
+    (native-inputs (list gcc-15 pkg-config))
     (inputs (list cairo hyprlang (librsvg-for-system) libzip tomlplusplus))
     (home-page "https://standards.hyprland.org/hyprcursor/")
     (synopsis "Cursor theme format")
@@ -3927,7 +3899,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprsunset
   (package
     (name "hyprsunset")
-    (version "0.3.0")
+    (version "0.3.2")
     (source
      (origin
        (method git-fetch)
@@ -3936,7 +3908,7 @@ This package is the fork of hsetroot by Hyriand.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0h0iibncjl780nnwvf1mfmqckdzzc4b4fphflj4mq56nswf697ha"))))
+        (base32 "09kv81j3vwxyr8myiyc3zdyp59aaqc5zxvid0k56cndjjrjfv0kr"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f)) ;No tests.
@@ -3965,7 +3937,7 @@ reduce percieved brightness below the monitor's minimum.")
 (define-public hyprlock
   (package
    (name "hyprlock")
-   (version "0.9.0")
+   (version "0.9.1")
    (source
     (origin
      (method git-fetch)
@@ -3974,7 +3946,7 @@ reduce percieved brightness below the monitor's minimum.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "1f0vcp0c9d3m9v3avajprpv14khnv3wk3y9fi3pcwr5xf2alaxv2"))))
+      (base32 "1njqa6l01qdr4n3azs1wq18qg0d8cdznr5wdh286m24fkgmwjx44"))))
    (build-system cmake-build-system)
    (arguments
     `(#:phases
@@ -4027,7 +3999,7 @@ GPU-accelerated screen locking utility.")
               "0j3hbqfx40cjxkvaiqzfij8pgblg2hyv9lbbjjh4iahciwgh7623"))))
    (build-system cmake-build-system)
    (arguments '(#:tests? #f)) ;; no test
-   (native-inputs (list gcc-14 pkg-config))
+   (native-inputs (list gcc-15 pkg-config))
    (inputs
     (list cairo
           file
@@ -4072,7 +4044,7 @@ compositors, though.")
                      (("wl-copy" cmd)
                       (search-input-file
                        inputs (string-append "bin/" cmd)))))))))
-    (native-inputs (list gcc-14 hyprwayland-scanner pkg-config))
+    (native-inputs (list gcc-15 hyprwayland-scanner pkg-config))
     (inputs
      (list cairo
            hyprutils

@@ -2062,8 +2062,8 @@ complete studio.")
 
 (define-public tascam-gtk
   ;; This commit represents the latest version at the time of this writing.
-  (let ((commit "69fb86f31efcdb27c7854d2a190457aab42b337a")
-        (revision "0"))
+  (let ((commit "6419a3be8fd9678ebcfd79812bfbcc55b44fc3a6")
+        (revision "1"))
     (package
       (name "tascam-gtk")
       (version (git-version "0.4" revision commit))
@@ -2075,12 +2075,12 @@ complete studio.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "05fbs5s24nwr6b10jgjhsfi7aj6y65kcickmygl7g84xvsnykdb0"))))
+                  "1gsnac7x3djvbwf807vz58zrqf09sdr01kfdvp1pdf6j3zsxz0bb"))))
       (build-system gnu-build-system)
       (inputs
-       (list liblo gtkmm-3 alsa-lib libxml++-3))
+       (list liblo gtkmm-3 alsa-lib libxml++))
       (native-inputs
-       (list `(,glib "bin") pkg-config))
+       (list autoconf automake `(,glib "bin") pkg-config))
       (home-page "https://github.com/onkelDead/tascam-gtk")
       (synopsis "GTK+ based application to control Tascam US-16x08 DSP mixer")
       (description "This is a mixer application to control the Tascam US-16x08
@@ -5343,13 +5343,16 @@ can receive input from a MIDI keyboard.")
                    (string-append "CXX=" #$(cxx-for-target)))
            #:phases
            #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-portaudio-path
+               (add-after 'unpack 'patch-portaudio-and-portmidi-paths
                  (lambda* (#:key inputs #:allow-other-keys)
                    (substitute* "src/sgui/widgets/hardware_dialog.py"
                      (("\\\"libportaudio")
                       (string-append "\"" (assoc-ref inputs "portaudio")
-                                     "/lib/libportaudio")))))
-               (add-after 'patch-portaudio-path 'change-directory
+                                     "/lib/libportaudio"))
+                     (("'libportmidi")
+                      (string-append "'" (assoc-ref inputs "portmidi")
+                                     "/lib/libportmidi")))))
+               (add-after 'patch-portaudio-and-portmidi-paths 'change-directory
                  (lambda _
                    (chdir "src")))
                (delete 'configure) ;no configure script
@@ -5380,7 +5383,9 @@ can receive input from a MIDI keyboard.")
                      `("GUIX_PYTHONPATH" ":" prefix
                        (,(getenv "GUIX_PYTHONPATH")))
                      `("PATH" ":" prefix
-                       (,(getenv "PATH")))))))))
+                       (,(getenv "PATH")))
+                     `("QT_PLUGIN_PATH" ":" prefix
+                       (,(getenv "QT_PLUGIN_PATH")))))))))
     (native-inputs
      (list pkg-config
            python-gcovr
@@ -5396,8 +5401,9 @@ can receive input from a MIDI keyboard.")
            jq
            libsndfile
            portaudio
-           portmidi
+           portmidi-2
            python
+           python-distro
            python-jinja2
            python-mido
            python-mutagen
@@ -5408,6 +5414,7 @@ can receive input from a MIDI keyboard.")
            python-pyyaml
            python-wavefile
            python-yq
+           qtwayland
            rubberband
            valgrind/pinned
 

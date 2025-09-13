@@ -621,7 +621,8 @@ output), and Binutils.")
       (outputs '("out" "opt-viewer"))
       (arguments
        (list
-        #:tests? (not (target-x86-32?))
+        #:tests? (not (or (%current-target-system)
+                          (target-x86-32?)))
         #:configure-flags
         #~(list
            ;; These options are required for cross-compiling LLVM according
@@ -716,7 +717,8 @@ of programming tools as well as libraries with equivalent functionality.")
       #:modules '((guix build cmake-build-system)
                   ((guix build gnu-build-system) #:prefix gnu:)
                   (guix build utils))
-      #:tests? (not (target-x86-32?))
+      #:tests? (not (or (%current-target-system)
+                        (target-x86-32?)))
       #:configure-flags
       #~(list
          ;; These options are required for cross-compiling LLVM according
@@ -1564,9 +1566,6 @@ misuse of libraries outside of the store.")))
   (make-lld-wrapper lld))
 
 ;;; A LLD wrapper that can be used as a (near) drop-in replacement to GNU ld.
-(define-public lld-as-ld-wrapper-15
-  (make-lld-wrapper lld-15 #:lld-as-ld? #t))
-
 (define-public lld-as-ld-wrapper-18
   (make-lld-wrapper lld-18 #:lld-as-ld? #t))
 
