@@ -271,8 +271,7 @@ exported."
    %store-monad
    (return
     `(("setup-environment"
-       ;; TODO: It's necessary to source ~/.guix-profile too
-       ;; on foreign distros
+       ;; TODO: Replace HOME/.config with XDG_CONFIG_HOME.
        ,(computed-file "setup-environment"
                        #~(call-with-output-file #$output
                            (lambda (port)
@@ -287,13 +286,17 @@ exported."
 GUIX_PRIVILEGED=/run/privileged/bin
 PATH=\"${PATH#$GUIX_PRIVILEGED:}\"
 
-GUIX_PROFILE=\"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\"
-. " port)
+# Source user profiles such that ~/.config/guix/current search paths take
+# precedence.  Search $HOME_ENVIRONMENT/profile before ~/.guix-profile.
+for GUIX_PROFILE in \"$HOME/.guix-profile\"                           \\
+                    \"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\" \\
+                    \"$HOME/.config/guix/current\"
+do . " port)
                              (display #$(plain-file
                                           "export-search-paths"
                                           (export-search-paths))
                                       port)
-                             (display "\
+                             (display "; done
 
 # Prioritize programs of privileged-program-service-type, if any.
 test -d \"$GUIX_PRIVILEGED\" && PATH=\"$GUIX_PRIVILEGED:$PATH\"

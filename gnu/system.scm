@@ -1069,13 +1069,13 @@ the /etc directory."
 # Crucial variables that could be missing in the profiles' 'etc/profile'
 # because they would require combining both profiles.
 # FIXME: See <http://bugs.gnu.org/20255>.
-export MANPATH=$HOME/.guix-profile/share/man:/run/current-system/profile/share/man
-export INFOPATH=$HOME/.guix-profile/share/info:/run/current-system/profile/share/info
-export XDG_DATA_DIRS=$HOME/.guix-profile/share:/run/current-system/profile/share
-export XDG_CONFIG_DIRS=$HOME/.guix-profile/etc/xdg:/run/current-system/profile/etc/xdg
+export MANPATH=/run/current-system/profile/share/man
+export INFOPATH=/run/current-system/profile/share/info
+export XDG_DATA_DIRS=/run/current-system/profile/share
+export XDG_CONFIG_DIRS=/run/current-system/profile/etc/xdg
 
 # Make sure libXcursor finds cursors installed into user or system profiles.  See <http://bugs.gnu.org/24445>
-export XCURSOR_PATH=$HOME/.icons:$HOME/.guix-profile/share/icons:/run/current-system/profile/share/icons
+export XCURSOR_PATH=$HOME/.icons:/run/current-system/profile/share/icons
 
 # Ignore the default value of 'PATH'.
 unset PATH
@@ -1095,28 +1095,8 @@ then
   export `cat /etc/environment | cut -d= -f1`
 fi
 
-# Arrange so that ~/.config/guix/current comes first,
-# and guix-home comes before guix-profile.
-for profile in \"$HOME/.guix-profile\"        \\
-               \"$HOME/.config/guix/current\"
-do
-  if [ -f \"$profile/etc/profile\" ]
-  then
-    # Load the user profile's settings.
-    GUIX_PROFILE=\"$profile\" ; \\
-    . \"$profile/etc/profile\"
-  else
-    # At least define this one so that basic things just work
-    # when the user installs their first package.
-    export PATH=\"$profile/bin:$PATH\"
-  fi
-done
-
 # Prepend privileged programs.
 export PATH=/run/privileged/bin:$PATH
-
-# Arrange so that ~/.config/guix/current/share/info comes first.
-export INFOPATH=\"$HOME/.config/guix/current/share/info:$INFOPATH\"
 
 # Set the umask, notably for users logging in via 'lsh'.
 # See <http://bugs.gnu.org/22650>.
