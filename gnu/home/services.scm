@@ -282,6 +282,10 @@ exported."
 #   HOME_ENVIRONMENT=\"$HOME/.guix-home\"
 #   . \"$HOME_ENVIRONMENT/setup-environment\"
 
+# Do not let user profile programs shadow privileged programs.
+GUIX_PRIVILEGED=/run/privileged/bin
+PATH=\"${PATH#$GUIX_PRIVILEGED:}\"
+
 GUIX_PROFILE=\"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\"
 [ -f \"$GUIX_PROFILE/etc/profile\" ] && . \"$GUIX_PROFILE/etc/profile\"
 
@@ -310,8 +314,11 @@ case $XCURSOR_PATH in
   *) export XCURSOR_PATH=$GUIX_PROFILE/share/icons:$XCURSOR_PATH ;;
 esac
 
+# Prioritize programs of privileged-program-service-type, if any.
+test -d \"$GUIX_PRIVILEGED\" && PATH=\"$GUIX_PRIVILEGED:$PATH\"
+
 # Keep the shell environment clean.
-unset GUIX_PROFILE
+unset GUIX_PRIVILEGED GUIX_PROFILE
 
 " port)
                              (display
