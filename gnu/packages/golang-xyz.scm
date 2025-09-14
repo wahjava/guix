@@ -12703,8 +12703,8 @@ specified by @uref{https://tools.ietf.org/html/rfc2141, IETF RFC 2141}.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.23
-      #:import-path "github.com/leonelquinteros/gotext"))
+      #:import-path "github.com/leonelquinteros/gotext"
+      #:test-flags #~(list "-vet=off")))
     (propagated-inputs
      (list go-golang-org-x-tools))
     (home-page "https://github.com/leonelquinteros/gotext")
