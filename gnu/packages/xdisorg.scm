@@ -902,6 +902,28 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
 (define-public pixman
   (package
     (name "pixman")
+    (version "0.43.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.cairographics.org/releases/pixman-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "09m2hm5zcz3n5wikz3f3v13ccdywjc81baf7kyvxviw006wlsqm0"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config))
+    (inputs (list libpng zlib))
+    (synopsis "Low-level pixel manipulation library")
+    (description "Pixman is a low-level software library for pixel
+manipulation, providing features such as image compositing and trapezoid
+rasterisation.")
+    (home-page "http://www.pixman.org/")
+    (license license:expat)))
+
+(define-public pixman-0.42
+  (package
+    (inherit pixman)
+    (name "pixman")
     (version "0.42.2")
     (source
      (origin
@@ -919,15 +941,7 @@ typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
              "--enable-gnuplot"
              ,@(if (target-arm32?)
                    `("--disable-arm-simd")
-                   '()))))
-    (native-inputs (list pkg-config))
-    (inputs (list libpng zlib))
-    (synopsis "Low-level pixel manipulation library")
-    (description "Pixman is a low-level software library for pixel
-manipulation, providing features such as image compositing and trapezoid
-rasterisation.")
-    (home-page "http://www.pixman.org/")
-    (license license:expat)))
+                   '()))))))
 
 (define-public libdrm
   (package
