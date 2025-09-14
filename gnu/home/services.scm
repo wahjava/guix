@@ -241,7 +241,7 @@ ensures variable values are properly quoted."
                                   "\n")))
               variables))))
 
-(define (environment-variables->setup-environment-script vars)
+(define (setup-environment-script vars)
   "Return a file that can be sourced by a POSIX compliant shell which
 initializes the environment.  The file will source the home
 environment profile, set some default environment variables, and set
@@ -320,7 +320,7 @@ unset GUIX_PROFILE PROFILE_FILE
                 (extensions
                  (list (service-extension
                         home-service-type
-                        environment-variables->setup-environment-script)))
+                        setup-environment-script)))
                 (compose concatenate)
                 (extend append)
                 (default-value '())
