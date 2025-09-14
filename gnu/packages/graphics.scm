@@ -3402,3 +3402,29 @@ environment.  It supports drawing freehand as well as basic shapes and text.
 It features cut-and-paste for irregular regions or polygons.")
     (home-page "https://www.gnu.org/software/gpaint/")
     (license license:gpl3+)))
+
+(define-public meshoptimizer
+  (package
+    (name "meshoptimizer")
+    (version "0.25")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zeux/meshoptimizer")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j1iwys6p5ymj287q0l0rix2bs18b4mi7dwpj97dw06yp5gnmkb9"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:tests? #f)) ; no tests
+    (synopsis "Mesh optimization library for faster rendering")
+    (description
+     "When a GPU renders triangle meshes, various stages of the GPU pipeline
+have to process vertex and index data.  The efficiency of these stages depends
+on the data you feed them; this library provides algorithms to help optimize
+meshes for these stages, as well as algorithms to reduce the mesh complexity
+and storage overhead.")
+    (home-page "https://github.com/zeux/meshoptimizer")
+    (license license:expat)))
