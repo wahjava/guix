@@ -3,6 +3,7 @@
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2022-2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2023 Carlo Zancanaro <carlo@zancanaro.id.au>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -276,9 +277,12 @@ exported."
                            (lambda (port)
                              (set-port-encoding! port "UTF-8")
                              (display "\
-# NOTE: Set HOME_ENVIRONMENT before sourcing (home-shell-profile-service-type ensures
-# ~/.profile does)
-GUIX_PROFILE=\"$HOME_ENVIRONMENT/profile\"
+# Source this file to define and export environment variables related to
+# (user profile) search paths and Guix Home services:
+#   HOME_ENVIRONMENT=\"$HOME/.guix-home\"
+#   . \"$HOME_ENVIRONMENT/setup-environment\"
+
+GUIX_PROFILE=\"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\"
 PROFILE_FILE=\"$GUIX_PROFILE/etc/profile\"
 [ -f $PROFILE_FILE ] && . $PROFILE_FILE
 
