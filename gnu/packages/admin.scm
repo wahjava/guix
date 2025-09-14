@@ -1110,8 +1110,9 @@ on memory usage on GNU/Linux systems.")
         (base32 "058y4a4mvx9m179dyr4wi8mlm6i4ybywshadaj4cvfn9fv0r0nkx"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
+    (arguments '(#:configure-flags '("--enable-sensors")))
     (inputs
-     (list ncurses))
+     (list ncurses (list lm-sensors "lib")))
     (native-inputs
      (list autoconf automake python-minimal-wrapper))     ; for scripts/MakeHeader.py
     (home-page "https://htop.dev")
