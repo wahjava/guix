@@ -1074,6 +1074,7 @@ unset PATH
 # Load the system profile's settings.
 GUIX_PROFILE=/run/current-system/profile ; \\
 . " (plain-file "export-search-paths" (export-search-paths)) "
+unset GUIX_PROFILE
 
 # Since 'lshd' does not use pam_env, /etc/environment must be explicitly
 # loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
