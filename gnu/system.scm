@@ -1098,7 +1098,6 @@ fi
 # Arrange so that ~/.config/guix/current comes first,
 # and guix-home comes before guix-profile.
 for profile in \"$HOME/.guix-profile\"        \\
-               \"$HOME/.guix-home/profile\"   \\
                \"$HOME/.config/guix/current\"
 do
   if [ -f \"$profile/etc/profile\" ]

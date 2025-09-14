@@ -215,6 +215,7 @@
         (search-path-specification
           (variable "MANPATH")
           (files '("share/man")))
+        $PATH
         (search-path-specification
           (variable "XCURSOR_PATH")
           (files '("share/icons")))
