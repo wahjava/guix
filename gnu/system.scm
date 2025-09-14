@@ -1090,7 +1090,7 @@ fi
 export PATH=/run/privileged/bin:$PATH
 
 # ~/.icons is a typical Xcursor search path along with $XDG_DATA_HOME/icons.
-XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
+[ -f \"$HOME/.icons\" ] && XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
 
 # Set the umask, notably for users logging in via 'lsh'.
 # See <http://bugs.gnu.org/22650>.
