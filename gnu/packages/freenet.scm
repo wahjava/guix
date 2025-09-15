@@ -47,6 +47,24 @@
                                                (commit *freenet/contrib-commit*)))
                                          (sha256
                                           (base32 *freenet/contrib-sha256*))))
+
+(define-public freenet-ext
+  (package
+    (name "freenet-ext")
+    (version "50")
+    (source *freenet/contrib-source*)
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:source-dir "freenet-ext/src"
+                 #:jar-name "freenet-ext.jar"
+                 #:phases (modify-phases %standard-phases
+                            (replace 'install
+                              (install-jars ".")))))
+    (home-page "https://github.com/hyphanet/contrib")
+    (description "freenet-ext provides external libraries needed for Freenet.")
+    (synopsis "External libraries for hyphanet")
+    (license license:gpl2+)))
+
 (define-public java-bdb-je
   (package
     (name "java-bdb-je")
