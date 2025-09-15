@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2021 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
+;;; Copyright © 2023, 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,10 +38,9 @@
   (and (* (or flags comment (ignore (* whitespace))))
        (ignore "msgid ") msgid (ignore (* whitespace))
        (ignore "msgstr ") msgstr))
-(define-peg-pattern escape body (or "\\\\" "\\\"" "\\n"))
-(define-peg-pattern str-chr body (or " " "!" (and (ignore "\\") "\"")
-                                     "\\n" (and (ignore "\\") "\\")
-                                     (range #\# #\頋)))
+(define-peg-pattern str-chr body (and comment-chr
+                                      ;; Do not parse \" before newlines.
+                                      (followed-by comment-chr)))
 (define-peg-pattern msgid all content)
 (define-peg-pattern msgstr all content)
 (define-peg-pattern content body
