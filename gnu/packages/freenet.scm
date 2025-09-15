@@ -89,6 +89,50 @@
     (description "freenet-db4o: Database for Objects as needed by Freenet.")
     (synopsis "Java object database v7")
     (license license:gpl2)))
+
+(define-public freenet-native-big-integer
+  (package
+   (name "freenet-native-big-integer")
+   (version "contrib")
+   (source *freenet/contrib-source*)
+   (build-system gnu-build-system)
+   (arguments
+    `(#:tests? #f
+      #:phases (modify-phases %standard-phases
+                 (delete 'configure)
+                 (replace 'build
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (let ((gcc (string-append (assoc-ref inputs "gcc") "/bin/gcc"))
+                           (gmp (string-append (assoc-ref inputs "gmp") "/lib/"))
+                           (java-incl. (string-append (assoc-ref inputs "openjdk") "/include/"))
+                           (source "jbigi/src/jbigi.c")
+                           (compile-flags "-fPIC -Wall")
+                           (link-flags "-shared -Wl,-soname,libjbigi.so"))
+                       (chdir "NativeBigInteger")
+                       (system* gcc
+                                "-c" compile-flags
+                                (string-append "-I" java-incl.
+                                               " -I" java-incl. "/linux/"
+                                               " -I" "jbigi/include/")
+                                source
+                                link-flags
+                                (string-append " -L" gmp
+                                               " -lgmp")))))
+                 (replace 'install
+                   (lambda* (#:key outputs system #:allow-other-keys)
+                     (let* ((sys (string-split system #\-))
+                            (os-arch (string-append (cadr sys) "-" (car sys))))
+                       (map (lambda (obj-file)
+                              (install-file obj-file
+                                            (string-append (assoc-ref outputs "out")
+                                                           "/lib/")))
+                            (find-files "." os-arch))))))))
+   (inputs (list gmp))
+   (native-inputs (list `(,openjdk14 "jdk")))
+   (home-page "https://github.com/hyphanet/contrib")
+   (description "native big integer implementation adapted from i2p.")
+   (synopsis "Native big integer")
+   (license license:gpl2+)))   ; code from i2p is BSD, commits by Freenet devs are usually GPL2+, so GPL2+ is safe
 (define-public java-jbitcollider-core
   (package
     (name "java-jbitcollider-core")
