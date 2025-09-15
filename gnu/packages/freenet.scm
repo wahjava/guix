@@ -235,3 +235,84 @@
     (description "FEC implementation by onionnetworks")
     (synopsis "Onionnetworks FEC")
     (license license:expat)))
+
+(define-public java-unbescape
+  (package
+    (name "java-unbescape")
+    (version "unbescape-1.1.6.RELEASE")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/unbescape/unbescape")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "03yfm9gwfgynqkyk8320sf4iy3pnqzm7zmpakk55saqk6lzk8xdi"))
+              (snippet
+               #~(begin
+                   (use-modules (guix build utils))
+                   (mkdir-p "target/classes/META-INF")
+                   ;; MANIFEST.MF copied from a build from git
+                   (with-output-to-file "target/classes/META-INF/MANIFEST.MF"
+                          (lambda _
+                            (format #t "Manifest-Version: 1.0
+Automatic-Module-Name: unbescape
+Bnd-LastModified: 1706116789103
+Build-Jdk: 9-internal
+Built-By: guix
+Bundle-Description: Advanced yet easy-to-use escape/unescape library for
+  Java
+Bundle-DocURL: http://www.unbescape.org
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: unbescape
+Bundle-SymbolicName: org.unbescape
+Bundle-Vendor: The UNBESCAPE team
+Bundle-Version: 1.1.6.RELEASE
+Created-By: Apache Maven Bundle Plugin
+Export-Package: org.unbescape;version=\"1.1.6\",org.unbescape.uri;version=
+ \"1.1.6\",org.unbescape.html;version=\"1.1.6\",org.unbescape.java;version=\"
+ 1.1.6\",org.unbescape.css;version=\"1.1.6\",org.unbescape.csv;version=\"1.1
+ .6\",org.unbescape.json;version=\"1.1.6\",org.unbescape.properties;version
+ =\"1.1.6\",org.unbescape.xml;version=\"1.1.6\",org.unbescape.javascript;ver
+ sion=\"1.1.6\"
+Implementation-Title: unbescape
+Implementation-URL: http://www.unbescape.org
+Implementation-Vendor: The UNBESCAPE team
+Implementation-Vendor-Id: org.unbescape
+Implementation-Version: 1.1.6.RELEASE
+Require-Capability: osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=1.6))\"
+Specification-Title: unbescape
+Specification-Vendor: The UNBESCAPE team
+Specification-Version: 1.1.6.RELEASE
+Tool: Bnd-3.5.0.201709291849
+X-Compile-Source-JDK: 6
+X-Compile-Target-JDK: 6")))))))
+    (build-system maven-build-system)
+    (arguments
+     `(#:exclude
+       (("org.apache.maven.plugins" .
+         ("maven-source-plugin" "maven-javadoc-plugin" "maven-gpg-plugin"
+          "maven-release-plugin" "maven-assembly-plugin" "maven-surefire-plugin"
+          "maven-site-plugin"))
+        ("com.mycila.maven-license-plugin" . ("maven-license-plugin"))
+        ("org.apache.felix" . ("maven-bundle-plugin")))
+       #:maven-plugins
+       (("maven-enforcer-plugin" ,maven-enforcer-plugin)
+        ,@(default-maven-plugins))))
+    (propagated-inputs
+     (list java-jopt-simple-4
+           java-commons-math3))
+    (native-inputs
+     (list java-junit
+           java-hamcrest-core
+           java-commons-lang3
+           maven-model-builder
+           maven-resolver-provider
+           maven-resolver-impl
+           java-guice))
+    (home-page "https://github.com/unbescape/unbescape")
+    (synopsis "Java escaping library")
+    (description "Unbescape is a Java library aimed at performing fully-featured and high-performance escape and unescape operations for , HTML (HTML5 and HTML 4), XML (XML 1.0 and XML 1.1), JavaScript, JSON, URI/URL, CSS, CSV (Comma-Separated Values), Java literals, and Java .properties files")
+    (license license:asl2.0)))
