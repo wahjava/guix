@@ -149,3 +149,29 @@
     (description "LZMA Streams in Java")
     (synopsis "Java LZMA Streams")
     (license license:lgpl2.1)))
+
+(define-public java-onion-common
+  (package
+    (name "java-onion-common")
+    (version "1.0.4-r4")
+    (source (origin (method git-fetch)
+                    (uri (git-reference
+                          (url "https://github.com/hyphanet/contrib")
+                          (commit *freenet/contrib-commit*)))
+                    (sha256
+                     (base32 *freenet/contrib-sha256*))))
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:build-target "jars"
+                 #:phases (modify-phases %standard-phases
+                            (add-before 'build 'set-env
+                              (lambda _
+                                (chdir "onion-common/")))
+                            (replace 'install
+                              (install-jars "lib")))))
+    (native-inputs
+     (list gcc-toolchain))
+    (home-page "https://github.com/hyphanet/contrib")
+    (description "Locally maintained onionnetworks tools")
+    (synopsis "Onionnetworks tools")
+    (license license:expat)))
