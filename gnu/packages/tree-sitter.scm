@@ -9,6 +9,7 @@
 ;;; Copyright © 2023, 2024 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
+;;; Copyright © 2025 Felipe Silva <git@felipeqq2.rocks>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -874,3 +875,10 @@ which will be used as a snippet in origin."
    "1r9p7hhnc1zagwxzdxhs4p6rnqs9naddkgbfymi6pbw6cyg2ccwl"
    "1.1.2"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-zig"))
+
+(define-public tree-sitter-toml
+  (tree-sitter-grammar
+   "toml" "TOML"
+   "1j9fgy1hlsq6xqqnpjl65a2mmydlx91p8ss36k7vyf7284d6bm4v"
+   "0.7.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-toml"))
