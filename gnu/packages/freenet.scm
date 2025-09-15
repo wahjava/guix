@@ -175,3 +175,34 @@
     (description "Locally maintained onionnetworks tools")
     (synopsis "Onionnetworks tools")
     (license license:expat)))
+
+(define-public onion-fec                ;FIXME patch
+  (package
+    (name "onion-fec")
+    (version "1.0.4-r4")
+    (source (origin (method git-fetch)
+                    (uri (git-reference
+                          (url "https://github.com/hyphanet/contrib")
+                          (commit *freenet/contrib-commit*)))
+                    (sha256
+                     (base32 *freenet/contrib-sha256*))))
+    (build-system gnu-build-system)
+    (arguments `(#:tests? #f
+                 #:phases (modify-phases %standard-phases
+                            (delete 'configure)
+                            (add-before 'build 'set-env
+                              (lambda _
+                                (chdir "onion-fec/src/csrc")
+                                (setenv "CC" (which "gcc"))
+                                (setenv "JAVA_HOME" (assoc-ref %build-inputs "openjdk"))))
+                            (replace 'install
+                              (lambda _
+                                (let* ((lib (string-append (assoc-ref %outputs "out") "/lib")))
+                                  (install-file "libfec8.so" lib)
+                                  (install-file "libfec16.so" lib)))))))
+    (native-inputs
+     (list `(,openjdk14 ,"jdk")))
+    (home-page "https://github.com/hyphanet/contrib")
+    (description "FEC implementation by onionnetworks")
+    (synopsis "Onionnetworks FEC")
+    (license license:expat)))
