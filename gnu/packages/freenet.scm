@@ -36,6 +36,17 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages check)
   #:export (fred))
+
+;; Thanks to Tommy[D] for the Gentoo package which showed how to split up contrib!
+
+(define *freenet/contrib-commit* "0e7962a81777a7e750a0b4fe4b8ab538e9bea14b")
+(define *freenet/contrib-sha256* "02nv99qbwzb0x0vz0vpwnsc5rz1jymbaw5cz0r2s0adipx1j7y1j")
+(define *freenet/contrib-source* (origin (method git-fetch)
+                                         (uri (git-reference
+                                               (url "https://github.com/hyphanet/contrib")
+                                               (commit *freenet/contrib-commit*)))
+                                         (sha256
+                                          (base32 *freenet/contrib-sha256*))))
 (define-public java-bdb-je
   (package
     (name "java-bdb-je")
