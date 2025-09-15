@@ -48,6 +48,26 @@
                                          (sha256
                                           (base32 *freenet/contrib-sha256*))))
 
+(define-public freenet-seedrefs
+  (package
+    (name "freenet-seedrefs")
+    (version "git")
+    (source (origin (method git-fetch)
+                    (uri (git-reference
+                          (url "https://github.com/hyphanet/seedrefs")
+                          (commit "2f477b4995536dcfaa8a0c6810b6b333b1d5b5e2")))
+                    (sha256
+                     (base32 "0dq9gkjmp29s24g73xv8gpanp9cgvrc2yy79iyxi6yf2cyys2h84"))))
+    (build-system copy-build-system)
+    (arguments `(#:install-plan '(("seednodes.fref" "var/"))
+                 #:phases (modify-phases %standard-phases
+                            (add-before 'install 'collect-seednodes
+                              (lambda _ (system "cat ./* > seednodes.fref"))))))
+    (home-page "https://github.com/hyphanet/seedrefs")
+    (description "Freenet Hyphanet seed node references for the main opennet.")
+    (synopsis "Hyphanet seednodes")
+    (license license:gpl2+)))
+
 (define-public freenet-ext
   (package
     (name "freenet-ext")
