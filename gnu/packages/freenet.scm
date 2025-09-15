@@ -133,6 +133,39 @@
    (description "native big integer implementation adapted from i2p.")
    (synopsis "Native big integer")
    (license license:gpl2+)))   ; code from i2p is BSD, commits by Freenet devs are usually GPL2+, so GPL2+ is safe
+
+(define-public freenet-native-thread    ;FIXME Patch and arch.
+  (package
+    (name "freenet-native-thread")
+    (version "contrib")
+    (source *freenet/contrib-source*)
+    (build-system gnu-build-system)
+    (arguments
+     `(#:tests? #f
+       #:modules ((ice-9 regex) ,@%default-gnu-imported-modules)
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (add-before 'build 'set-env
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((java-home (assoc-ref inputs "icedtea")))
+               (setenv "JAVA_HOME" java-home)
+               (chdir "NativeThread/"))))
+         (replace 'build
+           (lambda _ (system* "make" "all")))
+         (replace 'install
+           (lambda* (#:key outputs system #:allow-other-keys)
+             (let ((lib (string-append (assoc-ref outputs "out") "/lib/"))
+                   (obj-dir "lib/freenet/support/io/")
+                   (lib-file (if ,(target-x86-64?)
+                                 "/libNativeThread-amd64.so"
+                                 "/libNativeThread-i386.so")))
+               (install-file (string-append obj-dir lib-file) lib)))))))
+    (native-inputs (list `(,icedtea "jdk")))
+    (home-page "https://github.com/hyphanet/contrib" )
+    (description "Java tooling for native thread specifics")
+    (synopsis "Java native thread tools")
+    (license license:gpl2+)))
 (define-public java-jbitcollider-core
   (package
     (name "java-jbitcollider-core")
