@@ -482,6 +482,65 @@ and internet-based applications that run on desktop, server, mobile, IoT, and
 embedded systems")
     (synopsis "POCO C++ libraries")
     (license license:boost1.0)))
+
+(define-public fms
+  (package
+    (name "fms")
+    (version "0.3.83")
+    (source (origin (method url-fetch)
+                    (uri (string-append "https://dev.gentoo.org/~tommy/distfiles/"
+                                        name "-src-" version ".zip"))
+                    (sha256
+                     (base32 "118gfgrd87b479ybfcgc8ri0fbpb5nh2bghs2znsiwm7pxa935pa"))))
+    (build-system cmake-build-system)
+    (arguments `(#:tests? #f
+                 #:configure-flags (list "-DCMAKE_SOURCE_DIR=."
+                                         "-DI_HAVE_READ_THE_README=ON"
+                                         "-DALTERNATE_CAPTCHA=ON"
+                                         "-DUSE_BUNDLED_SQLITE=OFF"
+                                         "-DAUDIO_CAPTCHA=ON")
+                 #:out-of-source? #f
+                 #:phases
+                 (modify-phases %standard-phases
+                   (add-before 'configure 'set-env
+                     (lambda _
+                       ;; Unpack phase doesn't extract the archive into a separate directory
+                       ;; This leads the pwd to be the first directory in the tmpdir.
+                       ;; Our soruce directory lies one step before that.
+                       (chdir "..")
+                       (setenv "CPLUS_INCLUDE_PATH"
+                               (string-join (list "include/"
+                                                  (getenv "CPLUS_INCLUDE_PATH")) ":"))))
+                   (add-after 'install 'install-fms
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       (let* ((out (assoc-ref outputs "out"))
+                              (bin (string-append out "/bin/"))
+                              (static (string-append out "/share/fms/static-files/")))
+                         (mkdir-p bin)
+                         (mkdir-p static)
+                         (install-file "fms" bin)
+                         ;; Copy Directories containing static files
+                         (map (lambda (dir)
+                                (copy-recursively dir (string-append static dir)))
+                              '("espeak-data" "fonts" "images" "resources" "styles" "translations"))
+                         ;; Copy rest of the static files
+                         (map (lambda (file)
+                                (install-file file static))
+                              (find-files "." "\\.htm"))))))))
+    (inputs (list sqlite
+                  mbedtls-apache
+                  freeimage
+                  libiconv
+                  espeak
+                  poco
+                  ant))
+    (native-inputs (list unzip))
+    (home-page "")
+    (description "Freenet Message System")
+    (synopsis "The Freenet Message System is a reference specification for
+newsgroup like communication inside of Freenet.")
+    (license license:gpl3+)))
+
 (define-public java-unbescape
   (package
     (name "java-unbescape")
