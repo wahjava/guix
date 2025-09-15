@@ -791,3 +791,84 @@ X-Compile-Target-JDK: 6")))))))
     (synopsis "Java templating engine")
     (description "Java templating engine inspired by Twig and similar to the Python Jinja Template Engine syntax.")
     (license license:asl2.0)))
+
+
+
+(define-public fred
+  (package
+    (name "fred")
+    (version "0.7.5-build-1503")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/hyphanet/fred/releases/download/build0"
+                           (third (string-split version #\-)) "/freenet-build0" (third (string-split version #\-)) "-source.tar.bz2"))
+       (sha256
+        (base32
+         "0r029jrrmabrcddc322iblqd32s3n3fxnyvkgfqb711s4jmk1ifz"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:tests? #f
+       #:source-dir "src"
+       #:jar-name "freenet.jar"
+       #:main-class "freenet.node.NodeStarter"
+       #:build-target "compile"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'delete-native-dependencies
+           (lambda _
+             (delete-file-recursively "src/freenet/crypt/Hash.java")))
+         (add-after 'build 'copy-files
+           (lambda _
+             (copy-recursively
+              "src/freenet/clients/http/staticfiles"
+              "build/classes/freenet/clients/http/staticfiles")
+             (copy-recursively
+              "src/freenet/clients/http/templates"
+              "build/classes/freenet/clients/http/templates")
+             (for-each
+              (lambda (file)
+                (install-file file "build/classes/freenet/l10n/"))
+              (append (find-files "src/freenet/l10n" "\\.properties$"
+                                  #:fail-on-error? #t)
+                               (find-files "src/freenet/l10n" "\\.tab$")))
+             (install-file "dependencies.properties" "build/classes/")))
+         (add-after 'copy-files 'build-jar
+           (lambda _ (system* "ant" "jar")))
+         (replace 'install (install-jars "build")))))
+    (inputs (list freenet-seedrefs
+                             freenet-ext
+                             java-bdb-je
+                             java-bouncycastle
+                             java-commons-compress
+                             java-freenet-mantissa
+                             java-jbitcollider-core
+                             java-junit
+                             java-lzma
+                             java-lzmajio
+                             java-native-access
+                             java-native-access-platform
+                             java-onion-common
+                             java-onion-fec
+                             java-pebble
+                             java-service-wrapper
+                             java-slf4j-api
+                             java-logback-classic
+                             java-logback-core
+                             java-commons-lang3
+                             java-commons-io
+                             java-javaee-servletapi
+                             java-unbescape
+                             onion-fec
+                             freenet-db4o
+                             freenet-native-thread
+                             freenet-native-big-integer
+                             freenet-jcpuid
+                             maven-slf4j-provider
+                             openjdk))
+    (outputs '("out"))
+    (home-page "https://www.hyphanet.org")
+    (synopsis "Secure and decentralized publishing and communication")
+    (description "Hyphanet is a p2p platform for censorship-resistant and
+privacy-respecting publishing and communication.")
+    (license license:gpl2+)))
