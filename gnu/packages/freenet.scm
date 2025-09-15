@@ -69,6 +69,26 @@
     (synopsis "Java Berkeley DB")
     (license license:asl2.0)))
 
+
+(define-public freenet-db4o
+  (package
+    (name "freenet-db4o")
+    (version "7.4")
+    (source (origin (method git-fetch)
+                    (uri (git-reference
+                          (url "https://github.com/xor-freenet/db4o-7.4")
+                          (commit "831aecf5f88a8f6716707c61249d55d627246fac")))
+                    (sha256
+                     (base32 "1njzric4c6c9kgvrx49ssr8l46jwsaxg1j7g2gh8hy3v4dal0sw7"))))
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:phases (modify-phases %standard-phases
+                            (replace 'install
+                              (install-jars ".")))))
+    (home-page "https://web.archive.org/web/20140517213411/http://www.db4o.com/")
+    (description "freenet-db4o: Database for Objects as needed by Freenet.")
+    (synopsis "Java object database v7")
+    (license license:gpl2)))
 (define-public java-jbitcollider-core
   (package
     (name "java-jbitcollider-core")
