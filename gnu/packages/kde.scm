@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2016, 2017, 2019-2021, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2019-2021, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2016, 2017 Thomas Danckaert <post@thomasdanckaert.be>
 ;;; Copyright © 2017, 2018 Mark Meyer <mark@ofosos.org>
@@ -1643,6 +1643,13 @@ different notification systems.")
                    ;; So kdeconnect.so isn't installed to lib/plugins
                    "-DPLUGIN_INSTALL_DIR=lib/qt6/plugins")
            #:phases #~(modify-phases %standard-phases
+                        ;; This phase should be removed in kdeconnect-25+
+                        (add-after 'unpack 'compat-with-qt-6.9
+                          (lambda _
+                            (substitute* "core/backends/lan/mdns_wrapper.h"
+                              (("#include <QHostAddress>")
+                               (string-append "#include <QHash>\n"
+                                              "#include <QHostAddress>")))))
                         (add-after 'unpack 'fix-dbus-autostart
                           (lambda _
                             ;; 'dbus-daemon' requires an absolute Exec path.
