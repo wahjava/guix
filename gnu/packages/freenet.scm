@@ -117,3 +117,24 @@
       (description "Java JNI bindings for lzma.")
       (synopsis "Java JNI LZMA")
       (license license:public-domain))))
+
+(define-public java-lzmajio
+  (package
+    (name "java-lzmajio")
+    (version "0.95-r3")
+    (source (origin (method git-fetch)
+                    (uri (git-reference
+                          (url "https://github.com/league/lzmajio")
+                          (commit "bfea68ba7f061c2cbcfded2c8e9c3a3f91436b91")))
+                    (sha256
+                     (base32 "1mrhknrk200jyl92n84bcl3chq29mdv5ps1899f48ag0bbvx4xy5"))))
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:phases (modify-phases %standard-phases
+                            (replace 'install (install-jars ".")))))
+    (inputs (list java-lzma))
+    (native-inputs (list git java-junit java-lzma))
+    (home-page "https://github.com/league/lzmajio")
+    (description "LZMA Streams in Java")
+    (synopsis "Java LZMA Streams")
+    (license license:lgpl2.1)))
