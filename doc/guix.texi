@@ -19600,6 +19600,7 @@ declaration.
 * Kerberos Services::           Kerberos services.
 * LDAP Services::               LDAP services.
 * Web Services::                Web servers.
+* Hyphanet::                    Peer-to-peer communication.
 * High Availability Services::  High availability services.
 * Certificate Services::        TLS certificates via Let's Encrypt.
 * DNS Services::                DNS daemons.
@@ -35648,6 +35649,89 @@ Owner's group of the @code{agate} process.
 
 @item @code{log-file} (default: @file{"/var/log/agate.log"})
 The file which should store the logging output of Agate.
+
+@end table
+@end deftp
+
+
+@node Hyphanet
+@subsection Hyphanet
+
+@cindex p2p
+The @code{(gnu services freenet)} module provides Freenet / Hyphanet
+communication services.
+
+@anchor{Fred}
+@subsubheading Fred
+
+@defvar freenet-service-type
+Service type for the @uref{https://www.hyphanet.org,Hyphanet} censorship
+resistant p2p communication daemon: Fred (Freenet Reference deamon). The
+value of this service type is a @code{<freenet-configuration>} record.
+
+A simple configuration:
+
+@lisp
+(service freenet-service-type)
+@end lisp
+@end defvar
+
+In the default configuration, the Hyphanet node connects to opennet
+using seednodes. It logs its output into @file{fred.log} in the folder
+set as @code{working-dir}, defaulting to @code{/var/lib/hyphanet}.
+
+@deftp {Data Type} freenet-configuration
+
+The initial configuration for Fred. Some of the values can be changed at
+runtime, so they only apply when the service is first launched, others
+can be changed from the configuration between runs.
+
+@table @asis
+
+@item @code{freenet-package} (default: @code{fred})
+The package to run.
+
+@item @code{user} (default: @code{root})
+The existing user account to use to run the daemon.
+
+@item @code{group} (default: @code{"users"})
+The existing group to run the service with.
+
+@item @code{working-dir} (default: @code{"/var/lib/hyphanet/"})
+The working directory for the hyphanet node. This is where all its state
+is written, including the store with temporary data.
+
+@item @code{max-memory} (default: @code{"2048M"})
+The memory limit of the process. Less than 512 MiB is not advisable. If using the WebOfTrust plugin for communication, at least 1024 MiB are required.
+
+@item @code{store-size-mb} (default: @code{5000})
+The size of the store in MiB for temporary data. Ignored if freenet.ini is set.
+
+@item @code{output-bandwidth-kBps} (default: @code{200})
+The maximum output bandwidth to use, in kilobyte per second. Ignored if freenet.ini is set.
+
+@item @code{opennet-enabled} (default: @code{#t})
+Whether to connect to opennet using known seednodes. This is required if
+you cannot add at least three friends who already run Hyphanet. It can
+make the IP address visible. Ignored if freenet.ini is set.
+
+@item @code{update-uri} (default: the official update key)
+The URI to use to check for seednode and installer updates. Ignored if freenet.ini is set.
+
+@item @code{address-override} (default: @code{#f})
+A domain name or IP address to use. If #f, the IP is autodetected if possible. Ignored if freenet.ini is set.
+
+@item @code{seed} (default: @code{#f})
+Whether to be a seednode. Ignored if freenet.ini is set.
+
+Being a seednode requires having a stable IP address or a domain name as
+address-override. To contribute as seednode requires sending the noderef
+from @uref{http://127.0.0.1:8888/strangers/myref.txt} to core
+developers, for example via the @code{#freenet} channel on
+@uref{https://libera.chat,libera.chat}.
+
+@item @code{freenet.ini} (default: @code{#f})
+The content for a custom freenet.ini file to use.
 
 @end table
 @end deftp
