@@ -80,3 +80,40 @@
     (description "Bitcollider tools in Java")
     (synopsis "Java bitcollider tools")
     (license license:public-domain)))
+
+(define-public java-lzma
+  (let* ((version "21.07")
+         (version-filename (fold-right string-append "" ;eg. 21.07 -> 2107 for use in filenames
+                                       (string-split version #\.))))
+    (package
+      (name "java-lzma")
+      (version version)
+      (source (origin (method url-fetch)
+                      (uri (string-append "https://www.7-zip.org/a/lzma"
+                                          version-filename
+                                          ".7z"))
+                      (sha256
+                       (base32 "0x8dvzd0vqijl9z4qadsnxx6w18jh2xl8n6fcahcha367kq8hf43"))))
+      (build-system ant-build-system)
+      (arguments
+       `(#:jar-name "lzma.jar"
+         #:source-dir "source/Java/SevenZip"
+         #:tests? #f
+         #:phases (modify-phases %standard-phases
+                    (add-after 'unpack 'unzip
+                      (lambda* (#:key inputs #:allow-other-keys)
+                        (mkdir "source")
+                        (with-directory-excursion "source/"
+                          (let ((7z (string-append (assoc-ref inputs "p7zip") "/bin/7z"))
+                                (archive
+                                 (string-append "../lzma"
+                                                ,version-filename
+                                                ".7z")))
+
+                            (system* 7z "x" archive)))))
+                    (replace 'install (install-jars "build")))))
+      (native-inputs (list p7zip))
+      (home-page "https://www.7-zip.org")
+      (description "Java JNI bindings for lzma.")
+      (synopsis "Java JNI LZMA")
+      (license license:public-domain))))
