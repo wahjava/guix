@@ -224,6 +224,28 @@
     (synopsis "Java bitcollider tools")
     (license license:public-domain)))
 
+(define-public java-freenet-mantissa
+  (package
+    (name "java-freenet-mantissa")
+    (version "0_pre23765")
+    (source (origin (method url-fetch)
+                    (uri "https://distfiles.gentoo.org/distfiles/mersennetwister-0_pre23765.tar.bz2")
+                    (sha256
+                     (base32 "1szr4w04abasgcsswzaawha4fmj8h9327jy8yzaybr5a99hv07vq"))))
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:jar-name "mantissa.jar"
+                 #:source-dir "org"
+                 #:phases (modify-phases %standard-phases
+                            (add-before 'build 'set-pwd
+                              (lambda _
+                                (chdir "../")))
+                            (replace 'install (install-jars ".")))))
+    (home-page "http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html")
+    (description "Modified Mersenne Twister java implementation for Freenet")
+    (synopsis "Java mersenne twister random number generator")
+    (license license:bsd-0)))
+
 (define-public java-lzma
   (let* ((version "21.07")
          (version-filename (fold-right string-append "" ;eg. 21.07 -> 2107 for use in filenames
