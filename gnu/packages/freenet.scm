@@ -166,6 +166,41 @@
     (description "Java tooling for native thread specifics")
     (synopsis "Java native thread tools")
     (license license:gpl2+)))
+
+(define-public freenet-jcpuid
+  (package
+    (name "freenet-jcpuid")
+    (version "contrib")
+    (source *freenet/contrib-source*)
+    (build-system gnu-build-system)
+    (arguments
+     `(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (replace 'build
+           (lambda* (#:key inputs #:allow-other-keys)
+             (let ((g++ (string-append (assoc-ref inputs "gcc") "/bin/g++"))
+                   (openjdk (string-append (assoc-ref inputs "openjdk") "/include/"))
+                   (source "src/jcpuid.cpp")
+                   (flags "-shared -static -static-libgcc -fPIC")
+                   (obj "libjcpuid-linux.so"))
+               (chdir "jcpuid")
+               (system* g++ flags
+                        " -Iinclude/"
+                        (string-append " -I" openjdk)
+                        (string-append " -I" openjdk "/linux/")
+                        source))))
+         (replace 'install
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((lib (string-append (assoc-ref outputs "out") "/lib/")))
+               (install-file "lib/freenet/support/CPUInformation/libjcpuid-x86-linux.so" lib)))))))
+    (native-inputs (list `(,openjdk14 "jdk")))
+    (home-page "https://github.com/hyphanet/contrib")
+    (description "native CPU info tools for Java")
+    (synopsis "Java CPU info")
+    (license license:gpl2+)))
+
 (define-public java-jbitcollider-core
   (package
     (name "java-jbitcollider-core")
