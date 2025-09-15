@@ -316,3 +316,250 @@ X-Compile-Target-JDK: 6")))))))
     (synopsis "Java escaping library")
     (description "Unbescape is a Java library aimed at performing fully-featured and high-performance escape and unescape operations for , HTML (HTML5 and HTML 4), XML (XML 1.0 and XML 1.1), JavaScript, JSON, URI/URL, CSS, CSV (Comma-Separated Values), Java literals, and Java .properties files")
     (license license:asl2.0)))
+
+(define-public java-pebble
+  (package
+    (name "java-pebble")
+    (version "3.1.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/PebbleTemplates/pebble")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0s3xpjbn6dhmw5mszs72zpnzwapk894vvc1682blij7rp80x201r"))))
+    (build-system maven-build-system)
+    (arguments
+     `(#:tests? #f
+       #:exclude ;; packages to remove from pom
+       (("org.apache.maven.plugins" .
+         ("maven-source-plugin" "maven-archetype-plugin" "maven-shade-plugin"
+          "maven-site-plugin" "maven-javadoc-plugin" "maven-eclipse-plugin"
+          "maven-gpg-plugin" "maven-release-plugin" "maven-assembly-plugin"))
+        ("com.mycila.maven-license-plugin" . ("maven-license-plugin"))
+        ("com.github.ben-manes.caffeine" . ("caffeine"))
+        ("ch.qos.logback" . ("logback-classic"))
+        ("org.junit-jupiter". ("junit-jupiter"))
+        ("org.assertj" . ("assertj-core"))
+        ("org.apache.felix" . ("maven-bundle-plugin")))
+       #:maven-plugins
+       (("maven-enforcer-plugin" ,maven-enforcer-plugin)
+        ,@(default-maven-plugins))
+       #:phases
+       (modify-phases %standard-phases
+           (add-after 'unpack 'chdir
+             (lambda _ (chdir "pebble") #t))
+           (add-after 'chdir 'delete-parts-with-unmet-dependencies
+             (lambda _
+               (use-modules (ice-9 rdelim) (ice-9 string-fun))
+               (delete-file-recursively "src/test/")
+               ; (delete-file-recursively "src/main/java/com/mitchellbosecke/pebble/loader/ServletLoader.java")
+               (delete-file-recursively "src/main/java/com/mitchellbosecke/pebble/loader/Servlet5Loader.java")
+               (delete-file-recursively "src/main/java/com/mitchellbosecke/pebble/cache/template/CaffeineTemplateCache.java")
+                                        (delete-file-recursively "src/main/java/com/mitchellbosecke/pebble/cache/tag/CaffeineTagCache.java")
+               ))
+           (add-after 'chdir 'remove-plugins-in-toplevel
+             (lambda _
+               (use-modules (ice-9 rdelim) (ice-9 string-fun))
+               (with-atomic-file-replacement "../pom.xml"
+                 (lambda (in out) (let ((str (read-delimited "" in)))
+                                    (display
+                                     (string-replace-substring
+                                      (string-replace-substring str "
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.6.2</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.1.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.1</version>
+        <configuration>
+          <argLine>-Dfile.encoding=${project.build.sourceEncoding}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.8</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+        <configuration>
+          <tagNameFormat>v@{project.version}</tagNameFormat>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>release</releaseProfiles>
+          <goals>deploy</goals>
+        </configuration>
+      </plugin>" "
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+")  "          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.2.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+" "") out))))))
+           (add-after 'chdir 'install-maven-dependencies
+             (lambda _ #f))
+           (add-after 'chdir 'remove-testing-and-optional-dependencies
+             (lambda* (#:key inputs #:allow-other-keys)
+               (use-modules (ice-9 rdelim) (ice-9 string-fun))
+               (with-atomic-file-replacement "pom.xml"
+                 (lambda (in out) (let ((str (read-delimited "" in)))
+                                    (display (string-replace-substring
+                                              (string-replace-substring str "<!-- optional dependencies -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>${caffeine.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>${servlet-api.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <version>5.0.0</version>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- testing dependencies -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback-classic.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commons-io.version}</version>
+      <scope>test</scope>
+    </dependency>" "")
+ "<plugin><version>3.2.0</version>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Automatic-Module-Name>io.pebbletemplates</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+" "") out))))))
+           (add-after 'fix-pom-files 'add-servlet-system-path
+             (lambda* (#:key inputs #:allow-other-keys)
+               (use-modules (ice-9 rdelim) (ice-9 string-fun))
+               (with-atomic-file-replacement "pom.xml"
+                 (lambda (in out) (let ((str (read-delimited "" in)))
+                                    (display (string-replace-substring str "<dependencies>"
+                                                                       (string-append "<dependencies>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>${servlet-api.version}</version>
+      <optional>false</optional>
+      <scope>system</scope>
+      <systemPath>" (search-input-file inputs "share/java/javax-servletapi.jar")
+      "</systemPath>
+    </dependency>
+"
+                                  )) out))))))
+             )))
+    (propagated-inputs
+     (list java-commons-io))
+    (native-inputs
+     (list java-junit
+           java-assertj
+           java-commons-io
+           java-slf4j-api
+           java-unbescape
+           java-logback-classic
+           java-commons-lang3
+           java-javaee-servletapi
+           maven-compiler-plugin
+           maven-model-builder
+           maven-resolver-provider
+           maven-resolver-impl))
+    (home-page "https://github.com/unbescape/unbescape")
+    (synopsis "Java templating engine")
+    (description "Java templating engine inspired by Twig and similar to the Python Jinja Template Engine syntax.")
+    (license license:asl2.0)))
