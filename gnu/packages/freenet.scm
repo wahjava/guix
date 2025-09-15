@@ -57,3 +57,26 @@
     (description "Implementation of the Berkeley DB in pure Java.")
     (synopsis "Java Berkeley DB")
     (license license:asl2.0)))
+
+(define-public java-jbitcollider-core
+  (package
+    (name "java-jbitcollider-core")
+    (version "0.8")
+    (source (origin (method url-fetch)
+                    (uri
+                     (string-append
+                      "mirror://sourceforge/project/bitcollider/jBitcollider%20%28Java%29/"
+                      version "/jBitcollider-" version ".zip"))
+                    (sha256
+                     (base32 "0i0hhrhz7pz11wl4wrk7mw2zbvap1zjzfzvrn6dnd74ikvp84r5k"))))
+    (build-system ant-build-system)
+    (arguments `(#:tests? #f
+                 #:jar-name "jbitcollider-core-0.8.jar"
+                 #:source-dir "plugins/org.bitpedia.collider.core/src"
+                 #:phases (modify-phases %standard-phases
+                            (replace 'install (install-jars "build/jar")))))
+    (native-inputs (list unzip))
+    (home-page "http://bitcollider.sourceforge.net/")
+    (description "Bitcollider tools in Java")
+    (synopsis "Java bitcollider tools")
+    (license license:public-domain)))
