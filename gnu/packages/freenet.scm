@@ -107,6 +107,42 @@
     (synopsis "Java Berkeley DB")
     (license license:asl2.0)))
 
+(define-public java-service-wrapper
+  (let ((release-date "20210104")
+        (bits (if (target-64bit?)
+                  "64"
+                  "32")))
+    (package
+      (name "java-service-wrapper")
+      (version "3.5.45")
+      (source
+       (origin
+         (method url-fetch)
+         (uri
+          (string-append
+           "https://sourceforge.net/projects/wrapper/files/wrapper_src/Wrapper_"
+           version "_" release-date "/wrapper_" version "_src.tar.gz"))
+         (sha256
+          (base32 "00nlswxm7az631xrsibz7syhs4mwqg6dlkqrsn9wb283mnhnaydf"))))
+      (build-system ant-build-system)
+      (arguments
+       `(#:tests? #f
+         #:build-target "main"
+         #:make-flags `(,(string-append "-Dbits=" ,bits))
+         #:phases (modify-phases %standard-phases
+                    (add-after 'install 'install-bins
+                      (lambda* (#:key outputs #:allow-other-keys)
+                        (let ((out (assoc-ref outputs "out")))
+                          (install-file "bin/wrapper" (string-append out "/bin/"))
+                          (install-file "lib/libwrapper.so" (string-append out "/lib/")))))
+                    (replace 'install
+                      (install-jars "lib/wrapper.jar")))))
+      (native-inputs (list cunit
+                           ncurses))
+      (home-page "https://wrapper.tanikisoftware.org")
+      (description "A wrapper for running java applications as daemons.")
+      (synopsis "Java daemon service wrapper")
+      (license license:gpl2))))
 
 (define-public freenet-db4o
   (package
