@@ -464,6 +464,24 @@
     (synopsis "Onionnetworks FEC")
     (license license:expat)))
 
+(define-public poco
+  (package
+    (name "poco")
+    (version "1.11.1")
+    (source (origin (method url-fetch)
+                    (uri (string-append "https://github.com/pocoproject/poco/archive/refs/tags/poco-"
+                                        version "-release.tar.gz"))
+                    (sha256
+                     (base32 "1h2a5fyw1j47lq9h0cwbg86lch4wqfy3647qb3pg57r3ka0sa4i4"))))
+    (build-system cmake-build-system)
+    (arguments `(#:tests? #f))
+    (native-inputs (list openssl))
+    (home-page "https://pocoproject.org")
+    (description "Powerful cross-platform C++ libraries for building network
+and internet-based applications that run on desktop, server, mobile, IoT, and
+embedded systems")
+    (synopsis "POCO C++ libraries")
+    (license license:boost1.0)))
 (define-public java-unbescape
   (package
     (name "java-unbescape")
