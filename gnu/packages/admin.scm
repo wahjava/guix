@@ -3320,7 +3320,7 @@ provides the following commands:
     (native-search-paths
      ;; XXX: Attempting to use (package-native-search-paths python)
      ;; here would cause an error about python being an unbound
-     ;; variable in the tests/cpan.scm test.
+     ;; variable in the tests/import/cpan.scm test.
      (list (search-path-specification
             (variable "GUIX_PYTHONPATH")
             (files (list "lib/python3.11/site-packages")))))

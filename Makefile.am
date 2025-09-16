@@ -546,7 +546,6 @@ SCM_TESTS =					\
   tests/combinators.scm			\
   tests/composer.scm				\
   tests/containers.scm				\
-  tests/cpan.scm				\
   tests/cpio.scm				\
   tests/cran.scm				\
   tests/crate.scm				\
@@ -568,6 +567,7 @@ SCM_TESTS =					\
   tests/graph.scm				\
   tests/gremlin.scm				\
   tests/hexpm.scm				\
+  tests/import/cpan.scm				\
   tests/import/hackage.scm			\
   tests/import/pypi.scm				\
   tests/home-import.scm				\
