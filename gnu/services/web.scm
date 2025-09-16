@@ -39,7 +39,6 @@
   #:use-module (gnu services shepherd)
   #:use-module (gnu services admin)
   #:use-module (gnu services configuration)
-  #:use-module (gnu services getmail)
   #:use-module (gnu services mail)
   #:use-module (gnu system pam)
   #:use-module (gnu system shadow)

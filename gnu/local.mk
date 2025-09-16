@@ -739,7 +739,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/services/file-sharing.scm			\
   %D%/services/games.scm			\
   %D%/services/ganeti.scm			\
-  %D%/services/getmail.scm				\
   %D%/services/guix.scm			\
   %D%/services/hurd.scm				\
   %D%/services/kerberos.scm			\

@@ -32,7 +32,6 @@
   #:use-module (gnu system vm)
   #:use-module (gnu services)
   #:use-module (gnu services base)
-  #:use-module (gnu services getmail)
   #:use-module (gnu services mail)
   #:use-module (gnu services networking)
   #:use-module (guix gexp)

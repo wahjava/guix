@@ -30,7 +30,6 @@
   #:use-module (gnu services)
   #:use-module (gnu services web)
   #:use-module (gnu services databases)
-  #:use-module (gnu services getmail)
   #:use-module (gnu services networking)
   #:use-module (gnu services shepherd)
   #:use-module (gnu services mail)
