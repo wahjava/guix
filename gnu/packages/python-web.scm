@@ -204,6 +204,36 @@ writing applications that talk to network enabled embedded
 @acronym{IoT,Internet of Things} devices.")
     (license license:expat)))
 
+(define-public python-backoff
+  (package
+    (name "python-backoff")
+    (version "2.2.1")
+    (source
+     (origin
+       (method git-fetch) ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/python-backoff/backoff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cpfd8fdznwlxrjpwy10pl4bj9q393ys1vj90nvsrhwakqcdiil3"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core
+                         python-pytest
+                         python-requests
+                         python-responses
+                         python-pytest-asyncio))
+    (home-page "https://github.com/python-backoff/backoff")
+    (synopsis "Function decoration for backoff and retry")
+    (description
+     "This module provides function decorators which can be used to wrap a
+function such that it will be retried until some condition is met.  It is
+meant to be of use when accessing unreliable resources with the potential for
+intermittent failures i.e. network resources and external APIs.  Decorators
+support both regular functions for synchronous code and asyncio's coroutines
+for asynchronous code.")
+    (license license:expat)))
+
 (define-public python-devpi-common
   (package
     (name "python-devpi-common")
