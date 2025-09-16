@@ -551,7 +551,6 @@ SCM_TESTS =					\
   tests/debug-link.scm				\
   tests/derivations.scm			\
   tests/discovery.scm				\
-  tests/elpa.scm				\
   tests/file-systems.scm			\
   tests/gexp.scm				\
   tests/git.scm					\
@@ -567,6 +566,7 @@ SCM_TESTS =					\
   tests/import/crate.scm			\
   tests/import/egg.scm				\
   tests/import/elm.scm				\
+  tests/import/elpa.scm				\
   tests/import/gem.scm				\
   tests/import/git.scm				\
   tests/import/hackage.scm			\
