@@ -547,7 +547,6 @@ SCM_TESTS =					\
   tests/composer.scm				\
   tests/containers.scm				\
   tests/cpio.scm				\
-  tests/cran.scm				\
   tests/cve.scm				\
   tests/debug-link.scm				\
   tests/derivations.scm			\
@@ -564,6 +563,7 @@ SCM_TESTS =					\
   tests/gremlin.scm				\
   tests/hexpm.scm				\
   tests/import/cpan.scm				\
+  tests/import/cran.scm				\
   tests/import/crate.scm			\
   tests/import/egg.scm				\
   tests/import/elm.scm				\
