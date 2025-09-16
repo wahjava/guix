@@ -570,6 +570,7 @@ SCM_TESTS =					\
   tests/import/gem.scm				\
   tests/import/git.scm				\
   tests/import/hackage.scm			\
+  tests/import/opam.scm				\
   tests/import/pypi.scm				\
   tests/home-import.scm				\
   tests/home-services.scm			\
@@ -587,7 +588,6 @@ SCM_TESTS =					\
   tests/nar.scm				\
   tests/npm-binary.scm				\
   tests/networking.scm				\
-  tests/opam.scm				\
   tests/openpgp.scm				\
   tests/packages.scm				\
   tests/pack.scm				\
