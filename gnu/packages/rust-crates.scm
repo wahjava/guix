@@ -8082,10 +8082,6 @@
   (crate-source "io-reactor" "0.5.2"
                 "0ybcgk7d8843f9klm3ifgx546qfipg0738bbr0gac10gccz8rmvp"))
 
-(define rust-io-uring-0.7.10
-  (crate-source "io-uring" "0.7.10"
-                "0yvjyygwdcqjcgw8zp254hvjbm7as1c075dl50spdshas3aa4vq4"))
-
 (define rust-io-uring-0.7.8
   (crate-source "io-uring" "0.7.8"
                 "04whnj5a4pml44jhsmmf4p87bpgr7swkcijx4yjcng8900pj0vmq"))
@@ -8093,6 +8089,10 @@
 (define rust-io-uring-0.7.9
   (crate-source "io-uring" "0.7.9"
                 "1i60fxfbxypfgfmq883kwxgldxcjlnnwjazgjiys3893fvrqfdfr"))
+
+(define rust-io-uring-0.7.10
+  (crate-source "io-uring" "0.7.10"
+                "0yvjyygwdcqjcgw8zp254hvjbm7as1c075dl50spdshas3aa4vq4"))
 
 (define rust-ioctl-rs-0.1.6
   (crate-source "ioctl-rs" "0.1.6"
@@ -12811,6 +12811,10 @@
   (crate-source "rabbitmq_http_client" "0.35.0"
                 "0g5xipi5chwd0z4zzlryz6513czmq9pzy9l9npzfm7xbj00fzwlb"))
 
+(define rust-rabbitmq-http-client-0.44.0
+  (crate-source "rabbitmq_http_client" "0.44.0"
+                "0p5h4shaii9xmg934c6x93b2q0flhs6v4faysaji9mllm5ab56f4"))
+
 (define rust-radicle-git-ext-0.8.1
   (crate-source "radicle-git-ext" "0.8.1"
                 "0l363i5gwnd3pl0f415cf89lc2b64cxsw0n6l3ajlwficxpc4y2b"))
@@ -14567,6 +14571,10 @@
 (define rust-serde-spanned-0.6.9
   (crate-source "serde_spanned" "0.6.9"
                 "18vmxq6qfrm110caszxrzibjhy2s54n1g5w1bshxq9kjmz7y0hdz"))
+
+(define rust-serde-spanned-1.0.0
+  (crate-source "serde_spanned" "1.0.0"
+                "10rv91337k8x8zmfir4h8aiwmwgkq07gdv7h0jxhcwwgk10lqws0"))
 
 (define rust-serde-test-1.0.177
   (crate-source "serde_test" "1.0.177"
@@ -16353,6 +16361,10 @@
   (crate-source "tokio" "1.45.1"
                 "0yb7h0mr0m0gfwdl1jir2k37gcrwhcib2kiyx9f95npi7sim3vvm"))
 
+(define rust-tokio-1.46.0
+  (crate-source "tokio" "1.46.0"
+                "1i1ypwjxrsxz1w14qyvj3smcandl6dsg6h85w75shmhp920bnh0i"))
+
 (define rust-tokio-1.46.1
   (crate-source "tokio" "1.46.1"
                 "05sxldy7kcgysnxyzz1h1l8j3d9mjyqfh7r48ni27gmg9lsa5hqc"))
@@ -16448,6 +16460,10 @@
 (define rust-toml-0.8.23
   (crate-source "toml" "0.8.23"
                 "0qnkrq4lm2sdhp3l6cb6f26i8zbnhqb7mhbmksd550wxdfcyn6yw"))
+
+(define rust-toml-0.9.0
+  (crate-source "toml" "0.9.0"
+                "1y7qad1jq6h5x7k5s279fynmj1byay47x9k004jm5arrvsdy0wgj"))
 
 (define rust-toml-0.9.6
   (crate-source "toml" "0.9.6"
@@ -38497,6 +38513,7 @@
                                      rust-idna-1.0.3
                                      rust-idna-adapter-1.2.1
                                      rust-indexmap-2.9.0
+                                     rust-io-uring-0.7.10
                                      rust-ipnet-2.11.0
                                      rust-iri-string-0.7.8
                                      rust-is-terminal-polyfill-1.70.1
@@ -38555,7 +38572,7 @@
                                      rust-quinn-proto-0.11.10
                                      rust-quinn-udp-0.5.11
                                      rust-quote-1.0.40
-                                     rust-rabbitmq-http-client-0.35.0
+                                     rust-rabbitmq-http-client-0.44.0
                                      rust-rand-0.9.1
                                      rust-rand-chacha-0.9.0
                                      rust-rand-core-0.9.3
@@ -38584,11 +38601,12 @@
                                      rust-security-framework-2.11.1
                                      rust-security-framework-3.2.0
                                      rust-security-framework-sys-2.14.0
-                                     rust-serde-1.0.219
+                                     rust-serde-1.0.225
                                      rust-serde-aux-4.7.0
-                                     rust-serde-derive-1.0.219
+                                     rust-serde-core-1.0.225
+                                     rust-serde-derive-1.0.225
                                      rust-serde-json-1.0.140
-                                     rust-serde-spanned-0.6.8
+                                     rust-serde-spanned-1.0.0
                                      rust-serde-urlencoded-0.7.1
                                      rust-serde-value-0.7.0
                                      rust-shellexpand-3.1.1
@@ -38618,14 +38636,15 @@
                                      rust-tinystr-0.8.1
                                      rust-tinyvec-1.9.0
                                      rust-tinyvec-macros-0.1.1
-                                     rust-tokio-1.45.1
+                                     rust-tokio-1.46.0
                                      rust-tokio-native-tls-0.3.1
                                      rust-tokio-rustls-0.26.2
                                      rust-tokio-util-0.7.15
-                                     rust-toml-0.8.20
-                                     rust-toml-datetime-0.6.11
+                                     rust-toml-0.9.0
+                                     rust-toml-datetime-0.7.1
                                      rust-toml-edit-0.22.24
-                                     rust-toml-write-0.1.2
+                                     rust-toml-parser-1.0.2
+                                     rust-toml-writer-1.0.2
                                      rust-tower-0.5.2
                                      rust-tower-http-0.6.6
                                      rust-tower-layer-0.3.3
