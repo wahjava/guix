@@ -571,6 +571,7 @@ SCM_TESTS =					\
   tests/import/hackage.scm			\
   tests/import/hexpm.scm			\
   tests/import/opam.scm				\
+  tests/import/print.scm			\
   tests/import/pypi.scm				\
   tests/home-import.scm				\
   tests/home-services.scm			\
@@ -592,7 +593,6 @@ SCM_TESTS =					\
   tests/packages.scm				\
   tests/pack.scm				\
   tests/pki.scm				\
-  tests/print.scm				\
   tests/processes.scm				\
   tests/profiles.scm				\
   tests/publish.scm				\
