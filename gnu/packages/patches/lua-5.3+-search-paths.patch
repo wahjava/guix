@@ -1,0 +1,88 @@
+Change Lua to use GUIX_LUA_PATH and GUIX_LUA_CPATH to construct the default
+LUA_PATH and LUA_CPATH, instead of using hard-coded paths that Guix doesn't
+populate.
+
+These paths don't use Lua's usual '?' path wildcard, and thus are compatible
+with Guix's search-paths mechanism.
+
+--- a/src/loadlib.c
++++ b/src/loadlib.c
+@@ -764,13 +772,76 @@
+ }
+ 
+ 
++const char* guix_path (lua_State* L) {
++  luaL_Buffer buf;
++  luaL_buffinit(L, &buf);
++
++  const char* next;
++  const char* source = getenv("GUIX_LUA_PATH");
++  if (source != NULL) {
++    while ((next = strstr(source, ";")) != NULL) {
++      luaL_addlstring(&buf, source, next - source);  /* push prefix */
++      luaL_addstring(&buf, "/?.lua;");
++      luaL_addlstring(&buf, source, next - source);  /* push prefix */
++      luaL_addstring(&buf, "/?/init.lua;");
++      source = next + 1;  /* continue after the semicolon */
++    }
++    if (*source != '\0') {
++      luaL_addstring(&buf, source);
++      luaL_addstring(&buf, "/?.lua;");
++      luaL_addstring(&buf, source);
++      luaL_addstring(&buf, "/?/init.lua;");
++    }
++  }
++
++  /* Then add the local directory last */
++  luaL_addstring(&buf, "./?.lua;" "./?/init.lua");
++  luaL_pushresult(&buf);
++  return lua_tostring(L, -1);
++}
++
++
++const char* guix_cpath (lua_State* L) {
++  luaL_Buffer buf;
++  luaL_buffinit(L, &buf);
++
++  const char* next;
++  const char* source = getenv("GUIX_LUA_CPATH");
++  if (source != NULL) {
++    while ((next = strstr(source, ";")) != NULL) {
++      luaL_addlstring(&buf, source, next - source);  /* push prefix */
++      luaL_addstring(&buf, "/?.so;");
++      source = next + 1;  /* continue after the semicolon */
++    }
++    if (*source != '\0') {
++      luaL_addstring(&buf, source);
++      luaL_addstring(&buf, "/?.so;");
++    }
++  }
++
++  /* Then add the local directory last */
++  luaL_addstring(&buf, "./?.so");
++
++  luaL_pushresult(&buf);
++  return lua_tostring(L, -1);
++}
++
++
+ LUAMOD_API int luaopen_package (lua_State *L) {
+   createclibstable(L);
+   luaL_newlib(L, pk_funcs);  /* create 'package' table */
+   createsearcherstable(L);
++
+   /* set paths */
++  /* Calculating the Guix paths leaves strings on the stack (to protect them from GC). */
++  const char* default_path = guix_path(L);
++  const char* default_cpath = guix_cpath(L);
++  lua_rotate(L, -3, 2); /* rotate the old top of the stack back to the top */
+-  setpath(L, "path", LUA_PATH_VAR, LUA_PATH_DEFAULT);
+-  setpath(L, "cpath", LUA_CPATH_VAR, LUA_CPATH_DEFAULT);
++  setpath(L, "path", LUA_PATH_VAR, default_path);
++  setpath(L, "cpath", LUA_CPATH_VAR, default_cpath);
++  lua_rotate(L, -3, -2); /* undo the rotation we did at the start */
++  lua_pop(L, 2); /* pop calculated Guix paths */
++
+   /* store config information */
+   lua_pushliteral(L, LUA_DIRSEP "\n" LUA_PATH_SEP "\n" LUA_PATH_MARK "\n"
+                      LUA_EXEC_DIR "\n" LUA_IGMARK "\n");
