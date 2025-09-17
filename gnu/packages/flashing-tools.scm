@@ -429,45 +429,47 @@ dump Intel Firmware Descriptor data of an image file.")
     (license license:gpl2)))
 
 (define-public intelmetool
-  (package
-    (name "intelmetool")
-    (version "4.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://review.coreboot.org/coreboot")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0nw555i0fm5kljha9h47bk70ykbwv8ddfk6qhz6kfqb79vzhy4h2"))))
-    (build-system gnu-build-system)
-    (inputs
-     (list pciutils zlib))
-    (arguments
-     (list
-      #:make-flags
-      #~(list (string-append "CC=" #$(cc-for-target))
-              "INSTALL=install"
-              (string-append "PREFIX=" #$output))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'chdir
-            (lambda _
-              (chdir "util/intelmetool")))
-          (delete 'configure) ;no configure script
-          (delete 'check))))
-    (home-page
-     "https://github.com/coreboot/coreboot/tree/main/util/intelmetool/")
-    (synopsis "Intel Management Engine tools")
-    (description "This package provides tools for working with Intel
+  (let ((tag "25.06"))
+    (package
+      (name "intelmetool")
+      (version "1.1")              ;taken from util/intelmetool/intelmetool.h
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://review.coreboot.org/coreboot")
+                (commit tag)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1gm1af45qcxx11qwa1hpmkl7f8ab11nadq7nirwqjsnrvj8pr3q2"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                "INSTALL=install"
+                (string-append "PREFIX=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "util/intelmetool")))
+            (delete 'configure) ;no configure script
+            (delete 'check))
+        #:tests? #f))                    ;no test suite
+      (inputs
+       (list pciutils zlib))
+      (home-page
+       "https://github.com/coreboot/coreboot/tree/main/util/intelmetool/")
+      (synopsis "Intel Management Engine tools")
+      (description "This package provides tools for working with Intel
 Management Engine (ME).  You need to @code{sudo rmmod mei_me} and
 @code{sudo rmmod mei} before using this tool.  Also pass
 @code{iomem=relaxed} to the Linux kernel command line.")
-    (license license:gpl2)
-
-    ;; This is obviously an Intel thing, plus it requires <cpuid.h>.
-    (supported-systems '("x86_64-linux" "i686-linux"))))
+      (license license:gpl2)
+      ;; This is obviously an Intel thing, plus it requires <cpuid.h>.
+      (supported-systems '("x86_64-linux" "i686-linux")))))
 
 (define-public me-cleaner
   (package
