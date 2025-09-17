@@ -2709,11 +2709,11 @@ above command-line parameters.")
               (replace "guile" guile-2.2)))))
 
 (define-public guile-hall
-  (let ((commit "cda0bec30dcae2bc5cf4eeb4e7436f045d1f62d7")
+  (let ((commit "0.6.0")
         (revision "0"))
     (package
       (name "guile-hall")
-      (version (git-version "0.6.0" revision commit))
+      (version "0.6.0-0")
       (source
        (origin
          (method git-fetch)
@@ -2768,7 +2768,7 @@ above command-line parameters.")
              guile-lib
              guix))
       (propagated-inputs
-       (list guile-config guile-lib))
+       (list))
       (synopsis "Guile project tooling")
       (description
        "Hall is a command-line application and a set of Guile libraries that
