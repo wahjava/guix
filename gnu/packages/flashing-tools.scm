@@ -396,38 +396,39 @@ referred to as the \"Odin 3 protocol\".")
     (license license:expat)))
 
 (define-public ifdtool
-  (package
-    (name "ifdtool")
-    (version "4.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://review.coreboot.org/coreboot")
-              (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0jidj29jh6p65d17k304wlzhxvp4p3c2namgcdwg2sxq8jfr0zlm"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:make-flags
-      #~(list (string-append "CC=" #$(cc-for-target))
-              "INSTALL=install"
-              (string-append "PREFIX=" #$output))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'chdir
-            (lambda _
-              (chdir "util/ifdtool")))
-          (delete 'configure))           ; no configure script
-      #:tests? #f))                    ; no test suite
-    (home-page "https://doc.coreboot.org/util/ifdtool/")
-    (synopsis "Intel Firmware Descriptor dumper")
-    (description "This package provides @command{ifdtool}, a program to
+  (let ((tag "25.06"))
+    (package
+      (name "ifdtool")
+      (version "1.2")                   ;taken from util/ifdtool/ifdtool.h
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://review.coreboot.org/coreboot")
+                (commit tag)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1gm1af45qcxx11qwa1hpmkl7f8ab11nadq7nirwqjsnrvj8pr3q2"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                "INSTALL=install"
+                (string-append "PREFIX=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "util/ifdtool")))
+            (delete 'configure))           ; no configure script
+        #:tests? #f))                    ; no test suite
+      (home-page "https://doc.coreboot.org/util/ifdtool/")
+      (synopsis "Intel Firmware Descriptor dumper")
+      (description "This package provides @command{ifdtool}, a program to
 dump Intel Firmware Descriptor data of an image file.")
-    (license license:gpl2)))
+      (license license:gpl2))))
 
 (define-public intelmetool
   (package
