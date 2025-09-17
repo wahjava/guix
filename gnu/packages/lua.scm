@@ -97,7 +97,8 @@
              (sha256
               (base32 "1b2qn2rv96nmbm6zab4l877bd4zq7wpwm8drwjiy2ih4jqzysbhc"))
              (patches (search-patches "lua-pkgconfig.patch"
-                                      "lua-liblua-so.patch"))))
+                                      "lua-liblua-so.patch"
+                                      "lua-5.3-search-paths.patch"))))
     (build-system gnu-build-system)
     (inputs (list readline))
     (arguments
@@ -121,6 +122,15 @@
                        (string-append "INSTALL_TOP=" out)
                        (string-append "INSTALL_MAN=" out
                                       "/share/man/man1"))))))))
+    (native-search-paths
+     (list (search-path-specification
+             (variable "GUIX_LUA_PATH")
+             (separator ";")
+             (files '("share/lua/5.3")))
+           (search-path-specification
+             (variable "GUIX_LUA_CPATH")
+             (separator ";")
+             (files '("lib/lua/5.3")))))
     (home-page "https://www.lua.org/")
     (synopsis "Embeddable scripting language")
     (description
