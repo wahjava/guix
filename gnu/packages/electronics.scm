@@ -722,19 +722,18 @@ which allows one to install the M8 firmware on any Teensy.")
                    license:zlib))))
 
 (define-public nextpnr
-  ;; Necessary for compatibility with latest apycula.
-  ;; TODO: Remove with release 0.9.
+  ;; Commit and revision are useless.
   (let ((commit "d796cc720b60ccc18580c686d93c8751fe461532")
         (revision "0"))
     (package
       (name "nextpnr")
-      (version (git-version "0.8" revision commit))
+      (version "0.9")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                 (url "https://github.com/YosysHQ/nextpnr/")
-                (commit commit)
+                (commit (string-append "nextpnr-" version))
                 ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
                 ;; json11 and python-console, which have custom modifications or
                 ;; no longer have their original upstream.
@@ -762,7 +761,7 @@ which allows one to install the M8 firmware on any Teensy.")
          (patches (search-patches "nextpnr-gtest.patch"
                                   "nextpnr-imgui.patch"))
          (sha256
-          (base32 "1arj25vad76wg6b5yaaky4cby5zp9v92pdd4y3l0kxi7wvxhmmya"))))
+          (base32 "1wrlk0f4y29znd1zgl531lw4s0rfm5w8kx4hlwwdaj7b9vv3v65f"))))
       (build-system qt-build-system)
       (arguments
        (list
