@@ -1716,6 +1716,7 @@ their corresponding VERSION, SOURCE and LOCALES variables."
                     (guix build utils)
                     (ice-9 format)
                     (ice-9 ftw)
+                    (ice-9 threads)
                     (srfi srfi-1)
                     (srfi srfi-26))
         #:tests? #f                     ;no tests, this is data
@@ -1739,8 +1740,7 @@ their corresponding VERSION, SOURCE and LOCALES variables."
                                    (getcwd) "/l10n")
                                   ;; Hack, otherwise the build system throws:
                                   ;; 'RuntimeError: File "brand.dtd" not found'.
-                                  "ac_add_options --enable-official-branding"
-                                  "mk_add_options MOZ_OBJDIR=obj"))))
+                                  "ac_add_options --enable-official-branding"))))
                 (setenv "CONFIG_SHELL" (which "bash"))
                 (setenv "MOZBUILD_STATE_PATH"
                         (string-append (getcwd) "/mach_state"))
@@ -1762,9 +1762,11 @@ their corresponding VERSION, SOURCE and LOCALES variables."
                   (("\"mach\", \"build\", \"common\"" all)
                    (string-append all ", \"tb_common\"")))
 
-                (for-each
+                (n-par-for-each
+                 (parallel-job-count)
                  (lambda (l)
                    (let* ((out (assoc-ref outputs l))
+                          (objdir (string-append "obj-" l))
                           ;; The older lib/$project/distribution/extensions
                           ;; directory is deprecated.  Use the newer app-global
                           ;; directory, which is lib/$project/extensions.
@@ -1785,13 +1787,27 @@ their corresponding VERSION, SOURCE and LOCALES variables."
                                               'thunderbird
                                               '#$project))))
                      (format #t "processing locale `~a'...~%" l)
-                     ;; TODO: Revert to use 'invoke' here, after
-                     ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=1988069>
-                     ;; is fixed.
-                     (system* "./mach" "build" (string-append "langpack-" l))
-                     (mkdir-p ext-dir)
-                     (let ((xpi (find-file "obj" (string-append
-                                                  "\\." l "\\.langpack\\.xpi$"))))
+                     (let* ((pid (spawn
+                                  "./mach"
+                                  (list "mach" "build"
+                                        (string-append "langpack-" l))
+                                  #:environment
+                                  (cons (string-append "MOZ_OBJDIR=" objdir)
+                                        (environ))))
+                            (exit-val (status:exit-val (cdr (waitpid pid)))))
+                       (unless (zero? exit-val)
+                         ;; TODO: Turn this into an error after
+                         ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=1988069>
+                         ;; is resolved (but see Guile bug#79461, which means
+                         ;; errors do not propagate to the top).
+                         (format (current-error-port)
+                                 "warning: building langpack ~a exited with ~a~%"
+                                 l exit-val)))
+                     ;; Install extension.
+                     (let ((xpi (find-file (string-append "obj-" l)
+                                           (format #f "\\.~a\\.langpack\\.xpi$"
+                                                   l))))
+                       (mkdir-p ext-dir)
                        (copy-file xpi (string-append ext-dir "/" name))
                        ;; Symlink to the main output so that a user can
                        ;; install all of the language packs at once.
