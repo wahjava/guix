@@ -44,6 +44,7 @@
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2025 B. Wilson <elaexuotee@wilsonb.com>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -108,6 +109,7 @@
   #:use-module (gnu packages inkscape)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
+  #:use-module (gnu packages lesstif)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
@@ -2144,6 +2146,38 @@ supported.  It uses the RandR extension to find all outputs on the X
 server supporting backlight brightness control and changes them all in
 the same way.")
     (license license:x11)))
+
+(define-public xbae
+  (package
+    (name "xbae")
+    (version "4.60.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://sourceforge.net/projects/xbae/files/xbae/"
+                       version "/xbae-" version ".tar.gz"))
+       (sha256
+        (base32 "1a04xdxg74nabzc6fkdbildxlmjmajjdbabm40zh8vd3s0p70wpb"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "CFLAGS=-g -O2 "
+                             "-Wno-error=incompatible-pointer-types "
+                             "-Wno-error=implicit-function-declaration "
+                             "-Wno-error=int-conversion"))))
+    (inputs (list motif libxmu))
+    (home-page "https://sourceforge.net/projects/xbae/")
+    (synopsis "Motif-based widget set")
+    (description
+     "Xbae is a Motif-based widget set consisting of the XbaeMatrix,
+XbaeCaption, and XbaeInput widgets.  The XbaeMatrix widget displays a grid of
+cells like a spreadsheet.  The cell array is scrollable, editable, and
+configurable in appearance.  Each cell usually displays text.  Pixmaps can also
+be displayed but are not editable.")
+    (license (license:non-copyleft "file://COPYING"
+                                   "See COPYING in the distribution."))))
 
 (define-public xbitmaps
   (package
