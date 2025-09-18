@@ -1894,7 +1894,6 @@ on top of Baloo.")
                              milou
                              ocean-sound-theme
                              oxygen-sounds
-                             partitionmanager
                              plasma5support ;required by sddm breeze theme
                              plasma-browser-integration
                              plasma-desktop
@@ -1935,6 +1934,10 @@ on top of Baloo.")
                               (resolve-interface
                                '(gnu packages kde-systemtools))
                               'kwalletmanager)
+                             (module-ref
+                              (resolve-interface
+                               '(gnu packages kde-systemtools))
+                              'partitionmanager)
                              spectacle))
     ;; plasma-thunderbolt ;waiting for bolt
     (synopsis "The KDE Plasma desktop environment")
