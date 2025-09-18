@@ -531,6 +531,11 @@ and not propagated to upstream.")
                       ("Telegram/ThirdParty/cld3" #$cld3-for-telegram-desktop)
                       ("Telegram/ThirdParty/libprisma" #$libprisma-for-telegram-desktop)
                       ("Telegram/ThirdParty/tgcalls" #$tgcalls-for-telegram-desktop)))))
+               (add-after 'unpack-additional-sources 'patch-fix-qt-version-check
+                 (lambda _
+                   (with-directory-excursion "Telegram/lib_base"
+                     (invoke "patch" "-p0" "-i"
+                             #$(local-file "./patches/telegram-desktop-fix-qt-version-check.patch")))))
                (add-after 'unpack-additional-sources 'patch-gir-ignore-paths
                  (lambda _
                    (substitute* "cmake/external/glib/generate_cppgir.cmake"
