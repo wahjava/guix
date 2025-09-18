@@ -36,6 +36,7 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
@@ -684,3 +685,24 @@ mpdevil loads all tags and covers on demand.")
     (description "MyMPD is a mobile-friendly web client for the Music Player
 Daemon (MPD).")
     (license license:gpl3+)))
+
+(define-public rmpc
+  (package
+    (name "rmpc")
+    (version "0.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "rmpc" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "00a8z3b4wqf1j6v0ws2fckj452w46vgj1v2n446bv4ngrk7wnf06"))))
+    (build-system cargo-build-system)
+    (inputs (cargo-inputs 'rmpc))
+    (home-page "https://mierak.github.io/rmpc/")
+    (synopsis "Rusty Music Player Client")
+    (description
+     "rmpc is a terminal based Music Player Daemon client heavily inspired by
+ncmpcpp and ranger/lf file managers.  It has support for synchronized lyrics,
+and displaying album cover art with various terminal image protocols.")
+    (license license:bsd-3)))
