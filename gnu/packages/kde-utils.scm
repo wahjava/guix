@@ -1343,14 +1343,14 @@ Features:
 (define-public sweeper
   (package
     (name "sweeper")
-    (version "25.04.0")
+    (version "25.08.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/sweeper-" version ".tar.xz"))
        (sha256
-        (base32 "0v7hwz6xnp52fysbmqwrhjjcsr96bmw0a70n2kr2bq1hhh0zvf3h"))))
+        (base32 "1xq47j7q0m0s82bvjqb34r2h6x9rf73gfnsknvbf5yrn0ckzq88f"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
