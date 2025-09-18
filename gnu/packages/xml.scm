@@ -394,6 +394,7 @@ formulas and hyperlinks to multiple worksheets in an Excel 2007+ XLSX file.")
   (package
     (name "libxslt")
     (version "1.1.37")
+    (replacement libxslt/fixed)
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnome/sources"
@@ -442,6 +443,23 @@ formulas and hyperlinks to multiple worksheets in an Excel 2007+ XLSX file.")
      "Libxslt is an XSLT C library developed for the GNOME project.  It is
 based on libxml for XML parsing, tree manipulation and XPath support.")
     (license license:x11)))
+
+(define-public libxslt/fixed
+  (package
+    (inherit libxslt)
+    (version "1.1.43")
+    (replacement libxslt/fixed)
+    (source (origin
+             (method url-fetch)
+             (uri (string-append "mirror://gnome/sources"
+                                 "/libxslt/" (version-major+minor version)
+                                 "/libxslt-" version ".tar.xz"))
+             (sha256
+              (base32
+               "0fhqy01x99iia8306czakxza4spzyn88w4bin4sw5bx57hw6ngas"))))
+    (inputs (modify-inputs (package-inputs libxslt)
+              (replace "libxml2" libxml2-next)))
+    (properties '((hidden? . #t)))))
 
 (define-public openjade
   (package
