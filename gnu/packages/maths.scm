@@ -71,6 +71,7 @@
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -153,6 +154,7 @@
   #:use-module (gnu packages image-processing)
   #:use-module (gnu packages java)
   #:use-module (gnu packages less)
+  #:use-module (gnu packages lesstif)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
@@ -681,6 +683,50 @@ format.  dSFMT is only available on the CPUs which use IEEE 754 format double
 precision floating point numbers.")
     (home-page "http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/")
     (license license:bsd-3)))
+
+(define-public grace
+  (package
+    (name "grace")
+    (version "5.1.25")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "https://plasma-gate.weizmann.ac.il/pub/grace/src/grace"
+                       (version-major version)
+                       "/grace-" version ".tar.gz"))
+       (sha256 (base32 "1b523pzy7wss1ymppdvkblc7w0s682ksp4y1fch27xnhgs8vj6km"))
+       (modules '((guix build utils)))
+       (snippet '(begin (delete-file-recursively "T1lib")
+                        (delete-file-recursively "Xbae")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "CFLAGS=-g -O2 "
+                             "-Wno-error=implicit-function-declaration "
+                             "-Wno-error=implicit-int")
+              (string-append "--enable-grace-home=" #$output)
+              "--with-f77=gfortran"
+              "--with-bundled-xbae=no")
+      #:make-flags
+      #~(list (string-append "SHELL=" (search-input-file %build-inputs
+                                                         "bin/sh")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-test
+            (lambda _
+              (substitute* "examples/dotest"
+                (("cc") "gcc")))))))
+    (inputs (list fftw libjpeg-turbo libpng motif netcdf t1lib xbae))
+    (native-inputs (list gfortran))
+    (home-page "https://plasma-gate.weizmann.ac.il/Grace/")
+    (synopsis "2D plotting tool for the X Window System")
+    (description
+     "Grace is a 2D plotting tool for the X Window System.  It has a Motif-based
+@acronym{GUI, graphical user interface} and a scripting language that includes
+curve fitting, analysis, and export capabilities.")
+    (license license:gpl2+)))
 
 (define-public gsl
   (package
