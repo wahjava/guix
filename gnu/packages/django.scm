@@ -141,13 +141,13 @@ your project into different processes.")
 (define-public python-django
   (package
     (name "python-django")
-    (version "4.2.23")
+    (version "5.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "django" version))
        (sha256
-        (base32 "1r7sbhllc6d903di0ydqy737s28m223lgpk69y6xhjb4dsxfmza2"))))
+        (base32 "0yx82k8iilz8l6wkdvjcrz75i144lf211xybrrrks6b34wvh0pns"))))
     (build-system pyproject-build-system)
     (arguments
      '(#:test-flags
@@ -175,6 +175,12 @@ your project into different processes.")
                ((".*def test_incorrect_timezone.*" all)
                 (string-append "    @unittest.skip('Disabled by Guix')\n"
                                all)))))
+         (add-before 'check 'delete-sitecustomize
+           (lambda* _
+             ;; This file gets loaded instead of the GUIX sitecustomize.py,
+             ;; so we end up ignoring GUIX_PYTHONPATH and breaking imports.
+             ;; It only contains a coverage hook that we don't need here.
+             (delete-file "tests/sitecustomize.py")))
          (replace 'check
            (lambda* (#:key tests? test-flags #:allow-other-keys)
              (if tests?
