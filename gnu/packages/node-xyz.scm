@@ -8,6 +8,7 @@
 ;;; Copyright © 2022 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Jelle Licht <jlicht@fsfe.org>
 ;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
+;;; Copyright © 2025 Jen-Chieh Shen <jcs090218@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -323,6 +324,30 @@ with a module name as argument provides a function that writes debug output to
 @code{console.error} under that module name.  This output can be controlled in
 a more fine-grained manner by binding the @env{DEBUG} variable.")
     (license license:expat)))
+
+(define-public node-eask-cli
+  (package
+    (name "node-eask-cli")
+    (version "0.11.8")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/emacs-eask/cli")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32
+          "EAOQHUIAF2OJLK4ZMAGPPQNSOD26ZZE4E2HO7ZYKRSCYOIK6UQYA"))))
+    (build-system node-build-system)
+    (arguments '(#:tests? #f))
+    (home-page "https://emacs-eask.github.io/")
+    (synopsis "CLI for building, runing, testing, and managing your Emacs Lisp dependencies")
+    (description "Eask, originally created as a package development
+tool for Elisp projects, has since evolved into a versatile utility
+for Emacs Lisp that can be used to develop packages, manage configuration
+dependencies, and run Elisp programs as a runtime.")
+    (license license:gpl3+)))
 
 (define-public node-env-variable
   (package
