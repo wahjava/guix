@@ -578,34 +578,47 @@ interface (FFI) of Guile.")
 (define-public python-gpg
   (package
     (name "python-gpg")
-    (version "1.10.0")
+    (version "2.0.0")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "gpg" version))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://dev.gnupg.org/source/gpgmepy")
+                     (commit (string-append "gpgmepy-" version))))
               (sha256
                (base32
-                "1ji3ynhp36m1ccx7bmaq75dhij9frpn19v9mpi4aajn8csl194il"))))
-    (build-system python-build-system)
+                "0hcbf0k483608xrciaq4vis0kyvp4fq1l7mwsmd51jrr18nd9dhw"))))
+    (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f ; No test suite.
+       #:out-of-source? #t ; Won't build otherwise.
+       #:phases
        (modify-phases %standard-phases
          (add-before 'build 'set-environment
            (lambda _
-             ;; GPGME is built with large file support, so we need to set
-             ;; _FILE_OFFSET_BITS to 64 in all users of the GPGME library.
-             ,@(if (or (target-x86-32?) (target-arm32?))
-                   `((substitute* "setup.py"
-                       (("extra_macros = dict\\(\\)")
-                        "extra_macros = { \"_FILE_OFFSET_BITS\": 64 }")))
-                   '())
+;;; Don't know how to set _FILE_OFFSET_BITS,
+;;; but also not sure whether it is still necessary.
+;;             ;; GPGME is built with large file support, so we need to set
+;;             ;; _FILE_OFFSET_BITS to 64 in all users of the GPGME library.
+;;             ,@(if (or (target-x86-32?) (target-arm32?))
+;;                   `((substitute* "setup.py"
+;;                       (("extra_macros = dict\\(\\)")
+;;                        "extra_macros = { \"_FILE_OFFSET_BITS\": 64 }")))
+;;                   '())
+;;; Compiler can also be specified through the CPP environment variable.
              (substitute* "setup.py"
-               (("cc") (which "gcc")))
-             #t)))
-       #:tests? #f)) ; No test suite.
+               (("cc") (which "gcc"))))))))
     (inputs
-     (list gpgme))
+     (list gpgme gnupg))
     (native-inputs
-     (list swig))
+     (list
+      swig
+      pkg-config
+      autoconf
+      automake
+      libtool
+      python
+      python-setuptools
+      python-wheel))
     (home-page (package-home-page gpgme))
     (synopsis "Python bindings for GPGME GnuPG cryptography library")
     (description "This package provides Python bindings to the GPGME GnuPG
