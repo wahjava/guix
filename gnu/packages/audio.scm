@@ -5732,6 +5732,8 @@ loudness of audio and video files to the same level.")
     (license license:gpl2+)))
 
 (define-public r128gain
+  ;; XXX: Upstream notice: This project was archived by the owner on Aug 17,
+  ;; 2023. It is now read-only.
   (package
     (name "r128gain")
     (version "1.0.7")
@@ -5747,6 +5749,7 @@ loudness of audio and video files to the same level.")
     (build-system pyproject-build-system)
     (arguments
        (list
+        #:tests? #f ;require a complex set up, see <.github/workflows/ci.yml>.
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'hardcode-ffmpeg
@@ -5760,8 +5763,7 @@ loudness of audio and video files to the same level.")
                   python-tqdm ffmpeg))
     (native-inputs (list python-future
                          python-requests
-                         python-setuptools
-                         python-wheel))
+                         python-setuptools))
     (home-page "https://github.com/desbma/r128gain")
     (synopsis "Fast audio loudness scanner & tagger")
     (description
