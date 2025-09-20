@@ -593,8 +593,30 @@ interface (FFI) of Guile.")
        #:out-of-source? #t ; Won't build otherwise.
        #:phases
        (modify-phases %standard-phases
-         (add-before 'build 'set-environment
+         (add-before 'configure 'set-build-base
            (lambda _
+              ;; The build scripts attempts
+              ;; to create Zip files which fails because the Zip
+              ;; format does not support timestamps before 1980.
+              (let ((circa-1980 (* 10 366 24 60 60)))
+                (for-each (lambda (file)
+;;                            (make-file-writable file)
+                            (utime file circa-1980 circa-1980))
+                          (find-files ".")))
+;             ;; Otherwise --build-base will be python3-gpg,
+;             ;; which breaks the build for some reason.
+;             (substitute* "Makefile.in"
+;               (("--build-base=\"\\$\\$\\(basename \"\\$\\$\\{PYTHON\\}\"\\)-gpg\"")
+;                "--build-base=\"python-gpg\"")))
+             (substitute* "setup.py.in"
+               (("sink_name)\n") "sink_name)\n        os.chmod(sink_name, 0o644)\n"))
+             ;; Use copy instead of copy2 to set the timestamp to the current day.
+             (substitute* "setup.py.in" (("copy2"), "copy"))
+             (substitute* "setup.py.in"
+               (("cc") (which "gcc")))
+             ))
+;;         (add-before 'build 'set-environment
+;;           (lambda _
 ;;; Don't know how to set _FILE_OFFSET_BITS,
 ;;; but also not sure whether it is still necessary.
 ;;             ;; GPGME is built with large file support, so we need to set
@@ -604,9 +626,8 @@ interface (FFI) of Guile.")
 ;;                       (("extra_macros = dict\\(\\)")
 ;;                        "extra_macros = { \"_FILE_OFFSET_BITS\": 64 }")))
 ;;                   '())
-;;; Compiler can also be specified through the CPP environment variable.
-             (substitute* "setup.py"
-               (("cc") (which "gcc"))))))))
+;;    ))
+         )))
     (inputs
      (list gpgme gnupg))
     (native-inputs
