@@ -59,7 +59,6 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
-  #:use-module (gnu packages gcc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages glib)
@@ -70,6 +69,7 @@
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages m4)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
@@ -1448,3 +1448,92 @@ This compiler does the opposite of what the Fennel compiler does.")
      "Fnlfmt is a tool for automatically formatting Fennel code in a consistent
 way, following established lisp conventions.")
     (license license:lgpl3+)))
+
+(define-public lua-language-server
+  (package
+    (name "lua-language-server")
+    (version "3.15.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/LuaLS/lua-language-server")
+             (commit version)
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lww9zfiqcsyvk99mfa95g8bwrw6jl5713zj4z7250ipw3j2mfvy"))
+       (modules '((guix build utils)))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (delete 'check)
+          (replace 'build
+            (lambda _
+              (chdir "./3rd/luamake/")
+              (system "sh ./compile/build.sh")
+              (chdir "./../../")
+              (system "./3rd/luamake/luamake rebuild")))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (share-dir (string-append out
+                                               "/share/lua-language-server")))
+                (mkdir-p (string-append share-dir "/bin"))
+                (copy-recursively "bin"
+                                  (string-append share-dir "/bin"))
+                (copy-file "main.lua"
+                           (string-append share-dir "/main.lua"))
+                (copy-file "debugger.lua"
+                           (string-append share-dir "/debugger.lua"))
+                (copy-file "changelog.md"
+                           (string-append share-dir "/changelog.md"))
+                (copy-recursively "locale"
+                                  (string-append share-dir "/locale"))
+                (copy-recursively "meta"
+                                  (string-append share-dir "/meta"))
+                (copy-recursively "script"
+                                  (string-append share-dir "/script")))))
+          (add-after 'install 'make-wrapper
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (share-dir (string-append out
+                                               "/share/lua-language-server"))
+                     (luals-bin (string-append share-dir
+                                               "/bin/lua-language-server"))
+                     (bin-dir (string-append out "/bin"))
+                     (cache-dir (string-append
+                                 "${XDG_CACHE_HOME:-$HOME/.cache}")))
+                (if (file-exists? luals-bin)
+                    (begin
+                      (mkdir-p bin-dir)
+                      (with-output-to-file (string-append bin-dir
+                                            "/lua-language-server")
+                        (lambda ()
+                          (display (string-append "#!"
+                                                  #$bash-minimal "/bin/sh\n"))
+                          (display (string-append "exec "
+                                    luals-bin
+                                    " -E "
+                                    share-dir
+                                    "/main.lua --logpath="
+                                    cache-dir
+                                    "/lua-language-server/log --metapath="
+                                    cache-dir
+                                    "/lua-language-server/meta \"$@\"\n"))))
+                      (chmod (string-append bin-dir "/lua-language-server")
+                             #o755))
+                    (error "Binary does not exists: ~a~%" luals-bin))))))))
+    (native-inputs (list ninja git))
+    (inputs (list gcc))
+    (outputs `("out"))
+    (synopsis "Lua language server")
+    (description
+     "The Lua Language Server uses the Language Server Protocol
+to provide various features for Lua in your favourite code editors,
+making development easier, safer, and faster!")
+    (home-page "https://luals.github.io")
+    (license license:expat)))
