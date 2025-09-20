@@ -3185,6 +3185,36 @@ take some source key material and generate suitable cryptographic keys from it."
     (home-page "https://github.com/jtdowney/hkdf")
     (license license:expat)))
 
+(define-public ruby-neatjson
+  (package
+    (name "ruby-neatjson")
+    (version "0.10.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (rubygems-uri "neatjson" version))
+       (sha256
+        (base32 "0wm1lq8yl6rzysh3wg6fa55w5534k6ppiz0qb7jyvdy582mk5i0s"))))
+    (build-system ruby-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key tests? #:allow-other-keys)
+             (if tests?
+                 (invoke "ruby" "test/test_neatjson.rb")
+                 (format #t "test suite not run~%")))))))
+    (synopsis
+     "Generate JSON strings from Ruby objects with flexible formatting options")
+    (description
+     "Pretty-print JSON with more formatting options than the built-in
+     @code{JSON.pretty_generate}, such as keeping arrays and objects on a single
+     line when possible, aligning or sorting object keys, customizing numeric
+     representation, and more.")
+    (home-page "https://github.com/Phrogz/NeatJSON")
+    (license license:expat)))
+
 (define-public ruby-nenv
   (package
     (name "ruby-nenv")
