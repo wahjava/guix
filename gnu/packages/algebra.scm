@@ -1269,7 +1269,7 @@ features, and more.")
   (let ((commit "1d8b82b0740839c0de7f1242a3585e3390ff5f33")
         (revision "0"))
     (package/inherit eigen
-      (name "eigen")
+      (name "eigen-for-onnxruntime")
       (version (git-version "3.4.0" revision commit))
       (source
        (origin
