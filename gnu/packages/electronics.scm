@@ -1608,6 +1608,9 @@ to enforce it.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:modules '((guix build pyproject-build-system)
+                  ((guix build python-build-system) #:prefix python:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-ghdl-jit
@@ -1619,17 +1622,28 @@ to enforce it.")
                  (string-append
                   ": \"llvm\",\n\tr\"static elaboration, LLVM JIT code "
                   "generator\": \"llvm-jit\",")))))
-          (add-after 'ensure-no-mtimes-pre-1980 'dosymlink
-            (lambda* (#:key inputs #:allow-other-keys)
-              (with-directory-excursion "vunit/vhdl/JSON-for-VHDL"
+          (add-after 'install 'unbundle
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((_site-packages
+                     (string-append (python:site-packages inputs outputs)
+                                    "/vunit/vhdl/")))
+                (mkdir-p (string-append _site-packages "JSON-for-VHDL"))
                 (symlink
-                 (search-input-directory inputs "/share/json-for-vhdl")
-                 "src"))
-              (with-directory-excursion "vunit/vhdl"
-                (delete-file-recursively "osvvm")
+                 (search-input-directory inputs "share/json-for-vhdl")
+                 (string-append _site-packages "JSON-for-VHDL/src"))
                 (symlink
-                 (search-input-directory inputs "/share/osvvm/osvvm")
-                 "osvvm")))))
+                 (search-input-directory inputs "share/osvvm/osvvm")
+                 (string-append _site-packages "osvvm")))))
+          (add-after 'check 'run-examples
+            ;; Run examples as an extra check.
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion "examples/vhdl"
+                (for-each
+                 (lambda (dir)
+                   (invoke "python3" (string-append dir "/run.py")))
+                 (list
+                  "array" "check" "composite_generics" "json4vhdl" "logging"
+                  "logging" "uart" "vhdl_configuration"))))))
       #:test-flags
       ;; Skip lint tests which require python-pycodestyle, python-pylint and
       ;; python-mypy to reduce closoure size; some lint test fails, see
