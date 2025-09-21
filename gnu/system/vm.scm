@@ -167,7 +167,7 @@ environment with the store shared with the host.  MAPPINGS is a list of
   (define virtual-file-systems
     (cons (file-system
             (mount-point "/")
-            (device "/dev/vda1")
+            (device "/dev/vda2")
             (type "ext4"))
 
           (append (map mapping->file-system mappings)
