@@ -494,13 +494,13 @@ Kit for OpenType (AFDKO) @command{tx} tool.")
 (define-public python-compreffor
   (package
     (name "python-compreffor")
-    (version "0.5.4")
+    (version "0.5.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "compreffor" version))
        (sha256
-        (base32 "05gpszc8xh6wn3mdra05d6yz6ns624y67m9xs4vv8gh68m0aasrh"))))
+        (base32 "03hh7yi5slib4gayvj955a2f03j9yknijsx6kbh3yj7r6wc3vhc9"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -511,7 +511,10 @@ Kit for OpenType (AFDKO) @command{tx} tool.")
               (substitute* "setup.py"
                 ;; Not actually needed.
                 ((", \"setuptools_git_ls_files\"") "")))))))
-    (native-inputs (list python-pytest python-pytest-runner
+    (native-inputs (list python-pytest
+                         python-pytest-runner
+                         python-setuptools-67
+                         python-wheel-0.40
                          python-setuptools-scm))
     (propagated-inputs (list python-fonttools-minimal))
     (home-page "https://github.com/googlefonts/compreffor")
