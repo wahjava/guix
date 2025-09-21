@@ -122,124 +122,166 @@ the same author.")
         (sha256
          (base32 "1cap927i0s8ly4mckppw33ahlc5xnp3l2shk1m79wndf362x3r7c")))))
 
-(define replxx-sources
-  ;; Dzaima's fork of REPLXX can be used to enhance the CBQN REPL experience
-  ;; with syntax highlighting, readline-like history/navigation, and a
-  ;; prefixed keymap similar to BQNPAD.
-  (let ((commit "13f7b60f4f79c2f14f352a76d94860bad0fc7ce9"))
+(define %cbqn-version "0.9.0")
+
+(define cbqn-sources
+  (let ((version %cbqn-version))
     (origin
       (method git-fetch)
       (uri (git-reference
-            (url "https://github.com/dzaima/replxx")
-            (commit commit)))
+            (url "https://github.com/dzaima/CBQN")
+            (commit (string-append "v" version))))
+      (file-name (git-file-name "cbqn" version))
+      (sha256
+       (base32 "0433hp9lgv6w6mhdz0k1kx2rmxia76yy9i0z7ps4qdk7snf2yr2q")))))
+
+(define %replxx-commit "13f7b60f4f79c2f14f352a76d94860bad0fc7ce9")
+
+(define replxx-sources
+  (let ((commit %replxx-commit))
+    (origin
+      (method git-fetch)
+      (uri
+       (git-reference
+         (url "https://github.com/dzaima/replxx")
+         (commit commit)))
       (file-name (git-file-name "replxx" commit))
       (sha256
        (base32 "0440xjvdkrbpxqjrd6nsrnaxki0mgyinsb0b1dcshjj3h3jr1yy4")))))
 
+(define %singeli-commit "53f42ce4331176d281fa577408ec5a652bdd9127")
+
 (define singeli-sources
-  ;; Singeli can be used to more efficiently implement CBQN primitive
-  ;; operations. Used in this way only its source is required.
-  (let ((commit "53f42ce4331176d281fa577408ec5a652bdd9127"))
+  (let ((commit %singeli-commit))
     (origin
       (method git-fetch)
-      (uri (git-reference
-            (url "https://github.com/mlochbaum/Singeli")
-            (commit commit)))
+      (uri
+       (git-reference
+         (url "https://github.com/mlochbaum/Singeli")
+         (commit commit)))
       (file-name (git-file-name "singeli" commit))
       (sha256
        (base32 "1dzg4gk74lhy6pwvxzhk4zj1qinc83l7i6x6zpvdajdlz5vqvc1m")))))
 
 (define cbqn-bootstrap
-    (package
-      (name "cbqn-bootstrap")
-      (version "0.9.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/dzaima/CBQN")
-                      (commit (string-append "v" version))))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0433hp9lgv6w6mhdz0k1kx2rmxia76yy9i0z7ps4qdk7snf2yr2q"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        #:tests? #f ;skipping tests for bootstrap
-        ;; `make for-bootstrap' implicitly disables REPLXX, Singeli
-        #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
-                             ;; Default behaviour is to extract git hash to
-                             ;; use for version string, here our version
-                             ;; string is manually substituted in so git isn't
-                             ;; required for building.
-                             (string-append "version=" #$version)
-                             "nogit=1" "for-bootstrap")
-        #:phases
-        #~(modify-phases %standard-phases
-            (delete 'configure)
-            (replace 'install
-              (lambda* (#:key outputs #:allow-other-keys)
-                (mkdir-p (string-append #$output "/bin"))
-                (chmod "BQN" #o755)
-                (rename-file "BQN" "bqn")
-                (install-file "bqn" (string-append #$output "/bin")))))))
-      (inputs (list libffi))
-      (synopsis "BQN implementation in C")
-      (description "This package provides the reference implementation of
+  (package
+    (name "cbqn-bootstrap")
+    (version %cbqn-version)
+    (source
+     cbqn-sources)
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ;skipping tests for bootstrap
+      ;; `make for-bootstrap' implicitly disables REPLXX, Singeli
+      #:make-flags
+      #~(list (string-append "CC="
+                             #$(cc-for-target))
+              ;; Default behaviour is to extract git hash to
+              ;; use for version string, here our version
+              ;; string is manually substituted in so git isn't
+              ;; required for building.
+              (string-append "version="
+                             #$version)
+              "nogit=1"
+              "for-bootstrap")
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (mkdir-p (string-append #$output "/bin"))
+              (chmod "BQN" #o755)
+              (rename-file "BQN" "bqn")
+              (install-file "bqn"
+                            (string-append #$output "/bin")))))))
+    (inputs (list libffi))
+    (synopsis "BQN implementation in C")
+    (description
+     "This package provides the reference implementation of
 @uref{https://mlochbaum.github.io/BQN/, BQN}, a programming language inspired
 by APL.")
-      (home-page "https://mlochbaum.github.io/BQN/")
-      ;; Upstream explains licensing situation
-      (license (list license:asl2.0       ; src/utils/ryu*
-                     license:boost1.0
-                     license:expat        ; src/builtins/sortTemplate.h
-                     license:lgpl3        ; Everything else except the above
-                     license:gpl3
-                     license:mpl2.0))))
+    (home-page "https://mlochbaum.github.io/BQN/")
+    ;; Upstream explains licensing situation
+    (license (list license:asl2.0 ;src/utils/ryu*
+                   license:boost1.0
+                   license:expat ;src/builtins/sortTemplate.h
+                   license:lgpl3 ;Everything else except the above
+                   license:gpl3
+                   license:mpl2.0))))
+
+(define* (cbqn-combined-source name version #:key cbqn-sources replxx-sources singeli-sources)
+  (origin
+    (method (@@ (guix packages) computed-origin-method))
+    (file-name (string-append name "-" version ".tar.gz"))
+    (sha256 #f)
+    (uri
+     (delay
+       (with-imported-modules '((guix build utils))
+         #~(begin
+             (use-modules (guix build utils))
+             (let* ((dir (string-append "cbqn" #$version))
+                    (replxx-local-dir "build/replxxLocal")
+                    (singeli-local-dir "build/singeliLocal"))
+
+               (set-path-environment-variable
+                "PATH" '("bin")
+                (list #+(canonical-package bash)
+                      #+(canonical-package coreutils)
+                      #+(canonical-package gzip)
+                      #+(canonical-package tar)))
+               (copy-recursively #+cbqn-sources dir)
+
+               (with-directory-excursion dir
+                 ;; Copy in local replxx and Singeli code
+                 (mkdir replxx-local-dir)
+                 (mkdir singeli-local-dir)
+                 (copy-recursively #+replxx-sources replxx-local-dir)
+                 (copy-recursively #+singeli-sources singeli-local-dir)
+
+                 ;; Build bytecode using bootstrap CBQN
+                 (mkdir-p "build/bytecodeLocal/gen")
+                 (invoke (string-append #+cbqn-bootstrap
+                                        "/bin/bqn")
+                         "build/bootstrap.bqn"
+                         #+bqn-sources))
+
+               (invoke "tar" "cvfa" #$output
+                       "--mtime=@0"
+                       "--owner=root:0"
+                       "--group=root:0"
+                       "--sort=name"
+                       "--hard-dereference"
+                       dir))))))))
 
 (define-public cbqn
   (package
     (inherit cbqn-bootstrap)
     (name "cbqn")
     (outputs '("out" "lib"))
+    (source
+     (cbqn-combined-source name %cbqn-version
+                           #:cbqn-sources cbqn-sources
+                           #:replxx-sources replxx-sources
+                           #:singeli-sources singeli-sources))
     (arguments
-     (substitute-keyword-arguments (strip-keyword-arguments
-                                    (list #:tests?)
-                                    (package-arguments cbqn-bootstrap))
-       ((#:make-flags flags #~(list))
-        #~(cons* "shared-o3" "o3" "for-build" #$flags))
-       ((#:phases phases #~%standard-phases)
+     (substitute-keyword-arguments
+         (strip-keyword-arguments (list #:tests?)
+                                  (package-arguments cbqn-bootstrap))
+       ((#:make-flags flags
+         #~(list))
+        #~(cons* "shared-o3" "o3" "for-build"
+                 #$flags))
+       ((#:phases phases
+         #~%standard-phases)
         #~(modify-phases #$phases
-            ;; Symlinking local copies of REPLXX and Singeli is allowed
-            ;; instead of cloning submodules. `singeli-source' and
-            ;; `replxx-source' git hashes match the submodule hashes for this
-            ;; release of CBQN.
-            (add-before 'build 'link-local-replxx
-              (lambda* (#:key inputs #:allow-other-keys)
-                (symlink (dirname
-                          (search-input-file inputs "replxx-config.cmake.in"))
-                         "build/replxxLocal")))
-            (add-before 'build 'link-local-singeli
-              (lambda* (#:key inputs #:allow-other-keys)
-                (symlink (dirname (search-input-file inputs "singeli"))
-                         "build/singeliLocal")))
-            ;; The BQN built as part of `cbqn-bootstrap' is used here to
-            ;; generate bytecode rather than downloading pre-built bytecode.
-            (add-before 'build 'generate-bytecode
-              (lambda* (#:key inputs #:allow-other-keys)
-                (mkdir-p "build/bytecodeLocal/gen")
-                (system (string-append #+cbqn-bootstrap
-                                       "/bin/bqn build/bootstrap.bqn "
-                                       #+bqn-sources))))
             (replace 'check
               (lambda* (#:key inputs tests? #:allow-other-keys)
                 (when tests?
                   (system (string-append "./BQN -M 1000 \""
-                                         #+bqn-sources
-                                         "/test/this.bqn\""))
+                                         #+bqn-sources "/test/this.bqn\""))
                   (map (lambda (x)
-                         (system (string-append "./BQN ./test/" x
-                                                ".bqn")))
+                         (system (string-append "./BQN ./test/" x ".bqn")))
                        '("cmp"
                          "equal"
                          "copy"
@@ -255,22 +297,18 @@ by APL.")
                   (system "make -C test/ffi"))))
             (replace 'install
               (lambda* (#:key outputs #:allow-other-keys)
-                (let* ((bin (string-append (assoc-ref outputs "out")
-                                           "/bin"))
-                       (lib (string-append (assoc-ref outputs "lib")
-                                           "/lib"))
+                (let* ((bin (string-append (assoc-ref outputs "out") "/bin"))
+                       (lib (string-append (assoc-ref outputs "lib") "/lib"))
                        (include (string-append (assoc-ref outputs "lib")
-                                           "/include")))
+                                               "/include")))
                   (mkdir-p bin)
                   (rename-file "BQN" "bqn")
                   (install-file "bqn" bin)
                   (install-file "libcbqn.so" lib)
                   (install-file "include/bqnffi.h" include))))))))
-    (native-inputs (list bqn-sources cbqn-bootstrap replxx-sources
-                         singeli-sources libffi))
-    (properties
-     `((tunable? . #t)))
+    (native-inputs (list bqn-sources cbqn-bootstrap libffi))
     (license (append (package-license cbqn-bootstrap)
                      (list license:isc   ;Singeli module
                            license:bsd-3 ;REPLXX module
-                           license:unicode)))))
+                           license:unicode)))
+    (properties `((tunable? . #t)))))
