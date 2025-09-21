@@ -978,7 +978,7 @@ converter from FontForge’s @acronym{SFD, Spline Font Database} fonts to
        (snippet '(delete-file-recursively "src/cpp")) ;140+ MiB of stuff
        (sha256
         (base32 "1vlwl1w6sn8c78fsh1w549n3lk9v3v9hcp866vrsdr4byb7g2ani"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -998,7 +998,7 @@ converter from FontForge’s @acronym{SFD, Spline Font Database} fonts to
                 (invoke "pytest" "-vv")))))))
     (native-inputs
      (list pkg-config
-           python-cython
+           python-cython-0
            python-pytest
            python-setuptools-scm
            unzip))
