@@ -17708,12 +17708,11 @@ reading and writing MessagePack data.")
   (package
     (name "python-openstep-plist")
     (version "0.3.0")
-    (home-page "https://github.com/fonttools/openstep-plist")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url home-page)
+             (url "https://github.com/fonttools/openstep-plist")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -17727,8 +17726,9 @@ reading and writing MessagePack data.")
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
                       #$(package-version this-package)))))))
-    (native-inputs (list python-cython python-pytest python-setuptools-scm
-                         python-setuptools python-wheel))
+    (native-inputs (list python-cython-0 python-pytest python-setuptools-scm
+                         python-setuptools))
+    (home-page "https://github.com/fonttools/openstep-plist")
     (synopsis "OpenStep plist parser and writer")
     (description
      "This package provides a parser for the \"old style\" OpenStep property
