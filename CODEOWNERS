@@ -314,6 +314,8 @@ guix/import/crate/cargo-lock\.scm                  @guix/rust
 guix/scripts/import/crate\.scm                     @guix/rust
 tests/crate\.scm                                   @guix/rust
 
+gnu/packages/password-utils\.scm                   @guix/secrets
+
 gnu/packages/fortran(-.+|)\.scm$                   @guix/science
 gnu/packages/algebra\.scm                          @guix/science
 gnu/packages/astronomy\.scm                        @guix/science

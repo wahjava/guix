@@ -935,6 +935,11 @@ release."
                       "guix/scripts/import/crate.scm"
                       "tests/crate.scm")))
 
+(define-team secrets
+  (team 'secrets
+        #:name "Secrets"
+        #:scope (list "gnu/packages/password-utils.scm")))
+
 (define-team science
   (team 'science
         #:name "Science team"
@@ -1267,7 +1272,7 @@ the \"texlive\" importer."
 (define-member (person "Cayetano Santos"
                        "csantosb@inventati.org"
                        "csantosb")
-  ai emacs electronics hpc)
+  ai emacs electronics hpc secrets)
 
 (define-member (person "Greg Hogan"
                        "code@greghogan.com"
