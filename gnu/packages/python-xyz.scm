@@ -10987,6 +10987,9 @@ objects.")
        (sha256
         (base32 "1yigkhvjgbl9nrlijn4iwcs6k7i5y58drix1331cd1hb9wzn35z7"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;tests use yield which is not allowed since pytest 7
     (propagated-inputs (list python-networkx python-numpy))
     (native-inputs (list python-pytest python-setuptools))
     (home-page "https://github.com/bkmgit/python-colormath2")
