@@ -168,7 +168,6 @@ gnu/packages/freeipmi.scm
 gnu/packages/fribidi.scm
 gnu/packages/fsf.scm
 gnu/packages/ftp.scm
-gnu/packages/fvwm.scm
 gnu/packages/gambas.scm
 gnu/packages/games.scm
 gnu/packages/gawk.scm
