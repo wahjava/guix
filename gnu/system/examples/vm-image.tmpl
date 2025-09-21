@@ -123,7 +123,13 @@ root ALL=(ALL) ALL
                      (guix-service-type config =>
                                         (guix-configuration
                                          (inherit config)
-                                         (guix (current-guix))))))))
+                                         (guix (let ((guix (current-guix)))
+                                                 (package
+                                                   (inherit guix)
+                                                   ;; Do not leak the local checkout URL.
+                                                   (source (channel
+                                                             (inherit %default-guix-channel)
+                                                             (commit (guix-package-commit guix)))))))))))))
 
   ;; Allow resolution of '.local' host names with mDNS.
   (name-service-switch %mdns-host-lookup-nss))
