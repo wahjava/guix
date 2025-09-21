@@ -278,7 +278,6 @@ applications that want audio visualisation and audio visualisation plugins.")
            pkg-config))
     (inputs
      (list alsa-lib
-           esound
            (librsvg-for-system)
            gtk+
            jack-2
