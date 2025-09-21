@@ -874,3 +874,27 @@ which will be used as a snippet in origin."
    "1r9p7hhnc1zagwxzdxhs4p6rnqs9naddkgbfymi6pbw6cyg2ccwl"
    "1.1.2"
    #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-zig"))
+
+(define-public tree-sitter-query
+  (tree-sitter-grammar "query"
+   "Parser for tree-sitter query files"
+   "0fbqwg7km4yqjq8p2fkj9hpy0sfnijnf1hsk34wsirlp3af3hc67"
+   "0.7.0"
+   #:repository-url
+   "https://github.com/tree-sitter-grammars/tree-sitter-query"))
+
+(define-public tree-sitter-vim
+  (tree-sitter-grammar "vim"
+   "Parser for Vimscript files"
+   "0wr0sijh3vpka0gysbf0ki8zkvwfg8r5lvhi3xbwmkbyszjzgrqw"
+   "0.7.0"
+   #:repository-url "https://github.com/tree-sitter-grammars/tree-sitter-vim"))
+
+(define-public tree-sitter-vimdoc
+  (tree-sitter-grammar "vimdoc"
+   "Implements the Vimdoc spec"
+   "1gi16hmh4vk9hdfkg9kvwxd7m4rq8r6vymk7fgxqqrbyrks9f0mw"
+   "4.0.0"
+   #:repository-url
+   "https://github.com/neovim/tree-sitter-vimdoc"
+   #:license license:expat))
