@@ -599,13 +599,12 @@ to generate OpenType font binaries from Unified Font Objects (UFOs).")
        (uri (pypi-uri "fontMath" version ".zip"))
        (sha256
         (base32 "070v1jz5f18g15if459ppwswq4w5hzffwp1gvdc5j47bgz5qflva"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-fonttools-minimal))
     (native-inputs
      (list python-setuptools-scm
            python-pytest
            python-pytest-runner
-           python-wheel
            unzip))
     (home-page "https://github.com/robotools/fontMath")
     (synopsis "Fast font mathematical operations library")
