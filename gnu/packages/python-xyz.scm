@@ -12232,7 +12232,10 @@ where key might be occurred more than once in the container.")
     (propagated-inputs
      (list python-six))
     (native-inputs
-     (list python-flake8 python-pycodestyle python-setuptools python-wheel))
+     (list
+      python-pytest
+      python-setuptools
+      python-wheel))
     (home-page "https://github.com/gruns/orderedmultidict")
     (synopsis "Python Ordered Multivalue Dictionary - omdict")
     (description "This package contains a library for ordered multivalue
