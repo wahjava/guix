@@ -1824,59 +1824,41 @@ from a .env file before running tests.")
 (define-public python-pytest-examples
   (package
     (name "python-pytest-examples")
-    (version "0.0.10")
+    (version "0.0.18")
     (source
      (origin
        ;; No tests in the PyPI tarball.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/pydantic/pytest-examples")
-             (commit (string-append "v" version))))
+              (url "https://github.com/pydantic/pytest-examples")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lwxgyfj6lnkhmrvb6kzfskpwfz70kxnhnjvyl3l65k568c4wb4c"))))
+        (base32 "0p36ks2fws7ah312kvpy9zh1x72lmp2slsq37kxbb87z3v8faw36"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-k"
-              (string-append
-               ;; Disable tests requiring pthon-ruff.
-               "not test_ruff"
-               " and not test_ruff_config"
-               " and not test_ruff_offset"
-               " and not test_ruff_ok"
-               " and not test_ruff_error"
-               " and not test_update_files"
-               " and not test_cases_update[simple.md]"
-               " and not test_cases_update[dataclass_indent.md]"
-               " and not test_cases_update[long_python_lines.py]"
-               " and not test_cases_update[simple.py]"
-               " and not test_cases_update[python_class.py]"
-               " and not test_cases_update[call_twice.md]"
-               " and not test_insert_print[example/README.md:3-33]"
-               " and not test_insert_print[example/README.md:37-40]"
-               " and not test_insert_print[example/README.md:44-47]"
-               " and not test_insert_print[example/README.md:49-66]"
-               " and not test_python_self[example/test_example.py:28-31]"
-               " and not test_python_self[example/test_example.py:40-43]"
-               " and not test_python_self_change_docstyle[example/test_example.py:28-31]"
-               " and not test_python_self_change_docstyle[example/test_example.py:40-43]"))
+      #~(list "-k" (string-append
+                    ;; There are seemingly innocuous small differences in the
+                    ;; output of black (extra spaces, etc.) that causes the
+                    ;; tests to fail.
+                    "not test_black_error "
+                    "and not test_ruff_error "
+                    "and not test_ruff_offset "))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "pyproject.toml"
-                ;; XXX: Removing ruff from required packages to pass Sanity
-                ;; check, add it back when it's available.
-                (("'ruff>=0.0.258',") "")
-                ;; black>=23
-                ((">=23") ">22")))))))
-    (propagated-inputs
-     ;; TODO: Add python-ruff once it has been packaged.
-     (list python-black python-pytest))
-    (native-inputs
-     (list python-hatchling))
+          (add-after 'unpack 'patch-ruff-binary
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "pytest_examples/lint.py"
+                (("from ruff.__main__ import find_ruff_bin")
+                 "")
+                (("ruff = find_ruff_bin\\()")
+                 (format #f "ruff = ~s"
+                         (search-input-file inputs "bin/ruff")))))))))
+    (inputs (list ruff))
+    (propagated-inputs (list python-black python-pytest))
+    (native-inputs (list python-hatchling))
     (home-page "https://pypi.org/project/pytest-examples/")
     (synopsis "Pytest plugin for testing examples in docstrings and markdown files")
     (description
