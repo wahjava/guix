@@ -19798,6 +19798,26 @@ provide an easy to use, pythonic and comprehensive Python interface to dialog.
 This allows one to make simple text-mode user interfaces on Unix-like systems")
     (license license:lgpl2.1)))
 
+(define-public python-pytokens
+  (package
+    (name "python-pytokens")
+    (version "0.1.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytokens" version))
+       (sha256
+        (base32 "0i604f1ganmjsfk47sjrd8c2z12f8nx88s1yw2yaw9hxpshbz969"))))
+    (build-system pyproject-build-system)
+    ;; The test suite is disabled to avoid a cycle with python-black.
+    (arguments (list #:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/tusharsadhwani/pytokens")
+    (synopsis "Python 3.12+ compliant tokenizer for older Pythons")
+    (description "This package provides a fast, Python 3.12+ compliant
+tokenizer that runs on older Pythons.")
+    (license license:expat)))
+
 (define-public python-confection
   (package
     (name "python-confection")
