@@ -9867,14 +9867,14 @@ and integrated feature-set for programming Python effectively.")
 (define-public python-black
   (package
     (name "python-black")
-    (version "24.10.0")
+    (version "25.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "black" version))
        (sha256
         (base32
-         "0xa8vkgbvmkdh4vsk967xh81i6g47fcqf5vngdkvrqxgjx6acvl4"))))
+         "06dnvxx8r15r8iasxr6lyriir2h70977ll6c3xwm26yxl2lvqx04"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -9896,6 +9896,7 @@ and integrated feature-set for programming Python effectively.")
            python-packaging
            python-pathspec
            python-platformdirs
+           python-pytokens
            python-tomli
            python-typing-extensions))
     (native-inputs
