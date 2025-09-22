@@ -69,6 +69,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -96,6 +97,7 @@
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system scons)
+  #:use-module (guix cvs-download)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -170,7 +172,8 @@
   #:use-module (gnu packages logging)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages)
-  #:use-module (ice-9 match))
+  #:use-module (ice-9 match)
+  #:use-module (rnrs base))
 
 ;; packages outside the x.org system proper
 
@@ -1668,6 +1671,26 @@ unicode, XFT and may be extended with Perl plugins.  It also comes with a
 client/daemon pair that lets you open any number of terminal windows from
 within a single process.")
     (license license:gpl3+)))
+
+(define-public rxvt-unicode-next
+  (let* ((revision "2025-06-11")
+         (version (when (assert (equal? "9.31" (package-version rxvt-unicode)))
+                    (string-append "9.31-" revision))))
+    (package
+      (inherit rxvt-unicode)
+      (name "rxvt-unicode-next")
+      (version version)
+      (source
+       (origin
+         (inherit (package-source rxvt-unicode)) ; for patch
+         (method cvs-fetch)
+         (uri (cvs-reference
+               (root-directory ":pserver:anonymous@cvs.schmorp.de/schmorpforge")
+               (module "rxvt-unicode")
+               (revision revision)))
+         (sha256
+          (base32 "0wyqx1in5g03j3w19b76hrxhqkj3x2irqcpdwxfim0d3bncfvaq4"))))
+       (synopsis "Development version of rxvt-unicode"))))
 
 (define-public xcape
   (package
