@@ -335,3 +335,88 @@ cop/read/writer operations.  In addition one can also query the topology of
 the system in terms of memory pools and their agents.")
     (license license:ncsa)))
 
+
+;; e-smi looks hard to unbundle correctly from amd-smi
+;; the required esmi version is hardcoded in CMakeLists.txt
+(define (make-esmi-source version hash)
+  (origin
+    (method url-fetch)
+    (uri
+     (string-append "https://github.com/amd/esmi_ib_library/archive/refs/tags/"
+                    "esmi_pkg_ver-" version ".tar.gz"))
+    (sha256
+     (base32 hash))))
+
+(define %e-smi-version-for-rocm "4.1.2")
+(define e-smi-for-amd-smi
+  (make-esmi-source
+   %e-smi-version-for-rocm
+   "12wpw8lc1f2gm3dadd5vsdxpaxm2cj495n00nl0xqq0ca30i4pyr"))
+
+(define-public amd-smi
+  (package
+    (name "amd-smi")
+    (version "25.5.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/ROCm/amdsmi")
+                     (commit (string-append "rocm-" %rocm-version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0cfsj91pwzvc3c306ivvkzp819g4mxr88h091r2hr4f6h4xvvvgl"))
+              (patches
+               (search-patches "amd-smi-python.patch"))))
+    (build-system cmake-build-system)
+    (arguments (list
+                #:tests? #f
+                #:configure-flags
+                #~(list
+                   "-DBUILD_SHARED_LIBS=ON"
+                   ;; this requires ctypeslib2 packaging
+                   ;; "-DBUILD_WRAPPER=ON"
+                   "-DENABLE_ESMI_LIB=ON"
+                   "-DBUILD_CLI=ON")
+                #:phases
+                #~(modify-phases %standard-phases
+                    (add-after 'unpack 'add-e-smi
+                      (lambda* (#:key source inputs #:allow-other-keys)
+                        (let* ((esmi-subdir "esmi_ib_library")
+                               (esmi-pkgver
+                                (string-append "esmi_pkg_ver-" #$%e-smi-version-for-rocm))
+                               (esmi-tarball (string-append esmi-pkgver ".tar.gz"))
+                               (esmi-source (assoc-ref inputs esmi-tarball)))
+                          (mkdir-p esmi-subdir)
+                          (with-directory-excursion esmi-subdir
+                            (invoke "tar" "--strip-components=1" "-xf" esmi-source))
+                          ;; Fool cmake, which uses failing git calls above this.
+                          (substitute* "CMakeLists.txt"
+                            (("# Update to latest tags if not matched")
+                             (format #f "set(latest_esmi_tag ~s)" esmi-pkgver))))
+                        #t))
+                    (add-after 'add-e-smi 'patch-dlopen
+                      (lambda* (#:key inputs #:allow-other-keys)
+                        (substitute* (find-files "src" "\\.cc$")
+                          (("libdrm.so.2")
+                           (search-input-file inputs "/lib/libdrm.so.2"))
+                          (("libdrm_amdgpu.so")
+                           (search-input-file inputs "/lib/libdrm_amdgpu.so")))))
+                    (add-after 'add-e-smi 'patch-python
+                      (lambda* (#:key inputs #:allow-other-keys)
+                        (substitute* (find-files "py-interface" "\\.py$")
+                          (("/opt/rocm") #$output)))))))
+    (inputs (list e-smi-for-amd-smi
+                  libdrm
+                  python))
+    (home-page "https://github.com/ROCm/amdsmi")
+    (synopsis "ROCm library and application for managing AMD devices")
+    (description "The AMD @acronym{SMI,System Management Interface} allows
+managing and monitoring AMD devices, particularly in high-performance
+computing environments.  It provides a user-space interface that allows
+applications to control GPU operations, monitor performance, and retrieve
+information about the system's drivers and GPUs.  It also provides a
+command-line tool, @command{amd-smi}, which can be used to do the same.")
+    (license (list license:expat license:ncsa))))
+
+amd-smi
