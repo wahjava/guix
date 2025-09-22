@@ -3747,7 +3747,7 @@ a text snippet), using @code{libphonenumber}.")
 (define-public ejabberd
   (package
     (name "ejabberd")
-    (version "24.12")
+    (version "25.08")
     (source
      (origin
        (method git-fetch)
@@ -3756,7 +3756,7 @@ a text snippet), using @code{libphonenumber}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l82d8l4ck60vijzirl4xkyc2wv28jnq6amwi8dralm7r218hg7m"))))
+        (base32 "0cr9s37a1v06i3bqb471r4dw1hdv49ph3pwjjrmnm8xkhyplaaly"))))
     (build-system rebar-build-system)
     (inputs (list bash-minimal coreutils procps sed))
     (native-inputs
