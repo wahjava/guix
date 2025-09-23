@@ -11959,14 +11959,11 @@ by pycodestyle.")
     (arguments
      (list
       #:test-flags
-      ;; This test requires pytest-examples, which in turn requires
-      ;; python-ruff, which is difficult to package because it is written in
-      ;; Rust (TODO: Enable when Ruff is in Guix!).
-      #~(list "--ignore=tests/test_docs.py"
-              ;; Optional typing check with Pydantic.
+      #~(list ;; Optional typing check with Pydantic.
               "--ignore=tests/test_other.py"
               ;; TODO: Some timezones are missing in PyTZ, remove constrain
               ;; when updated.
+              "--ignore=tests/test_docs.py"
               "-k" (string-append "not test_is_datetime_zoneinfo"
                                   " and not test_is_now_tz"
                                   " and not test_tz"))))
