@@ -8393,8 +8393,6 @@ flexibility and power of the Python language.")
            python-progress
            python-pyyaml
            python-tomli))
-    ;; TODO: Add python-pytest-ruff to native-inputs once it has been
-    ;; packaged.
     (native-inputs
      (list python-hatchling python-mypy python-pytest))
     (home-page "https://github.com/OneDeadKey/kalamine")
