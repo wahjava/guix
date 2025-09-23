@@ -682,6 +682,56 @@ from software emulation to complete hardware acceleration for modern GPUs.")
                     (call-with-output-file mesa-icd
                       (lambda (port) (format port "~a\n" new-path)))))))))))))
 
+;; Rusticl package and helper inputs.
+
+;; Current rust-bindgen-cli bombs out on opencl bindgen, due to a
+;; fault in llvm.  We use llvm-18 here as it works, and this is the
+;; version for mesa, spirv-llvm-translator, and others.
+(define rust-bindgen-cli-for-rusticl
+  (let ((rust-bindgen-cli
+         (@(gnu packages rust-apps) rust-bindgen-cli)))
+    (package/inherit rust-bindgen-cli
+        (inputs (modify-inputs (package-inputs rust-bindgen-cli)
+                  (replace "clang" clang-18))))))
+
+;; We adjust the mesa base build according to recommendations from:
+;; https://docs.mesa3d.org/rusticl.html
+(define-public mesa-rusticl-icd
+  (package/inherit mesa
+    (name "mesa-rusticl-icd")
+    ;; rustfmt from rust:tools is not compulsory, but avoids warnings in
+    ;; compilation.
+    (native-inputs (modify-inputs (package-native-inputs mesa)
+                     (replace "rust-bindgen-cli" rust-bindgen-cli-for-rusticl)
+                     (append
+                      spirv-tools
+                      spirv-llvm-translator
+                      (list rust "tools"))))
+    (inputs (modify-inputs (package-inputs mesa)
+              (replace "llvm-for-mesa" llvm-for-rusticl)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments mesa)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-before 'build 'setup-environment
+              (lambda _
+                (setenv "RUSTC" "clippy-driver")))
+            (add-after 'install 'patch-icd
+              ;; The generated ICD contains a relative path.
+              (lambda _
+                (let* ((icd-subdir (string-append #$output "/etc/OpenCL/vendors")))
+                  (with-directory-excursion icd-subdir
+                    (substitute* "rusticl.icd"
+                      (("libRusticlOpenCL.so")
+                       (string-append #$output "/lib/libRusticlOpenCL.so")))))))))
+       ((#:configure-flags flags)
+        #~(cons*
+           "-Dgallium-rusticl=true"
+           "-Dllvm=enabled"
+           "-Drust_std=2021"
+           "-Dgallium-rusticl-enable-drivers=radeonsi,iris,nouveau,zink"
+           #$flags))))))
+
 (define-public mesa-headers
   (package/inherit mesa
     (name "mesa-headers")

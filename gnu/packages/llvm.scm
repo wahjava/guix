@@ -1793,6 +1793,17 @@ using @code{clang-rename}.")))
                     (install-file "bin/llvm-config"
                                   (string-append out "/bin"))))))))))))
 
+;; We adjust the llvm base build according to recommendations from:
+;; https://docs.mesa3d.org/rusticl.html
+(define-public llvm-for-rusticl
+  (package/inherit llvm-for-mesa
+    (arguments
+     (substitute-keyword-arguments (package-arguments llvm-for-mesa)
+       ((#:configure-flags flags)
+        #~(cons*
+           "-DLLVM_ENABLE_DUMP=ON"
+           #$flags))))))
+
 (define make-ocaml-llvm
   ;; Make it a memoizing procedure so its callers below don't end up defining
   ;; two equal-but-not-eq "ocaml-llvm" packages for the default LLVM.
