@@ -780,9 +780,16 @@ fullscreen terminal rendering, and keyboard input event reporting.")
        (sha256
         (base32 "0la51nzzqrkisshwbk2wpviisqqzylwkz9qsa9f3y05nyn27b030"))))
     (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "python3" "tests/tests.py")))))))
     (native-inputs
-     (list python-setuptools
-           python-wheel))
+     (list python-setuptools))
     (home-page "https://github.com/doukremt/distance")
     (synopsis "Utilities for comparing sequences")
     (description
