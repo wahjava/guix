@@ -13869,8 +13869,6 @@ class constructs.")
     (arguments
      '(#:test-flags '("-k" "not project")))
     (propagated-inputs (list python-jaraco-text))
-    ;; TODO: Add python-pytest-ruff to native-inputs once it has been
-    ;; packaged.
     (native-inputs (list python-pytest
                          python-pytest-black
                          python-pytest-checkdocs
