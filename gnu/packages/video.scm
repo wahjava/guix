@@ -2798,6 +2798,33 @@ mpv. @{This script does not display thumbnails on its own}, it is meant to be
 used alongside a @{UI, User Interface} script that calls it.")
       (license license:mpl2.0))))
 
+(define-public mpv-uosc
+  (package
+    (name "mpv-uosc")
+    (version "5.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tomasklaen/uosc")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rzi42igdc399q2gq2s3phjqrd4bdqarxh7xash9mxlnidcf4mrs"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("src/uosc" "share/mpv/scripts/")
+          ("src/fonts" "share/mpv/"))))
+    (propagated-inputs
+     (list mpv
+           mpv-thumbfast))
+    (home-page "https://github.com/tomasklaen/uosc")
+    (synopsis "Feature-rich minimalist proximity-based UI for mpv player")
+    (description "Feature-rich minimalist proximity-based UI for mpv player.")
+    (license license:gpl3+)))
+
 (define-public smplayer
   (package
     (name "smplayer")
