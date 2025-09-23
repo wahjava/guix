@@ -826,14 +826,19 @@ which allows one to install the M8 firmware on any Teensy.")
       #:cmake cmake                     ;CMake 3.25 or higher is required.
       #:configure-flags
       ;; TODO: enable more architectures?
-      #~(list "-DARCH=generic;ice40;ecp5;himbaechel"
+      #~(list "-DARCH=himbaechel"
               "-DBUILD_GUI=ON"
               "-DUSE_OPENMP=ON"
               "-DBUILD_TESTS=ON"
-              "-DHIMBAECHEL_UARCH=ng-ultra;gowin"
-              "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
-              "-DHIMBAECHEL_SPLIT=ON"
+              "-DHIMBAECHEL_UARCH=gatemate"
+              ;; "-DHIMBAECHEL_NGULTRA_DEVICES=ng-ultra"
+              ;; "-DHIMBAECHEL_SPLIT=ON"
               "-DHIMBAECHEL_PRJBEYOND_DB=/tmp/prjbeyond-db"
+              "-DHIMBAECHEL_GATEMATE_DEVICES=all"
+              (string-append "-DHIMBAECHEL_PEPPERCORN_PATH="
+                             ;; #$(this-package-input "prjpeppercorn")
+                             #$(package-source prjpeppercorn))
+              (string-append "-DEXPORT_BBA_FILES=" #$output "/bba-files")
               (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
               (string-append "-DICESTORM_INSTALL_PREFIX="
                              #$(this-package-input "icestorm"))
@@ -876,6 +881,7 @@ which allows one to install the M8 firmware on any Teensy.")
            corrosion
            eigen
            icestorm
+           prjpeppercorn
            prjtrellis
            pybind11
            python
@@ -1067,6 +1073,40 @@ such as:
     (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
 editor, part of the RiNgDove EDA suite.")
     (license license:gpl2+)))
+
+(define-public prjpeppercorn
+  (package
+    (name "prjpeppercorn")
+    (version "1.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/YosysHQ/prjpeppercorn/")
+              (commit (string-append "v" version)))
+            )
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "169f8lsc3fmc6wdsvd2m0cdfdmwwdi8zzpy4nk72aaqsk2a76c5y"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                     ;no test suite
+      #:configure-flags
+      #~(list "-DBUILD_SHARED=ON"
+              "-DSTATIC_BUILD=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "libgm"))))))
+    (inputs
+     (list  boost))
+    (home-page "https://github.com/YosysHQ/prjpeppercorn")
+    (synopsis "Placement and routing for Gatemate FPGAs")
+    (description
+     "GateMate FPGAs Bitstream Documentation and Tools.")
+    (license license:isc)))
 
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.
