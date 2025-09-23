@@ -1107,7 +1107,6 @@ in Python 3.13 by PEP-594.")
     (arguments
      '(#:test-flags '("-k" "not project")))
     (propagated-inputs (list python-tempora))
-    ;; TODO: Add python-pytest-ruff to native-inputs once it has been packaged.
     (native-inputs (list python-pytest
                          python-pytest-black
                          python-pytest-checkdocs
