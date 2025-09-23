@@ -9664,46 +9664,10 @@ Interfaces} via data models provided in the JSON format.")
        (sha256
         (base32 "14zcbl32m53zfh054bkqk4jcjp72q1wa0w5z5wygnjz66nnwmj8h"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "-k" (string-append
-                    ;; Disable tests requiring python-ruff.
-                    "not test_docs_examples[docs/index.md:24-83]"
-                    " and not test_docs_examples[docs/index.md:113-137]"
-                    " and not test_docs_examples[docs/index.md:148-156]"
-                    " and not test_docs_examples[docs/index.md:173-183]"
-                    " and not test_docs_examples[docs/index.md:193-201]"
-                    " and not test_docs_examples[docs/index.md:212-243]"
-                    " and not test_docs_examples[docs/index.md:286-317]"
-                    " and not test_docs_examples[docs/index.md:331-372]"
-                    " and not test_docs_examples[docs/index.md:430-439]"
-                    " and not test_docs_examples[docs/index.md:453-459]"
-                    " and not test_docs_examples[docs/index.md:514-522]"
-                    " and not test_docs_examples[docs/index.md:547-549]"
-                    " and not test_docs_examples[docs/index.md:553-585]"
-                    " and not test_docs_examples[docs/index.md:620-645]"
-                    " and not test_docs_examples[docs/index.md:654-732]"
-                    " and not test_docs_examples[docs/index.md:738-772]")
-              "--ignore=tests/test_docs.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "pyproject.toml"
-                ;; hatchling.build failed on this line with error:
-                ;; ValueError: Unknown classifier in field
-                ;; `project.classifiers`: Framework :: Pydantic :: 2
-                (("'Framework :: Pydantic :: 2',") "")
-                ;; python-dotenv>=0.21.0
-                ((">=0.21.0") ">=0.20.0"))))
-          (add-before 'check 'set-home
-            (lambda _
-              ;; FileNotFoundError: [Errno 2] No such file or directory:
-              ;; '/homeless-shelter/
-              (setenv "HOME" "/tmp"))))))
-    (propagated-inputs
-     (list python-dotenv python-pydantic-2))
+    ;; Same example tests require the 'azure-keyvault-secrets' and
+    ;; 'azure-identity' modules, not yet packaged.
+    (arguments (list #:test-flags #~(list "-k" "not test_docs_examples")))
+    (propagated-inputs (list python-dotenv python-pydantic-2))
     (native-inputs
      (list python-hatchling
            python-pytest
