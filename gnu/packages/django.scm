@@ -334,7 +334,8 @@ and adapters that are useful for non-trivial configuration scenarios.")
            python-pytest-django
            python-setuptools-next
            python-shortuuid
-           python-wheel))
+           python-wheel
+           tzdata-for-tests))
     (home-page "https://github.com/django-extensions/django-extensions")
     (synopsis "Custom management extensions for Django")
     (description
