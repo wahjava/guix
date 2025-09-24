@@ -283,8 +283,7 @@ exported."
 #   . \"$HOME_ENVIRONMENT/setup-environment\"
 
 GUIX_PROFILE=\"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\"
-PROFILE_FILE=\"$GUIX_PROFILE/etc/profile\"
-[ -f $PROFILE_FILE ] && . $PROFILE_FILE
+[ -f \"$GUIX_PROFILE/etc/profile\" ] && . \"$GUIX_PROFILE/etc/profile\"
 
 case $GUIX_LOCPATH in
   *$GUIX_PROFILE/lib/locale*) ;;
@@ -312,7 +311,7 @@ case $XCURSOR_PATH in
 esac
 
 # Keep the shell environment clean.
-unset GUIX_PROFILE PROFILE_FILE
+unset GUIX_PROFILE
 
 " port)
                              (display
