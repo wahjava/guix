@@ -182,12 +182,13 @@ interactive shell in that environment.\n"))
                                    "(@@ (gnu packages base) glibc-for-fhs)")
                                  args-parsed)
                      args-parsed)))
-      (options-with-caching
-       (auto-detect-manifest
-        (match command
-          (() opts)
-          (("--") opts)
-          (("--" command ...) (alist-cons 'exec command opts))))))))
+      (parameterize ((%graft? (assoc-ref opts 'graft?)))
+        (options-with-caching
+         (auto-detect-manifest
+          (match command
+            (() opts)
+            (("--") opts)
+            (("--" command ...) (alist-cons 'exec command opts)))))))))
 
 (define (find-file-in-parent-directories candidates)
   "Find one of CANDIDATES in the current directory or one of its ancestors."
