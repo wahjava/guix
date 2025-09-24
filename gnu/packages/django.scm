@@ -947,28 +947,6 @@ project aims to bulk update given objects using one query over Django ORM.")
 for Django sites.")
     (license license:bsd-3)))
 
-(define-public python-django-contrib-comments
-  (package
-    (name "python-django-contrib-comments")
-    (version "1.9.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "django-contrib-comments" version))
-              (sha256
-               (base32
-                "0ccdiv784a5vnpfal36km4dyg12340rwhpr0riyy0k89wfnjn8yi"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-django python-six))
-    (home-page "https://github.com/django/django-contrib-comments")
-    (synopsis "Comments framework")
-    (description
-      "Django used to include a comments framework; since Django 1.6 it's been
-separated to a separate project.  This is that project.  This framework can be
-used to attach comments to any model, so you can use it for comments on blog
-entries, photos, book chapters, or anything else.")
-    (license license:bsd-3)))
-
 (define-public python-django-ninja
   (package
     (name "python-django-ninja")
