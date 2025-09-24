@@ -2077,7 +2077,7 @@ Features:
           (add-before 'check 'pre-check
             (lambda* (#:key inputs #:allow-other-keys)
               (setenv "LD_LIBRARY_PATH"
-                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.2.37"))))))))
+                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.3.7"))))))))
     (propagated-inputs (list python-isodate python-lxml python-xmlsec))
     (native-inputs (list python-coverage
                          python-flake8
