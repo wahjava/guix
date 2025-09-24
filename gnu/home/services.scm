@@ -29,6 +29,7 @@
   #:use-module (guix store)
   #:use-module (guix gexp)
   #:use-module (guix profiles)
+  #:use-module (guix search-paths)
   #:use-module (guix sets)
   #:use-module (guix ui)
   #:use-module (guix discovery)
@@ -287,38 +288,12 @@ GUIX_PRIVILEGED=/run/privileged/bin
 PATH=\"${PATH#$GUIX_PRIVILEGED:}\"
 
 GUIX_PROFILE=\"${HOME_ENVIRONMENT:-$HOME/.guix-home}/profile\"
-[ -f \"$GUIX_PROFILE/etc/profile\" ] && . \"$GUIX_PROFILE/etc/profile\"
-
-case \"$GUIX_LOCPATH\" in
-  *$GUIX_PROFILE/lib/locale*) ;;
-  '') export GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale\" ;;
-  *) GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale:$GUIX_LOCPATH\"
-esac
-case \"$XDG_DATA_DIRS\" in
-  *$GUIX_PROFILE/share*) ;;
-  '') export XDG_DATA_DIRS=\"$GUIX_PROFILE/share\" ;;
-  *) XDG_DATA_DIRS=\"$GUIX_PROFILE/share:$XDG_DATA_DIRS\"
-esac
-case \"$MANPATH\" in
-  *$GUIX_PROFILE/share/man*) ;;
-  '') export MANPATH=\"$GUIX_PROFILE/share/man\" ;;
-  *) MANPATH=\"$GUIX_PROFILE/share/man:$MANPATH\"
-esac
-case \"$INFOPATH\" in
-  *$GUIX_PROFILE/share/info*) ;;
-  '') export INFOPATH=\"$GUIX_PROFILE/share/info\" ;;
-  *) INFOPATH=\"$GUIX_PROFILE/share/info:$INFOPATH\"
-esac
-case \"$XDG_CONFIG_DIRS\" in
-  *$GUIX_PROFILE/etc/xdg*) ;;
-  '') export XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg\" ;;
-  *) XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg:$XDG_CONFIG_DIRS\"
-esac
-case \"$XCURSOR_PATH\" in
-  *$GUIX_PROFILE/share/icons*) ;;
-  '') export XCURSOR_PATH=\"$GUIX_PROFILE/share/icons\" ;;
-  *) XCURSOR_PATH=\"$GUIX_PROFILE/share/icons:$XCURSOR_PATH\"
-esac
+. " port)
+                             (display #$(plain-file
+                                          "export-search-paths"
+                                          (export-search-paths))
+                                      port)
+                             (display "\
 
 # Prioritize programs of privileged-program-service-type, if any.
 test -d \"$GUIX_PRIVILEGED\" && PATH=\"$GUIX_PRIVILEGED:$PATH\"

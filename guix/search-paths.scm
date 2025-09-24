@@ -2,6 +2,7 @@
 ;;; Copyright © 2013, 2014, 2015, 2017, 2018 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -57,6 +58,7 @@
             evaluate-search-paths
             environment-variable-definition
             search-path-definition
+            export-search-paths
             set-search-paths))
 
 ;;; Commentary:
@@ -331,6 +333,46 @@ prefix/suffix."
      (environment-variable-definition variable value
                                       #:kind kind
                                       #:separator separator))))
+
+(define* (export-search-paths #:key (profile-var "GUIX_PROFILE"))
+  (format #f "\
+# Fail when '~a' is null.
+[ \"$~a\" ] || return
+[ -f \"$~a/etc/profile\" ] && . \"$~a/etc/profile\"
+# Anticipate some search paths to avoid needing to login again to source
+# a newly created $~a/etc/profile.
+case \"$GUIX_LOCPATH\" in
+  *$GUIX_PROFILE/lib/locale*) ;;
+  '') export GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale\" ;;
+  *) GUIX_LOCPATH=\"$GUIX_PROFILE/lib/locale:$GUIX_LOCPATH\"
+esac
+case \"$INFOPATH\" in
+  *$GUIX_PROFILE/share/info*) ;;
+  '') export INFOPATH=\"$GUIX_PROFILE/share/info\" ;;
+  *) INFOPATH=\"$GUIX_PROFILE/share/info:$INFOPATH\"
+esac
+case \"$MANPATH\" in
+  *$GUIX_PROFILE/share/man*) ;;
+  '') export MANPATH=\"$GUIX_PROFILE/share/man\" ;;
+  *) MANPATH=\"$GUIX_PROFILE/share/man:$MANPATH\"
+esac
+case \"$XDG_CONFIG_DIRS\" in
+  *$GUIX_PROFILE/etc/xdg*) ;;
+  '') export XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg\" ;;
+  *) XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg:$XDG_CONFIG_DIRS\"
+esac
+case \"$XCURSOR_PATH\" in
+  *$GUIX_PROFILE/share/icons*) ;;
+  '') export XCURSOR_PATH=\"$GUIX_PROFILE/share/icons\" ;;
+  *) XCURSOR_PATH=\"$GUIX_PROFILE/share/icons:$XCURSOR_PATH\"
+esac
+case \"$XDG_DATA_DIRS\" in
+  *$GUIX_PROFILE/share*) ;;
+  '') export XDG_DATA_DIRS=\"$GUIX_PROFILE/share\" ;;
+  *) XDG_DATA_DIRS=\"$GUIX_PROFILE/share:$XDG_DATA_DIRS\"
+esac
+"
+          profile-var profile-var profile-var profile-var profile-var))
 
 (define* (set-search-paths search-paths directories
                            #:key (setenv setenv))
