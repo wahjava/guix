@@ -373,46 +373,6 @@ commands, additional database fields and admin extensions.")
 that are useful for particular countries or cultures.")
     (license license:bsd-3)))
 
-(define-public python-django-simple-math-captcha
-  (package
-    (name "python-django-simple-math-captcha")
-    (version "2.0.0")
-    (home-page "https://github.com/alsoicode/django-simple-math-captcha")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1pqriqvg1bfx36p8hxzh47zl5qk911vgf3xaxfvhkjyi611rbxzy"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'compatibility
-           (lambda _
-             (substitute* "test_simplemathcaptcha/form_tests.py"
-               (("label for=\"id_captcha_0\"") "label"))
-             (substitute* "simplemathcaptcha/widgets.py"
-               (("ugettext_lazy") "gettext_lazy"))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "runtests.py")))))))
-    (native-inputs
-     (list python-mock python-setuptools python-wheel))
-    (propagated-inputs
-     (list python-django python-six))
-    (synopsis "Easy-to-use math field/widget captcha for Django forms")
-    (description
-     "A multi-value-field that presents a human answerable question,
-with no settings.py configuration necessary, but instead can be configured
-with arguments to the field constructor.")
-    (license license:asl2.0)))
-
 (define-public python-django-classy-tags
   (package
     (name "python-django-classy-tags")
