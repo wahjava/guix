@@ -672,7 +672,7 @@ reuse, integration with the template loader and inline output.")
 (define-public python-django-debug-toolbar
   (package
     (name "python-django-debug-toolbar")
-    (version "3.2.1")
+    (version "6.0.0")
     (source
      (origin
        (method git-fetch)
@@ -682,7 +682,7 @@ reuse, integration with the template loader and inline output.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1m1j2sx7q0blma0miswj3c8hrfi5q4y5cq2b816v8gagy89xgc57"))))
+         "0rh0bkbn3z8njmaca0jjby4l9axmbgmcr34pf4sdjk99l55azmv4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -700,7 +700,9 @@ reuse, integration with the template loader and inline output.")
     (propagated-inputs
      (list python-sqlparse python-django))
     (native-inputs
-     (list python-django-jinja
+     (list python-django-csp
+           python-django-template-partials
+           python-hatchling
            python-html5lib
            python-setuptools
            python-wheel
