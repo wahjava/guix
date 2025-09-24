@@ -3129,42 +3129,41 @@ cross-validation.")
                         (mkdir-p html)
                         (copy-recursively "build/html" html)))
                     (format #t "sphinx-build not found, skipping~%"))))))))
-    (propagated-inputs
+    (propagated-inputs (list python-numpy))
+    (inputs (list openblas))
+    (native-inputs
      (append
        (if (supported-package? python-jupytext)  ; Depends on pandoc.
            (list python-jupytext)
            '())
-       (list python-matplotlib
+       (list gfortran
+             ;; XXX: Adding gfortran shadows GCC headers, causing a compilation
+             ;; failure.  Somehow also providing GCC works around it ...
+             gcc
+             meson-python
+             pkg-config
+             pybind11-2.10
+             python-click
+             python-cython-0
+             python-doit
+             python-hypothesis
+             python-matplotlib
              python-mpmath
              python-mypy
-             python-numpy
              python-numpydoc
-             python-pydata-sphinx-theme
+             python-pooch
+             python-pycodestyle
              python-pydevtool
+             python-pydata-sphinx-theme
+             python-sphinx
+             python-pytest
+             python-pytest-cov
+             python-pytest-timeout
+             python-pytest-xdist
              python-pythran
              python-rich-click
-             python-sphinx
              python-threadpoolctl
              python-typing-extensions)))
-    (inputs (list openblas pybind11-2.10))
-    (native-inputs
-     (list gfortran
-           ;; XXX: Adding gfortran shadows GCC headers, causing a compilation
-           ;; failure.  Somehow also providing GCC works around it ...
-           gcc
-           meson-python
-           pkg-config
-           python-click
-           python-cython-0
-           python-doit
-           python-hypothesis
-           python-pooch
-           python-pycodestyle
-           python-pydevtool
-           python-pytest
-           python-pytest-cov
-           python-pytest-timeout
-           python-pytest-xdist))
     (home-page "https://scipy.org/")
     (synopsis "The Scipy library provides efficient numerical routines")
     (description "The SciPy library is one of the core packages that make up
