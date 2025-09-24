@@ -794,42 +794,6 @@ files.  Integrates the webassets library with Django, adding support for
 merging, minifying and compiling CSS and Javascript files.")
     (license license:bsd-2)))
 
-(define-public python-django-jinja
-  (package
-    (name "python-django-jinja")
-    (version "2.11.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/niwinz/django-jinja")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "17irzcwxm49iqyn3q2rpfncj41r6gywh938q9myfq7m733vjy2fj"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (with-directory-excursion "testing"
-                 (invoke "python" "runtests.py"))))))))
-    (propagated-inputs
-     (list python-django python-jinja2 python-pytz python-django-pipeline))
-    (native-inputs
-     (list python-setuptools python-wheel tzdata-for-tests))
-    (home-page "https://niwinz.github.io/django-jinja/latest/")
-    (synopsis "Simple jinja2 templating backend for Django")
-    (description
-     "This package provides a templating backend for Django, using Jinja2.  It
-provides certain advantages over the builtin Jinja2 backend in Django, for
-example, explicit calls to callables from templates and better performance.")
-    (license license:bsd-3)))
-
 (define-public python-dj-database-url
   (package
     (name "python-dj-database-url")
