@@ -48,6 +48,7 @@
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-crypto)
+  #:use-module (gnu packages python-graphics)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages serialization)
@@ -137,7 +138,10 @@ the federation of interconnected video hosting services.")
            python-requests
            python-tomlkit
            python-urwid-3
-           python-wcwidth))
+           python-wcwidth
+           ;; Required to display images in the TUI
+           python-pillow
+           python-term-image))
     (home-page "https://github.com/ihabunek/toot/")
     (synopsis "Mastodon CLI client")
     (description "Interact with Mastodon social network from the command line.
