@@ -1383,24 +1383,26 @@ API.")
 (define-public python-olm
   (package
     ;; python-olm is part of libolm and must be updated at the same time.
-    (inherit libolm)
+    (inherit olm)
     (name "python-olm")
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir
-           (lambda _
-             (chdir "python")))
-         (add-before 'build 'set-preprocessor
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CPP" "gcc -E")))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest")))))))
-    (inputs (list libolm))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "python")))
+          (add-before 'build 'set-preprocessor
+            (lambda _
+              (setenv "CPP" "gcc -E")))
+          (replace 'check
+            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+              (when tests?
+                (add-installed-pythonpath inputs outputs)
+                (invoke "pytest")))))))
+    (inputs
+     (list olm))
     (propagated-inputs
      (list python-cffi python-future))
     (native-inputs
