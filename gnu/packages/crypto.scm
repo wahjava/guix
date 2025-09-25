@@ -982,14 +982,15 @@ SHA256, SHA512, SHA3, AICH, ED2K, Tiger, DC++ TTH, BitTorrent BTIH, GOST R
 (define-public botan
   (package
     (name "botan")
-    (version "2.19.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://botan.randombit.net/releases/"
-                                  "Botan-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0m9dh00zibx13pbjij8lbncf86pix3cxklxmgl47z965k7rlgq6s"))))
+    (version "3.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://botan.randombit.net/releases/"
+                           "Botan-" version ".tar.xz"))
+       (sha256
+        (base32
+         "10q85dr21v33vb9q0skp7xyfm1wx2akqdyp98f72xm6xb15jhgwc"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1018,15 +1019,18 @@ SHA256, SHA512, SHA3, AICH, ED2K, Tiger, DC++ TTH, BitTorrent BTIH, GOST R
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (invoke "./botan-test")))))))
-    (native-inputs (list python-wrapper python-docutils))
-    (inputs (list sqlite bzip2 zlib))
+    (native-inputs
+     (list python-wrapper python-docutils))
+    (inputs
+     (list sqlite bzip2 zlib))
     (synopsis "Cryptographic library in C++11")
     (description "Botan is a cryptography library, written in C++11, offering
-the tools necessary to implement a range of practical systems, such as TLS/DTLS,
-PKIX certificate handling, PKCS#11 and TPM hardware support, password hashing,
-and post-quantum crypto schemes.  In addition to the C++, botan has a C89 API
-specifically designed to be easy to call from other languages.  A Python binding
-using ctypes is included, and several other language bindings are available.")
+the tools necessary to implement a range of practical systems, such as
+TLS/DTLS, PKIX certificate handling, PKCS#11 and TPM hardware support,
+password hashing, and post-quantum crypto schemes.  In addition to the C++,
+botan has a C89 API specifically designed to be easy to call from other
+languages.  A Python binding using ctypes is included, and several other
+language bindings are available.")
     (home-page "https://botan.randombit.net")
     (license license:bsd-2)))
 
