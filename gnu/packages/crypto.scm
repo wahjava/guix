@@ -1455,29 +1455,28 @@ SHA-256, SHA-512, and WHIRLPOOL hashes.")
   (package
     (name "mkp224o")
     (version "1.7.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/cathugger/mkp224o")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "1d0mrp936if1zi8ss0mmywglsmrl0jx42x2sgnm56js8ij3g3g9q"))
-              (file-name (git-file-name name version))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cathugger/mkp224o")
+              (commit (string-append "v" version))))
+       (sha256
+        (base32
+         "1d0mrp936if1zi8ss0mmywglsmrl0jx42x2sgnm56js8ij3g3g9q"))
+       (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; no test suite
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'set-cflags
-           (lambda _
-             (setenv "CFLAGS" "-O3")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((outdir (assoc-ref outputs "out"))
-                    (bindir (string-append outdir "/bin")))
-               (install-file "mkp224o" bindir)
-               #t))))))
+     (list
+      #:tests? #f ; no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'set-cflags
+            (lambda _
+              (setenv "CFLAGS" "-O3")))
+          (replace 'install
+            (lambda _
+              (install-file "mkp224o" (string-append #$output "/bin")))))))
     (native-inputs
      (list autoconf))
     (inputs
