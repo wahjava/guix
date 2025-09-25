@@ -1103,34 +1103,37 @@ OpenBSD signatures, but it cannot sign messages in OpenBSD format yet.")
   (package
     (name "enchive")
     (version "3.5")
-    (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/skeeto/enchive")
-                      (commit version)))
-                (sha256
-                 (base32
-                  "0fdrfc5l42lj2bvmv9dmkmhmm7qiszwk7cmdvnqad3fs7652g0qa"))
-                (file-name (git-file-name name version))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/skeeto/enchive")
+              (commit version)))
+       (sha256
+        (base32
+         "0fdrfc5l42lj2bvmv9dmkmhmm7qiszwk7cmdvnqad3fs7652g0qa"))
+       (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target         '
-       #:make-flags (list ,(string-append "CC=" (cc-for-target))
-                          "PREFIX=$(out)")
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (add-after 'install 'post-install
-                    (lambda _
-                      (let* ((out (assoc-ref %outputs "out"))
-                             (lisp (string-append out "/share/emacs/site-lisp")))
-                        (install-file "enchive-mode.el" lisp)
-                        #t))))))
+     (list
+      #:tests? #f                      ;no check target         '
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'install 'post-install
+            (lambda _
+              (install-file
+               "enchive-mode.el"
+               (string-append #$output "/share/emacs/site-lisp")))))))
     (synopsis "Encrypted personal archives")
     (description
-     "Enchive is a tool to encrypt files to yourself for long-term
-archival.  It's a focused, simple alternative to more complex solutions such as
-GnuPG or encrypted filesystems.  Enchive has no external dependencies and is
-trivial to build for local use.  Portability is emphasized over performance.")
+     "Enchive is a tool to encrypt files to yourself for long-term archival.
+It's a focused, simple alternative to more complex solutions such as GnuPG or
+encrypted filesystems.  Enchive has no external dependencies and is trivial to
+build for local use.  Portability is emphasized over performance.")
     (home-page "https://github.com/skeeto/enchive")
     (license license:unlicense)))
 
