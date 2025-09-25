@@ -1038,23 +1038,26 @@ language bindings are available.")
   (package
     (name "ccrypt")
     (version "1.11")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/ccrypt/"
-                                  version "/ccrypt-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0kx4a5mhmp73ljknl2lcccmw9z3f5y8lqw0ghaymzvln1984g75i"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/ccrypt/"
+                           version "/ccrypt-" version ".tar.gz"))
+       (sha256
+        (base32
+         "0kx4a5mhmp73ljknl2lcccmw9z3f5y8lqw0ghaymzvln1984g75i"))))
     (build-system gnu-build-system)
     (home-page "https://ccrypt.sourceforge.net")
-    (synopsis "Command-line utility for encrypting and decrypting files and streams")
-    (description "@command{ccrypt} is a utility for encrypting and decrypting
-files and streams.  It was designed as a replacement for the standard unix
+    (synopsis
+     "Command-line utility for encrypting and decrypting files and streams")
+    (description
+     "@command{ccrypt} is a utility for encrypting and decrypting files and
+streams.  It was designed as a replacement for the standard unix
 @command{crypt} utility, which is notorious for using a very weak encryption
-algorithm.  @command{ccrypt} is based on the Rijndael block cipher, a version of
-which is also used in the Advanced Encryption Standard (AES, see
-@url{http://www.nist.gov/aes}).  This cipher is believed to provide very strong
-security.")
+algorithm.  @command{ccrypt} is based on the Rijndael block cipher, a version
+of which is also used in the Advanced Encryption Standard (AES, see
+@url{http://www.nist.gov/aes}).  This cipher is believed to provide very
+strong security.")
     (license license:gpl2)))
 
 (define-public asignify
