@@ -1662,30 +1662,33 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
 (define-public keychain
   (package
     (name "keychain")
-    (version "2.9.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/funtoo/keychain")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1i698n0mp2wxk1yd8lhwq7i1dj5v01li1g9qi047aqc34r4079lq"))))
+    (version "2.9.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/funtoo/keychain")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0nj5rq9vzvf5g8axmicy5zfcjir7a6fr1ai4ha3cpqj4zgridga7"))))
     (build-system gnu-build-system)
-    (propagated-inputs (list procps))
-    (native-inputs (list perl))
     (arguments
-     `(#:tests? #f ; No test suite
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (replace 'install
-                    (lambda _
-                      (install-file "keychain"
-                                    (string-append %output "/bin/"))
-                      (install-file "keychain.1"
-                                    (string-append %output "/share/man/man1"))
-                      #t)))))
+     (list
+      #:tests? #f ; No test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'install
+            (lambda _
+              (install-file "keychain" (string-append #$output "/bin/"))
+              (install-file "keychain.1"
+                            (string-append #$output "/share/man/man1")))))))
+    (propagated-inputs
+     (list procps))
+    (native-inputs
+     (list perl))
     (synopsis
      "SSH or GPG agent frontend that can share a single agent on the same
 system")
