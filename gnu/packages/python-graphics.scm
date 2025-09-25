@@ -13,6 +13,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Sisiutl <sisiutl@egregore.fun>
+;;; Copyright © 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -346,6 +347,45 @@ multitouch applications.")
     (description
      "This package provides Kivy widgets that approximate Google's Material
 Design spec without sacrificing ease of use or application performance.")
+    (license license:expat)))
+
+(define-public python-term-image
+  (package
+    (name "python-term-image")
+    (version "0.7.2")
+    (source
+     (origin
+       ;; We need the full repo to run the tests.
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/AnonymouX47/term-image")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lsd5m0k5m99arkca2rzrrlln10c8ax6xfawqwjnspcbf8l3h3dq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags
+           #~(list "tests"
+                   ;; These tests require network access.
+                   "-k" (string-append "not test_from_url"
+                                       " and not test_source"
+                                       " and not test_close"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'adjust-dependencies
+                 (lambda _
+                   (substitute* "setup.py"
+                     (("pillow>=9.1,<11") "pillow>=9.1,<12")))))))
+    (propagated-inputs (list python-pillow python-requests))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-urwid
+           python-wheel))
+    (home-page "https://github.com/AnonymouX47/term-image")
+    (synopsis "Display images in the terminal")
+    (description "Display images in the terminal.")
     (license license:expat)))
 
 (define-public python-pivy
