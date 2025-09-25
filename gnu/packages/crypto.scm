@@ -1141,28 +1141,31 @@ build for local use.  Portability is emphasized over performance.")
   (package
     (name "libsecp256k1")
     (version "0.7.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/bitcoin-core/secp256k1")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1d0cnd2s607j642h64821mpklfvvzy70mkyl2dlsm5s9lgvndn2p"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; These files are pre-generated, the build system is able to
-               ;; re-generate those.
-               #~(for-each delete-file '("src/precomputed_ecmult.c"
-                                         "src/precomputed_ecmult_gen.c")))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/bitcoin-core/secp256k1")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1d0cnd2s607j642h64821mpklfvvzy70mkyl2dlsm5s9lgvndn2p"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; These files are pre-generated, the build system is able to
+        ;; re-generate those.
+        #~(for-each delete-file '("src/precomputed_ecmult.c"
+                                  "src/precomputed_ecmult_gen.c")))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags '("--enable-module-recovery"
-                           "--enable-experimental"
-                           "--enable-shared"
-                           "--disable-static"
-                           "--disable-benchmark")))
+     (list
+      #:configure-flags
+      #~'("--enable-module-recovery"
+          "--enable-experimental"
+          "--enable-shared"
+          "--disable-static"
+          "--disable-benchmark")))
     (native-inputs
      (list autoconf automake libtool))
     (synopsis "C library for EC operations on curve secp256k1")
